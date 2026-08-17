@@ -1,0 +1,44 @@
+FONTS BUNDLED WITH THIS COURSE
+==============================
+
+The .woff2 files in this folder are bundled so the site runs offline
+from a USB stick with no internet connection. They are loaded by
+@font-face rules at the top of ../style.css.
+
+All three families are distributed under the SIL Open Font License,
+version 1.1 (OFL-1.1), which permits redistribution of the font files
+alongside this notice.
+
+1. Barlow Condensed  (headings, labels, table headers)
+   Weights bundled: 500, 600 — latin and latin-ext subsets
+   License: OFL-1.1
+   Copyright 2017 The Barlow Project Authors
+   https://github.com/jpt/barlow
+
+2. Source Sans 3  (body text, buttons, form controls)
+   Weights bundled: 400, 600 (+ 400 italic, latin only)
+   Subsets: latin and latin-ext
+   License: OFL-1.1
+   Attribution: Google Inc.
+   https://github.com/adobe-fonts/source-sans
+
+3. IBM Plex Mono  (numbers, times, target designations)
+   Weight bundled: 500 — latin and latin-ext subsets
+   License: OFL-1.1
+   Copyright 2017 IBM Corp.
+   https://github.com/IBM/plex
+
+Source of the files: the @fontsource npm packages
+(@fontsource/barlow-condensed, @fontsource/source-sans-3,
+@fontsource/ibm-plex-mono), which repackage the upstream releases.
+Each package declares license type OFL-1.1 in its metadata.
+
+Total size of bundled fonts: approximately 252 KB.
+
+BEFORE DISTRIBUTION
+-------------------
+The LICENSE-*.txt files in this folder are the copyright/attribution
+notices shipped by the packages. They are NOT the full text of the
+OFL-1.1. If this course is distributed outside your organization,
+add the complete OFL-1.1 license text to this folder and confirm the
+attribution lines above against each project's upstream repository.

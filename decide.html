@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D3A Course — Phase 1: Decide — High-Payoff Target List</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-phase="decide">
+
+<header class="site">
+  <div class="header-inner">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title" data-i18n="decide.001">The Fires Lab</p>
+          <p class="site-strap" data-i18n="decide.002">Mastering Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub" data-i18n="decide.055">Decide · Detect · Deliver · Assess</p>
+      </div>
+    </a>
+    <nav class="phases">
+      <a href="battle.html" data-i18n="decide.003">Home</a>
+      <a href="scenario.html" data-phase="scenario"><span data-i18n="decide.004">Scenario</span><span class="check"> ✔</span></a>
+      <a href="decide.html" class="active" data-phase="decide"><span data-i18n="decide.005">1. Decide</span><span class="check"> ✔</span></a>
+      <a href="detect.html" data-phase="detect"><span data-i18n="decide.006">2. Detect</span><span class="check"> ✔</span></a>
+      <a href="deliver.html" data-phase="deliver"><span data-i18n="decide.007">3. Deliver</span><span class="check"> ✔</span></a>
+      <a href="assess.html" data-phase="assess"><span data-i18n="decide.008">4. Assess</span><span class="check"> ✔</span></a>
+      <a href="glossary.html" data-i18n="decide.009">Glossary</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="subphases">
+  <a href="decide.html" data-sub="decide.html" class="active"><span data-i18n="decide.010"><span class="step">1A</span><span>High-Payoff Target List</span></span><span class="check"> ✔</span></a>
+  <a href="decide-agm.html" data-sub="decide-agm.html"><span data-i18n="decide.011"><span class="step">1B</span><span>Attack Guidance Matrix</span></span><span class="check"> ✔</span></a>
+  <a href="decide-tss.html" data-sub="decide-tss.html"><span data-i18n="decide.012"><span class="step">1C</span><span>Target Selection Standards</span></span><span class="check"> ✔</span></a>
+  <a href="decide-sync.html" data-sub="decide-sync.html"><span data-i18n="decide.075"><span class="step">1D</span><span>Target Synchronization Matrix</span></span><span class="check"> ✔</span></a>
+</nav>
+
+<main>
+  <div class="panel">
+    <span class="phase-tag" data-i18n="decide.013">Product 1 of 3</span>
+    <h1 data-i18n="decide.014">Decide: The High-Payoff Target List</h1>
+    <p class="lede" data-i18n="decide.015">The decide function starts the targeting process. It translates the commander's intent into priorities and engagement guidance.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="page-progress-fill"></div></div>
+      <p class="progress-label" id="page-progress-label"></p>
+    </div>
+
+    <div class="doctrine"><span data-i18n="decide.016">
+      In the decide function we determine <strong>which targets are most worth engaging</strong>, and with what to engage them. We use the information from the intelligence planning process, which occurred previously, to create a fires plan that supports the mission. We cannot engage every target. We may run out of ammunition, or, more importantly, we may engage a less important target at the expense of missing a target that is crucial to our plan to defeat the enemy. The decide function produces <strong>three</strong> products, and you will build them one at a time: the <strong>high-payoff target list (HPTL)</strong> on this page, the <strong>attack guidance matrix (AGM)</strong> next, and the <strong>target selection standards (TSS)</strong> last.
+      </span><span class="src" data-i18n="decide.017">Adapted from MCTP 3-31B, Appendix A.</span>
+    </div>
+
+    <p data-i18n="decide.018">At the end of the third page you will see all three products together on one worksheet, the way a fire support cell actually keeps them.</p>
+
+    <h2 data-i18n="decide.019">Two kinds of targets</h2>
+    <p data-i18n="decide.020">Before you can build a target list, you must understand two terms:</p>
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide.021">Term</th><th data-i18n="decide.022">Meaning</th><th data-i18n="decide.023">Whose mission?</th></tr>
+      <tr><td data-i18n="decide.024"><strong>High-value target (HVT)</strong></td><td data-i18n="decide.025">A target the <em>enemy</em> commander needs to accomplish <em>his</em> mission.</td><td data-i18n="decide.026">Enemy's mission</td></tr>
+      <tr><td data-i18n="decide.027"><strong>High-payoff target (HPT)</strong></td><td data-i18n="decide.028">A target whose loss will significantly contribute to the success of <em>our</em> mission. HPTs are chosen from the HVT list.</td><td data-i18n="decide.029">Our mission</td></tr>
+    </tbody></table>
+    <p data-i18n="decide.030">The S-2's list of eight enemy elements in the scenario is the <strong>HVT list</strong>. Your first job is to decide which of those HVTs are <strong>HPTs</strong> — the ones worth spending our limited sensors and ammunition on, because attacking them directly helps us seize the bridge.</p>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="decide.031">The eight enemy elements — the HVT list</h2>
+    <p data-i18n="decide.032">All eight elements from the S-2's list are shown on the map. The map does not tell you which ones are high-payoff targets. That is your decision in the tasks below.</p>
+    <figure class="map-figure">
+      <div class="map-frame"><div id="decide-map"></div></div>
+      <div class="map-unlocated">
+        <h4 data-i18n="decide.103">Known to exist — location not established</h4>
+        <div id="decide-map-unlocated"></div>
+      </div>
+      <figcaption class="map-caption"><span data-i18n="decide.033">This map shows what we have located, and the restricted fire area around the bridge. A dashed symbol is where we assess he will be. Elements we have not found are set apart below, with no position. </span><a href="scenario.html" data-i18n="decide.034">Open the full map and its complete key</a></figcaption>
+    </figure>
+    <table class="map-key">
+      <tbody><tr><th data-i18n="decide.035">Ref</th><th data-i18n="decide.036">Element</th><th data-i18n="decide.037">Where it sits</th></tr>
+      <tr><td class="ref">1</td><td data-i18n="decide.038">Ammunition supply point</td><td data-i18n="decide.039">Well to the rear, 6 km behind the river. Holds the mortar and ATGM ammunition.</td></tr>
+      <tr><td class="ref">2</td><td data-i18n="decide.040">ATGM section</td><td data-i18n="decide.041">Dug in on the high ground overlooking the crossing.</td></tr>
+      <tr><td class="ref">3</td><td data-i18n="decide.042">Field kitchen</td><td data-i18n="decide.043">Furthest back of all, with the rear-area trains.</td></tr>
+      <tr><td class="ref">4</td><td data-i18n="decide.044">Engineer obstacle team</td><td data-i18n="decide.045">On the bridge itself.</td></tr>
+      <tr><td class="ref">5</td><td data-i18n="decide.046">Battalion command post</td><td data-i18n="decide.047">In the treeline, 4 km behind the river. Relocates every 24 hours.</td></tr>
+      <tr><td class="ref">6</td><td data-i18n="decide.048">Logistics trucks</td><td data-i18n="decide.049">Move along the road at night between the supply point and the fighting positions.</td></tr>
+      <tr><td class="ref">7</td><td data-i18n="decide.050">Reconnaissance squad</td><td data-i18n="decide.051">The only enemy element on our side of the river.</td></tr>
+      <tr><td class="ref">8</td><td data-i18n="decide.052">120 mm mortar platoon</td><td data-i18n="decide.053">Deepest of the fighting elements, but still close enough to reach the bridge.</td></tr>
+    </tbody></table>
+  </div>
+
+  <!-- decide-1: nominate the HPTs -->
+  <div class="panel">
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide.054">Task 1.1 — Nominate the High-Payoff Targets</h3>
+        <span class="status" data-status="decide-1">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide.056">Review the commander's guidance on the Scenario page. From the S-2's HVT list, select the elements that should become <strong>HPTs</strong>. Remember: ammunition is limited, the attack is in 48 hours, and every mission must serve the plan to seize the bridge intact.</p>
+        <div id="d1-choices">
+          <label class="choice"><input type="checkbox" value="asp"><span><span data-i18n="decide.057">Ammunition supply point</span><span class="why" data-i18n="decide.058">Your commander rejected this as an HPT — and this is the hardest one. It is a real military target, it holds the mortar ammunition, and the commander wants the mortars silenced. But the enemy already has <strong>three days of ammunition forward at his firing positions</strong>. Destroying the ASP would not stop one mortar round during our 48 hours. High value to the enemy, no payoff for us in this fight. It stays on the HVT list and can be nominated later.</span></span></label>
+          <label class="choice"><input type="checkbox" value="atgm"><span><span data-i18n="decide.059">ATGM section</span><span class="why" data-i18n="decide.060">HPT — must be destroyed before our lead vehicles are exposed at the bridge.</span></span></label>
+          <label class="choice"><input type="checkbox" value="kitchen"><span><span data-i18n="decide.061">Field kitchen</span><span class="why" data-i18n="decide.062">Your commander rejected this as an HPT. He will not spend fires on the enemy's rear-area comfort.</span></span></label>
+          <label class="choice"><input type="checkbox" value="engineers"><span><span data-i18n="decide.063">Engineer obstacle team</span><span class="why" data-i18n="decide.064">HPT — if the engineers drop the bridge, the mission fails. Protecting the bridge is requirement number one.</span></span></label>
+          <label class="choice"><input type="checkbox" value="trucks"><span><span data-i18n="decide.065">Logistics trucks</span><span class="why" data-i18n="decide.066">Your commander rejected this as an HPT, for the same reason as the ASP: supply interdiction is too slow to affect this fight.</span></span></label>
+          <label class="choice"><input type="checkbox" value="mortars"><span><span data-i18n="decide.067">120&nbsp;mm mortar platoon</span><span class="why" data-i18n="decide.068">HPT — the greatest danger to our troops massed at the crossing. The commander demands they be silenced.</span></span></label>
+          <label class="choice"><input type="checkbox" value="cp"><span><span data-i18n="decide.069">Battalion command post</span><span class="why" data-i18n="decide.070">HPT — the commander requires enemy command and control to be disrupted. The CP coordinates the defense, and it is how he would call for artillery or reinforcements.</span></span></label>
+          <label class="choice"><input type="checkbox" value="recon"><span><span data-i18n="decide.071">Reconnaissance squad</span><span class="why" data-i18n="decide.072">Your commander rejected this as an HPT. He is an observer — but the S-2 told you the mortar fires on the bridge are already laid on, so <em>he may not use an observer at all</em>. Killing the squad costs him accuracy and timing, not the ability to shoot. And we have not located it, and it moves continuously, so we would spend a sensor to buy very little.</span></span></label>
+          <label class="choice"><input type="checkbox" value="infantry"><span><span data-i18n="decide.090">Infantry platoon</span><span class="why" data-i18n="decide.099">Your commander rejected this as an HPT — and this is the one that pulls hardest, because it is the only element on this list that will shoot directly at our soldiers. But it is <em>beyond</em> the bridge. It cannot stop the crossing; it can only fight us after we have made it. Our mission is to get the bridge and pass the force through, and this platoon does not stand between us and that.</span></span></label>
+        </div>
+        <div class="btn-row"><button class="btn" id="d1-check" data-i18n="decide.073">Check Answers</button></div>
+        <div class="feedback" id="d1-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- decide-2: HVT vs HPT concept -->
+  <div class="panel">
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide.074">Task 1.2 — HVT or HPT?</h3>
+        <span class="status" data-status="decide-2">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide.076">The enemy infantry platoon holds prepared positions beyond the bridge and will fight our assault force. Why is it an <strong>HVT but not an HPT</strong> in this operation?</p>
+        <div id="d2-choices">
+          <label class="choice"><input type="radio" name="d2" value="a"><span><span data-i18n="decide.077">Because it is dug in, and artillery cannot defeat infantry in prepared positions.</span><span class="why" data-i18n="decide.078">Effectiveness is not the test. We could suppress it if we chose to. The question is whether doing so brings the bridge into our hands, and it does not.</span></span></label>
+          <label class="choice"><input type="radio" name="d2" value="b"><span><span data-i18n="decide.079">Because destroying it does not help us seize the bridge — it can only fight us after a crossing it cannot prevent.</span><span class="why" data-i18n="decide.080">Correct. The platoon is genuinely important to the enemy commander's defense, which is what makes it an HVT. It is not a high-payoff target because attacking it does not pay off for OUR mission.</span></span></label>
+          <label class="choice"><input type="radio" name="d2" value="c"><span><span data-i18n="decide.081">Because our assault force outnumbers it, so it is not a threat.</span><span class="why" data-i18n="decide.082">It <em>is</em> a threat — it is the one enemy element that will shoot directly at our soldiers. But high-payoff is not a measure of danger. A target is high-payoff when attacking it makes our mission succeed, and this platoon does not stand between us and the bridge.</span></span></label>
+        </div>
+        <div class="btn-row"><button class="btn" id="d2-check" data-i18n="decide.083">Check Answer</button></div>
+        <div class="feedback" id="d2-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- decide-3: prioritise the HPTL -->
+  <div class="panel">
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide.084">Task 1.3 — Build the High-Payoff Target List (HPTL)</h3>
+        <span class="status" data-status="decide-3">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide.086">Put the five HPTs in priority order using the ▲ and ▼ buttons. Everything you need is in the commander's guidance:</p>
+
+        <div class="callout-cdr">
+          <h3 data-i18n="decide.087">Reminder — Brigade Commander's Guidance</h3>
+          <p data-i18n="decide.088">“My intent is to seize the Kordan bridge <strong>intact</strong> and cross before the enemy can react. To do that, fires must accomplish three things:</p>
+          <ol>
+            <li data-i18n="decide.097"><strong>Protect the bridge</strong> — stop the enemy engineers before they can drop it.</li>
+            <li data-i18n="decide.098"><strong>Disrupt enemy indirect fire</strong> — do not allow the enemy to use mortars on friendly units as we are forced to concentrate near the bridge.</li>
+                        <li data-i18n="decide.100"><strong>Disrupt enemy command and control</strong> — there is a significant risk the enemy will request indirect artillery fire or reinforcements when he learns friendly forces are concentrated near the bridge. We must disrupt his command and communications network to mitigate this risk.</li>
+          </ol>
+          <p data-i18n="decide.101">Nothing may be allowed to stop a vehicle on the span. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”</p>
+        </div>
+
+        <p data-i18n="decide.102">His three requirements are already in priority order — but you have <strong>four</strong> targets, and the fourth is not simply added to the bottom. Read the last paragraph again and ask which losses would <em>end</em> the mission, and which would only hurt.</p>
+        <ul class="sortlist" id="d3-list">
+          <li data-value="cp"><span class="rank">1</span><span class="name" data-i18n="decide.089">Battalion command post</span><span class="movers"><button class="up">▲</button><button class="down">▼</button></span></li>
+          <li data-value="engineers"><span class="rank">3</span><span class="name" data-i18n="decide.091">Engineer obstacle team</span><span class="movers"><button class="up">▲</button><button class="down">▼</button></span></li>
+          <li data-value="atgm"><span class="rank">4</span><span class="name" data-i18n="decide.092">ATGM section</span><span class="movers"><button class="up">▲</button><button class="down">▼</button></span></li>
+          <li data-value="mortars"><span class="rank">5</span><span class="name" data-i18n="decide.093">120&nbsp;mm mortar platoon</span><span class="movers"><button class="up">▲</button><button class="down">▼</button></span></li>
+        </ul>
+        <div class="btn-row"><button class="btn" id="d3-check" data-i18n="decide.094">Check Order</button></div>
+        <div class="feedback" id="d3-feedback"></div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a class="btn secondary" href="scenario.html" data-i18n="decide.095">← Scenario</a>
+      <a class="btn" href="decide-agm.html" data-i18n="decide.096">Next: Attack Guidance Matrix →</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/map.js"></script>
+<script src="js/lang-zh.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script>
+D3A_MAP.render('decide-map');
+D3A_MAP.renderUnlocated('decide-map-unlocated');
+D3A.registerPage('decide', ['decide-1','decide-2','decide-3']);
+
+D3A.initMultiSelect({
+  containerId: 'd1-choices', checkBtnId: 'd1-check', feedbackId: 'd1-feedback',
+  exerciseId: 'decide-1',
+  correct: ['cp','mortars','atgm','engineers'],
+  explainOk: 'These four directly enable the seizure of the bridge. Now look at what you left off. The ammunition supply point is a real military target and it holds the rounds the enemy mortars fire — but his fighting positions already hold three days forward, so destroying it does not stop one round inside our 48 hours. The infantry platoon will shoot at our soldiers, but only after the crossing it cannot prevent. And the reconnaissance squad can only make his fires better, not possible. High value to the enemy is not the test. Payoff for OUR mission is.',
+  explainBad: 'You proposed this list to the commander and he did not approve it. Yellow = an HPT you left off. Red = a target he rejected. Ask of each one: if I destroy this, does the bridge fall into our hands sooner? Read what he said under each item, then adjust and nominate again.'
+});
+
+D3A.initSingleSelect({
+  containerId: 'd2-choices', checkBtnId: 'd2-check', feedbackId: 'd2-feedback',
+  exerciseId: 'decide-2', correct: 'b',
+  explainOk: 'HVT = valuable to the ENEMY\'s mission. HPT = attacking it pays off for OUR mission. The infantry platoon is both dangerous to us and important to him — and still not a high-payoff target. Danger and value are not the test.',
+  explainBad: 'Ask whose mission each term refers to. Then ask what has to happen for OUR mission to succeed, and whether attacking this platoon brings it any closer.'
+});
+
+D3A.initSortList({
+  listId: 'd3-list', checkBtnId: 'd3-check', feedbackId: 'd3-feedback',
+  exerciseId: 'decide-3',
+  correctOrder: ['engineers','atgm','mortars','cp'],
+  explainOk: 'The rule behind this order: rank by what would DEFEAT the mission, not by what would hurt most. The engineers and the ATGM section can both end the operation in one event — one drops the bridge, the other leaves a burning vehicle on a span we then cannot cross. The mortars are attritional: they hurt, and we can mitigate them. The command post is last because it is the hardest to find and the slowest to pay off, not because it does not matter.',
+  explainBad: 'You proposed this order to the commander and he rejected it. He wants the list ranked by what would DEFEAT the mission, not by what would hurt most. Green rows are already where he wants them. Ask of each target: would losing this END the mission, or only hurt? Everything that can end it goes above everything that can only hurt — then re-read what he said about a vehicle stopped on the span.'
+});
+</script>
+
+
+</body></html>

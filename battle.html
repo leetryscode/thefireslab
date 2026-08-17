@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fires Lab — Battle</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="header-inner">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title" data-i18n="battle.001">The Fires Lab</p>
+          <p class="site-strap" data-i18n="battle.002">Mastering Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub" data-i18n="battle.044">Decide · Detect · Deliver · Assess</p>
+      </div>
+    </a>
+    <nav class="phases">
+      <a href="battle.html" class="active" data-i18n="battle.003">Home</a>
+      <a href="scenario.html" data-phase="scenario"><span data-i18n="battle.004">Scenario</span><span class="check"> ✔</span></a>
+      <a href="decide.html" data-phase="decide"><span data-i18n="battle.005">1. Decide</span><span class="check"> ✔</span></a>
+      <a href="detect.html" data-phase="detect"><span data-i18n="battle.006">2. Detect</span><span class="check"> ✔</span></a>
+      <a href="deliver.html" data-phase="deliver"><span data-i18n="battle.007">3. Deliver</span><span class="check"> ✔</span></a>
+      <a href="assess.html" data-phase="assess"><span data-i18n="battle.008">4. Assess</span><span class="check"> ✔</span></a>
+      <a href="glossary.html" data-i18n="battle.009">Glossary</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <span class="phase-tag" data-i18n="battle.010">Battle Mode</span>
+    <h1 data-i18n="battle.011">Welcome to The Fires Lab</h1>
+    <p class="lede" data-i18n="battle.012">A step-by-step course on the <strong>D3A targeting methodology</strong> — Decide, Detect, Deliver, and Assess.</p>
+
+    <p data-i18n="battle.013">This course begins <strong>after intelligence preparation of the operational environment (IPOE) is complete</strong>. Your intelligence section has already studied the enemy and the terrain. Now your job is to use that intelligence to plan and execute <strong>targeting</strong>: finding the right enemy targets and engaging them at the right time and place to support the commander's plan.</p>
+
+    <div class="doctrine">
+      <span data-i18n="battle.014"><strong>What is D3A?</strong> D3A is a tactical-level targeting methodology. It helps a unit integrate and synchronize all of its capabilities to engage the right target, at the right place and time, to create the effect the commander wants. Its four functions are:
+      </span><ul>
+        <li data-i18n="battle.015"><strong>Decide</strong> — determine which targets to engage, based on the mission and the commander's guidance.</li>
+        <li data-i18n="battle.016"><strong>Detect</strong> — find and track those targets using available sensors and observers.</li>
+        <li data-i18n="battle.017"><strong>Deliver</strong> — engage the targets to create the desired effect.</li>
+        <li data-i18n="battle.018"><strong>Assess</strong> — evaluate the results and decide what to do next.</li>
+      </ul>
+      <span class="src" data-i18n="battle.019">Adapted from MCTP 3-31B, Appendix A (Targeting Processes at Echelons Below MEF).</span>
+    </div>
+
+    <p data-i18n="battle.020">The four functions form a continuous cycle. Assessment feeds back into new decisions, and the cycle repeats for as long as the operation continues.</p>
+
+    <h2 data-i18n="battle.021">How this workbook works</h2>
+    <p data-i18n="battle.022">You will work through one continuing tactical scenario. Read the scenario first, then complete the four phases <strong>in order</strong>. Each phase has short lessons followed by tasks. Complete every task in a phase before moving to the next one. A checkmark appears in the menu bar when a phase is finished. Your progress is saved on this computer.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="course-progress-fill"></div></div>
+      <p class="progress-label" id="course-progress-label">Course progress: 0 of 17 tasks</p>
+    </div>
+
+    <div class="phase-cards">
+      <a class="phase-card" href="scenario.html" data-phase="scenario">
+        <span class="num" data-i18n="battle.023">START HERE</span>
+        <h3 data-i18n="battle.024">The Scenario</h3>
+        <p data-i18n="battle.025">Your mission, the enemy situation, and the intelligence picture after IPOE.</p>
+      </a>
+      <a class="phase-card" href="decide.html" data-phase="decide">
+        <span class="num" data-i18n="battle.026">PHASE 1</span>
+        <h3 data-i18n="battle.027">Decide</h3>
+        <p data-i18n="battle.028">Three products, one at a time: the high-payoff target list, the target selection standards, and the attack guidance matrix.</p>
+      </a>
+      <a class="phase-card" href="detect.html" data-phase="detect">
+        <span class="num" data-i18n="battle.029">PHASE 2</span>
+        <h3 data-i18n="battle.030">Detect</h3>
+        <p data-i18n="battle.031">Task your sensors to find the targets, and check acquisitions against your standards.</p>
+      </a>
+      <a class="phase-card" href="deliver.html" data-phase="deliver">
+        <span class="num" data-i18n="battle.032">PHASE 3</span>
+        <h3 data-i18n="battle.033">Deliver</h3>
+        <p data-i18n="battle.034">Engage valid targets with the right asset to create the desired effect.</p>
+      </a>
+      <a class="phase-card" href="assess.html" data-phase="assess">
+        <span class="num" data-i18n="battle.035">PHASE 4</span>
+        <h3 data-i18n="battle.036">Assess</h3>
+        <p data-i18n="battle.037">Evaluate battle damage and recommend the next step: re-attack, new targets, or new guidance.</p>
+      </a>
+      <a class="phase-card" href="glossary.html">
+        <span class="num" data-i18n="battle.038">REFERENCE</span>
+        <h3 data-i18n="battle.039">Glossary</h3>
+        <p data-i18n="battle.040">Definitions of every term and acronym used in this course.</p>
+      </a>
+    </div>
+
+    <div class="btn-row">
+      <a class="btn" href="scenario.html" data-i18n="battle.041">Begin the Course →</a>
+      <button class="btn secondary" onclick="D3A.resetAll()" data-i18n="battle.042">Reset Progress</button>
+      <a class="btn secondary" href="index.html" data-i18n="battle.043">← Choose a Different Track</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/lang-zh.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script>D3A.registerPage('battle', []);</script>
+
+
+</body></html>

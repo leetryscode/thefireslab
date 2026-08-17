@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D3A Course — Phase 1: Decide — Target Synchronization Matrix</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-phase="decide">
+
+<header class="site">
+  <div class="header-inner">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title" data-i18n="decide-sync.001">The Fires Lab</p>
+          <p class="site-strap" data-i18n="decide-sync.002">Mastering Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub" data-i18n="decide-sync.003">Decide · Detect · Deliver · Assess</p>
+      </div>
+    </a>
+    <nav class="phases">
+      <a href="battle.html" data-i18n="decide-sync.004">Home</a>
+      <a href="scenario.html" data-phase="scenario"><span data-i18n="decide-sync.005">Scenario</span><span class="check"> ✔</span></a>
+      <a href="decide.html" class="active" data-phase="decide"><span data-i18n="decide-sync.006">1. Decide</span><span class="check"> ✔</span></a>
+      <a href="detect.html" data-phase="detect"><span data-i18n="decide-sync.007">2. Detect</span><span class="check"> ✔</span></a>
+      <a href="deliver.html" data-phase="deliver"><span data-i18n="decide-sync.008">3. Deliver</span><span class="check"> ✔</span></a>
+      <a href="assess.html" data-phase="assess"><span data-i18n="decide-sync.009">4. Assess</span><span class="check"> ✔</span></a>
+      <a href="glossary.html" data-i18n="decide-sync.010">Glossary</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="subphases">
+  <a href="decide.html" data-sub="decide.html"><span data-i18n="decide-sync.011"><span class="step">1A</span><span>High-Payoff Target List</span></span><span class="check"> ✔</span></a>
+  <a href="decide-agm.html" data-sub="decide-agm.html"><span data-i18n="decide-sync.012"><span class="step">1B</span><span>Attack Guidance Matrix</span></span><span class="check"> ✔</span></a>
+  <a href="decide-tss.html" data-sub="decide-tss.html"><span data-i18n="decide-sync.013"><span class="step">1C</span><span>Target Selection Standards</span></span><span class="check"> ✔</span></a>
+  <a href="decide-sync.html" data-sub="decide-sync.html" class="active"><span data-i18n="decide-sync.014"><span class="step">1D</span><span>Target Synchronization Matrix</span></span><span class="check"> ✔</span></a>
+</nav>
+
+<main>
+  <div class="panel">
+    <span class="phase-tag" data-i18n="decide-sync.015">Synchronization</span>
+    <h1 data-i18n="decide-sync.016">Decide: Target Synchronization Matrix</h1>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="page-progress-fill"></div></div>
+      <p class="progress-label" id="page-progress-label"></p>
+    </div>
+
+    <h2 data-i18n="decide-sync.018">What an approved HAT gives you</h2>
+    <p data-i18n="decide-sync.017">When the commander approves the HAT he makes his decision on every target in it, in advance. A report arrives. The <strong>fire support coordination cell (FSCC)</strong> checks it against the target selection standards, finds the target on the high-payoff target list, and orders the attack the attack guidance matrix directs. <strong>The FSCC does not go back to the commander for permission. He gave it when he approved the HAT.</strong></p>
+    <p data-i18n="decide-sync.019">That is what the HAT is for. It lets the FSCC employ ordnance quickly and still stay inside the commander's guidance, at the moment when nobody has time to find him and ask.</p>
+    <p data-i18n="decide-sync.022">A target that does not fit the HAT is a different case. A target that is not on the list, a report that fails a standard, or an attack the guidance does not permit all go back to the commander. Those are the decisions he kept for himself.</p>
+
+    <div class="doctrine"><span data-i18n="decide-sync.023">
+      The HAT is written before we know where the enemy will be. It tells us <strong>what</strong> to attack, <strong>how good</strong> a report must be, and <strong>what</strong> attacks it. It does not tell us <strong>where to look</strong>. That is the work left on this page.
+      </span><span class="src" data-i18n="decide-sync.024">Concept from MCTP 3-31B, Appendix A. The synchronization products on this page are a teaching construct built for Operation RIVER GATE. They are not a doctrinal template.</span>
+    </div>
+  </div>
+
+  <!-- ============ the intelligence update ============ -->
+  <div class="panel">
+    <h2 data-i18n="decide-sync.025">The intelligence update</h2>
+    <p data-i18n="decide-sync.026">The S-2 has been working while you built the HAT. He cannot tell you where the enemy is. He can tell you where the enemy has to go, and which pieces of ground are worth watching to find out.</p>
+
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide-sync.027">Term</th><th data-i18n="decide-sync.028">What it is</th><th data-i18n="decide-sync.029">What we do there</th></tr>
+      <tr><td data-i18n="decide-sync.030"><strong>Named area of interest (NAI)</strong></td><td data-i18n="decide-sync.031">A piece of ground where we expect to see something that answers a question we have about the enemy.</td><td data-i18n="decide-sync.032">We <em>watch</em> it. An NAI confirms or denies what we think he is doing.</td></tr>
+      <tr><td data-i18n="decide-sync.033"><strong>Target area of interest (TAI)</strong></td><td data-i18n="decide-sync.034">A piece of ground the enemy must occupy, or must pass through, for his own plan to work.</td><td data-i18n="decide-sync.035">We <em>attack</em> him there. A TAI is chosen because it is where his plan is most vulnerable.</td></tr>
+    </tbody></table>
+    <p class="src" data-i18n="decide-sync.036">These definitions are simplified for this course. Flagged for review by a subject matter expert.</p>
+
+    <div class="callout-cdr">
+      <h3 data-i18n="decide-sync.037">S-2 assessment — Operation RIVER GATE</h3>
+      <p data-i18n="decide-sync.038"><strong>TAI 1.</strong> The ATGM section cannot cover the crossing from anywhere else. To engage our vehicles on the span it must emplace inside TAI 1.</p>
+      <p data-i18n="decide-sync.039"><strong>NAI 2.</strong> A crossroads. Anything the enemy moves forward toward the bridge passes through it, engineer equipment included.</p>
+      <p data-i18n="decide-sync.040"><strong>NAI 1.</strong> The best firing position on this ground for the 120 mm mortar platoon.</p>
+      <p data-i18n="decide-sync.041"><strong>NAI 3.</strong> A second position the mortar platoon could use. It is not as good as NAI 1.</p>
+    </div>
+
+    <div class="map-figure">
+      <img class="nai-map" src="img/kordan-nai-map.jpg" alt="The Kordan River valley with four areas marked. TAI 1 is a red box just west of the bridge. NAI 1 is a yellow box in the west of the picture, NAI 2 a yellow box south of the bridge, NAI 3 a yellow box in the south. A small solid circle marks the restricted fire area at the bridge. A black dashed circle around the bridge marks the range of the small UAS, and a much larger red dashed arc across the south west marks the range of the one-way attack UAS.">
+    </div>
+
+    <table class="map-key">
+      <caption data-i18n="decide-sync.042">Areas of interest — Operation RIVER GATE</caption>
+      <tbody><tr><th data-i18n="decide-sync.043">Area</th><th data-i18n="decide-sync.044">What we are looking for</th><th data-i18n="decide-sync.045">Why there</th></tr>
+      <tr><td class="ref">TAI 1</td><td data-i18n="decide-sync.046">ATGM section</td><td data-i18n="decide-sync.047">The only ground from which he can engage vehicles on the span. We intend to attack him here.</td></tr>
+      <tr><td class="ref">NAI 1</td><td data-i18n="decide-sync.048">120 mm mortar platoon</td><td data-i18n="decide-sync.049">The best mortar firing position on this ground.</td></tr>
+      <tr><td class="ref">NAI 2</td><td data-i18n="decide-sync.050">Engineer obstacle team</td><td data-i18n="decide-sync.051">A crossroads on the route forward. Engineer equipment moving to the bridge is seen here first.</td></tr>
+      <tr><td class="ref">NAI 3</td><td data-i18n="decide-sync.052">120 mm mortar platoon</td><td data-i18n="decide-sync.053">A second, less suitable mortar position. Watched after NAI 1.</td></tr>
+      <tr><td class="ref">RFA</td><td data-i18n="decide-sync.054">Restricted fire area, Kordan Bridge</td><td data-i18n="decide-sync.055">Cratering munitions are not permitted inside it. The one-way attack UAS is the only asset that may fire here.</td></tr>
+      <tr><td class="ref">Black ring</td><td data-i18n="decide-sync.020">Range of the small UAS</td><td data-i18n="decide-sync.021">The sUAS cannot see past this line. TAI 1 is inside it. All three named areas of interest are outside it, so only the long-range ISR UAS can watch them.</td></tr>
+      <tr><td class="ref">Red ring</td><td data-i18n="decide-sync.056">Range of the one-way attack UAS</td><td data-i18n="decide-sync.057">The drone cannot strike past this line. TAI 1 and NAI 2 are well inside it. NAI 1 and NAI 3 straddle it, so only part of each can be reached.</td></tr>
+    </tbody></table>
+
+    <p data-i18n="decide-sync.058">Notice what is <em>not</em> on this map. There is no area of interest for the battalion command post, because the S-2 cannot say where it is. We will find it, if we find it, while we are looking for something else.</p>
+  </div>
+
+  <!-- ============ the target package ============ -->
+  <div class="panel">
+    <h2 data-i18n="decide-sync.059">The target package</h2>
+    <p data-i18n="decide-sync.060">A <strong>target package</strong> is the plan for one target. It names four things: the sensor that will find it, the sensor that will find it if the first one cannot, the asset that will attack it, and the asset that will attack it if the first one cannot.</p>
+    <p data-i18n="decide-sync.061">The HAT has already told you which weapon is preferred against each target. The package is where that preference meets the ground. It asks where the S-2 expects this target to be, what can see that place, and what is permitted to fire into it.</p>
+
+    <div class="callout-cdr">
+      <h3 data-i18n="decide-sync.247">Planning data — ISR and collections management</h3>
+      <p data-i18n="decide-sync.248"><strong>Long-range ISR UAS.</strong> We hold two aircraft. Each flies for two hours, and the battery needs two hours to charge once it lands. One aircraft can therefore be in the air at any time, and the two hand over between them. Nothing else we own can watch a named area of interest.</p>
+      <p data-i18n="decide-sync.249"><strong>Scout team.</strong> Very hard to detect, and it can stay where it is. It can only see the ground in front of it: the bridge, and part of TAI 1.</p>
+      <p data-i18n="decide-sync.250"><strong>The scout team's sUAS.</strong> The team holds several airframes and can charge them. Each one flies for about thirty minutes. That is not continuous coverage. By launching the next drone as the last one comes back, the team can keep one area under watch for as long as it judges necessary.</p>
+    </div>
+
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide-sync.062">Sensors you hold</th><th data-i18n="decide-sync.063">Attack assets you hold</th></tr>
+      <tr>
+        <td data-i18n="decide-sync.064">Scout team<br>sUAS<br>Long-range ISR UAS</td>
+        <td data-i18n="decide-sync.065">105 mm howitzer battery<br>155 mm M109A2 battery<br>One-way attack UAS</td>
+      </tr>
+    </tbody></table>
+    <p class="src" data-i18n="decide-sync.066">Electronic signals indication is not offered here. You saw why in Task 1.10: it reports an area rather than a point, and it never sees the target itself, so its report fails both target location error and minimum size. It cues another sensor. It does not carry a package on its own.</p>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide-sync.067">Task 1.11 — Build the four target packages</h3>
+        <span class="status" data-status="decide-11">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide-sync.068">Work one target at a time and check it before moving on. For the sensors, find that target's area of interest on the map above and ask what can see that far. For the attack assets, start from the attack guidance matrix you built in 1B, then ask whether anything about that piece of ground changes the answer. Two targets have no second sensor available, and working out why is part of the exercise.</p>
+        <div id="d11-pkg">
+
+          <div class="match-row">
+            <div data-i18n="decide-sync.069"><span class="target-name">1. Engineer obstacle team</span><br><span class="target-desc">High-payoff target 1. Effect required: neutralize. Attacked immediately.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.070">Sensor, primary</span>
+                <select data-answer="isr">
+                  <option value="" data-i18n="decide-sync.071">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.072">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.073">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.074">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.075">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.076">Sensor, alternate</span>
+                <select data-answer="scout">
+                  <option value="" data-i18n="decide-sync.077">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.078">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.079">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.080">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.081">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.082">Attack, primary</span>
+                <select data-answer="105">
+                  <option value="" data-i18n="decide-sync.083">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.084">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.085">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.086">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.087">Attack, alternate</span>
+                <select data-answer="owa">
+                  <option value="" data-i18n="decide-sync.088">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.089">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.090">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.091">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-sync.092">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-sync.093"><strong>Sensors.</strong> The S-2 expects the engineers to come forward through NAI 2, which lies outside the range of the small UAS, so the long-range ISR UAS takes the area. The scout team is at the bridge, which is where they are going, so it is a second pair of eyes on the same target in a different place.</p>
+            <p class="row-note always" data-i18n="decide-sync.094"><strong>Attack.</strong> This is the one row where the package does not follow the attack guidance matrix, which ranks the one-way attack UAS first. The next task asks why.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="decide-sync.095"><span class="target-name">2. ATGM section</span><br><span class="target-desc">High-payoff target 2. Effect required: suppress. Attacked as a planned target.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.096">Sensor, primary</span>
+                <select data-answer="suas">
+                  <option value="" data-i18n="decide-sync.097">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.098">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.099">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.100">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.101">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.102">Sensor, alternate</span>
+                <select data-answer="scout">
+                  <option value="" data-i18n="decide-sync.103">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.104">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.105">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.106">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.107">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.108">Attack, primary</span>
+                <select data-answer="owa">
+                  <option value="" data-i18n="decide-sync.109">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.110">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.111">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.112">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.113">Attack, alternate</span>
+                <select data-answer="105">
+                  <option value="" data-i18n="decide-sync.114">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.115">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.116">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.117">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-sync.118">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-sync.119"><strong>Sensors.</strong> TAI 1 is the only area of interest inside the range of the small UAS, so the sUAS can work it, rotating one airframe in as the last comes back to charge. The scout team flies those drones, and from where it lies it can also see part of TAI 1 with its own eyes. That is what remains when no drone is up.</p>
+            <p class="row-note always" data-i18n="decide-sync.120"><strong>Attack.</strong> Straight from the attack guidance matrix. The drone is primary because a launcher must be hit rather than bracketed, and the 105 mm battery follows it.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="decide-sync.121"><span class="target-name">3. 120 mm mortar platoon</span><br><span class="target-desc">High-payoff target 3. Effect required: neutralize. Attacked immediately.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.122">Sensor, primary</span>
+                <select data-answer="isr">
+                  <option value="" data-i18n="decide-sync.123">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.124">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.125">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.126">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.127">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.128">Sensor, alternate</span>
+                <select data-answer="none">
+                  <option value="" data-i18n="decide-sync.129">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.130">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.131">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.132">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.133">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.134">Attack, primary</span>
+                <select data-answer="105">
+                  <option value="" data-i18n="decide-sync.135">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.136">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.137">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.138">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.139">Attack, alternate</span>
+                <select data-answer="155">
+                  <option value="" data-i18n="decide-sync.140">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.141">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.142">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.143">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-sync.144">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-sync.145"><strong>Sensors.</strong> NAI 1 and NAI 3 are both well outside the range of the small UAS, and the scout team cannot walk that far behind the enemy. Only the long-range ISR UAS reaches them, so there is no second <em>kind</em> of sensor to assign. We hold two long-range ISR airframes, and the matrix below uses both.</p>
+            <p class="row-note always" data-i18n="decide-sync.146"><strong>Attack.</strong> Straight from the attack guidance matrix. An area weapon against an area target, and we hold more 105 mm rounds than 155 mm.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="decide-sync.147"><span class="target-name">4. Battalion command post</span><br><span class="target-desc">High-payoff target 4. Effect required: destroy. Attacked as acquired.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.148">Sensor, primary</span>
+                <select data-answer="isr">
+                  <option value="" data-i18n="decide-sync.149">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.150">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.151">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.152">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.153">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.154">Sensor, alternate</span>
+                <select data-answer="none">
+                  <option value="" data-i18n="decide-sync.155">— choose —</option>
+                  <option value="scout" data-i18n="decide-sync.156">Scout team</option>
+                  <option value="suas" data-i18n="decide-sync.157">sUAS</option>
+                  <option value="isr" data-i18n="decide-sync.158">Long-range ISR UAS</option>
+                  <option value="none" data-i18n="decide-sync.159">No second sensor available</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.160">Attack, primary</span>
+                <select data-answer="155">
+                  <option value="" data-i18n="decide-sync.161">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.162">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.163">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.164">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-sync.165">Attack, alternate</span>
+                <select data-answer="owa">
+                  <option value="" data-i18n="decide-sync.166">— choose —</option>
+                  <option value="105" data-i18n="decide-sync.167">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-sync.168">155 mm M109A2 battery</option>
+                  <option value="owa" data-i18n="decide-sync.169">One-way attack UAS</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-sync.170">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-sync.171"><strong>Sensors.</strong> There is no area of interest for the command post, so nothing is watching for it. Only the long-range ISR UAS works at that depth, and it is already committed to the mortar areas. The command post is found while the ISR is looking for mortars, which is exactly what the matrix below shows.</p>
+            <p class="row-note always" data-i18n="decide-sync.172"><strong>Attack.</strong> Straight from the attack guidance matrix. The commander requires the command post destroyed, destroy needs weight, and the 155 mm battery leads.</p>
+          </div>
+
+        </div>
+        <div class="btn-row"><button class="btn" id="d11-check" data-i18n="decide-sync.173">Check All Four</button></div>
+        <div class="feedback" id="d11-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ when the package and the matrix disagree ============ -->
+  <div class="panel">
+    <h2 data-i18n="decide-sync.174">When the package and the matrix disagree</h2>
+    <p data-i18n="decide-sync.175">Three of your four packages copy the attack guidance matrix exactly. One does not. Against the engineer obstacle team the matrix ranks the one-way attack UAS first, and your package ranks the 105 mm howitzer battery first.</p>
+    <p data-i18n="decide-sync.176">That is not an error in either product. They answer different questions.</p>
+    <p data-i18n="decide-sync.177">The attack guidance matrix has to hold for that target <strong>wherever it appears</strong>, because the officer reading it does not know where the report will come from. The target package is built for <strong>where the S-2 expects to find it</strong>. When intelligence tells us something new about the ground, the package can be sharper than the matrix.</p>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide-sync.178">Task 1.12 — Why the package changed the order</h3>
+        <span class="status" data-status="decide-12">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <div id="d12-match">
+          <div class="match-row">
+            <div data-i18n="decide-sync.179"><span class="target-name">Why does the package put the 105 mm howitzer battery first against the engineers?</span><br><span class="target-desc">The attack guidance matrix ranks the one-way attack UAS first against this target.</span></div>
+            <select data-answer="nai2">
+              <option value="" data-i18n="decide-sync.180">— choose —</option>
+              <option value="nai2" data-i18n="decide-sync.181">Because the S-2 now expects to see them at NAI 2, short of the bridge and in the open, where a battery can reach them and the drone's precision buys nothing</option>
+              <option value="wrong" data-i18n="decide-sync.182">Because the attack guidance matrix was written badly, and the package corrects it</option>
+              <option value="collateral" data-i18n="decide-sync.183">Because a 105 mm shell causes less collateral damage than a drone</option>
+              <option value="save" data-i18n="decide-sync.184">Because all ten drones must be saved for the command post</option>
+            </select>
+            <p class="row-note ok" data-i18n="decide-sync.185">Correct. The matrix assumed we would find the engineers where they do their work, on the bridge. The intelligence update says we will see them before that, moving up through a crossroads. Against a work party in the open, fire landing near them is enough, and we hold 300 rounds of 105 mm against 10 drones.</p>
+            <p class="row-note bad" data-for="wrong" data-i18n="decide-sync.186">No. Nothing in the matrix is wrong. It ranks weapons against a target type without knowing where that target will be found, and that is the only job it has. The package knows something the matrix could not.</p>
+            <p class="row-note bad" data-for="collateral" data-i18n="decide-sync.187">No. The drone carries the smaller warhead and does not crater, which is why it is the only asset permitted inside the restricted fire area. Collateral damage is an argument for the drone, not against it.</p>
+            <p class="row-note bad" data-for="save" data-i18n="decide-sync.188">No. The command post is the deepest target on the list and the drone is its alternate, not its primary. Saving all ten for one target would leave three packages with no alternate at all.</p>
+          </div>
+          <div class="match-row">
+            <div data-i18n="decide-sync.189"><span class="target-name">Then why is the one-way attack UAS still in the package at all?</span><br><span class="target-desc">It moved down to the alternate. It was not removed.</span></div>
+            <select data-answer="rfa">
+              <option value="" data-i18n="decide-sync.190">— choose —</option>
+              <option value="rfa" data-i18n="decide-sync.191">Because if the engineers get past NAI 2 and reach the span they are inside the restricted fire area, where the drone is the only asset permitted to fire</option>
+              <option value="displace" data-i18n="decide-sync.192">Because the 105 mm battery must displace for 20 minutes after every fire mission</option>
+              <option value="accurate" data-i18n="decide-sync.193">Because the drone is more accurate, and more accuracy is always better</option>
+              <option value="cheap" data-i18n="decide-sync.194">Because the drone is the cheapest asset we hold</option>
+            </select>
+            <p class="row-note ok" data-i18n="decide-sync.195">Correct, and this is what an alternate is for. The package is built on what we <em>expect</em>. The alternate is what we do when the expectation is wrong. The engineers reaching the bridge is the case this plan has to survive, and inside that circle every gun we own is forbidden.</p>
+            <p class="row-note bad" data-for="displace" data-i18n="decide-sync.196">That is true of the battery, and it matters, but it is true against every target. It does not explain why <em>this</em> alternate is the drone rather than the 155 mm battery.</p>
+            <p class="row-note bad" data-for="accurate" data-i18n="decide-sync.197">No. If more accuracy were always better the matrix would rank the drone first against everything, and it does not. Against an area target we would be spending a single-use aircraft to do what a shell does.</p>
+            <p class="row-note bad" data-for="cheap" data-i18n="decide-sync.198">No. We hold 300 rounds of 105 mm and 10 drones, and each drone is used once. It is the most expensive shot in the inventory.</p>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn" id="d12-check" data-i18n="decide-sync.199">Check Answers</button></div>
+        <div class="feedback" id="d12-feedback"></div>
+      </div>
+    </div>
+
+    <p class="closing-rule" data-i18n="decide-sync.200">The target synchronization matrix makes the expected case fast. The HAT is what saves you when the expected case is wrong.</p>
+  </div>
+
+  <!-- ============ the fires synchronization matrix (locked) ============ -->
+  <div class="panel locked" data-reveal-when="decide-11 decide-12">
+    <h2 data-i18n="decide-sync.201">The fires synchronization matrix</h2>
+    <p data-i18n="decide-sync.202">Time is the horizontal axis. Our assets are the vertical. Each target has a sensor and a shooter, with a second of each where availability allows.</p>
+    <p data-i18n="decide-sync.245">The matrix is produced by a group of planners, experts in the weapon systems and in collections. Its purpose is to synchronize their efforts before any order goes out to a fires asset or a collection asset.</p>
+
+    <div class="tsm-scroll">
+      <table class="tsm">
+        <caption data-i18n="decide-sync.204">77th Combined Arms Brigade — Fires Synchronization Matrix — Operation RIVER GATE</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="tsm-asset" data-i18n="decide-sync.205">Asset</th>
+            <th scope="col" data-i18n="decide-sync.206">T-4</th><th scope="col" data-i18n="decide-sync.207">T-3</th><th scope="col" data-i18n="decide-sync.208">T-2</th><th scope="col" data-i18n="decide-sync.209">T-1</th>
+            <th scope="col" class="tsm-h" data-i18n="decide-sync.210">T=0</th>
+            <th scope="col" data-i18n="decide-sync.211">T+1</th><th scope="col" data-i18n="decide-sync.212">T+2</th><th scope="col" data-i18n="decide-sync.213">T+3</th>
+            <th scope="col" data-i18n="decide-sync.214">T+4</th><th scope="col" data-i18n="decide-sync.215">T+5</th><th scope="col" data-i18n="decide-sync.216">T+6</th><th scope="col" data-i18n="decide-sync.217">T+7</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="band-start"><th scope="rowgroup" colspan="13" class="tsm-band" data-i18n="decide-sync.218">Surveillance assets</th></tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.219">Scout team</th>
+            <td colspan="4" class="blk t-eng" data-i18n="decide-sync.220">Kordan Bridge / engineers</td>
+            <td colspan="8" class="blk t-atgm" data-i18n="decide-sync.221">TAI 1 / ATGM</td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.222">sUAS</th>
+            <td colspan="6" class="blk t-atgm" data-i18n="decide-sync.223">TAI 1 / ATGM</td>
+            <td colspan="6" class="blk empty"></td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.224">Long-range ISR UAS #1</th>
+            <td colspan="2" class="blk t-eng" data-i18n="decide-sync.225">NAI 2 / engineers</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="decide-sync.226">NAI 1 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="decide-sync.227">NAI 3 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.228">Long-range ISR UAS #2</th>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="decide-sync.229">NAI 1 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="decide-sync.230">NAI 3 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-cp" data-i18n="decide-sync.231">NAI 3 / mortars or command post</td>
+          </tr>
+          <tr class="band-start"><th scope="rowgroup" colspan="13" class="tsm-band" data-i18n="decide-sync.232">Attack assets</th></tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.233">155 mm M109A2 battery</th>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="10" class="blk t-cp" data-i18n="decide-sync.234">Mortars / command post</td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.235">105 mm howitzer battery</th>
+            <td colspan="2" class="blk t-eng" data-i18n="decide-sync.236">Engineer team</td>
+            <td colspan="1" class="blk empty"></td>
+            <td colspan="5" class="blk t-atgm" data-i18n="decide-sync.237">ATGM</td>
+            <td colspan="4" class="blk t-mor" data-i18n="decide-sync.238">Mortars</td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="decide-sync.239">One-way attack UAS</th>
+            <td colspan="4" class="blk t-eng" data-i18n="decide-sync.240">Engineer team</td>
+            <td colspan="4" class="blk t-atgm" data-i18n="decide-sync.241">ATGM</td>
+            <td colspan="4" class="blk t-cp" data-i18n="decide-sync.242">Command post</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tsm-legend" data-i18n="decide-sync.243"><span class="key t-eng">Engineer team</span> <span class="key t-atgm">ATGM section</span> <span class="key t-mor">120 mm mortar platoon</span> <span class="key t-cp">Battalion command post</span></p>
+    <p class="src" data-i18n="decide-sync.244">A surveillance block names the area being watched and the target expected there. An attack block names the target that asset is held against. An empty cell means the asset is unassigned and available.</p>
+
+    <div class="callout-cdr">
+      <h3 data-i18n="decide-sync.203">How the planners arrived at this timeline</h3>
+      <ul>
+        <li data-i18n="decide-sync.246"><strong>T equals zero</strong> is the hour friendly forces reach the bridge. Every other hour is counted from it.</li>
+        <li data-i18n="decide-sync.255">The commander ordered that <strong>the ATGM section is not struck before T minus 1</strong>, to preserve the element of surprise.</li>
+        <li data-i18n="decide-sync.256">The commander assessed that <strong>crossing and securing the far side takes four hours</strong>.</li>
+        <li data-i18n="decide-sync.257">When friendly forces take the bridge at T equals zero, <strong>the engineer team stops being important</strong>.</li>
+        <li data-i18n="decide-sync.258">Four hours after that, at T plus 4, <strong>the ATGM section stops being important</strong> as well.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="src lock-note" data-reveal-when="decide-11 decide-12" data-i18n="decide-sync.251">Finish both tasks on this page and the completed fires synchronization matrix will appear above.</p>
+
+    <p class="closing-rule" data-i18n="decide-sync.259">We now have a fires plan to engage the enemy deliberately and dynamically. The <strong>Decide</strong> step is complete.</p>
+
+    <div class="complete-banner" id="phase-complete-banner" data-i18n="decide-sync.252">✔ Phase 1 complete. Your HPTL, AGM, TSS and fires synchronization matrix are set. Now find the targets. Go to Phase 2: Detect.</div>
+
+    <div class="page-nav">
+      <a class="btn secondary" href="decide-tss.html" data-i18n="decide-sync.253">← Target Selection Standards</a>
+      <a class="btn" href="detect.html" data-i18n="decide-sync.254">Phase 2: Detect →</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/lang-zh.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script>
+D3A.registerPage('decide', ['decide-11','decide-12']);
+
+D3A.initSelectMatch({
+  containerId: 'd11-pkg', checkBtnId: 'd11-check', feedbackId: 'd11-feedback',
+  exerciseId: 'decide-11',
+  explainOk: 'Three of the four packages are the attack guidance matrix copied straight across. Only the engineer team changed, and it changed because intelligence told us something the matrix could not know. Notice also how much of the sensor work the map did for you: every named area of interest lies outside the range of the small UAS, which left the long-range ISR UAS as the only candidate for three of the four targets.',
+  explainBad: 'For the sensors, find that target’s area of interest on the map above and ask what can see that far. For the attack assets, start from the attack guidance matrix you built in 1B, then ask whether anything about that piece of ground changes the answer.'
+});
+
+D3A.initSelectMatch({
+  containerId: 'd12-match', checkBtnId: 'd12-check', feedbackId: 'd12-feedback',
+  exerciseId: 'decide-12',
+  explainOk: 'This is the relationship between the two products. The attack guidance matrix is general, so it survives being wrong about the ground. The package is specific, so it is fast when the ground is what we expected. You build both, and you keep both.',
+  explainBad: 'Ask what changed between the two products. Nothing about the weapons changed. What changed is that we now know where we expect to see this target, and one piece of ground on this map forbids most of what we own.'
+});
+</script>
+
+
+
+</body></html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D3A Course — The Scenario</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-phase="scenario">
+
+<header class="site">
+  <div class="header-inner">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title" data-i18n="scenario.001">The Fires Lab</p>
+          <p class="site-strap" data-i18n="scenario.002">Mastering Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub" data-i18n="scenario.139">Decide · Detect · Deliver · Assess</p>
+      </div>
+    </a>
+    <nav class="phases">
+      <a href="battle.html" data-i18n="scenario.003">Home</a>
+      <a href="scenario.html" class="active" data-phase="scenario"><span data-i18n="scenario.004">Scenario</span><span class="check"> ✔</span></a>
+      <a href="decide.html" data-phase="decide"><span data-i18n="scenario.005">1. Decide</span><span class="check"> ✔</span></a>
+      <a href="detect.html" data-phase="detect"><span data-i18n="scenario.006">2. Detect</span><span class="check"> ✔</span></a>
+      <a href="deliver.html" data-phase="deliver"><span data-i18n="scenario.007">3. Deliver</span><span class="check"> ✔</span></a>
+      <a href="assess.html" data-phase="assess"><span data-i18n="scenario.008">4. Assess</span><span class="check"> ✔</span></a>
+      <a href="glossary.html" data-i18n="scenario.009">Glossary</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <span class="phase-tag" data-i18n="scenario.010">Start Here</span>
+    <h1 data-i18n="scenario.011">The Scenario: Operation RIVER GATE</h1>
+    <p class="lede" data-i18n="scenario.012">This is the tactical situation you will use for the entire course. Read it carefully — every task refers back to it.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="page-progress-fill"></div></div>
+      <p class="progress-label" id="page-progress-label"></p>
+    </div>
+  </div>
+
+  <!-- ============ 1. THE GROUND ============ -->
+  <div class="panel">
+    <h2 data-i18n="scenario.013">1. The Ground</h2>
+
+    <figure class="map-figure">
+      <div class="map-frame"><div id="scenario-map"></div></div>
+      <div class="map-unlocated">
+        <h4 data-i18n="scenario.024">Known to exist — location not established</h4>
+        <div id="scenario-map-unlocated"></div>
+      </div>
+      <figcaption class="map-caption" data-i18n="scenario.015">The map shows <strong>the enemy</strong>, and the restricted fire area around the bridge. Friendly units are not drawn. A <strong>dashed</strong> symbol is where we assess he <em>will</em> be, not where he is. Elements we know about but have <strong>not found</strong> are set apart below the map, with no position.</figcaption>
+    </figure>
+
+    <table class="map-key">
+      <caption data-i18n="scenario.016">Key — ground and control measures</caption>
+      <tbody><tr><th data-i18n="scenario.017">Ref</th><th data-i18n="scenario.018">Feature</th><th data-i18n="scenario.019">Why it matters</th></tr>
+      <tr><td class="ref">A</td><td data-i18n="scenario.020">Kordan River</td><td data-i18n="scenario.021">Cannot be crossed by vehicles anywhere except the bridge.</td></tr>
+      <tr><td class="ref">B</td><td data-i18n="scenario.022">The bridge</td><td data-i18n="scenario.023">The mission. It must be taken usable.</td></tr>
+      <tr><td class="ref">G</td><td data-i18n="scenario.032">Restricted fire area (RFA) around the bridge</td><td data-i18n="scenario.033">The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here.</td></tr>
+    </tbody></table>
+
+    <table class="map-key">
+      <caption data-i18n="scenario.034">Key — enemy elements</caption>
+      <tbody><tr><th data-i18n="scenario.035">Ref</th><th data-i18n="scenario.036">Element</th><th data-i18n="scenario.037">Where it sits</th></tr>
+      <tr><td class="ref">1</td><td data-i18n="scenario.038">Ammunition supply point</td><td data-i18n="scenario.039">Well to the rear, 6 km behind the river.</td></tr>
+      <tr><td class="ref">2</td><td data-i18n="scenario.040">ATGM section</td><td data-i18n="scenario.041">Dug in on the high ground, looking straight down onto the crossing.</td></tr>
+      <tr><td class="ref">3</td><td data-i18n="scenario.042">Field kitchen</td><td data-i18n="scenario.043">Furthest back of all, with the rear-area trains.</td></tr>
+      <tr><td class="ref">4</td><td data-i18n="scenario.044">Engineer obstacle team</td><td data-i18n="scenario.045">On the bridge itself.</td></tr>
+      <tr><td class="ref">5</td><td data-i18n="scenario.046">Battalion command post</td><td data-i18n="scenario.047">Deep, hidden inside the treeline. It must transmit to control the defense.</td></tr>
+      <tr><td class="ref">6</td><td data-i18n="scenario.048">Logistics trucks</td><td data-i18n="scenario.049">Move along the road at night between the supply point and the fighting positions.</td></tr>
+      <tr><td class="ref">7</td><td data-i18n="scenario.050">Reconnaissance squad</td><td data-i18n="scenario.051">The only enemy element on <strong>our</strong> side of the river, behind our own forward line.</td></tr>
+      <tr><td class="ref">8</td><td data-i18n="scenario.052">120&nbsp;mm mortar platoon</td><td data-i18n="scenario.053">Deepest of the fighting elements, but still close enough to range the bridge.</td></tr>
+      <tr><td class="ref">9</td><td data-i18n="scenario.054">Infantry platoon</td><td data-i18n="scenario.055">In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.</td></tr>
+    </tbody></table>
+  </div>
+
+  <!-- ============ 2. OUR MISSION ============ -->
+  <div class="panel">
+    <h2 data-i18n="scenario.056">2. Our Mission and the Commander's Guidance</h2>
+    <p data-i18n="scenario.014">You are a member of the <strong>Fire Support Coordination Cell of the 77th Combined Arms Brigade</strong>.</p>
+    <p class="lede" data-i18n="scenario.057"><strong>Mission:</strong> on order, the 77th Combined Arms Brigade seizes the Kordan River bridge in order to allow follow-on forces to reinforce the assault.</p>
+
+    <div class="callout-cdr">
+      <h3 data-i18n="scenario.058">Brigade Commander's Targeting Guidance</h3>
+      <p data-i18n="scenario.059">“Fires must accomplish three things for me:</p>
+      <ol>
+        <li data-i18n="scenario.060"><strong>Protect the bridge</strong> — stop the enemy engineers before they can drop it or block it.</li>
+        <li data-i18n="scenario.061"><strong>Disrupt enemy indirect fire</strong> — do not allow the enemy to use mortars on friendly units as we are forced to concentrate near the bridge.</li>
+        <li data-i18n="scenario.062"><strong>Disrupt enemy command and control</strong> — there is a significant risk the enemy will request indirect artillery fire or reinforcements when he learns friendly forces are concentrated near the bridge. We must disrupt his command and communications network to mitigate this risk.</li>
+      </ol>
+      <p data-i18n="scenario.063"><strong>Restriction on fires near the bridge.</strong> “No cratering munitions on or near the bridge — nothing that could damage the span, the abutments, or the approach road. Artillery and mortars are forbidden inside 300 metres of the bridge.”</p>
+    </div>
+  </div>
+
+  <!-- ============ 3. INTELLIGENCE BRIEF ============ -->
+  <div class="panel">
+    <h2 data-i18n="scenario.069">3. Intelligence Brief (S-2)</h2>
+    <p data-i18n="scenario.025">IPOE is complete. The enemy will defend the southern side of the river. We assess he is likely to take the following action.</p>
+
+    <h3 data-i18n="scenario.026">What we have located</h3>
+    <p data-i18n="scenario.027">Reconnaissance flights have detected an <strong>anti-tank guided missile (ATGM) team</strong> on the southern side of the river. This team will likely fire on vehicles as they cross the bridge or attempt to remove the obstacles. He displaces these positions every 48 hours, so this location will not stay good for long.</p>
+    <p data-i18n="scenario.028">An <strong>infantry platoon</strong> is held in reserve in dispersed positions south of the bridge. It is unlikely to engage us at the crossing given our artillery superiority, and will more likely attempt to delay friendly forces after we cross.</p>
+
+    <h3 data-i18n="scenario.029">What we assess he will do</h3>
+    <p data-i18n="scenario.030">The enemy will likely deploy his <strong>engineer team</strong> to destroy or block the bridge. We assess this will occur within the next 24 hours. Nothing is there yet. Once the team begins, about one hour of work is enough to make the bridge unusable.</p>
+    <p data-i18n="scenario.031">The enemy will use his <strong>mortar platoon</strong> to fire on friendly forces as we concentrate at the bridge. The engineer team, the ATGM team, or a reconnaissance team may call for this fire. The bridge is a known location, so we can expect his weapons are already laid on it — he may not use an observer at all.</p>
+    <p data-i18n="scenario.064">If his own mortars are silenced or prove ineffective, his <strong>command post</strong> is how he requests fires from a higher echelon of enemy command.</p>
+
+    <h3 data-i18n="scenario.065">What we know exists but have not found</h3>
+    <p data-i18n="scenario.066">The elements below have no location. They are on the list because the enemy needs them, not because we can see them. <em>Finding them is the work of Phase 2.</em></p>
+    <p data-i18n="scenario.067">His sustainment is an <strong>ammunition supply point</strong> assessed roughly 6&nbsp;km in depth holding mortar and ATGM stocks, <strong>logistics trucks</strong> that move forward at night, and a <strong>field kitchen</strong> with the rear-area trains. The S-2 further assesses that the enemy fighting positions <strong>already hold three days of ammunition forward</strong>, drawn before we attack.</p>
+
+    <table class="doc">
+      <tbody><tr><th data-i18n="scenario.068">Enemy element</th><th data-i18n="scenario.070">Location</th><th data-i18n="scenario.071">What the S-2 knows after IPOE</th></tr>
+      <tr><td data-i18n="scenario.072"><strong>Engineer team</strong></td><td data-i18n="scenario.073">Assessed</td><td data-i18n="scenario.074">Not yet committed. Assessed to deploy to the bridge within 24 hours. About one hour of work will make the bridge unusable. They do not relocate once they begin.</td></tr>
+      <tr><td data-i18n="scenario.075"><strong>ATGM team</strong></td><td data-i18n="scenario.076">Found</td><td data-i18n="scenario.077">Detected by reconnaissance flights, south of the river and covering the crossing. Displaces every 48 hours. Can also observe and call for fire.</td></tr>
+      <tr><td data-i18n="scenario.078"><strong>120&nbsp;mm mortar platoon</strong></td><td data-i18n="scenario.079">Not found</td><td data-i18n="scenario.080">In depth, ranging the bridge. Fires are pre-planned on the crossing. Displaces immediately after every fire mission.</td></tr>
+      <tr><td data-i18n="scenario.081"><strong>Battalion command post</strong></td><td data-i18n="scenario.082">Not found</td><td data-i18n="scenario.083">Assessed about 4&nbsp;km in depth. Controls the defense by radio and is the link to higher headquarters for additional fires. Relocates every 24 hours.</td></tr>
+      <tr><td data-i18n="scenario.084"><strong>Reconnaissance squad</strong></td><td data-i18n="scenario.085">Not found</td><td data-i18n="scenario.086">Small dismounted teams on our side of the river. Report our movement and can adjust mortar fire. They move continuously.</td></tr>
+      <tr><td data-i18n="scenario.087"><strong>Infantry platoon</strong></td><td data-i18n="scenario.088">Found</td><td data-i18n="scenario.089">Dispersed positions south of the bridge, held in reserve. More likely to delay us after the crossing than to fight for it.</td></tr>
+      <tr><td data-i18n="scenario.090"><strong>Ammunition supply point (ASP)</strong></td><td data-i18n="scenario.091">Not found</td><td data-i18n="scenario.092">Mortar and ATGM stocks, assessed roughly 6&nbsp;km in depth. The source of every round his mortars fire.</td></tr>
+      <tr><td data-i18n="scenario.093"><strong>Logistics trucks</strong></td><td data-i18n="scenario.094">Not found</td><td data-i18n="scenario.095">Move supplies forward at night between the ASP and the fighting positions.</td></tr>
+      <tr><td data-i18n="scenario.096"><strong>Field kitchen</strong></td><td data-i18n="scenario.097">Not found</td><td data-i18n="scenario.098">Feeds the battalion. With the trains area, well to the rear.</td></tr>
+    </tbody></table>
+    <p data-i18n="scenario.102">These nine elements are what the S-2 judges important to the <em>enemy</em> commander. Deciding which of them are worth <em>our</em> ammunition is the work of Phase 1.</p>
+  </div>
+
+  <!-- ============ 4. ASSETS ============ -->
+  <div class="panel">
+    <h2 data-i18n="scenario.103">4. Assets Available to You</h2>
+    <p data-i18n="scenario.104">The brigade has three ways to deliver fires and four ways to find targets.</p>
+    <table class="doc">
+      <tbody><tr><th data-i18n="scenario.105">Asset</th><th data-i18n="scenario.106">Type</th><th data-i18n="scenario.107">What it can do</th></tr>
+      <tr><td data-i18n="scenario.108">M109A2 155&nbsp;mm self-propelled howitzer battalion</td><td data-i18n="scenario.109">Delivery</td><td data-i18n="scenario.110">Long range — reaches every target in the enemy area. Its shells crater, so it may not be used near the bridge.</td></tr>
+      <tr><td data-i18n="scenario.111">Mortar battery (120&nbsp;mm)</td><td data-i18n="scenario.112">Delivery</td><td data-i18n="scenario.113">Short range, fast response. Best against targets close to our forward line.</td></tr>
+      <tr><td data-i18n="scenario.114">One-way attack UAS (OWA-UAS)</td><td data-i18n="scenario.115">Sensor / Delivery</td><td data-i18n="scenario.116">A small drone that searches for a target, then flies into it. Small, very precise warhead: it destroys what it hits and little else. The <strong>only</strong> asset that may strike on or beside the bridge. Used once.</td></tr>
+      <tr><td data-i18n="scenario.117">Long-range ISR UAS</td><td data-i18n="scenario.118">Sensor</td><td data-i18n="scenario.119">Flies deep for many hours with a powerful camera. Can watch one place continuously and report at once. Shared — must be tasked in advance.</td></tr>
+      <tr><td data-i18n="scenario.120">Small UAS (sUAS)</td><td data-i18n="scenario.121">Sensor</td><td data-i18n="scenario.122">A short-range camera drone. Confirms exact locations near the front and observes results. Short flight time.</td></tr>
+      <tr><td data-i18n="scenario.123">Electronic signals indication (ESI)</td><td data-i18n="scenario.124">Sensor</td><td data-i18n="scenario.125">Detects radio, wifi and satellite emissions and estimates where they come from. Good against a command post, which must transmit. Gives an <strong>area</strong>, not a point.</td></tr>
+      <tr><td data-i18n="scenario.126">Scout observation posts (OPs)</td><td data-i18n="scenario.127">Sensor</td><td data-i18n="scenario.128">Soldiers in hidden positions. Very reliable, but see only what is in front of them.</td></tr>
+    </tbody></table>
+    <p data-i18n="scenario.129">Note the difference between the two aircraft: the <strong>long-range ISR UAS</strong> looks deep and stays a long time; the <strong>sUAS</strong> looks close and stays a short time. The <strong>OWA-UAS</strong> does both — look and strike — but only once.</p>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="scenario.099">Task: Confirm you understand the mission</h2>
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="scenario.131">Scenario Check</h3>
+        <span class="status" data-status="scenario-1">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p class="task-label" data-i18n="scenario.132">Question</p>
+        <p data-i18n="scenario.100">Our mission is written at the top of this page. What does it require of us?</p>
+        <div id="sc1-choices">
+          <label class="choice"><input type="radio" name="sc1" value="destroy"><span><span data-i18n="scenario.101">Destroy the enemy motorized infantry battalion defending the river.</span><span class="why" data-i18n="scenario.130">No. Destroying his battalion is a means, never the mission. We attack what threatens the crossing — and we do not carry the ammunition to do more than that.</span></span></label>
+          <label class="choice"><input type="radio" name="sc1" value="seize"><span><span data-i18n="scenario.133">Seize the bridge intact and keep it usable, so that follow-on forces can cross.</span><span class="why" data-i18n="scenario.134">Correct. The bridge must be taken usable, and it must stay usable long enough for the force behind us to pass. Every fires decision in this course is measured against that one sentence.</span></span></label>
+          <label class="choice"><input type="radio" name="sc1" value="alltargets"><span><span data-i18n="scenario.135">Attack every element on the high-value target list.</span><span class="why" data-i18n="scenario.136">No. The high-value target list is what matters to the <em>enemy</em> commander. Only some of those elements threaten <em>our</em> mission, and separating the two is the work of Phase 1.</span></span></label>
+          <label class="choice"><input type="radio" name="sc1" value="deny"><span><span data-i18n="scenario.137">Deny the enemy the use of the bridge.</span><span class="why" data-i18n="scenario.138">This is the opposite of our mission — and it is exactly what the enemy engineer team is trying to achieve. A bridge dropped or blocked is a failure for us even if we did it ourselves.</span></span></label>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="sc1-check" data-i18n="scenario.142">Check Answer</button>
+        </div>
+        <div class="feedback" id="sc1-feedback"></div>
+      </div>
+    </div>
+
+    <div class="complete-banner" id="phase-complete-banner" data-i18n="scenario.143">✔ Scenario complete. You are ready to begin Phase 1: Decide.</div>
+
+    <div class="page-nav">
+      <a class="btn secondary" href="battle.html" data-i18n="scenario.144">← Home</a>
+      <a class="btn" href="decide.html" data-i18n="scenario.145">Phase 1: Decide →</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/map.js"></script>
+<script src="js/lang-zh.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script>
+D3A_MAP.render('scenario-map');
+D3A_MAP.renderUnlocated('scenario-map-unlocated');
+D3A.registerPage('scenario', ['scenario-1']);
+D3A.initSingleSelect({
+  containerId: 'sc1-choices', checkBtnId: 'sc1-check', feedbackId: 'sc1-feedback',
+  exerciseId: 'scenario-1', correct: 'seize',
+  explainOk: 'Hold on to this. The mission is the standard every target is judged against. In Phase 1 you will be given nine enemy elements and asked which of them threaten the crossing — not which are worth the most to the enemy.',
+  explainBad: 'Re-read the mission statement at the top of this page. Ask what has to be true when the operation ends for us to have succeeded.'
+});
+</script>
+
+
+</body></html>

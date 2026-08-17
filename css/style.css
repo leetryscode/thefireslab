@@ -1,0 +1,1382 @@
+/* The Fires Lab — a D3A targeting workbook
+   Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+   Build reference: CLC-RG-7F61363DDFE5
+   Original work. Not for copying or derivative use without written permission. */
+
+/* =========================================================
+   The Fires Lab — shared styles
+   Theme: "Command post" — olive chrome, per-phase accent colors,
+   condensed headings, humanist body text, mono for data.
+   Fonts are bundled locally in css/fonts/ so the site works offline.
+   ========================================================= */
+
+/* ---------- Bundled fonts (see css/fonts/FONTS-NOTICE.txt) ---------- */
+@font-face {
+  font-family: 'Barlow Condensed'; font-style: normal; font-weight: 500; font-display: swap;
+  src: url('fonts/barlow-condensed-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow Condensed'; font-style: normal; font-weight: 500; font-display: swap;
+  src: url('fonts/barlow-condensed-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Barlow Condensed'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('fonts/barlow-condensed-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Barlow Condensed'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('fonts/barlow-condensed-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Sans 3'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('fonts/source-sans-3-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Source Sans 3'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('fonts/source-sans-3-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Sans 3'; font-style: italic; font-weight: 400; font-display: swap;
+  src: url('fonts/source-sans-3-latin-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Source Sans 3'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('fonts/source-sans-3-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Source Sans 3'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('fonts/source-sans-3-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap;
+  src: url('fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap;
+  src: url('fonts/ibm-plex-mono-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* ---------- Design tokens ---------- */
+:root {
+  /* ownership marker, readable at runtime and never rendered:
+     getComputedStyle(document.documentElement).getPropertyValue("--clc-ref") */
+  --clc-ref: "CLC-RG-7F61363DDFE5";
+  --clc-owner: "Catherine Lake Creations LLC";
+  /* type */
+  --font-head: 'Barlow Condensed', 'Franklin Gothic Medium', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --font-body: 'Source Sans 3', 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', Consolas, 'Courier New', monospace;
+
+  /* neutrals */
+  --bg: #f1f2ec;
+  --panel: #ffffff;
+  --ink: #171b12;
+  --muted: #5a614f;
+  --border: #dcded4;
+  --border-soft: #e8eae1;
+
+  /* olive chrome (global identity) */
+  --accent: #3f6b2c;
+  --accent-dark: #1c2a17;
+  --accent-light: #e9efe2;
+
+  /* brass — text-safe version and fill version */
+  --gold: #806419;          /* passes AA on white and on --bg */
+  --gold-fill: #c9a227;     /* use only as a background, with dark text */
+  --gold-on-fill: #2e2609;
+
+  /* per-phase accents */
+  --p-scenario: #4d5a44;
+  --p-decide:   #806419;
+  --p-detect:   #2d5f8f;
+  --p-deliver:  #a33327;
+  --p-assess:   #2f6b4f;
+  --p-scenario-tint: #edefe9;
+  --p-decide-tint:   #f7f0dc;
+  --p-detect-tint:   #e9f1f8;
+  --p-deliver-tint:  #faebe8;
+  --p-assess-tint:   #e8f2ed;
+
+  /* the current page's accent — overridden by body[data-phase] below */
+  --phase: var(--accent);
+  --phase-tint: var(--accent-light);
+
+  /* semantic */
+  --ok: #2c6b30;
+  --ok-bg: #e9f3e8;
+  --bad: #a3352a;
+  --bad-bg: #f9eae7;
+  --warn-bg: #f9f2df;
+
+  --radius: 14px;
+  --radius-sm: 8px;
+  font-size: 17px;
+}
+
+/* Each page sets <body data-phase="..."> to colour-code that phase. */
+body[data-phase="scenario"] { --phase: var(--p-scenario); --phase-tint: var(--p-scenario-tint); }
+body[data-phase="decide"]   { --phase: var(--p-decide);   --phase-tint: var(--p-decide-tint); }
+body[data-phase="detect"]   { --phase: var(--p-detect);   --phase-tint: var(--p-detect-tint); }
+body[data-phase="deliver"]  { --phase: var(--p-deliver);  --phase-tint: var(--p-deliver-tint); }
+body[data-phase="assess"]   { --phase: var(--p-assess);   --phase-tint: var(--p-assess-tint); }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Header / nav ---------- */
+header.site {
+  background: var(--accent-dark);
+  color: #fff;
+  padding: 0;
+  border-bottom: 3px solid var(--gold-fill);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.header-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 24px 0;
+}
+.header-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* The masthead is two lines: the lab's name, shouted, and the strapline under
+   it. The strapline drops the uppercase deliberately — at this size caps stop
+   being readable as a phrase, and the contrast is what separates the two. */
+.site-titles { display: flex; flex-direction: column; gap: 2px; }
+.site-title {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  margin: 0;
+}
+.site-strap {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: .03em;
+  text-transform: none;
+  line-height: 1.2;
+  color: #d3dfc6;
+  margin: 0;
+}
+.site-sub {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #b9c7a8;
+  margin: 0;
+}
+nav.phases {
+  display: flex;
+  gap: 3px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+nav.phases a {
+  font-family: var(--font-head);
+  color: #d9e2cf;
+  text-decoration: none;
+  padding: 9px 16px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: rgba(255,255,255,.05);
+  border-bottom: 4px solid transparent;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+nav.phases a:hover { background: rgba(255,255,255,.16); color: #fff; }
+nav.phases a.active {
+  background: var(--bg);
+  color: var(--accent-dark);
+  border-bottom-color: var(--gold-fill);
+}
+/* the active tab wears its own phase colour */
+nav.phases a[data-phase="scenario"].active { color: var(--p-scenario); border-bottom-color: var(--p-scenario); }
+nav.phases a[data-phase="decide"].active   { color: var(--p-decide);   border-bottom-color: var(--p-decide); }
+nav.phases a[data-phase="detect"].active   { color: var(--p-detect);   border-bottom-color: var(--p-detect); }
+nav.phases a[data-phase="deliver"].active  { color: var(--p-deliver);  border-bottom-color: var(--p-deliver); }
+nav.phases a[data-phase="assess"].active   { color: var(--p-assess);   border-bottom-color: var(--p-assess); }
+
+nav.phases a .check {
+  display: none;
+  color: var(--gold-fill);
+  margin-left: 4px;
+}
+nav.phases a.done .check { display: inline; }
+nav.phases a.active.done .check { color: inherit; }
+
+/* ---------- Second-level nav (the three Decide products) ----------
+   Decide is the only phase that produces three separate products, so it
+   is the only phase with sub-pages. This bar sits on the page rather
+   than in the dark header, so a student always knows which of the three
+   he is in and that all three belong to one phase. */
+nav.subphases {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: 1080px;
+  margin: 26px auto -6px;
+  padding: 0 24px;
+}
+nav.subphases a {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-bottom: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  transition: color .15s, border-color .15s, background .15s;
+}
+nav.subphases a:hover { color: var(--phase); background: var(--phase-tint); }
+nav.subphases a.active {
+  color: var(--phase);
+  border-color: var(--phase);
+  background: var(--phase-tint);
+}
+nav.subphases a .step {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  margin-right: 7px;
+  opacity: .75;
+}
+nav.subphases a .check { display: none; color: var(--gold); margin-left: 5px; }
+nav.subphases a.done .check { display: inline; }
+
+/* ---------- Flagged cells and their explanation panels ----------
+   A "?" beside a value the student is right to question. The note lives
+   in a hidden block in the HTML so it can be translated. */
+button.flag {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: .82rem;
+  line-height: 1;
+  color: var(--gold-on-fill);
+  background: var(--gold-fill);
+  border: 0;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+button.flag:hover { filter: brightness(1.12); }
+button.flag:focus-visible { outline: 2px solid var(--phase); outline-offset: 2px; }
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(28, 30, 24, .55);
+  padding: 24px;
+  overflow-y: auto;
+}
+.modal.show { display: flex; align-items: center; justify-content: center; }
+.modal-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 5px solid var(--phase);
+  border-radius: var(--radius);
+  padding: 26px 30px;
+  max-width: 34em;
+  box-shadow: 0 18px 44px rgba(0,0,0,.3);
+}
+.modal-box h4 {
+  margin: 0 0 10px;
+  color: var(--phase);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.modal-box p { margin: 0 0 12px; }
+.modal-box p:last-of-type { margin-bottom: 18px; }
+
+/* ---------- The HAT worksheet ----------
+   HPTL, AGM and TSS on one sheet, in the orientation a fire support cell
+   actually uses: one column per priority, the products stacked in bands
+   down the left. It is wider than a phone, so it scrolls sideways rather
+   than being reflowed into something the student would not recognise. */
+.hat-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 18px 0 10px;
+}
+table.hat {
+  border-collapse: collapse;
+  min-width: 820px;
+  width: 100%;
+  font-size: .95rem;
+}
+table.hat th, table.hat td {
+  border: 1px solid var(--border);
+  padding: 9px 11px;
+  text-align: left;
+  vertical-align: top;
+}
+table.hat thead th {
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  background: var(--phase);
+  color: #fff;
+  border-color: var(--phase);
+}
+table.hat th[scope="row"], table.hat th[scope="rowgroup"] {
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-weight: 600;
+  background: var(--phase-tint);
+  white-space: nowrap;
+}
+/* the three products, banded so the student can see where each one ends.
+   There are exactly three of these lines and they must stay meaning "a new
+   product begins" — the weapon blocks inside the TSS band use the lighter
+   .weapon-start rule below instead. */
+table.hat tr.band-start th, table.hat tr.band-start td { border-top: 3px solid var(--phase); }
+table.hat tr.weapon-start th, table.hat tr.weapon-start td { border-top: 2px solid var(--muted); }
+/* The reference template gives every weapon system its own block of
+   standards, so a label column carries the weapon name down the rows of each
+   block. Unlike an ordinary row heading it must wrap, or the label pushes the
+   data columns off the page. */
+table.hat th.hat-weapon {
+  white-space: normal;
+  width: 1%;
+  line-height: 1.25;
+}
+table.hat th.hat-weapon { font-size: .84rem; width: 104px; }
+/* The criterion column carries the longest labels in the table. Fixing its
+   width stops it stealing room from the four target columns, which are the
+   part the student actually reads. */
+table.hat th.hat-crit { font-size: .82rem; width: 176px; white-space: normal; }
+table.hat th.hat-crit, table.hat th.hat-weapon { padding: 8px 9px; }
+/* A standard that has not been set yet. Deliberately reads as absent rather
+   than as a value, so nobody mistakes a placeholder for guidance. */
+table.hat td.pending { color: var(--muted); font-style: italic; }
+/* Attack order rides inside the location-error cell as a badge pinned right,
+   the way the printed worksheet does it. It is deliberately NOT its own row:
+   the number ranks weapons within ONE target, so it has to be read down a
+   column, and a row of its own invites reading it across, where a legitimate
+   2, 2, 1, 3 looks like a broken ranking. */
+table.hat td.ord { padding-right: 8px; }
+b.order {
+  float: right;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: .82rem;
+  line-height: 18px;
+  min-width: 20px;
+  height: 18px;
+  text-align: center;
+  color: var(--gold-on-fill);
+  background: var(--gold-fill);
+  border-radius: 3px;
+  margin-left: 10px;
+}
+.hat-legend b.order { float: none; display: inline-block; margin: 0 4px 0 0; vertical-align: 1px; }
+table.hat td.data { font-family: var(--font-mono); font-weight: 500; }
+table.hat caption {
+  caption-side: top;
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  padding-bottom: 8px;
+  text-align: left;
+}
+.hat-legend {
+  font-size: .92rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ---------- Layout ---------- */
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px 96px;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 30px 34px;
+  margin-bottom: 26px;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.15;
+}
+h1 { font-size: 2.35rem; margin: 0 0 6px; color: var(--accent-dark); }
+h2 {
+  font-size: 1.7rem;
+  color: var(--accent-dark);
+  margin-top: 34px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--phase-tint);
+}
+.panel > h2:first-child { margin-top: 0; }
+h3 { font-size: 1.35rem; color: var(--accent-dark); margin-bottom: 6px; }
+h4 { font-size: 1.15rem; }
+
+.phase-tag {
+  display: inline-block;
+  font-family: var(--font-head);
+  background: var(--phase);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  padding: 3px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.lede { color: var(--muted); font-size: 1.1rem; margin-top: 0; max-width: none; }
+/* Prose carries no measure of its own: it runs the full width of whatever
+   contains it, so a paragraph ends exactly where a table or an exercise does.
+   The old 78ch cap on p and 62ch on .lede left a 300px gutter of white beside
+   every block of text and broke lines early, which read as ragged. Anything
+   added here that caps a text element has to be checked against .lede too.
+   The Chinese overrides at the bottom of this file keep their own measure in
+   em, because a ch unit assumes Latin character widths. */
+p { max-width: none; }
+
+/* mono utility for data: grids, times, target numbers */
+.mono, .data {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: .92em;
+  letter-spacing: -.01em;
+}
+
+/* ---------- Doctrine / callout boxes ---------- */
+.doctrine {
+  background: var(--phase-tint);
+  border-left: 5px solid var(--phase);
+  border-radius: 0;
+  padding: 18px 22px;
+  margin: 22px 0;
+  font-size: 1rem;
+}
+/* small print: a source line inside a doctrine box, or a caveat under a table */
+.src { display: block; margin-top: 10px; font-size: .85rem; color: var(--muted); font-style: italic; }
+.callout-cdr {
+  background: var(--warn-bg);
+  border-left: 5px solid var(--gold-fill);
+  border-radius: 0;
+  padding: 18px 22px;
+  margin: 22px 0;
+}
+.callout-cdr h3 { margin: 0 0 6px; color: #6b5417; }
+.keyterm { border-bottom: 2px dotted var(--gold); cursor: help; font-weight: 600; }
+
+/* ---------- Tables ---------- */
+table.doc {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: .98rem;
+}
+table.doc th {
+  font-family: var(--font-head);
+  background: var(--phase);
+  color: #fff;
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+table.doc td { padding: 9px 14px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+table.doc tr:nth-child(even) td { background: #fafbf7; }
+table.doc td.num, table.doc td .num-cell { font-family: var(--font-mono); font-weight: 500; font-size: .9rem; }
+/* option lists inside a table cell (the AGM template table) */
+table.doc td ul.opts { margin: 0; padding-left: 1.1em; }
+table.doc td ul.opts li { margin: 0 0 4px; }
+table.doc td ul.opts li:last-child { margin-bottom: 0; }
+
+/* ---------- Exercises ---------- */
+.exercise {
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--phase);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 28px 0;
+  overflow: hidden;
+}
+.exercise-head {
+  background: var(--phase-tint);
+  color: var(--accent-dark);
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.exercise-head h3 { color: var(--phase); margin: 0; font-size: 1.3rem; }
+.exercise-head .status {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.exercise-head .status.done { background: var(--gold-fill); border-color: var(--gold-fill); color: var(--gold-on-fill); }
+.exercise-body { padding: 22px; background: #fff; }
+.task-label {
+  font-family: var(--font-head);
+  font-weight: 600;
+  color: var(--phase);
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* choices */
+.choice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 9px 0;
+  cursor: pointer;
+  background: #fff;
+  transition: background .15s, border-color .15s;
+}
+.choice:hover { background: var(--phase-tint); border-color: var(--phase); }
+.choice input { margin-top: 6px; flex-shrink: 0; accent-color: var(--phase); }
+.choice.correct { background: var(--ok-bg); border-color: var(--ok); }
+.choice.incorrect { background: var(--bad-bg); border-color: var(--bad); }
+.choice.missed { border-color: var(--gold); background: var(--warn-bg); }
+.choice .why { display: none; font-size: .9rem; color: var(--muted); margin-top: 5px; }
+.choice.reveal .why { display: block; }
+
+/* buttons */
+.btn {
+  display: inline-block;
+  font-family: var(--font-body);
+  background: var(--phase);
+  color: #fff;
+  border: none;
+  padding: 11px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter .15s;
+}
+.btn:hover { filter: brightness(.85); }
+.btn.secondary { background: #fff; color: var(--phase); border: 2px solid var(--phase); padding: 9px 22px; }
+.btn.secondary:hover { background: var(--phase-tint); filter: none; }
+.btn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+.btn-row { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; align-items: center; }
+
+/* feedback */
+.feedback { border-radius: var(--radius-sm); padding: 13px 18px; margin-top: 16px; font-size: 1rem; display: none; }
+.feedback.show { display: block; }
+.feedback.ok { background: var(--ok-bg); border-left: 4px solid var(--ok); color: #1d4d20; }
+.feedback.bad { background: var(--bad-bg); border-left: 4px solid var(--bad); color: #7c2419; }
+.feedback.partial { background: var(--warn-bg); border-left: 4px solid var(--gold-fill); color: #6b5417; }
+/* bulleted feedback body: sits under the bold "Correct." lead */
+.feedback .fb-list { margin: 8px 0 0; padding-left: 22px; }
+.feedback .fb-list li + li { margin-top: 6px; }
+
+/* sortable priority list */
+/* Three fixed columns: rank badge, name, movers. The rank and the movers
+   are a constant width on every row so the eye reads a straight edge down
+   each side; only the name flexes. .rank and .name must be direct children
+   of the li — if a translation wrapper ever swallows them the row collapses
+   into a stack. tools/tag-i18n.js treats .rank as runtime-owned to keep
+   that from happening; test-runtime.js section 19 enforces it. */
+.sortlist { list-style: none; padding: 0; margin: 12px 0; }
+.sortlist li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px 10px 14px;
+  margin: 7px 0;
+}
+.sortlist li .rank {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: #fff;
+  background: var(--phase);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: .95rem;
+  flex: 0 0 32px;
+}
+.sortlist li .name { flex: 1 1 auto; min-width: 0; line-height: 1.35; }
+.sortlist li .movers {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.sortlist li button {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 34px; height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .8rem;
+  line-height: 1;
+  color: var(--phase);
+  padding: 0;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.sortlist li button:hover { background: var(--phase); color: #fff; border-color: var(--phase); }
+.sortlist li button:focus-visible { outline: 2px solid var(--phase); outline-offset: 2px; }
+/* the first row cannot move up and the last cannot move down */
+.sortlist li:first-child button.up,
+.sortlist li:last-child button.down { opacity: .3; cursor: default; }
+.sortlist li:first-child button.up:hover,
+.sortlist li:last-child button.down:hover {
+  background: #fff; color: var(--phase); border-color: var(--border);
+}
+.sortlist li.correct { background: var(--ok-bg); border-color: var(--ok); }
+.sortlist li.correct .rank { background: var(--ok); }
+.sortlist li.incorrect { background: var(--bad-bg); border-color: var(--bad); }
+.sortlist li.incorrect .rank { background: var(--bad); }
+
+/* select rows (matching) */
+.match-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.match-row:last-of-type { border-bottom: none; }
+.match-row .target-name { font-weight: 600; }
+.match-row .target-desc { font-size: .88rem; color: var(--muted); font-weight: 400; }
+.match-row select, .agm-grid select {
+  width: 100%;
+  font-family: var(--font-body);
+  padding: 9px 11px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: .95rem;
+  background: #fff;
+  color: var(--ink);
+}
+.match-row select:focus, .agm-grid select:focus { outline: 2px solid var(--phase); outline-offset: 1px; }
+.match-row select.correct, .agm-grid select.correct { border-color: var(--ok); background: var(--ok-bg); }
+.match-row select.incorrect, .agm-grid select.incorrect { border-color: var(--bad); background: var(--bad-bg); }
+
+/* Commander's fires guidance for a single target. Sits above the target inside
+   a match row (grid-column spans it) and also stands alone in the worked
+   example. Brass, like the commander's callout, because that is whose voice it
+   is. .todo marks placeholder text that has not been written yet. */
+.fires-guidance {
+  grid-column: 1 / -1;
+  margin: 0 0 6px;
+  padding: 10px 14px;
+  background: var(--warn-bg);
+  border-left: 3px solid var(--gold-fill);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: .93rem;
+  line-height: 1.55;
+}
+.fires-guidance .todo { color: var(--bad); font-style: italic; }
+
+/* The worked example row inside the method exercise. It carries no select, so
+   initSelectMatch skips it: the answers are shown as static text and the note
+   under them is always visible rather than revealed on check. */
+.match-row.worked { background: var(--phase-tint); border-radius: var(--radius-sm); padding: 12px 14px; }
+.pick-answer {
+  display: block;
+  font-weight: 600;
+  padding: 9px 11px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.worked-note {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  padding: 9px 12px;
+  border-left: 3px solid var(--phase);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #fff;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+/* Two ranked choices inside one match row (the preferred-method exercise).
+   Stacked, each with its own small label above the select. */
+.method-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; align-items: start; }
+.method-picks .pick { display: grid; gap: 3px; align-content: start; }
+/* the row's own Check answer button sits under both selects */
+.method-picks .pick-check { grid-column: 1 / -1; }
+.btn.row-check { padding: 6px 16px; font-size: .9rem; font-weight: 600; }
+.method-picks .pick-label {
+  font-family: var(--font-head);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Commander's note under a matched row. Both texts sit in the HTML so the
+   tagger can key them; only the one app.js marks .show is visible. */
+.row-note {
+  display: none;
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding: 9px 12px;
+  border-left: 3px solid var(--border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.row-note.show { display: block; }
+.row-note.ok { border-left-color: var(--ok); background: var(--ok-bg); }
+/* neutral justification note: shown right or wrong, so it must not read
+   as a verdict. Brass rule, no tinted fill. */
+.row-note.always { border-left-color: var(--gold-fill); background: var(--bg); }
+.row-note.bad { border-left-color: var(--bad); background: var(--bad-bg); }
+
+/* AGM grid */
+.agm-grid { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.agm-grid th {
+  font-family: var(--font-head);
+  background: var(--phase);
+  color: #fff;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.agm-grid td { padding: 9px 12px; border-bottom: 1px solid var(--border-soft); }
+/* keep the answer column wide enough to read the option text */
+.agm-grid select { min-width: 165px; }
+
+/* report cards (detect / assess drills) */
+.report-card {
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--phase);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 16px 20px;
+  margin: 16px 0;
+  background: #fcfcfa;
+}
+.report-card h4 { margin: 0 0 6px; color: var(--phase); font-size: 1.15rem; }
+.report-card .meta {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.report-card .decision-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.report-card .decision-btns button {
+  font-family: var(--font-body);
+  background: #fff;
+  border: 1.5px solid var(--phase);
+  color: var(--phase);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: .92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.report-card .decision-btns button:hover:not(:disabled) { background: var(--phase); color: #fff; }
+.report-card .decision-btns button:disabled { opacity: .4; cursor: not-allowed; }
+.report-card .decision-btns button.chosen-ok { background: var(--ok-bg); border-color: var(--ok); color: #1d4d20; opacity: 1; }
+.report-card .decision-btns button.chosen-bad { background: var(--bad-bg); border-color: var(--bad); color: #7c2419; opacity: 1; }
+.report-card .drill-feedback { font-size: .93rem; margin-top: 12px; display: none; padding: 10px 14px; border-radius: 6px; }
+.report-card .drill-feedback.show { display: block; }
+.report-card .drill-feedback.ok { background: var(--ok-bg); border-left: 3px solid var(--ok); }
+.report-card .drill-feedback.bad { background: var(--bad-bg); border-left: 3px solid var(--bad); }
+
+/* progress bar */
+.progress-wrap { margin: 14px 0 6px; }
+.progress-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #e2e5da;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--phase);
+  width: 0%;
+  transition: width .4s;
+}
+.progress-label {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .02em;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* phase cards on the Battle home */
+.phase-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin: 22px 0;
+}
+.phase-card {
+  border: 1px solid var(--border);
+  border-top: 6px solid var(--p-scenario);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  background: #fff;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform .12s, border-color .12s;
+}
+.phase-card:hover { transform: translateY(-3px); }
+.phase-card[data-phase="scenario"] { border-top-color: var(--p-scenario); }
+.phase-card[data-phase="decide"]   { border-top-color: var(--p-decide); }
+.phase-card[data-phase="detect"]   { border-top-color: var(--p-detect); }
+.phase-card[data-phase="deliver"]  { border-top-color: var(--p-deliver); }
+.phase-card[data-phase="assess"]   { border-top-color: var(--p-assess); }
+.phase-card .num {
+  font-family: var(--font-head);
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.phase-card[data-phase="scenario"] .num { color: var(--p-scenario); }
+.phase-card[data-phase="decide"] .num   { color: var(--p-decide); }
+.phase-card[data-phase="detect"] .num   { color: var(--p-detect); }
+.phase-card[data-phase="deliver"] .num  { color: var(--p-deliver); }
+.phase-card[data-phase="assess"] .num   { color: var(--p-assess); }
+.phase-card h3 { margin: 5px 0 7px; }
+.phase-card p { font-size: .92rem; color: var(--muted); margin: 0; }
+
+/* footer nav */
+.page-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 36px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* glossary */
+dl.glossary dt { font-family: var(--font-head); font-size: 1.2rem; font-weight: 600; color: var(--accent-dark); margin-top: 16px; }
+dl.glossary dd { margin: 2px 0 0 0; color: var(--muted); font-size: .98rem; }
+
+/* A panel that stays hidden until its exercises are done (data-reveal-when).
+   Hidden here rather than in JS so it never flashes on a slow load.
+   .lock-note is the inverse and sits outside the locked panel, so app.js
+   toggles .revealed on it too. */
+.locked { display: none; }
+.locked.revealed { display: block; }
+.lock-note.revealed { display: none; }
+
+/* completion banner */
+.complete-banner {
+  display: none;
+  background: var(--ok-bg);
+  border-left: 5px solid var(--ok);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 18px 24px;
+  margin: 22px 0;
+  font-weight: 600;
+  color: #1d4d20;
+}
+.complete-banner.show { display: block; }
+
+/* ---------- Mode-select splash (index.html) ---------- */
+.header-inner-splash { padding-bottom: 16px; }
+.brand-link { color: inherit; text-decoration: none; display: block; }
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin: 22px 0;
+}
+.mode-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-top: 6px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 26px 28px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform .12s, border-color .12s;
+}
+.mode-card:hover { transform: translateY(-3px); }
+.mode-card:nth-of-type(2) { border-top-color: var(--p-detect); }
+.mode-card h2 { margin: 0 0 2px; color: var(--accent-dark); font-size: 1.9rem; border-bottom: none; padding-bottom: 0; }
+.mode-card .mode-tag {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 14px;
+  font-weight: 500;
+}
+.mode-card ul { margin: 0; padding-left: 20px; font-size: .95rem; }
+.mode-card ul li { margin: 5px 0; }
+.mode-card .badge-soon {
+  position: absolute;
+  top: 18px; right: 18px;
+  font-family: var(--font-head);
+  background: var(--gold-fill);
+  color: var(--gold-on-fill);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+
+/* ---------- Coming-soon placeholder (campaign.html) ---------- */
+.soon-tag {
+  display: inline-block;
+  font-family: var(--font-head);
+  background: var(--gold-fill);
+  color: var(--gold-on-fill);
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  padding: 3px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 640px) {
+  :root { font-size: 16px; }
+  .match-row { grid-template-columns: 1fr; gap: 8px; }
+  .method-picks { grid-template-columns: 1fr; }
+  .panel { padding: 20px; }
+  main { padding: 20px 14px 64px; }
+  .header-inner { padding: 10px 16px 0; }
+  h1 { font-size: 1.95rem; }
+  h2 { font-size: 1.45rem; }
+}
+
+@media print {
+  header.site { position: static; }
+  .panel { border: 1px solid #999; page-break-inside: avoid; }
+  .btn, .movers, .lang-toggle { display: none; }
+}
+
+/* ---------- Language switch ---------- */
+.lang-toggle {
+  display: flex;
+  gap: 0;
+  margin-left: auto;          /* pushes it to the right of the nav row */
+  align-self: center;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lang-toggle button {
+  font-family: var(--font-head);
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  background: transparent;
+  color: #d9e2cf;
+  border: none;
+  padding: 5px 14px;
+  cursor: pointer;
+  line-height: 1.5;
+  transition: background .15s, color .15s;
+}
+.lang-toggle button:hover { background: rgba(255,255,255,.16); color: #fff; }
+.lang-toggle button.on { background: var(--gold-fill); color: var(--gold-on-fill); }
+.lang-toggle button:focus-visible { outline: 2px solid var(--gold-fill); outline-offset: -2px; }
+/* the two splash pages have no nav row — sit the switch under the title */
+.header-inner > .lang-toggle { margin: 10px 0 0; align-self: flex-start; width: max-content; }
+
+
+/* ---------- Sketch map ----------
+   The SVG is drawn by js/map.js and carries no text (the tagger skips
+   <svg>, so text inside it could never translate). Everything readable
+   lives in .map-key beside it. Badges pick up the page's phase accent;
+   the doctrinal red/blue of the symbols deliberately does not. */
+.map-figure { margin: 22px 0 6px; }
+
+.map-frame {
+  background: #f7f8f3;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px 6px;
+}
+.map-svg { display: block; width: 100%; height: auto; }
+
+.map-badge-bg {
+  fill: var(--panel);
+  stroke: var(--phase);
+  stroke-width: 2;
+}
+.map-badge-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--phase);
+}
+
+/* focus mode: the page's current targets stay lit, the rest recede.
+   The drawing now sits on aerial imagery, so a dimmed marker has to go
+   further down than it did over a plain sketch, and a lit one needs a
+   ring — a heavier badge stroke alone disappears into the photograph. */
+.map-unit { transition: opacity .2s; }
+.map-svg.has-focus .map-unit.is-dim { opacity: .18; }
+.map-svg.has-focus .map-unit.is-hot .map-badge-bg { stroke-width: 3; }
+
+.map-hot-ring { fill: none; stroke: var(--phase); stroke-width: 3; opacity: 0; }
+
+/* the commander's restricted fire area. Brass, not hostile red and not the phase
+   accent, so it reads as neither an enemy graphic nor a focus ring. It is
+   furniture, so it sits outside .map-units and never dims. */
+.map-rfa { fill: none; stroke: var(--gold); stroke-width: 3; }
+
+/* ---------- location states ----------
+   A templated marker is where we assess he WILL be, not where he is. The
+   dashed frame comes from map.js; this only softens the fill so the two
+   read apart at a glance on a busy photograph. */
+.map-unit.is-templated .map-frame-shape { fill-opacity: .45; }
+
+/* The unlocated strip: known to exist, no position. It is deliberately
+   NOT styled like the map — no imagery, no frame that could be mistaken
+   for ground. Its heading is ordinary HTML above it, so it translates. */
+.map-unlocated { margin: 10px 0 0; }
+.map-unlocated h4 {
+  font-family: var(--font-head);
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+.map-strip {
+  background: repeating-linear-gradient(
+    -45deg, #f4f5ef, #f4f5ef 8px, #eceee5 8px, #eceee5 16px);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+.map-svg.has-focus .map-unit.is-hot .map-hot-ring { opacity: 1; }
+
+.map-caption {
+  font-size: .86rem;
+  color: var(--muted);
+  margin: 8px 2px 0;
+  line-height: 1.5;
+}
+
+/* the key table — this is the part that translates */
+table.map-key { width: 100%; border-collapse: collapse; margin-top: 14px; }
+table.map-key th {
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .82rem;
+  text-align: left;
+  padding: 7px 12px;
+  background: var(--phase);
+  color: #fff;
+}
+table.map-key td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+  font-size: .94rem;
+}
+table.map-key tr:nth-child(even) td { background: #fafbf7; }
+table.map-key td.ref {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--phase);
+  width: 3.2em;
+  white-space: nowrap;
+}
+table.map-key caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .84rem;
+  color: var(--muted);
+  padding: 0 2px 6px;
+}
+
+@media (max-width: 640px) {
+  table.map-key td, table.map-key th { padding: 6px 8px; font-size: .88rem; }
+}
+
+@media print {
+  .map-frame { background: #fff; border: 1px solid #999; }
+  .map-figure { page-break-inside: avoid; }
+}
+
+/* ---------- The areas-of-interest map (1D) ----------
+   Unlike every other map in this course this one is a flat picture rather
+   than an SVG overlay, so the NAI, TAI and control-measure labels are burned
+   into the image. They carry no data-i18n key and will ship in English.
+   The adjacent table.map-key is what a translator actually receives, so every
+   label drawn in the picture must also appear there in words. */
+.nai-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- The fires synchronization matrix (1D) ----------
+   Assets down the left, one column per hour across the top; blocks are
+   colspans. Colour is redundant with the text inside each block, since every
+   block names its own target, so nothing here is carried by hue alone. */
+.tsm-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 18px 0 10px;
+}
+table.tsm {
+  border-collapse: collapse;
+  table-layout: fixed;      /* every hour the same width, or a colspan of 2
+                               looks longer than a colspan of 3 */
+  min-width: 940px;
+  width: 100%;
+  font-size: .88rem;
+}
+table.tsm th, table.tsm td {
+  border: 1px solid var(--border);
+  padding: 7px 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+table.tsm thead th {
+  background: var(--phase);
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+}
+table.tsm thead th.tsm-h { background: var(--gold); }
+/* table-layout is fixed, so the header row sets every column width. */
+table.tsm thead th.tsm-asset { text-align: left; width: 176px; }
+table.tsm tbody th.tsm-asset {
+  background: #f4f6ef;
+  font-family: var(--font-head);
+  font-size: .86rem;
+  font-weight: 600;
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+table.tsm th.tsm-band {
+  background: var(--phase-tint);
+  font-family: var(--font-head);
+  font-size: .8rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--phase);
+  padding: 5px 9px;
+}
+table.tsm tr.band-start th, table.tsm tr.band-start td { border-top: 3px solid var(--phase); }
+table.tsm td.blk { font-size: .84rem; line-height: 1.35; text-align: center; }
+table.tsm td.blk.empty { background: repeating-linear-gradient(135deg, #fff, #fff 6px, #f3f3ef 6px, #f3f3ef 12px); }
+table.tsm td.t-eng  { background: #e7f0d6; border-left: 3px solid #6d8a3c; }
+table.tsm td.t-atgm { background: #fbeed0; border-left: 3px solid #a8801d; }
+table.tsm td.t-mor  { background: #dfe9f4; border-left: 3px solid #3f6a99; }
+table.tsm td.t-cp   { background: #f1e0ec; border-left: 3px solid #8a4a76; }
+table.tsm caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .84rem;
+  color: var(--muted);
+  padding: 10px 12px 8px;
+}
+.tsm-legend { margin: 2px 0 14px; font-size: .86rem; }
+.tsm-legend .key {
+  display: inline-block;
+  padding: 3px 10px;
+  margin: 0 6px 6px 0;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border);
+}
+.tsm-legend .key.t-eng  { background: #e7f0d6; border-left-color: #6d8a3c; }
+.tsm-legend .key.t-atgm { background: #fbeed0; border-left-color: #a8801d; }
+.tsm-legend .key.t-mor  { background: #dfe9f4; border-left-color: #3f6a99; }
+.tsm-legend .key.t-cp   { background: #f1e0ec; border-left-color: #8a4a76; }
+
+/* A single sentence the 1D page turns on, set apart without a heading. */
+.closing-rule {
+  margin: 22px 0 4px;
+  padding: 14px 18px;
+  background: var(--phase-tint);
+  border-left: 4px solid var(--phase);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+}
+
+/* ---------- Traditional Chinese ----------
+   The bundled Latin fonts carry no CJK glyphs, so Chinese falls back to
+   whatever the machine already has. Condensed faces, uppercasing and wide
+   letter-spacing are Latin typographic devices — they do nothing good to
+   Chinese characters, so they are switched off here rather than left to
+   render badly. */
+:root {
+  --font-cjk: "Microsoft JhengHei", "微軟正黑體", "PingFang TC", "Heiti TC",
+              "Noto Sans TC", "Source Han Sans TC", sans-serif;
+}
+
+:lang(zh-Hant) body,
+:lang(zh-Hant) .btn,
+:lang(zh-Hant) select,
+:lang(zh-Hant) button {
+  font-family: var(--font-cjk);
+  line-height: 1.85;          /* CJK needs more air between lines */
+}
+
+:lang(zh-Hant) h1, :lang(zh-Hant) h2, :lang(zh-Hant) h3, :lang(zh-Hant) h4,
+:lang(zh-Hant) .site-title, :lang(zh-Hant) .site-strap, :lang(zh-Hant) .site-sub,
+:lang(zh-Hant) nav.phases a, :lang(zh-Hant) .phase-tag,
+:lang(zh-Hant) .task-label, :lang(zh-Hant) .phase-card .num,
+:lang(zh-Hant) .mode-card .mode-tag, :lang(zh-Hant) .soon-tag,
+:lang(zh-Hant) .badge-soon, :lang(zh-Hant) dl.glossary dt,
+:lang(zh-Hant) table.doc th, :lang(zh-Hant) .agm-grid th {
+  font-family: var(--font-cjk);
+  text-transform: none;
+  letter-spacing: .02em;
+  line-height: 1.4;
+}
+
+/* headings lose the condensed face, so bring the sizes back down a little */
+:lang(zh-Hant) h1 { font-size: 1.95rem; }
+:lang(zh-Hant) h2 { font-size: 1.4rem; }
+:lang(zh-Hant) h3 { font-size: 1.15rem; }
+:lang(zh-Hant) .site-title { font-size: 1.2rem; letter-spacing: .04em; }
+:lang(zh-Hant) .site-strap { font-size: .95rem; letter-spacing: .02em; }
+:lang(zh-Hant) .site-sub { font-size: .9rem; letter-spacing: .06em; }
+:lang(zh-Hant) nav.phases a { font-size: .95rem; }
+:lang(zh-Hant) .exercise-head h3 { font-size: 1.1rem; }
+
+/* a ch-based measure assumes Latin character widths */
+:lang(zh-Hant) p { max-width: 40em; }
+:lang(zh-Hant) .lede { max-width: 34em; }
+
+/* numbers and target designations stay in the mono face — they remain
+   Latin even in the Chinese version */
+:lang(zh-Hant) .mono, :lang(zh-Hant) .data,
+:lang(zh-Hant) .report-card .meta, :lang(zh-Hant) .progress-label,
+:lang(zh-Hant) .sortlist li .rank, :lang(zh-Hant) table.doc td.num {
+  font-family: var(--font-mono);
+}
+/* except the status pill, which is a word, not a number */
+:lang(zh-Hant) .exercise-head .status { font-family: var(--font-cjk); letter-spacing: .04em; }
+
+/* EN / 繁中 labels should each render in their own script */
+.lang-toggle button[data-lang="zh"] { font-family: var(--font-cjk); letter-spacing: .02em; }
+:lang(zh-Hant) .lang-toggle button[data-lang="en"] { font-family: var(--font-head); }
+
+/* the map key is prose, so it takes the CJK face; the badge column stays
+   monospaced because its contents are numbers and Latin letters */
+:lang(zh-Hant) table.map-key th { font-family: var(--font-cjk); text-transform: none; letter-spacing: .02em; }
+:lang(zh-Hant) table.map-key caption { font-family: var(--font-cjk); text-transform: none; letter-spacing: .02em; }
+:lang(zh-Hant) table.map-key td { line-height: 1.8; }
+:lang(zh-Hant) table.map-key td.ref { font-family: var(--font-mono); }
+
+/* The synchronization matrix carries the same condensed, uppercased,
+   letter-spaced treatment as the HAT, so it needs the same switching off. */
+:lang(zh-Hant) table.tsm thead th,
+:lang(zh-Hant) table.tsm th.tsm-band,
+:lang(zh-Hant) table.tsm tbody th.tsm-asset,
+:lang(zh-Hant) table.tsm caption,
+:lang(zh-Hant) .method-picks .pick-label {
+  font-family: var(--font-cjk);
+  text-transform: none;
+  letter-spacing: .02em;
+}
+:lang(zh-Hant) table.tsm td.blk { line-height: 1.7; }
+:lang(zh-Hant) .map-caption { line-height: 1.8; }

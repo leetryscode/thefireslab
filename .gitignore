@@ -1,0 +1,9 @@
+# The student-facing readme is for the USB and zip copies only; it tells the
+# reader to extract a folder, which makes no sense on the hosted site.
+OPEN ME FIRST.txt
+
+# build artefacts and OS cruft
+*.zip
+Thumbs.db
+.DS_Store
+~$*

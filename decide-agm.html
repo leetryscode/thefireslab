@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D3A Course — Phase 1: Decide — Attack Guidance Matrix</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-phase="decide">
+
+<header class="site">
+  <div class="header-inner">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title" data-i18n="decide-agm.001">The Fires Lab</p>
+          <p class="site-strap" data-i18n="decide-agm.002">Mastering Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub" data-i18n="decide-agm.254">Decide · Detect · Deliver · Assess</p>
+      </div>
+    </a>
+    <nav class="phases">
+      <a href="battle.html" data-i18n="decide-agm.003">Home</a>
+      <a href="scenario.html" data-phase="scenario"><span data-i18n="decide-agm.004">Scenario</span><span class="check"> ✔</span></a>
+      <a href="decide.html" class="active" data-phase="decide"><span data-i18n="decide-agm.005">1. Decide</span><span class="check"> ✔</span></a>
+      <a href="detect.html" data-phase="detect"><span data-i18n="decide-agm.006">2. Detect</span><span class="check"> ✔</span></a>
+      <a href="deliver.html" data-phase="deliver"><span data-i18n="decide-agm.007">3. Deliver</span><span class="check"> ✔</span></a>
+      <a href="assess.html" data-phase="assess"><span data-i18n="decide-agm.008">4. Assess</span><span class="check"> ✔</span></a>
+      <a href="glossary.html" data-i18n="decide-agm.009">Glossary</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="subphases">
+  <a href="decide.html" data-sub="decide.html"><span data-i18n="decide-agm.010"><span class="step">1A</span><span>High-Payoff Target List</span></span><span class="check"> ✔</span></a>
+  <a href="decide-agm.html" data-sub="decide-agm.html" class="active"><span data-i18n="decide-agm.011"><span class="step">1B</span><span>Attack Guidance Matrix</span></span><span class="check"> ✔</span></a>
+  <a href="decide-tss.html" data-sub="decide-tss.html"><span data-i18n="decide-agm.012"><span class="step">1C</span><span>Target Selection Standards</span></span><span class="check"> ✔</span></a>
+  <a href="decide-sync.html" data-sub="decide-sync.html"><span data-i18n="decide-agm.255"><span class="step">1D</span><span>Target Synchronization Matrix</span></span><span class="check"> ✔</span></a>
+</nav>
+
+<main>
+  <div class="panel">
+    <span class="phase-tag" data-i18n="decide-agm.013">Product 2 of 3</span>
+    <h1 data-i18n="decide-agm.014">Decide: The Attack Guidance Matrix</h1>
+    <p class="lede" data-i18n="decide-agm.015">You have decided what to attack. The second product says how each target will be attacked, and when.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="page-progress-fill"></div></div>
+      <p class="progress-label" id="page-progress-label"></p>
+    </div>
+
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide-agm.016">Target</th><th data-i18n="decide-agm.017">When</th><th data-i18n="decide-agm.018">Effect</th><th data-i18n="decide-agm.118">Preferred method</th></tr>
+      <tr>
+        <td data-i18n="decide-agm.020"><strong>HPT X</strong></td>
+        <td><ul class="opts">
+          <li data-i18n="decide-agm.205">Immediate</li>
+          <li data-i18n="decide-agm.206">As acquired</li>
+          <li data-i18n="decide-agm.207">Planned</li>
+        </ul></td>
+        <td><ul class="opts">
+          <li data-i18n="decide-agm.208">Destroy</li>
+          <li data-i18n="decide-agm.209">Neutralize</li>
+          <li data-i18n="decide-agm.210">Suppress</li>
+        </ul></td>
+        <td><ul class="opts">
+          <li data-i18n="decide-agm.119">OWA-UAS</li>
+          <li data-i18n="decide-agm.120">105 mm howitzer battery</li>
+          <li data-i18n="decide-agm.121">155 mm M109A2 battery</li>
+        </ul></td>
+      </tr>
+    </tbody></table>
+    <p data-i18n="decide-agm.122">The last column is not one answer. It is these three assets written in the order we prefer them for that target.</p>
+  </div>
+
+  <!-- decide-9: when -->
+  <div class="panel">
+    <h2 data-i18n="decide-agm.080">When</h2>
+    <p data-i18n="decide-agm.081">The first column of the matrix says <em>when</em> a target is attacked. There are three answers:</p>
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide-agm.082">Code</th><th data-i18n="decide-agm.083">Meaning</th><th data-i18n="decide-agm.084">What it does to the fight</th></tr>
+      <tr><td class="data" data-i18n="decide-agm.085">I</td><td data-i18n="decide-agm.086"><strong>Immediate</strong></td><td data-i18n="decide-agm.087"><strong>Preempts all other routine missions.</strong> The target is attacked as soon as it is positively identified, ahead of every <em>as acquired</em> target waiting, whatever its place on the HPTL.</td></tr>
+      <tr><td class="data" data-i18n="decide-agm.088">A</td><td data-i18n="decide-agm.089"><strong>As acquired</strong></td><td data-i18n="decide-agm.090"><strong>Engaged in HPTL order.</strong> When several targets are waiting, the one highest on the HPTL is engaged first, provided an asset is free and is not already committed to an <em>immediate</em> or a scheduled <em>planned</em> mission. Two targets of the same priority are engaged in the order they were acquired.</td></tr>
+      <tr><td class="data" data-i18n="decide-agm.091">P</td><td data-i18n="decide-agm.092"><strong>Planned</strong></td><td data-i18n="decide-agm.093"><strong>Scheduled.</strong> The target is attacked at a time we choose, as part of the scheme of fires. We choose the time so that the effect is present when the rest of the plan needs it.</td></tr>
+    </tbody></table>
+
+    <p data-i18n="decide-agm.094">Two questions decide which one a target gets:</p>
+    <ol>
+      <li data-i18n="decide-agm.095"><strong>Is the threat happening right now?</strong> If the target is killing the mission at this moment, it is <em>Immediate</em>.</li>
+      <li data-i18n="decide-agm.096"><strong>If not — is the effect temporary, or would hitting it early reveal the plan?</strong> If either is true, it is <em>Planned</em>. Otherwise it is <em>As acquired</em>.</li>
+    </ol>
+
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide-agm.100">Task 1.4 — Set the timing</h3>
+        <span class="status" data-status="decide-9">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide-agm.102">Apply the two questions to each HPT.</p>
+        <div id="d9-match">
+          <div class="match-row">
+            <div data-i18n="decide-agm.103"><span class="target-name">1. Engineer obstacle team</span><br><span class="target-desc">Placing charges on the span at this moment. If they finish, the mission is over.</span></div>
+            <select data-answer="I">
+              <option value="" data-i18n="decide-agm.104">— choose —</option>
+              <option value="I" data-i18n="decide-agm.105">I — Immediate</option>
+              <option value="A" data-i18n="decide-agm.106">A — As acquired</option>
+              <option value="P" data-i18n="decide-agm.107">P — Planned</option>
+            </select>
+            <p class="row-note ok" data-i18n="decide-agm.019">Commander agrees: this preempts every other mission. If the engineer team is not engaged immediately we risk losing the bridge.</p>
+            <p class="row-note bad" data-i18n="decide-agm.028">Commander disagrees: if we wait, we risk losing the bridge. Fires on the engineer team take priority over anything else in the queue.</p>
+          </div>
+          <div class="match-row">
+            <div data-i18n="decide-agm.113"><span class="target-name">2. ATGM section</span><br><span class="target-desc">Dug in and going nowhere. Twelve hours of report life. Sits on the only high ground overlooking the crossing site.</span></div>
+            <select data-answer="P">
+              <option value="" data-i18n="decide-agm.114">— choose —</option>
+              <option value="I" data-i18n="decide-agm.115">I — Immediate</option>
+              <option value="A" data-i18n="decide-agm.116">A — As acquired</option>
+              <option value="P" data-i18n="decide-agm.117">P — Planned</option>
+            </select>
+            <p class="row-note ok" data-i18n="decide-agm.031">Commander agrees: the section has been located and is unlikely to move, so we can schedule it. We will strike it in coordination with our movement, otherwise we risk the enemy sending another section that we have not located.</p>
+            <p class="row-note bad" data-i18n="decide-agm.032">Commander disagrees: he worries that if we strike the ATGM section early, we risk the enemy sending another one before we clear the far side of the bridge.</p>
+          </div>
+          <div class="match-row">
+            <div data-i18n="decide-agm.108"><span class="target-name">3. 120&nbsp;mm mortar platoon</span><br><span class="target-desc">Only findable while firing, and firing on our troops at the crossing. We must engage while we still have the tubes in sight.</span></div>
+            <select data-answer="I">
+              <option value="" data-i18n="decide-agm.109">— choose —</option>
+              <option value="I" data-i18n="decide-agm.110">I — Immediate</option>
+              <option value="A" data-i18n="decide-agm.111">A — As acquired</option>
+              <option value="P" data-i18n="decide-agm.112">P — Planned</option>
+            </select>
+            <p class="row-note ok" data-i18n="decide-agm.033">Commander agrees: the mortars are an imminent danger to our soldiers at the crossing, and they can only be found while they fire, so they preempt every other mission. Waiting loses both the target and our soldiers.</p>
+            <p class="row-note bad" data-i18n="decide-agm.034">Commander disagrees: the platoon moves after every mission, and it is firing on our soldiers now. Waiting in a queue means we never find the tubes again, and our soldiers stay under fire.</p>
+          </div>
+          <div class="match-row">
+            <div data-i18n="decide-agm.123"><span class="target-name">4. Battalion command post</span><br><span class="target-desc">Not located yet. Relocates every 24 hours. It is not stopping the crossing at this moment.</span></div>
+            <select data-answer="A">
+              <option value="" data-i18n="decide-agm.124">— choose —</option>
+              <option value="I" data-i18n="decide-agm.125">I — Immediate</option>
+              <option value="A" data-i18n="decide-agm.126">A — As acquired</option>
+              <option value="P" data-i18n="decide-agm.127">P — Planned</option>
+            </select>
+            <p class="row-note ok" data-i18n="decide-agm.041">Commander agrees: the command post is not an imminent danger to our forces, and no friendly action waits on its destruction, so it does not warrant dropping a higher-priority task. We engage it in its turn on the HPTL, when an asset is free.</p>
+            <p class="row-note bad" data-for="P" data-i18n="decide-agm.042">Commander disagrees: once we locate the command post we do not need to wait, as the enemy cannot easily regain this capability. No friendly action is contingent upon the command post being destroyed, and the commander would not risk it relocating while we wait.</p>
+            <p class="row-note bad" data-for="I" data-i18n="decide-agm.043">Commander disagrees: the command post is mobile, and the enemy usually relocates it after 24 hours, but it is not an imminent danger to friendly forces, so it does not preempt our other missions.</p>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn" id="d9-check" data-i18n="decide-agm.128">Check the Timing</button></div>
+        <div class="feedback" id="d9-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- decide-8: effect -->
+  <div class="panel">
+    <h2 data-i18n="decide-agm.021">What effect</h2>
+    <p data-i18n="decide-agm.044">The second column of the matrix says <em>what</em> the attack must do to the target. There are three answers. They are not three strengths of the same thing. Each one buys a different result, for a different length of time, at a different cost in ammunition.</p>
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide-agm.051">Code</th><th data-i18n="decide-agm.052">Meaning</th><th data-i18n="decide-agm.053">What it does to the target</th><th data-i18n="decide-agm.054">How long it lasts</th></tr>
+      <tr>
+        <td class="data" data-i18n="decide-agm.060">S</td>
+        <td data-i18n="decide-agm.061"><strong>Suppress</strong></td>
+        <td data-i18n="decide-agm.062">Limits what the target can do. The crews stay under cover and cannot fire accurately.</td>
+        <td data-i18n="decide-agm.063"><strong>Only while our rounds are landing.</strong> It ends the moment we stop firing.</td>
+      </tr>
+      <tr>
+        <td class="data" data-i18n="decide-agm.065">N</td>
+        <td data-i18n="decide-agm.066"><strong>Neutralize</strong></td>
+        <td data-i18n="decide-agm.067">Disables the capability we care about and breaks the unit apart as a fighting team.</td>
+        <td data-i18n="decide-agm.068"><strong>Temporary.</strong> The unit can recover if we give it time.</td>
+      </tr>
+      <tr>
+        <td class="data" data-i18n="decide-agm.072">D</td>
+        <td data-i18n="decide-agm.073"><strong>Destroy</strong></td>
+        <td data-i18n="decide-agm.074">Physical destruction of the target.</td>
+        <td data-i18n="decide-agm.097"><strong>Permanent.</strong> The target must be replaced before it can work again.</td>
+      </tr>
+    </tbody></table>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide-agm.022">Task 1.5 — Choose the effect</h3>
+        <span class="status" data-status="decide-8">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide-agm.024">Choose the desired effect for each HPT. Use the planning notes to guide you.</p>
+        <table class="agm-grid" id="d8-agm">
+          <tbody><tr><th data-i18n="decide-agm.025">Priority / HPT</th><th data-i18n="decide-agm.026">Planning notes</th><th data-i18n="decide-agm.027">Effect</th></tr>
+          <tr>
+            <td data-i18n="decide-agm.029"><strong>1. Engineer obstacle team</strong></td>
+            <td data-i18n="decide-agm.030">They are working <em>on the bridge itself</em>. The bridge must survive. Their primary function is to block or destroy it, and they must be stopped from completing it.</td>
+            <td><select data-answer="neutralize">
+              <option value="" data-i18n="decide-agm.035">— choose —</option>
+              <option value="destroy" data-i18n="decide-agm.036">Destroy</option>
+              <option value="neutralize" data-i18n="decide-agm.037">Neutralize</option>
+              <option value="suppress" data-i18n="decide-agm.038">Suppress</option>
+            </select></td>
+          </tr>
+          <tr>
+            <td data-i18n="decide-agm.049"><strong>2. ATGM section</strong></td>
+            <td data-i18n="decide-agm.050">Dug in on high ground, looking straight down on the crossing. Commander's word: the ATGM team must not be able to affect our vehicles as they cross that chokepoint.</td>
+            <td><select data-answer="suppress">
+              <option value="" data-i18n="decide-agm.055">— choose —</option>
+              <option value="destroy" data-i18n="decide-agm.056">Destroy</option>
+              <option value="neutralize" data-i18n="decide-agm.057">Neutralize</option>
+              <option value="suppress" data-i18n="decide-agm.058">Suppress</option>
+            </select></td>
+          </tr>
+          <tr>
+            <td data-i18n="decide-agm.039"><strong>3. 120&nbsp;mm mortar platoon</strong></td>
+            <td data-i18n="decide-agm.040">Deep behind the river, moves after each mission. The commander requires this enemy capability removed for the duration of the mission, about a day.</td>
+            <td><select data-answer="neutralize">
+              <option value="" data-i18n="decide-agm.045">— choose —</option>
+              <option value="destroy" data-i18n="decide-agm.046">Destroy</option>
+              <option value="neutralize" data-i18n="decide-agm.047">Neutralize</option>
+              <option value="suppress" data-i18n="decide-agm.048">Suppress</option>
+            </select></td>
+          </tr>
+          <tr>
+            <td data-i18n="decide-agm.069"><strong>4. Battalion command post</strong></td>
+            <td data-i18n="decide-agm.070">4&nbsp;km behind the river. Neutralize is enough to keep the defense from coordinating while we cross, and the commander's written requirement is only to “disrupt” his command and control. The commander has decided otherwise: if we are going to strike a command post, he wants it gone for good, not one staff officer missing and one radio replaced. He accepts what that costs in ammunition.</td>
+            <td><select data-answer="destroy">
+              <option value="" data-i18n="decide-agm.075">— choose —</option>
+              <option value="destroy" data-i18n="decide-agm.076">Destroy</option>
+              <option value="neutralize" data-i18n="decide-agm.077">Neutralize</option>
+              <option value="suppress" data-i18n="decide-agm.078">Suppress</option>
+            </select></td>
+          </tr>
+        </tbody></table>
+        <div class="btn-row"><button class="btn" id="d8-check" data-i18n="decide-agm.079">Check the Matrix</button></div>
+        <div class="feedback" id="d8-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- decide-10: preferred method of engagement -->
+  <div class="panel">
+    <h2 data-i18n="decide-agm.129">Preferred method of engagement</h2>
+    <p data-i18n="decide-agm.130">The last column of the matrix says <em>what we will attack the target with</em>. It is not one answer. It is a short list in the order we prefer it. The first choice is what we use when nothing prevents it. The second and third are there because the first will sometimes be firing another mission, out of range, or unable to fire where the target has appeared. The cell works down the list without going back to the commander.</p>
+
+    <h3 data-i18n="decide-agm.132">What we have to attack with</h3>
+    <table class="doc">
+      <tbody><tr><th></th><th data-i18n="decide-agm.023">OWA-UAS</th><th data-i18n="decide-agm.059">105 mm howitzer battery</th><th data-i18n="decide-agm.064">155 mm M109A2 battery</th></tr>
+      <tr><td data-i18n="decide-agm.071"><strong>Reach</strong></td><td data-i18n="decide-agm.098">About 1 km</td><td data-i18n="decide-agm.099">Every target</td><td data-i18n="decide-agm.101">Every target</td></tr>
+      <tr><td data-i18n="decide-agm.131"><strong>Effect radius</strong></td><td class="data" data-i18n="decide-agm.133">5 m</td><td class="data" data-i18n="decide-agm.134">30 m</td><td class="data" data-i18n="decide-agm.135">50 m</td></tr>
+      <tr><td data-i18n="decide-agm.136"><strong>Cratering</strong></td><td data-i18n="decide-agm.137">None</td><td data-i18n="decide-agm.138">Yes</td><td data-i18n="decide-agm.139">Heavy</td></tr>
+      <tr><td data-i18n="decide-agm.140"><strong>Inside the RFA</strong></td><td data-i18n="decide-agm.141">May fire</td><td data-i18n="decide-agm.142">May not fire</td><td data-i18n="decide-agm.143">May not fire</td></tr>
+      <tr><td data-i18n="decide-agm.144"><strong>We hold</strong></td><td data-i18n="decide-agm.145">10, single use</td><td class="data" data-i18n="decide-agm.146">300 rounds</td><td class="data" data-i18n="decide-agm.147">120 rounds</td></tr>
+      <tr><td data-i18n="decide-agm.148"><strong>After it fires</strong></td><td data-i18n="decide-agm.149">Gone</td><td data-i18n="decide-agm.150">20 min to displace</td><td data-i18n="decide-agm.151">20 min to displace</td></tr>
+      <tr><td data-i18n="decide-agm.152"><strong>The munition</strong></td><td data-i18n="decide-agm.153">Precision. One target.</td><td data-i18n="decide-agm.154">Cheaper, easy to move</td><td data-i18n="decide-agm.155">The expensive round</td></tr>
+    </tbody></table>
+    <p class="src" data-i18n="decide-agm.160">These figures are set for this scenario. They are not published doctrine.</p>
+
+    <p data-i18n="decide-agm.156">There is no formula that produces the order for every target. It comes from what fires have to achieve against that particular target, and from what we can afford to spend doing it. The commander's fires guidance is therefore written for each high-payoff target, and it is given with the target below.</p>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide-agm.169">Task 1.6 — Choose the method</h3>
+        <span class="status" data-status="decide-10">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide-agm.218">Read the commander’s fires guidance above each target, then select the <strong>primary</strong> and <strong>alternate</strong> means of engagement. Whatever asset is left over is the tertiary means, so you do not have to record it. The engineer team is worked for you as an example. Check each target as you finish it, and the commander’s reasoning will appear beneath it.</p>
+        <div id="d10-match">
+          <div class="match-row worked">
+            <p class="fires-guidance" data-i18n="decide-agm.158"><strong>Fires guidance.</strong> “Destruction of this target is vital to mission success. Do not risk missing. The target is likely on the road, and I would prefer less cratering for future friendly operations.”</p>
+            <div data-i18n="decide-agm.159"><span class="target-name">Worked example — 1. Engineer obstacle team — Neutralize</span><br><span class="target-desc">A small team, unprotected, likely carrying explosives or mines.</span></div>
+            <div class="method-picks">
+              <div class="pick" data-i18n="decide-agm.161"><span class="pick-label">Primary</span><span class="pick-answer">OWA-UAS</span></div>
+              <div class="pick" data-i18n="decide-agm.162"><span class="pick-label">Alternate</span><span class="pick-answer">105 mm howitzer battery</span></div>
+            </div>
+            <p class="row-note always show" data-i18n="decide-agm.163"><strong>Primary, OWA-UAS.</strong> I do not want to risk missing, since they are vital to friendly mission success. Likely a small team carrying explosives or mines.</p>
+            <p class="row-note always show" data-i18n="decide-agm.164"><strong>Alternate, 105 mm howitzer battery.</strong> If I have to use indirect fire, I might as well use the cheapest and most abundant round, given the small and unprotected nature of the target.</p>
+          </div>
+          <div class="match-row">
+            <p class="fires-guidance" data-i18n="decide-agm.165"><strong>Fires guidance.</strong> “We are targeting a small team with a missile. They may still be able to employ it under fire, especially if they are in a protected position.”</p>
+            <div data-i18n="decide-agm.166"><span class="target-name">2. ATGM section — Suppress</span><br><span class="target-desc">A launcher crew in a prepared position.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.167">Primary</span>
+                <select data-answer="owa">
+                  <option value="" data-i18n="decide-agm.168">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.170">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.171">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.172">155 mm M109A2 battery</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.173">Alternate</span>
+                <select data-answer="105">
+                  <option value="" data-i18n="decide-agm.174">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.175">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.176">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.177">155 mm M109A2 battery</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.157">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-agm.178"><strong>Primary, OWA-UAS.</strong> We are targeting a small team with a missile. They may still be able to employ it under fire, especially in a protected position.</p>
+            <p class="row-note always" data-i18n="decide-agm.179"><strong>Alternate, 105 mm howitzer battery.</strong> No reason not to use the cheaper and more abundant round, all things being equal.</p>
+          </div>
+          <div class="match-row">
+            <p class="fires-guidance" data-i18n="decide-agm.180"><strong>Fires guidance.</strong> “This is an area target.”</p>
+            <div data-i18n="decide-agm.181"><span class="target-name">3. 120&nbsp;mm mortar platoon — Neutralize</span><br><span class="target-desc">Three tubes spread across a firing position.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.182">Primary</span>
+                <select data-answer="105">
+                  <option value="" data-i18n="decide-agm.183">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.184">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.185">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.186">155 mm M109A2 battery</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.187">Alternate</span>
+                <select data-answer="155">
+                  <option value="" data-i18n="decide-agm.188">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.189">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.190">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.193">155 mm M109A2 battery</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.196">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-agm.194"><strong>Primary, 105 mm howitzer battery.</strong> An area fire weapon against an area target. No reason not to use the cheaper munition.</p>
+            <p class="row-note always" data-i18n="decide-agm.195"><strong>Alternate, 155 mm M109A2 battery.</strong> Also an area fire weapon against an area target.</p>
+          </div>
+          <div class="match-row">
+            <p class="fires-guidance" data-i18n="decide-agm.197"><strong>Fires guidance.</strong> “The enemy command post may be a single soft tent, or several tents and vehicles. I wish to minimize the risk of missing on the first salvo. If we do not meet the criteria on that first salvo, the enemy is likely to displace rapidly and we may lose the opportunity to attrite key communications equipment and radios.”</p>
+            <div data-i18n="decide-agm.198"><span class="target-name">4. Battalion command post — Destroy</span><br><span class="target-desc">4&nbsp;km behind the river. Not located yet, and it relocates every 24 hours.</span></div>
+            <div class="method-picks">
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.199">Primary</span>
+                <select data-answer="155">
+                  <option value="" data-i18n="decide-agm.200">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.201">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.202">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.203">155 mm M109A2 battery</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.204">Alternate</span>
+                <select data-answer="owa">
+                  <option value="" data-i18n="decide-agm.211">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.212">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.213">105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.214">155 mm M109A2 battery</option>
+                </select>
+              </div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.217">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-agm.215"><strong>Primary, 155 mm M109A2 battery.</strong> I wish to minimize the risk of missing on the first salvo. The 155 covers a greater area.</p>
+            <p class="row-note always" data-i18n="decide-agm.216"><strong>Alternate, OWA-UAS.</strong> The drone buys precision and a guaranteed hit.</p>
+          </div>
+        </div>
+        <div class="feedback" id="d10-feedback"></div>
+      </div>
+    </div>
+    <p class="src" data-i18n="decide-agm.219">Attack guidance is not an exact science. The approved matrix may reflect the opinions of the commander.</p>
+  </div>
+
+  <!-- the finished product: hidden until all three exercises on this page are done -->
+  <div class="panel locked" data-reveal-when="decide-9 decide-8 decide-10">
+    <h2 data-i18n="decide-agm.220">The completed attack guidance matrix</h2>
+    <p data-i18n="decide-agm.221">This is the product you have just built. It goes to the fire support cell as part of the order, and it is read from left to right: what the target is, when it is attacked, what the attack must do, and what attacks it.</p>
+    <table class="doc">
+      <tbody><tr><th data-i18n="decide-agm.222">Priority / HPT</th><th data-i18n="decide-agm.223">When</th><th data-i18n="decide-agm.224">Effect</th><th data-i18n="decide-agm.225">Primary</th><th data-i18n="decide-agm.226">Alternate</th><th data-i18n="decide-agm.227">Tertiary</th></tr>
+      <tr>
+        <td data-i18n="decide-agm.228"><strong>1. Engineer obstacle team</strong></td>
+        <td data-i18n="decide-agm.229">Immediate</td><td data-i18n="decide-agm.230">Neutralize</td>
+        <td data-i18n="decide-agm.231">OWA-UAS</td><td data-i18n="decide-agm.232">105 mm</td><td data-i18n="decide-agm.233">155 mm</td>
+      </tr>
+      <tr>
+        <td data-i18n="decide-agm.234"><strong>2. ATGM section</strong></td>
+        <td data-i18n="decide-agm.235">Planned</td><td data-i18n="decide-agm.236">Suppress</td>
+        <td data-i18n="decide-agm.237">OWA-UAS</td><td data-i18n="decide-agm.238">105 mm</td><td data-i18n="decide-agm.239">155 mm</td>
+      </tr>
+      <tr>
+        <td data-i18n="decide-agm.240"><strong>3. 120&nbsp;mm mortar platoon</strong></td>
+        <td data-i18n="decide-agm.241">Immediate</td><td data-i18n="decide-agm.242">Neutralize</td>
+        <td data-i18n="decide-agm.243">105 mm</td><td data-i18n="decide-agm.244">155 mm</td><td data-i18n="decide-agm.245">OWA-UAS</td>
+      </tr>
+      <tr>
+        <td data-i18n="decide-agm.246"><strong>4. Battalion command post</strong></td>
+        <td data-i18n="decide-agm.247">As acquired</td><td data-i18n="decide-agm.248">Destroy</td>
+        <td data-i18n="decide-agm.249">155 mm</td><td data-i18n="decide-agm.250">OWA-UAS</td><td data-i18n="decide-agm.251">105 mm</td>
+      </tr>
+    </tbody></table>
+    <p class="src" data-i18n="decide-agm.252">105 mm is the 105 mm howitzer battery. 155 mm is the 155 mm M109A2 battery. OWA-UAS is the one-way attack UAS.</p>
+  </div>
+
+  <div class="panel">
+    <p class="src lock-note" data-reveal-when="decide-9 decide-8 decide-10" data-i18n="decide-agm.253">Finish all three tasks on this page and your completed attack guidance matrix will appear above.</p>
+    <div class="page-nav">
+      <a class="btn secondary" href="decide.html" data-i18n="decide-agm.191">← High-Payoff Target List</a>
+      <a class="btn" href="decide-tss.html" data-i18n="decide-agm.192">Next: Target Selection Standards →</a>
+    </div>
+  </div>
+
+</main>
+
+
+<script src="js/lang-zh.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script>
+D3A.registerPage('decide', ['decide-9','decide-8','decide-10']);
+
+D3A.initSelectMatch({
+  containerId: 'd8-agm', checkBtnId: 'd8-check', feedbackId: 'd8-feedback',
+  exerciseId: 'decide-8',
+  explainOk: 'Neutralize takes away the capability we care about, and that is usually all the plan requires. The ATGM section is suppressed: it only has to be unable to shoot accurately while our vehicles are on the chokepoint. The engineers are neutralized: we only require that they are stopped from completing their primary function, blocking or destroying the bridge. The mortars are neutralized: the commander only requires that we remove this enemy capability for the duration of this mission, about a day. The command post is the exception, and the mission did not make it one. The commander decided that if we strike a command post he wants it gone for good. Neutralize would have served, and he accepts what destroy costs in ammunition.',
+  explainBad: 'Use the planning notes, and for each target ask two questions. Which enemy capability must be taken away? And for how long: only while our vehicles are on the chokepoint, only for the length of this mission, or for good? The smallest answer that still serves the plan is usually the right one, because every step up costs ammunition. Only the commander can ask for more than the mission needs.'
+});
+
+D3A.initSelectMatch({
+  containerId: 'd9-match', checkBtnId: 'd9-check', feedbackId: 'd9-feedback',
+  exerciseId: 'decide-9',
+  explainOk: '<ul class="fb-list"><li><strong>HPTL Rank = Commander’s Operational Weight</strong> (<em>What matters most to achieving the overall scheme of maneuver?</em>)</li><li><strong>AGM Timing (“Immediate”) = Window of Vulnerability / Peril</strong> (<em>How fast do we lose the chance to strike it, or how fast will it hurt us?</em>)</li></ul>',
+  explainBad: 'Ask the first question of each target: is the threat happening right now? If it is not, ask whether the effect wears off, or whether an early strike would tell the enemy where we intend to cross.'
+});
+
+D3A.initSelectMatch({
+  containerId: 'd10-match', checkBtnId: 'd10-check', feedbackId: 'd10-feedback',
+  exerciseId: 'decide-10',
+  explainOk: 'Compare your two choices with the commander\'s reasoning under each row.',
+  explainBad: 'The rows marked in red do not match. His reasoning is under each one.'
+});
+</script>
+
+
+</body></html>
