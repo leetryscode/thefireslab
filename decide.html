@@ -65,7 +65,7 @@
       </span><span class="src" data-i18n="decide.017">Adapted from MCTP 3-31B, Appendix A.</span>
     </div>
 
-    <p data-i18n="decide.018">At the end of the third page you will see all three products together on one worksheet, the way a fire support cell actually keeps them.</p>
+    <p data-i18n="decide.018">At the end of the third page you will see all three products together on one worksheet, the way a fire support coordination cell (FSCC) actually keeps them.</p>
 
     <h2 data-i18n="decide.019">Two kinds of targets</h2>
     <p data-i18n="decide.020">Before you can build a target list, you must understand two terms:</p>
@@ -79,25 +79,21 @@
 
   <div class="panel">
     <h2 data-i18n="decide.031">The eight enemy elements — the HVT list</h2>
-    <p data-i18n="decide.032">All eight elements from the S-2's list are shown on the map. The map does not tell you which ones are high-payoff targets. That is your decision in the tasks below.</p>
+    <p data-i18n="decide.032">All eight elements from the S-2's list are in the key below. Neither the map nor the key tells you which ones are high-payoff targets. That is your decision in the tasks below.</p>
     <figure class="map-figure">
-      <div class="map-frame"><div id="decide-map"></div></div>
-      <div class="map-unlocated">
-        <h4 data-i18n="decide.103">Known to exist — location not established</h4>
-        <div id="decide-map-unlocated"></div>
-      </div>
-      <figcaption class="map-caption"><span data-i18n="decide.033">This map shows what we have located, and the restricted fire area around the bridge. A dashed symbol is where we assess he will be. Elements we have not found are set apart below, with no position. </span><a href="scenario.html" data-i18n="decide.034">Open the full map and its complete key</a></figcaption>
+      <div class="map-frame"><img class="map-img" src="img/kordan-situation-map.jpg" width="772" height="774" alt="Situation map of the Kordan bridge sector, showing the coordinated fire line, the retain task at the bridge, and the locations still to be searched."></div>
+      <figcaption class="map-caption"><span data-i18n="decide.033">The map shows the ground, the fire support coordination measures in effect, and the brigade's task at the bridge. A red <strong>?</strong> marks an enemy element we know exists but have not located. </span><a href="scenario.html" data-i18n="decide.034">Open the full map and its complete key</a></figcaption>
     </figure>
     <table class="map-key">
-      <tbody><tr><th data-i18n="decide.035">Ref</th><th data-i18n="decide.036">Element</th><th data-i18n="decide.037">Where it sits</th></tr>
-      <tr><td class="ref">1</td><td data-i18n="decide.038">Ammunition supply point</td><td data-i18n="decide.039">Well to the rear, 6 km behind the river. Holds the mortar and ATGM ammunition.</td></tr>
-      <tr><td class="ref">2</td><td data-i18n="decide.040">ATGM section</td><td data-i18n="decide.041">Dug in on the high ground overlooking the crossing.</td></tr>
-      <tr><td class="ref">3</td><td data-i18n="decide.042">Field kitchen</td><td data-i18n="decide.043">Furthest back of all, with the rear-area trains.</td></tr>
-      <tr><td class="ref">4</td><td data-i18n="decide.044">Engineer obstacle team</td><td data-i18n="decide.045">On the bridge itself.</td></tr>
-      <tr><td class="ref">5</td><td data-i18n="decide.046">Battalion command post</td><td data-i18n="decide.047">In the treeline, 4 km behind the river. Relocates every 24 hours.</td></tr>
-      <tr><td class="ref">6</td><td data-i18n="decide.048">Logistics trucks</td><td data-i18n="decide.049">Move along the road at night between the supply point and the fighting positions.</td></tr>
-      <tr><td class="ref">7</td><td data-i18n="decide.050">Reconnaissance squad</td><td data-i18n="decide.051">The only enemy element on our side of the river.</td></tr>
-      <tr><td class="ref">8</td><td data-i18n="decide.052">120 mm mortar platoon</td><td data-i18n="decide.053">Deepest of the fighting elements, but still close enough to reach the bridge.</td></tr>
+      <tbody><tr><th data-i18n="decide.036">Element</th><th data-i18n="decide.037">Where it sits</th></tr>
+      <tr><td data-i18n="decide.038">Ammunition supply point</td><td data-i18n="decide.039">Well to the rear, 6 km behind the river. Holds the mortar and ATGM ammunition.</td></tr>
+      <tr><td data-i18n="decide.040">ATGM section</td><td data-i18n="decide.041">Dug in on the high ground overlooking the crossing.</td></tr>
+      <tr><td data-i18n="decide.042">Field kitchen</td><td data-i18n="decide.043">Furthest back of all, with the rear-area trains.</td></tr>
+      <tr><td data-i18n="decide.044">Engineer obstacle team</td><td data-i18n="decide.045">On the bridge itself.</td></tr>
+      <tr><td data-i18n="decide.046">Battalion command post</td><td data-i18n="decide.047">Assessed in the treeline, about 4 km behind the river. Not located. Relocates every 24 hours.</td></tr>
+      <tr><td data-i18n="decide.048">Logistics trucks</td><td data-i18n="decide.049">Move along the road at night between the supply point and the fighting positions.</td></tr>
+      <tr><td data-i18n="decide.052">120 mm mortar platoon</td><td data-i18n="decide.053">Deepest of the fighting elements, but still close enough to reach the bridge.</td></tr>
+      <tr><td data-i18n="decide.104">Infantry platoon</td><td data-i18n="decide.105">In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.</td></tr>
     </tbody></table>
   </div>
 
@@ -118,7 +114,6 @@
           <label class="choice"><input type="checkbox" value="trucks"><span><span data-i18n="decide.065">Logistics trucks</span><span class="why" data-i18n="decide.066">Your commander rejected this as an HPT, for the same reason as the ASP: supply interdiction is too slow to affect this fight.</span></span></label>
           <label class="choice"><input type="checkbox" value="mortars"><span><span data-i18n="decide.067">120&nbsp;mm mortar platoon</span><span class="why" data-i18n="decide.068">HPT — the greatest danger to our troops massed at the crossing. The commander demands they be silenced.</span></span></label>
           <label class="choice"><input type="checkbox" value="cp"><span><span data-i18n="decide.069">Battalion command post</span><span class="why" data-i18n="decide.070">HPT — the commander requires enemy command and control to be disrupted. The CP coordinates the defense, and it is how he would call for artillery or reinforcements.</span></span></label>
-          <label class="choice"><input type="checkbox" value="recon"><span><span data-i18n="decide.071">Reconnaissance squad</span><span class="why" data-i18n="decide.072">Your commander rejected this as an HPT. He is an observer — but the S-2 told you the mortar fires on the bridge are already laid on, so <em>he may not use an observer at all</em>. Killing the squad costs him accuracy and timing, not the ability to shoot. And we have not located it, and it moves continuously, so we would spend a sensor to buy very little.</span></span></label>
           <label class="choice"><input type="checkbox" value="infantry"><span><span data-i18n="decide.090">Infantry platoon</span><span class="why" data-i18n="decide.099">Your commander rejected this as an HPT — and this is the one that pulls hardest, because it is the only element on this list that will shoot directly at our soldiers. But it is <em>beyond</em> the bridge. It cannot stop the crossing; it can only fight us after we have made it. Our mission is to get the bridge and pass the force through, and this platoon does not stand between us and that.</span></span></label>
         </div>
         <div class="btn-row"><button class="btn" id="d1-check" data-i18n="decide.073">Check Answers</button></div>
@@ -165,7 +160,7 @@
             <li data-i18n="decide.098"><strong>Disrupt enemy indirect fire</strong> — do not allow the enemy to use mortars on friendly units as we are forced to concentrate near the bridge.</li>
                         <li data-i18n="decide.100"><strong>Disrupt enemy command and control</strong> — there is a significant risk the enemy will request indirect artillery fire or reinforcements when he learns friendly forces are concentrated near the bridge. We must disrupt his command and communications network to mitigate this risk.</li>
           </ol>
-          <p data-i18n="decide.101">Nothing may be allowed to stop a vehicle on the span. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”</p>
+          <p data-i18n="decide.101">Nothing may be allowed to stop a vehicle on the bridge. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”</p>
         </div>
 
         <p data-i18n="decide.102">His three requirements are already in priority order — but you have <strong>four</strong> targets, and the fourth is not simply added to the bottom. Read the last paragraph again and ask which losses would <em>end</em> the mission, and which would only hurt.</p>
@@ -187,20 +182,17 @@
   </div>
 </main>
 
-<script src="js/map.js"></script>
 <script src="js/lang-zh.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script>
-D3A_MAP.render('decide-map');
-D3A_MAP.renderUnlocated('decide-map-unlocated');
 D3A.registerPage('decide', ['decide-1','decide-2','decide-3']);
 
 D3A.initMultiSelect({
   containerId: 'd1-choices', checkBtnId: 'd1-check', feedbackId: 'd1-feedback',
   exerciseId: 'decide-1',
   correct: ['cp','mortars','atgm','engineers'],
-  explainOk: 'These four directly enable the seizure of the bridge. Now look at what you left off. The ammunition supply point is a real military target and it holds the rounds the enemy mortars fire — but his fighting positions already hold three days forward, so destroying it does not stop one round inside our 48 hours. The infantry platoon will shoot at our soldiers, but only after the crossing it cannot prevent. And the reconnaissance squad can only make his fires better, not possible. High value to the enemy is not the test. Payoff for OUR mission is.',
+  explainOk: 'These four directly enable the seizure of the bridge. Now look at what you left off. The ammunition supply point is a real military target and it holds the rounds the enemy mortars fire — but his fighting positions already hold three days forward, so destroying it does not stop one round inside our 48 hours. The infantry platoon will shoot at our soldiers, but only after the crossing it cannot prevent. High value to the enemy is not the test. Payoff for OUR mission is.',
   explainBad: 'You proposed this list to the commander and he did not approve it. Yellow = an HPT you left off. Red = a target he rejected. Ask of each one: if I destroy this, does the bridge fall into our hands sooner? Read what he said under each item, then adjust and nominate again.'
 });
 
@@ -215,8 +207,8 @@ D3A.initSortList({
   listId: 'd3-list', checkBtnId: 'd3-check', feedbackId: 'd3-feedback',
   exerciseId: 'decide-3',
   correctOrder: ['engineers','atgm','mortars','cp'],
-  explainOk: 'The rule behind this order: rank by what would DEFEAT the mission, not by what would hurt most. The engineers and the ATGM section can both end the operation in one event — one drops the bridge, the other leaves a burning vehicle on a span we then cannot cross. The mortars are attritional: they hurt, and we can mitigate them. The command post is last because it is the hardest to find and the slowest to pay off, not because it does not matter.',
-  explainBad: 'You proposed this order to the commander and he rejected it. He wants the list ranked by what would DEFEAT the mission, not by what would hurt most. Green rows are already where he wants them. Ask of each target: would losing this END the mission, or only hurt? Everything that can end it goes above everything that can only hurt — then re-read what he said about a vehicle stopped on the span.'
+  explainOk: 'The rule behind this order: rank by what would DEFEAT the mission, not by what would hurt most. The engineers and the ATGM section can both end the operation in one event — one drops the bridge, the other leaves a burning vehicle on a bridge we then cannot cross. The mortars are attritional: they hurt, and we can mitigate them. The command post is last because it is the hardest to find and the slowest to pay off, not because it does not matter.',
+  explainBad: 'You proposed this order to the commander and he rejected it. He wants the list ranked by what would DEFEAT the mission, not by what would hurt most. Green rows are already where he wants them. Ask of each target: would losing this END the mission, or only hurt? Everything that can end it goes above everything that can only hurt — then re-read what he said about a vehicle stopped on the bridge.'
 });
 </script>
 

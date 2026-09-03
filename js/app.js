@@ -105,20 +105,24 @@ const D3A = (() => {
               'decide-4', 'decide-5', 'decide-6', 'decide-7',
               'decide-8', 'decide-9', 'decide-10',
               'decide-11', 'decide-12'],
-    /* Parked 2026-08-16. Detect, Deliver and Assess are "Coming soon"
-       placeholders while their content is written. An empty list keeps the tab
-       dark (phaseDone requires length > 0) and keeps the course progress bar
-       counting only what a student can actually do. Move the ids back out of
-       PARKED when a phase is ready. */
-    detect:  [],
-    deliver: [],
+    /* Detect came back on 2026-08-24 with Task 2.1, the collection plan.
+       Deliver and Assess are still "Coming soon" placeholders while their
+       content is written. An empty list keeps a tab dark (phaseDone requires
+       length > 0) and keeps the course progress bar counting only what a
+       student can actually do. Move the ids back out of PARKED as each
+       exercise is built. */
+    detect:  ['detect-1', 'detect-3'],
+    deliver: ['deliver-1'],
     assess:  []
   };
 
-  /* The exercise ids each parked phase will bring back with it. */
+  /* The exercise ids still to come. detect-2 is the acquisition drill, which
+     is not written yet. Task 2.2 on the F2T2EA page is detect-3, not detect-2,
+     because detect-2 was already reserved. Displayed task numbers and internal
+     ids do not line up anywhere in this course; do not try to make them. */
   const PARKED = {
-    detect:  ['detect-1', 'detect-2'],
-    deliver: ['deliver-1', 'deliver-2'],
+    detect:  ['detect-2'],
+    deliver: ['deliver-2'],
     assess:  ['assess-1', 'assess-2', 'assess-3']
   };
 
@@ -128,7 +132,11 @@ const D3A = (() => {
     'decide.html':     ['decide-1', 'decide-2', 'decide-3'],
     'decide-tss.html': ['decide-4', 'decide-5', 'decide-6', 'decide-7'],
     'decide-agm.html': ['decide-8', 'decide-9', 'decide-10'],
-    'decide-sync.html': ['decide-11', 'decide-12']
+    'decide-sync.html': ['decide-11', 'decide-12'],
+    /* Detect's second-level nav, added 2026-08-27. 2B (F2T2EA) carries
+       Task 2.2, whose id is detect-3. */
+    'detect.html':          ['detect-1'],
+    'detect-f2t2ea.html':   ['detect-3']
   };
 
   function phaseDone(phase) {
@@ -223,8 +231,13 @@ const D3A = (() => {
       if (!box) return;
       lastTrigger = trigger || null;
       box.classList.add('show');
+      /* A tall reference product scrolls inside its own box, and focusing the
+         close button at the foot of it would scroll the reader straight past
+         the thing they opened. */
+      const panel = box.querySelector('.modal-box');
+      if (panel) panel.scrollTop = 0;
       const close = box.querySelector('.modal-close');
-      if (close) close.focus();
+      if (close) close.focus({ preventScroll: true });
     }
     function closeAll() {
       document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
@@ -241,6 +254,66 @@ const D3A = (() => {
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') closeAll();
     });
+  }
+
+
+  /* ---------- Phase 3: the synchronization matrix as a clock ----------
+
+     Each event on the timeline declares its hour column in data-hour,
+     counting the twelve hours from 1 (T-4) to 12 (T+7). Whichever event is
+     nearest the middle of the screen lights that hour on the rail and
+     rewrites the line under it with what every asset is doing in that hour.
+
+     That line is read out of the matrix in the modal, cell by cell, so the
+     matrix exists exactly once on the page. Reading it means walking each
+     row and accumulating colspans, because a block covering T-4 to T-1 is
+     one cell, not four. */
+  function initTimeline(opts) {
+    const wrap = document.getElementById(opts.clockId);
+    const list = document.getElementById(opts.timelineId);
+    if (!wrap || !list) return;
+    const events = [...list.querySelectorAll('.ev')];
+    if (!events.length) return;
+
+    let current = null;
+    function setCurrent(el) {
+      if (el === current) return;
+      current = el;
+      events.forEach(e => e.classList.toggle('current', e === el));
+      const n = parseInt(el.dataset.hour, 10);
+      wrap.querySelectorAll('.hour-rail li').forEach(s => s.classList.toggle('hour-on', parseInt(s.dataset.hour, 10) === n));
+    }
+
+    list.addEventListener('click', e => {
+      const li = e.target.closest('.ev');
+      if (li) setCurrent(li);
+    });
+
+    /* Follow the reader: whichever event sits nearest the middle of the
+       viewport is the one the clock reports. */
+    window.addEventListener('scroll', () => {
+      const mid = window.innerHeight * 0.55;
+      let best = null, bestD = Infinity;
+      for (const e of events) {
+        const r = e.getBoundingClientRect();
+        const d = Math.abs(r.top + r.height / 2 - mid);
+        if (d < bestD) { bestD = d; best = e; }
+      }
+      if (best) setCurrent(best);
+    }, { passive: true });
+
+    /* The site header is sticky too, so the rail has to sit under whatever
+       height it happens to be at this viewport width. */
+    const header = document.querySelector('header.site');
+    function place() { if (header) wrap.style.top = header.offsetHeight + 'px'; }
+    window.addEventListener('resize', place);
+    place();
+
+    document.addEventListener('d3a:langchange', () => {
+      if (current) { const el = current; current = null; setCurrent(el); }
+    });
+
+    setCurrent(events[0]);
   }
 
   /* ---------- Reusable exercise helpers ---------- */
@@ -409,6 +482,395 @@ const D3A = (() => {
     });
   }
 
+
+
+  /* The target workbench. The four high-payoff targets across the six F2T2EA
+     steps, pinned under the hour rail so a student can see where every target
+     stands while reading an event. It is the workbook's stand-in for a target
+     workbench or target factory.
+
+     Each row is ONE RADIO GROUP. That is deliberate: a target sits in exactly
+     one column, which is what a radio group means, and it buys keyboard
+     support, :checked styling with no JS, and a control jsdom can drive. The
+     alternative, dragging, does not fire on touch and cannot be tested here.
+
+     The leftmost column is HPTL: on the list, not yet detected. Every target
+     starts there, so "on the list but nobody has found it" is a visible state
+     rather than an empty row.
+
+     Positions persist under cfg.stateKey as { engineers: 'fix', ... }. Moving
+     a target fires d3a:wbmove on the document with { target, from, to }, which
+     is the hook a question engine listens for. */
+  function initWorkbench(cfg) {
+    const board = document.getElementById(cfg.boardId);
+    if (!board) return null;
+    const KEY = cfg.stateKey || 'workbench';
+    const rows = () => [...board.querySelectorAll('.wb-row')];
+
+    function positions() {
+      const out = {};
+      rows().forEach(r => {
+        const on = r.querySelector('input[type="radio"]:checked');
+        out[r.dataset.target] = on ? on.value : 'hptl';
+      });
+      return out;
+    }
+    function persist() { const s = load(); s[KEY] = positions(); save(s); }
+
+    function restore() {
+      const saved = load()[KEY];
+      const want = (saved && typeof saved === 'object') ? saved : {};
+      rows().forEach(r => {
+        const at = want[r.dataset.target] || 'hptl';
+        const input = r.querySelector('input[value="' + at + '"]');
+        if (input) input.checked = true;
+        r.dataset.at = at;
+      });
+    }
+
+    board.addEventListener('change', e => {
+      const input = e.target;
+      if (!input || input.type !== 'radio') return;
+      const row = input.closest('.wb-row');
+      if (!row) return;
+      const from = row.dataset.at || 'hptl';
+      if (from === input.value) return;
+      row.dataset.at = input.value;
+      persist();
+      document.dispatchEvent(new CustomEvent('d3a:wbmove', {
+        detail: { target: row.dataset.target, from: from, to: input.value }
+      }));
+    });
+
+    restore();
+
+    return {
+      positions: positions,
+      get: name => positions()[name],
+      set: function (name, step) {
+        const row = rows().find(r => r.dataset.target === name);
+        if (!row) return false;
+        const input = row.querySelector('input[value="' + step + '"]');
+        if (!input) return false;
+        input.checked = true;
+        row.dataset.at = step;
+        persist();
+        return true;
+      },
+      reset: function () { rows().forEach(r => this.set(r.dataset.target, 'hptl')); }
+    };
+  }
+
+  /* A step ladder. One situation at a time: the next is not revealed until
+     the current one is answered correctly. Built for Task 2.2, where a single
+     tank is followed through F2T2EA and the shape of the path is the lesson,
+     including the two places where it goes backwards.
+
+     Progress is stored as a count under "<exerciseId>.step", so a student who
+     closes the browser resumes rather than replaying nine correct answers.
+     That key is not an exercise id, so it never counts towards phase
+     completion or the course progress bar.
+
+     Steps are hidden by CSS (.lad-step is display:none until .shown), never by
+     JS, so nothing flashes into view while the page is loading. Same reason
+     data-reveal-when is done that way.
+
+     cfg = { containerId, feedbackId, exerciseId, counterId, explainOk, explainBad } */
+  function initStepLadder(cfg) {
+    const container = document.getElementById(cfg.containerId);
+    if (!container) return;
+    const steps = () => [...container.querySelectorAll('.lad-step')];
+    const total = steps().length;
+    if (!total) return;
+    const KEY_AT = cfg.exerciseId + '.step';
+
+    function solvedCount() {
+      const n = load()[KEY_AT];
+      return typeof n === 'number' ? Math.max(0, Math.min(n, total)) : 0;
+    }
+    function setSolved(n) { const s = load(); s[KEY_AT] = n; save(s); }
+
+    /* Everything is re-queried on every use. i18n.js rewrites the innerHTML of
+       tagged blocks when a language is applied, so anything cached at start-up
+       is a detached orphan a moment later. */
+    function draw() {
+      const done = solvedCount();
+      steps().forEach((li, i) => {
+        li.classList.toggle('shown', i <= done);
+        li.classList.toggle('solved', i < done);
+        const sel = li.querySelector('select[data-answer]');
+        if (!sel) return;
+        if (i < done) {
+          sel.value = sel.dataset.answer;
+          sel.classList.remove('incorrect');
+          sel.classList.add('correct');
+          sel.disabled = true;
+          li.querySelectorAll('.row-note.ok').forEach(n => n.classList.add('show'));
+        } else {
+          sel.disabled = false;
+        }
+      });
+      const counter = cfg.counterId && document.getElementById(cfg.counterId);
+      if (counter) {
+        counter.textContent = done >= total
+          ? t('ui.laddone', 'All {total} situations answered.', { total: total })
+          : t('ui.ladstep', 'Situation {n} of {total}', { n: done + 1, total: total });
+      }
+    }
+
+    /* A prompt sits beside the Check button, not in a banner at the foot of
+       the page, which a student working at step nine would never see. The
+       element is empty in the HTML so the tagger gives it no key. */
+    function say(li, msg) {
+      const m = li.querySelector('.tev-msg');
+      if (m) m.textContent = msg || '';
+    }
+
+    function check(li) {
+      say(li, '');
+      const sel = li.querySelector('select[data-answer]');
+      if (!sel) return;
+      if (!sel.value) {
+        showFeedback(cfg.feedbackId, false, '', t('ui.selectfirst', 'Select an answer first.'));
+        return;
+      }
+      li.querySelectorAll('.row-note').forEach(n => n.classList.remove('show'));
+      const right = sel.value === sel.dataset.answer;
+      sel.classList.remove('correct', 'incorrect');
+      sel.classList.add(right ? 'correct' : 'incorrect');
+
+      if (!right) {
+        /* Same note contract as initSelectMatch: .bad[data-for] targets one
+           wrong option, a .bad without data-for is the catch-all. */
+        const bad = [...li.querySelectorAll('.row-note.bad')];
+        const note = bad.find(n => n.dataset.for === sel.value) || bad.find(n => !n.dataset.for);
+        if (note) note.classList.add('show');
+        if (cfg.explainBad) showFeedback(cfg.feedbackId, false, cfg.explainOk, cfg.explainBad, cfg.exerciseId);
+        return;
+      }
+
+      const idx = steps().indexOf(li);
+      if (idx === solvedCount()) setSolved(idx + 1);
+      draw();
+
+      if (solvedCount() >= total) {
+        showFeedback(cfg.feedbackId, true, cfg.explainOk, cfg.explainBad, cfg.exerciseId);
+        complete(cfg.exerciseId);
+      } else {
+        const fb = document.getElementById(cfg.feedbackId);
+        if (fb) fb.classList.remove('show');
+      }
+    }
+
+    container.addEventListener('click', e => {
+      const btn = e.target.closest && e.target.closest('button.row-check');
+      if (!btn) return;
+      const li = btn.closest('.lad-step');
+      if (li) check(li);
+    });
+
+    document.addEventListener('DOMContentLoaded', draw);
+    document.addEventListener('d3a:langchange', draw);
+    draw();
+  }
+
+
+  /* Gated timeline events on deliver.html. Same contract as initStepLadder:
+     one event at a time, the next is revealed only when the current one is
+     right, and the position resumes from the store. The difference is what
+     gets checked.
+
+     An event answers in one of two ways:
+       data-target + data-answer   the student moves that target's box on the
+                                   pinned workbench, and the board is read
+       a <select data-answer>      an ordinary choice, e.g. which asset fires
+
+     The board is NOT reset between events. Positions accumulate, which is the
+     whole point of a workbench, and a target may move backwards.
+
+     cfg = { containerId, feedbackId, exerciseId, counterId, workbench,
+             explainOk, explainBad } */
+  function initTargetEvents(cfg) {
+    const box = document.getElementById(cfg.containerId);
+    if (!box) return;
+    const steps = () => [...box.querySelectorAll('.tev')];
+    const total = steps().length;
+    if (!total) return;
+    const KEY_AT = cfg.exerciseId + '.step';
+    /* Which option the student chose, per step index. Needed because a step may
+       accept more than one answer (data-answer="a|b"), so on a reload we cannot
+       reconstruct the choice from the markup the way a single-answer step can. */
+    const KEY_PICK = cfg.exerciseId + '.pick';
+    const wb = cfg.workbench || null;
+
+    function solvedCount() {
+      const n = load()[KEY_AT];
+      return typeof n === 'number' ? Math.max(0, Math.min(n, total)) : 0;
+    }
+    function setSolved(n) { const s = load(); s[KEY_AT] = n; save(s); }
+    function picks() { return load()[KEY_PICK] || {}; }
+    function setPick(i, v) { const s = load(); const p = s[KEY_PICK] || {}; p[i] = v; s[KEY_PICK] = p; save(s); }
+    /* A .row-note.pick is shown for the option actually chosen, right or wrong.
+       That is what lets one step carry a different justification per answer when
+       more than one answer is genuinely defensible. */
+    function showPick(li, given) {
+      li.querySelectorAll('.row-note.pick').forEach(n => n.classList.toggle('show', n.dataset.for === given));
+    }
+
+    function draw() {
+      const done = solvedCount();
+      const chosen = picks();
+      steps().forEach((li, i) => {
+        li.classList.toggle('shown', i <= done);
+        li.classList.toggle('solved', i < done);
+        const sel = li.querySelector('select[data-answer]');
+        if (sel) {
+          if (i < done) {
+            sel.value = chosen[i] || sel.dataset.answer.split('|')[0];
+            sel.disabled = true; sel.classList.add('correct');
+          } else sel.disabled = false;
+        }
+        if (i < done) showPick(li, chosen[i]);
+        /* A report can put a target on the board that was not on the HPTL.
+           The row is hidden in the markup and revealed with its step, so a
+           student is not told in advance that another one is coming. */
+        if (i <= done && li.dataset.revealRow) {
+          const row = document.querySelector('.wb-row[data-target="' + li.dataset.revealRow + '"]');
+          if (row) row.classList.remove('is-new');
+        }
+        /* The mirror of revealRow. A target whose cycle is finished comes off
+           the board so the pinned bar does not grow without limit as new
+           targets arrive. Its stored position is untouched; only the row is
+           hidden, and only once the step has actually been pressed, which is
+           why this reads i < done and revealRow reads i <= done. */
+        if (li.dataset.removeRow) {
+          li.dataset.removeRow.split(/\s+/).forEach(name => {
+            const row = document.querySelector('.wb-row[data-target="' + name + '"]');
+            if (row) row.classList.toggle('is-done', i < done);
+          });
+        }
+        if (i < done) {
+          li.querySelectorAll('.row-note.always, .row-note.ok').forEach(n => n.classList.add('show'));
+          const v = li.querySelector('.tev-verdict');
+          if (v) v.textContent = t('ui.correct', 'Correct.');
+          li.classList.add('right');
+        }
+      });
+      const counter = cfg.counterId && document.getElementById(cfg.counterId);
+      if (counter) {
+        counter.textContent = done >= total
+          ? t('ui.laddone', 'All {total} situations answered.', { total: total })
+          : t('ui.ladstep', 'Situation {n} of {total}', { n: done + 1, total: total });
+      }
+    }
+
+    /* Lee's explanations are written to be shown whether the student got it
+       right or wrong: "the explaination / hint when the student gets it right
+       or wrong". That is what .row-note.always already means.
+
+       The verdict line is a deliberately EMPTY element in the HTML. The tagger
+       skips wordless elements, so it carries no key of its own and app.js
+       writes the already-translated ui.correct or ui.tryagain into it. Same
+       trick as the situation counter.
+
+       A wrong answer MUST say so. Lee, 2026-08-27: "if they get it wrong, they
+       just get a message. It's not obvious that they got it wrong. And they may
+       just click the button for the assess button." Leaving the line blank read
+       as silence, and silence next to an explanation that shows either way is
+       indistinguishable from success. */
+    function reveal(li, right) {
+      li.querySelectorAll('.row-note.always').forEach(n => n.classList.add('show'));
+      const v = li.querySelector('.tev-verdict');
+      if (v) v.textContent = right ? t('ui.correct', 'Correct.')
+                                   : t('ui.tryagain', 'Not quite. Try again.');
+      li.classList.toggle('right', !!right);
+    }
+
+    /* A prompt sits beside the Check button, not in a banner at the foot of
+       the page, which a student working at step nine would never see. The
+       element is empty in the HTML so the tagger gives it no key. */
+    function say(li, msg) {
+      const m = li.querySelector('.tev-msg');
+      if (m) m.textContent = msg || '';
+    }
+
+    function check(li) {
+      say(li, '');
+      const sel = li.querySelector('select[data-answer]');
+      let given, want;
+      if (li.dataset.action === 'confirm') {
+        /* An acknowledgement step. One button, nothing to get wrong, so it
+           carries no .tev-verdict: there is no judgement to report. It still
+           gates the run like any other step. */
+        given = want = 'confirm';
+      } else if (sel) {
+        if (!sel.value) { say(li, t('ui.selectfirst', 'Select an answer first.')); return; }
+        given = sel.value; want = sel.dataset.answer;
+        sel.classList.remove('correct', 'incorrect');
+        sel.classList.add(given === want ? 'correct' : 'incorrect');
+      } else {
+        want = li.dataset.answer;
+        given = wb ? wb.get(li.dataset.target) : null;
+        if (given === 'hptl' && want !== 'hptl') {
+          say(li, t('ui.movefirst', 'Move the target on the board first.'));
+          return;
+        }
+      }
+
+      /* data-answer may list several acceptable values separated by "|", for a
+         step where the doctrine genuinely admits more than one defensible call. */
+      const right = want.split('|').indexOf(given) !== -1;
+      showPick(li, given);
+      li.classList.toggle('wrong', !right);
+      reveal(li, right);
+      if (!right) {
+        const bad = [...li.querySelectorAll('.row-note.bad')];
+        const note = bad.find(n => n.dataset.for === given) || bad.find(n => !n.dataset.for);
+        if (note) note.classList.add('show');
+        if (cfg.explainBad) showFeedback(cfg.feedbackId, false, cfg.explainOk, cfg.explainBad, cfg.exerciseId);
+        return;
+      }
+      li.querySelectorAll('.row-note.bad').forEach(n => n.classList.remove('show'));
+      li.querySelectorAll('.row-note.ok').forEach(n => n.classList.add('show'));
+
+      /* data-set="target:step ..." moves a box FOR the student, used on a
+         narrative beat where the FSCC has already made the call. Applied here
+         and NOT in draw(), because re-applying on every redraw would undo a
+         later step that moves the same target on. The position persists in
+         deliver.wb, so a reload needs no replay. */
+      if (li.dataset.set && wb) {
+        li.dataset.set.split(/\s+/).forEach(pair => {
+          const bits = pair.split(':');
+          if (bits.length === 2 && bits[0] && bits[1]) wb.set(bits[0], bits[1]);
+        });
+      }
+
+      const idx = steps().indexOf(li);
+      setPick(idx, given);
+      if (idx === solvedCount()) setSolved(idx + 1);
+      draw();
+
+      if (solvedCount() >= total) {
+        if (cfg.explainOk) showFeedback(cfg.feedbackId, true, cfg.explainOk, cfg.explainBad, cfg.exerciseId);
+        complete(cfg.exerciseId);
+      } else {
+        const fb = cfg.feedbackId && document.getElementById(cfg.feedbackId);
+        if (fb) fb.classList.remove('show');
+      }
+    }
+
+    box.addEventListener('click', e => {
+      const btn = e.target.closest && e.target.closest('button.row-check');
+      if (!btn) return;
+      const li = btn.closest('.tev');
+      if (li) check(li);
+    });
+
+    document.addEventListener('DOMContentLoaded', draw);
+    document.addEventListener('d3a:langchange', draw);
+    draw();
+  }
+
   /* Decision-card drills (detect validation, assess BDA).
      Each .report-card has data-answer; its buttons have data-value.
      cfg = { containerId, exerciseId, onAllCorrect } */
@@ -462,6 +924,8 @@ const D3A = (() => {
   initModals();
 
   return { registerPage, complete, isComplete, resetAll, refreshUI, PHASES, PARKED,
+           initTimeline,
            initMultiSelect, initSingleSelect, initSortList, initSelectMatch, initDecisionCards,
+           initStepLadder, initWorkbench, initTargetEvents,
            get storageAvailable() { return store.available; } };
 })();

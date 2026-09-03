@@ -118,6 +118,12 @@
   --bad: #a3352a;
   --bad-bg: #f9eae7;
   --warn-bg: #f9f2df;
+  /* "you are here" on the Deliver timeline. Deliberately NOT --phase-tint:
+     on Deliver that resolves to #faebe8, which is two values away from
+     --bad-bg #f9eae7, so the step you were reading looked exactly like a step
+     you had got wrong. Gold is already this site's you-are-here colour, on the
+     active hour-rail cell and the nav underline. */
+  --here-bg: #fdf3d9;
 
   --radius: 14px;
   --radius-sm: 8px;
@@ -717,7 +723,7 @@ table.doc td ul.opts li:last-child { margin-bottom: 0; }
 .match-row:last-of-type { border-bottom: none; }
 .match-row .target-name { font-weight: 600; }
 .match-row .target-desc { font-size: .88rem; color: var(--muted); font-weight: 400; }
-.match-row select, .agm-grid select {
+.match-row select, .agm-grid select, table.cpm select {
   width: 100%;
   font-family: var(--font-body);
   padding: 9px 11px;
@@ -727,9 +733,9 @@ table.doc td ul.opts li:last-child { margin-bottom: 0; }
   background: #fff;
   color: var(--ink);
 }
-.match-row select:focus, .agm-grid select:focus { outline: 2px solid var(--phase); outline-offset: 1px; }
-.match-row select.correct, .agm-grid select.correct { border-color: var(--ok); background: var(--ok-bg); }
-.match-row select.incorrect, .agm-grid select.incorrect { border-color: var(--bad); background: var(--bad-bg); }
+.match-row select:focus, .agm-grid select:focus, table.cpm select:focus { outline: 2px solid var(--phase); outline-offset: 1px; }
+.match-row select.correct, .agm-grid select.correct, table.cpm select.correct { border-color: var(--ok); background: var(--ok-bg); }
+.match-row select.incorrect, .agm-grid select.incorrect, table.cpm select.incorrect { border-color: var(--bad); background: var(--bad-bg); }
 
 /* Commander's fires guidance for a single target. Sits above the target inside
    a match row (grid-column spans it) and also stands alone in the worked
@@ -802,7 +808,7 @@ table.doc td ul.opts li:last-child { margin-bottom: 0; }
 .row-note.ok { border-left-color: var(--ok); background: var(--ok-bg); }
 /* neutral justification note: shown right or wrong, so it must not read
    as a verdict. Brass rule, no tinted fill. */
-.row-note.always { border-left-color: var(--gold-fill); background: var(--bg); }
+.row-note.always, .row-note.pick { border-left-color: var(--gold-fill); background: var(--bg); }
 .row-note.bad { border-left-color: var(--bad); background: var(--bad-bg); }
 
 /* AGM grid */
@@ -1080,6 +1086,7 @@ dl.glossary dd { margin: 2px 0 0 0; color: var(--muted); font-size: .98rem; }
   padding: 10px 12px 6px;
 }
 .map-svg { display: block; width: 100%; height: auto; }
+.map-img { display: block; width: 100%; height: auto; border-radius: 2px; }
 
 .map-badge-bg {
   fill: var(--panel);
@@ -1206,11 +1213,65 @@ table.map-key caption {
    Assets down the left, one column per hour across the top; blocks are
    colspans. Colour is redundant with the text inside each block, since every
    block names its own target, so nothing here is carried by hue alone. */
+/* ---------- the collection plan matrix (detect.html) ----------
+   Seven given columns plus the student's LTIOV choice and a per-row check
+   button. Wider than a phone, so it scrolls sideways inside .tsm-scroll
+   rather than being reflowed into something the student would not
+   recognise from his own spreadsheet. */
+table.cpm {
+  border-collapse: collapse;
+  min-width: 900px;
+  width: 100%;
+  font-size: .88rem;
+}
+table.cpm th, table.cpm td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+table.cpm thead th {
+  background: var(--phase);
+  color: #fff;
+  font-family: var(--font-head);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: .78rem;
+  white-space: nowrap;
+}
+table.cpm td.pir, table.cpm td.sir {
+  background: var(--phase-tint);
+  font-weight: 600;
+  vertical-align: middle;
+}
+table.cpm td.pair { white-space: nowrap; }
+/* Where to look holds one short area name per line, so it is given a narrow
+   fixed column instead of being allowed to take the width of "Kordan Bridge".
+   Its heading is the only one allowed to wrap; left on one line the uppercase
+   "WHERE TO LOOK" is what sets the floor, not the cells under it. */
+table.cpm td.where { width: 4.6rem; }
+table.cpm thead th.col-where { white-space: normal; }
+table.cpm td.ltiov { width: 148px; }
+table.cpm td.ltiov .btn { margin-top: 7px; padding: 7px 12px; font-size: .82rem; width: 100%; }
+table.cpm td.trigger { min-width: 190px; }
+
 .tsm-scroll {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   margin: 18px 0 10px;
+}
+/* Inside the exercise box the scroller's own border read as a box drawn
+   inside a box. Here it is pulled out to the full width of the white area
+   and keeps only the rules above and below it. -22px is .exercise-body's
+   padding, which does not change at any breakpoint. */
+#d1-cpm .tsm-scroll {
+  margin-left: -22px;
+  margin-right: -22px;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
 }
 table.tsm {
   border-collapse: collapse;
@@ -1325,7 +1386,8 @@ table.tsm caption {
 :lang(zh-Hant) .task-label, :lang(zh-Hant) .phase-card .num,
 :lang(zh-Hant) .mode-card .mode-tag, :lang(zh-Hant) .soon-tag,
 :lang(zh-Hant) .badge-soon, :lang(zh-Hant) dl.glossary dt,
-:lang(zh-Hant) table.doc th, :lang(zh-Hant) .agm-grid th {
+:lang(zh-Hant) table.doc th, :lang(zh-Hant) .agm-grid th,
+:lang(zh-Hant) table.cpm th {
   font-family: var(--font-cjk);
   text-transform: none;
   letter-spacing: .02em;
@@ -1380,3 +1442,628 @@ table.tsm caption {
 }
 :lang(zh-Hant) table.tsm td.blk { line-height: 1.7; }
 :lang(zh-Hant) .map-caption { line-height: 1.8; }
+
+/* ---------- Phase 3: the clock and the event timeline ----------
+   The synchronization matrix is the clock, but pinning all seven of its rows
+   under the header costs 450px of a 900px screen, so what sticks is its time
+   axis: twelve hours, the current one lit, and one generated line naming what
+   each asset is doing in that hour. The line is built in JS from the matrix
+   itself, which lives once, in the modal, so there is no second copy to drift.
+   The whole strip is about 100px and never changes height, which is what
+   keeps it from shoving the page around as the reader scrolls. */
+.tsm-clock {
+  position: sticky;
+  z-index: 6;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0 8px;
+  margin-bottom: 4px;
+}
+.clock-head { display: flex; align-items: center; gap: 12px; }
+.hour-rail { display: flex; gap: 2px; list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-width: 0; }
+/* The three reference products. They were fixed buttons floating over the
+   bottom of the page and Lee did not find them, so they now sit in the same
+   pinned bar as the clock, which is where he is already looking. */
+.clock-tools { display: flex; gap: 6px; flex: 0 0 auto; }
+.clock-tools .tool {
+  background: var(--phase);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-head);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.clock-tools .tool:hover { filter: brightness(1.14); }
+.hour-rail li {
+  flex: 1 1 0;
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--muted);
+  background: var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 5px 2px;
+  cursor: default;
+}
+.hour-rail li.hr-h { color: var(--gold); }
+.hour-rail li.hour-on {
+  background: var(--gold-fill);
+  color: var(--gold-on-fill);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.clock-now {
+  margin: 8px 0 0;
+  font-size: .82rem;
+  line-height: 1.5;
+  color: var(--muted);
+  min-height: 2.4em;
+}
+.clock-now b { color: var(--ink); font-weight: 600; }
+.clock-now .sep { color: var(--border); padding: 0 6px; }
+
+/* The events themselves. One card per report, the time in its own column
+   so the eye can run down the clock without reading the prose. */
+ol.timeline { list-style: none; margin: 22px 0 0; padding: 0; }
+li.ev {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 0 16px;
+  border-left: 3px solid var(--border);
+  padding: 14px 0 14px 16px;
+  cursor: pointer;
+}
+li.ev + li.ev { border-top: 1px solid var(--border-soft); }
+li.ev.current { border-left-color: var(--gold-fill); background: var(--here-bg); }
+.ev-time {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: .92rem;
+  color: var(--phase);
+}
+.ev-body { min-width: 0; }
+.ev-report { margin: 0 0 12px; font-weight: 600; }
+.ev-ask, .ev-say { margin-top: 10px; }
+.ev-ask h4, .ev-say h4 {
+  margin: 0 0 4px;
+  font-family: var(--font-head);
+  font-size: .8rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* A question that has been written reads as prose, not as an empty slot. */
+p.ev-q { margin: 0 0 4px; font-weight: 600; color: var(--ink); }
+/* One dropdown and its check button, not the two-column pairing grid the
+   .match-row class was written for. The notes still span the whole row. */
+.match-row.ev-choice { grid-template-columns: minmax(0, 1fr) auto; padding-bottom: 0; border-bottom: none; }
+.match-row.ev-choice select { width: 100%; }
+
+p.todo {
+  margin: 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+@media (max-width: 780px) {
+  .clock-head { flex-wrap: wrap; }
+  .hour-rail { flex: 1 1 100%; order: 2; }
+  .clock-tools { flex: 1 1 100%; order: 1; }
+  .clock-tools .tool { flex: 1 1 0; }
+}
+@media (max-width: 600px) {
+  li.ev { grid-template-columns: 1fr; gap: 6px; }
+  .hour-rail li { font-size: .68rem; padding: 4px 1px; }
+}
+
+/* ---------- Reference products, reachable from anywhere on the page ----------
+   Fixed buttons rather than links back to 1C and 1D, because the whole point
+   is not having to leave the event you are working on. */
+/* A reference product opened mid-task must not be taller than the screen it
+   is being read on, so the box caps at the viewport and scrolls inside. The
+   map is a 766px picture and upscaling it only blurs it. */
+.modal-box.wide { max-width: 94vw; max-height: 88vh; overflow-y: auto; }
+.modal-box.wide img.nai-map { max-width: 766px; display: block; margin: 0 auto; }
+.modal-box.wide .hat-scroll, .modal-box.wide .tsm-scroll { margin-top: 14px; }
+.modal-box.wide .map-figure { margin: 14px 0 0; }
+.modal-box.wide table.map-key { margin-top: 14px; }
+
+/* =========================================================
+   Phase 2B — the F2T2EA table (detect-f2t2ea.html)
+   Two columns: term and doctrinal definition. Lee's examples column was
+   lifted out on 2026-08-27 and lives in Work In Progress/f2t2ea-examples.md
+   until it comes back as an exercise. The .own badge inside the term cell
+   names the D3A function that owns each step, because Target and Engage are
+   practised in Deliver and Assess in Phase 4. FM 3-60 Appendix A is the
+   warrant for that split.
+   ========================================================= */
+table.doc.f2t2ea td.f2-step { width: 1%; white-space: nowrap; }
+table.doc.f2t2ea td.f2-step strong { display: block; font-size: 1.02rem; }
+
+.own {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 3px;
+}
+.own-detect  { color: var(--p-detect);  border-color: var(--p-detect);  background: var(--p-detect-tint); }
+.own-deliver { color: var(--p-deliver); border-color: var(--p-deliver); background: var(--p-deliver-tint); }
+.own-assess  { color: var(--p-assess);  border-color: var(--p-assess);  background: var(--p-assess-tint); }
+
+@media (max-width: 700px) {
+  table.doc.f2t2ea td.f2-step { white-space: normal; }
+}
+
+:lang(zh-Hant) .own { font-family: var(--font-cjk); text-transform: none; letter-spacing: .02em; }
+
+/* =========================================================
+   Phase 2B — the D3A cycle with F2T2EA inside it
+   The ring, the arrowheads and nothing else are SVG. Every word is an
+   absolutely positioned HTML span, because tools/tag-i18n.js skips <svg>
+   and text inside a drawing could never be translated. Same rule the map
+   follows. Positions are percentages of a square box, so the whole figure
+   scales as one object.
+   ========================================================= */
+figure.cycle { margin: 22px auto 6px; max-width: 580px; padding: 30px 0 6px; }
+
+/* The phase pills sit OUTSIDE the ring, so the square drawing box is narrower
+   than the figure and they hang into the margin either side. */
+.cycle-ring {
+  position: relative;
+  width: 76%;
+  margin: 0 auto 34px;
+  aspect-ratio: 1 / 1;
+  font-size: clamp(.58rem, 1.15vw, .8rem);
+}
+.cycle-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ring-arc  { fill: none; stroke: var(--muted); stroke-opacity: .34; stroke-width: 1.3; }
+.ring-head { fill: var(--muted); fill-opacity: .55; }
+
+.cycle-ring .cyc-phase,
+.cycle-ring .cyc-step,
+.cycle-ring .cyc-none {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  background: var(--panel);
+  text-align: center;
+}
+.cycle-ring .cyc-phase {
+  font-family: var(--font-head);
+  font-size: 1.28em;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: .34em .9em;
+  border: 2px solid;
+  border-radius: 999px;
+}
+.cycle-ring .cyc-step {
+  font-family: var(--font-mono);
+  font-size: 1em;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: .3em .7em;
+  border: 1px solid;
+  border-radius: 999px;
+}
+
+/* the four phase accents, reused from the badges in the table below */
+.cyc-decide  { color: var(--p-decide);  border-color: var(--p-decide); }
+.cyc-detect  { color: var(--p-detect);  border-color: var(--p-detect); }
+.cyc-deliver { color: var(--p-deliver); border-color: var(--p-deliver); }
+.cyc-assess  { color: var(--p-assess);  border-color: var(--p-assess); }
+.cycle-ring .cyc-step.cyc-detect  { background: var(--p-detect-tint); }
+.cycle-ring .cyc-step.cyc-deliver { background: var(--p-deliver-tint); }
+.cycle-ring .cyc-step.cyc-assess  { background: var(--p-assess-tint); }
+
+/* Decide owns a quarter of the ring and has no F2T2EA step in it. An empty
+   quarter reads as a drawing mistake, so the slot is filled with a dashed
+   ghost that says why it is empty. Lower case on purpose: it is not a step. */
+.cycle-ring .cyc-none {
+  font-family: var(--font-mono);
+  font-size: .92em;
+  letter-spacing: .03em;
+  color: var(--muted);
+  padding: .3em .7em;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+}
+
+/* The steps are a sequence, so they are numbered. The numbers also keep every
+   label a unique English string: tools/tag-i18n.js carries translations across
+   by English source alone, and four other pages already own the bare word
+   "Target" as 目標, which silently overwrote this chip's 目標處理 twice. */
+.cycle-ring .cyc-step .n {
+  color: var(--muted);
+  font-weight: 500;
+  margin-right: .45em;
+}
+
+figure.cycle figcaption {
+  margin-top: 14px;
+  font-size: .88rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Label positions, computed on a circle of radius 36% of the square box.
+   They live here rather than in inline styles so that a narrow screen can
+   re-place the whole figure without touching the markup or its keys. */
+.cycle-ring .at-decide { left: 50.0%; top: 0.0%; }
+.cycle-ring .at-detect { left: 100.0%; top: 50.0%; }
+.cycle-ring .at-deliver { left: 50.0%; top: 100.0%; }
+.cycle-ring .at-assess { left: 0.0%; top: 50.0%; }
+.cycle-ring .at-find { left: 69.7%; top: 34.6%; }
+.cycle-ring .at-fix { left: 75.0%; top: 50.0%; }
+.cycle-ring .at-track { left: 69.7%; top: 65.4%; }
+.cycle-ring .at-target { left: 59.4%; top: 73.2%; }
+.cycle-ring .at-engage { left: 36.8%; top: 71.2%; }
+.cycle-ring .at-assessstep { left: 25.1%; top: 52.6%; }
+.cycle-ring .at-none { left: 50.0%; top: 25.0%; }
+
+@media (max-width: 700px) {
+  /* On a phone the words do not shrink as fast as the box, so three things
+     give at once: the chips move out towards the ring, the phase pills move
+     further out again, and the type and padding tighten. Worst case is the
+     left-hand side, where the ASSESS pill and the Assess chip sit on the
+     same horizontal line. */
+  .cycle-ring { font-size: .5rem; }
+  .cycle-ring .cyc-phase { padding: .28em .6em; letter-spacing: .04em; }
+  .cycle-ring .cyc-step,
+  .cycle-ring .cyc-none  { padding: .26em .5em; }
+  .cycle-ring .at-decide { left: 50.0%; top: 0.0%; }
+  .cycle-ring .at-detect { left: 100.0%; top: 50.0%; }
+  .cycle-ring .at-deliver { left: 50.0%; top: 100.0%; }
+  .cycle-ring .at-assess { left: 0.0%; top: 50.0%; }
+  .cycle-ring .at-find { left: 72.9%; top: 32.1%; }
+  .cycle-ring .at-fix { left: 79.0%; top: 50.0%; }
+  .cycle-ring .at-track { left: 72.9%; top: 67.9%; }
+  .cycle-ring .at-target { left: 60.9%; top: 76.9%; }
+  .cycle-ring .at-engage { left: 34.6%; top: 74.6%; }
+  .cycle-ring .at-assessstep { left: 21.2%; top: 53.0%; }
+  .cycle-ring .at-none { left: 50.0%; top: 21.0%; }
+}
+
+:lang(zh-Hant) .cycle-ring .cyc-phase,
+:lang(zh-Hant) .cycle-ring .cyc-step,
+:lang(zh-Hant) .cycle-ring .cyc-none {
+  font-family: var(--font-cjk);
+  text-transform: none;
+  letter-spacing: .02em;
+}
+
+/* =========================================================
+   The step ladder (Task 2.2 on detect-f2t2ea.html)
+   One situation at a time. Hidden steps are display:none in CSS, not by
+   JS, so nothing flashes into view while the page is loading, and the
+   engine only ever toggles .shown / .solved.
+   ========================================================= */
+p.lad-count {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  letter-spacing: .03em;
+  color: var(--muted);
+}
+
+ol.ladder { list-style: none; margin: 14px 0 0; padding: 0; counter-reset: lad; }
+
+li.lad-step { display: none; }
+li.lad-step.shown {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px 16px;
+  align-items: start;
+  padding: 15px 0;
+  border-top: 1px solid var(--border-soft);
+  counter-increment: lad;
+}
+li.lad-step.shown:first-child { border-top: 0; padding-top: 4px; }
+
+li.lad-step.shown::before {
+  content: counter(lad);
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 999px;
+  min-width: 1.9em;
+  padding: 3px 0;
+  text-align: center;
+}
+
+.lad-sit { margin: 0; align-self: center; }
+.lad-pick { display: flex; gap: 8px; align-items: center; }
+.lad-pick select { min-width: 9.5em; }
+li.lad-step .row-note { grid-column: 1 / -1; }
+
+/* A solved step stays on screen: the point of the drill is watching one
+   target's path build up, including the two places it goes backwards. */
+li.lad-step.solved { opacity: .72; }
+li.lad-step.solved .lad-pick .row-check { visibility: hidden; }
+
+@media (max-width: 640px) {
+  li.lad-step.shown { grid-template-columns: auto 1fr; }
+  .lad-pick { grid-column: 2; }
+}
+
+/* =========================================================
+   The target workbench (deliver.html, pinned under the hour rail)
+   Four high-payoff targets across HPTL plus the six F2T2EA steps. Each row
+   is one radio group, so :checked does all the visual work and no JS paints
+   anything.
+
+   THE TARGET'S OWN BOX MOVES. Every cell holds a copy of the name; only the
+   checked one is displayed, and the rest show an empty slot. That is why the
+   names here are short: the box has to live inside a step column.
+   HPTL is a real position, not a label: on the list, nobody has found it.
+   ========================================================= */
+.workbench {
+  margin-top: 6px;
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+  /* contain:paint is load-bearing. Without it the table's min-width escapes
+     the scroll box and pushes the whole PAGE sideways at 420 px, even though
+     .workbench clips correctly. Measured: page scrollWidth 500 of 420. */
+  contain: paint;
+}
+
+table.wb { width: 100%; border-collapse: collapse; table-layout: fixed; }
+table.wb th[scope="col"] {
+  font-family: var(--font-mono);
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 0 3px;
+  border-bottom: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+/* The step number stays in the markup because it is what keeps each header a
+   unique English string: the bare word "Target" is owned by four other keys
+   as the noun 目標, and an unnumbered header would inherit the wrong Chinese.
+   See translation-pass. It is demoted visually rather than removed. */
+.wb-n { opacity: .45; font-weight: 500; margin-right: .35em; }
+
+table.wb th[scope="row"] { padding: 0; }
+table.wb td { padding: 0; border-left: 1px solid var(--border-soft); }
+table.wb tbody tr + tr th, table.wb tbody tr + tr td { border-top: 1px solid var(--border-soft); }
+
+.wb-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.wb-cell input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+/* an empty cell reads as a place the box could go */
+.wb-slot {
+  width: 62%;
+  height: 15px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color .12s, background .12s;
+}
+.wb-cell:hover .wb-slot { border-color: var(--p-deliver); background: var(--p-deliver-tint); }
+
+/* the target's box: hidden everywhere except the column it currently sits in */
+.wb-tag {
+  display: none;
+  width: 100%;
+  text-align: center;
+  font-size: .68rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--p-deliver);
+  border: 1px solid var(--p-deliver);
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  background: var(--p-deliver-tint);
+}
+.wb-cell input:checked ~ .wb-slot { display: none; }
+.wb-cell input:checked ~ .wb-tag { display: block; }
+
+/* parked is the not-yet-happened state, so it must not be the loudest thing
+   on the board. The phase red is reserved for a target that has moved. */
+table.wb th[scope="row"] .wb-cell input:checked ~ .wb-tag {
+  color: var(--ink);
+  border-color: var(--muted);
+  background: var(--bg);
+}
+
+.wb-cell input:focus-visible ~ .wb-slot,
+.wb-cell input:focus-visible ~ .wb-tag { outline: 2px solid var(--phase); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  /* Every pixel in the pinned bar is taken off the reading area, and a phone
+     has few to spare. The board scrolls sideways in its own box rather than
+     shrinking the columns to nothing. */
+  table.wb { table-layout: auto; min-width: 560px; }
+  table.wb th[scope="col"] { font-size: .55rem; padding-bottom: 2px; }
+  .wb-cell { min-height: 21px; }
+  .wb-tag { font-size: .6rem; padding: 1px 3px; }
+  .wb-slot { height: 12px; }
+}
+
+:lang(zh-Hant) table.wb th[scope="col"] { font-family: var(--font-cjk); text-transform: none; letter-spacing: .02em; }
+:lang(zh-Hant) .wb-tag { font-family: var(--font-cjk); }
+
+/* =========================================================
+   Gated timeline events (deliver.html)
+   One report at a time; the next appears when the current one is right.
+   Hidden by CSS, never by JS, so nothing flashes in during load.
+   ========================================================= */
+li.tev { display: none; }
+li.tev.shown { display: grid; }
+li.tev.solved { opacity: .78; }
+li.tev.solved .tev-act .row-check { visibility: hidden; }
+/* A pressed acknowledgement has nothing left to say, so its button box goes
+   rather than being hidden in place. Without this a narrative beat with no
+   explanation left a bare band where the button used to be. Graded steps keep
+   visibility:hidden so the page does not jump at the moment of the answer. */
+li.tev.solved[data-action="confirm"] .tev-act { display: none; }
+
+/* The two untimed follow-up steps ("update the target tracker") carry no
+   timestamp and no .ev class, on purpose: the hour rail must not count them
+   as separate reports. They still need the .ev geometry, or their text runs
+   flush to the page edge while every timed report above sits indented past
+   the time column. Empty first column, same rail, no top rule -- they are
+   the second half of the moment above them, not a new report. */
+li.tev:not(.ev) {
+  grid-template-columns: 88px 1fr;
+  gap: 0 16px;
+  border-left: 3px solid var(--border);
+  padding: 0 0 14px 16px;
+}
+li.tev:not(.ev) .ev-body { grid-column: 2; }
+li.tev:not(.ev) + li.ev { border-top: 1px solid var(--border-soft); }
+li.tev:not(.ev) + li.tev:not(.ev) { border-top: 1px solid var(--border-soft); padding-top: 14px; }
+/* Must live here, after the base rule above, not up with the other li.ev
+   narrow-screen rules -- equal specificity, so source order decides. */
+@media (max-width: 600px) {
+  li.tev:not(.ev) { grid-template-columns: 1fr; gap: 6px; }
+  /* one column now, so releasing the body from column 2 stops it opening an
+     implicit second column and sitting a gap-width off the timed reports */
+  li.tev:not(.ev) .ev-body { grid-column: auto; }
+}
+
+p.tev-act { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; flex-wrap: wrap; }
+p.tev-act select { min-width: 15em; }
+
+li.tev .ev-q { margin: 10px 0 0; }
+li.tev .row-note { margin-top: 12px; }
+li.tev .row-note p { margin: 0 0 8px; }
+li.tev .row-note p:last-child { margin-bottom: 0; }
+
+/* the "check the HAT" style prompt inside a question */
+.ev-q .hint { font-weight: 400; font-style: italic; color: var(--muted); }
+
+/* The verdict line at the head of a gated event's explanation. Empty in the
+   HTML and filled by app.js from ui.correct, so it carries no key. */
+.tev-verdict:empty { display: none; }
+.tev-verdict {
+  margin: 0 0 8px;
+  font-weight: 700;
+  color: var(--ok);
+}
+li.tev.right .row-note.always, li.tev.right .row-note.pick {
+  border-left-color: var(--ok);
+  background: var(--ok-bg);
+}
+/* A wrong answer has to look wrong. The justification note is shown either
+   way, so without this the only difference between right and wrong was a
+   green tint the student had nothing to compare against. */
+li.tev.wrong .tev-verdict { color: var(--bad); }
+li.tev.wrong .row-note.always, li.tev.wrong .row-note.pick {
+  border-left-color: var(--bad);
+  background: var(--bad-bg);
+}
+
+/* A prompt beside the Check button ("move the target first"), written by
+   app.js. Empty in the HTML, so the tagger gives it no key. */
+.tev-msg:empty { display: none; }
+.tev-msg {
+  margin: 8px 0 0;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* A target that is not on the HPTL and only appears when its report does.
+   Hidden in CSS so it never flashes onto the board during load. */
+.wb-row.is-new { display: none; }
+.wb-row.is-done { display: none; }
+
+/* ---------- Operations process against D3A, on assess.html ----------
+   Four rows, one per D3A function, so the alignment carries the meaning:
+   assessment runs down the whole thing while the process moves through it.
+   Lee's source chart had a blacked-out column between the two; he asked for
+   it gone, so there is no spacer here. His red italic emphasis on the last
+   row became <strong>: red is --bad everywhere else on this site and would
+   read as a wrong answer. */
+/* Same scroll box as .workbench, and for the same measured reason: without
+   contain:paint the table's intrinsic width escapes and pushes the whole PAGE
+   sideways at 420 px. */
+.ops-scroll { overflow-x: auto; min-width: 0; max-width: 100%; contain: paint; }
+table.ops-d3a { table-layout: auto; margin: 18px 0 6px; }
+/* table.doc th paints every th with the phase colour and white text, which is
+   right for the header bar and wrong for a row header inside the body: the D3A
+   names came out green on green, invisible. Both row-header columns opt out. */
+table.ops-d3a tbody th {
+  background: var(--bg);
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+table.ops-d3a .ops-side {
+  width: 2.6rem;
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid var(--border);
+  border-bottom: none;
+}
+table.ops-d3a .ops-side span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+/* NO VERTICAL WRITING MODE FOR CHINESE. Measured in headless Chromium: the
+   Latin label lays out 155 px tall, the Chinese one collapses to 8 px and the
+   four characters pile on top of each other. The cause is the font, not the
+   rule: no CJK webfont is bundled (see the --font-cjk note), and a fallback
+   without vertical metrics gives every glyph a near-zero vertical advance.
+   Microsoft JhengHei on Windows would probably be fine, which is exactly why
+   this must not depend on it. Chinese gets a narrow cell and ordinary
+   horizontal text instead, which wraps two characters per line by itself. */
+:lang(zh-Hant) table.ops-d3a .ops-side { width: 3.4rem; }
+:lang(zh-Hant) table.ops-d3a .ops-side span {
+  writing-mode: horizontal-tb;
+  transform: none;
+  white-space: normal;
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+table.ops-d3a .ops-phase { width: 8.5rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+table.ops-d3a .ops-fn {
+  width: 7rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--phase);
+  background: var(--phase-tint);
+  border-left: 1px solid var(--border);
+  white-space: nowrap;
+}
+table.ops-d3a tr:nth-child(even) td { background: transparent; }
+@media (max-width: 600px) {
+  table.ops-d3a .ops-phase, table.ops-d3a .ops-fn { width: auto; white-space: normal; }
+}

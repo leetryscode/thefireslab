@@ -180,8 +180,8 @@ window.D3A_LANG_ZH = {
     zh: "本課程<strong>從作戰環境情報準備（IPOE）完成之後開始</strong>。你的情報單位已經研究過敵軍與地形。現在你的工作，是運用這些情報來計畫並執行<strong>目標選定</strong>：找出正確的敵軍目標，並在正確的時間與地點接戰，以支援指揮官的計畫。"
   },
   "battle.014": {
-    en: "<strong>What is D3A?</strong> D3A is a tactical-level targeting methodology. It helps a unit integrate and synchronize all of its capabilities to engage the right target, at the right place and time, to create the effect the commander wants. Its four functions are:",
-    zh: "<strong>什麼是D3A？</strong>D3A是一套戰術層級的目標選定方法。它協助部隊整合並同步所有能力，在正確的地點與時間接戰正確的目標，以產生指揮官想要的效果。其四項功能為："
+    en: "<strong>What is D3A?</strong> D3A is a targeting methodology. It helps a unit integrate and synchronize all of its capabilities to engage the right target, at the right place and time, to create the effect the commander wants. Its four functions are:\n      ",
+    zh: ""
   },
   "battle.015": {
     en: "<strong>Decide</strong> — determine which targets to engage, based on the mission and the commander's guidance.",
@@ -432,24 +432,16 @@ window.D3A_LANG_ZH = {
     zh: "這是你整個課程都會使用的戰術狀況。請仔細閱讀 — 每一項課題都會回頭參照它。"
   },
   "scenario.013": {
-    en: "1. The Ground",
-    zh: "1. 地形"
-  },
-  "scenario.024": {
-    en: "Known to exist — location not established",
-    zh: "已知存在 — 位置尚未確定"
+    en: "1. Situation",
+    zh: ""
   },
   "scenario.015": {
-    en: "The map shows <strong>the enemy</strong>, and the restricted fire area around the bridge. Friendly units are not drawn. A <strong>dashed</strong> symbol is where we assess he <em>will</em> be, not where he is. Elements we know about but have <strong>not found</strong> are set apart below the map, with no position.",
-    zh: "地圖標示出<strong>敵軍</strong>，以及橋樑周邊的火力限制區。友軍單位未繪出。<strong>虛線</strong>符號代表我們研判他<em>將會</em>所在的位置，而不是他目前的位置。已知存在但<strong>尚未發現</strong>的單位，另列於地圖下方，不標示位置。"
+    en: "The map shows the ground, the fire support coordination measures in effect, and the brigade's task at the bridge. A red <strong>?</strong> marks an enemy element we know exists but have <strong>not located</strong>. What the S-2 knows about each one is in the intelligence brief below.",
+    zh: ""
   },
   "scenario.016": {
     en: "Key — ground and control measures",
     zh: "圖例 — 地形與管制措施"
-  },
-  "scenario.017": {
-    en: "Ref",
-    zh: "編號"
   },
   "scenario.018": {
     en: "Feature",
@@ -480,16 +472,12 @@ window.D3A_LANG_ZH = {
     zh: "橋樑周邊的火力限制區（RFA）"
   },
   "scenario.033": {
-    en: "The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here.",
-    zh: "指揮官禁止在其內使用成坑彈藥。只有攻擊型無人機可以在此打擊。"
+    en: "The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here. It is not drawn on this map.",
+    zh: ""
   },
   "scenario.034": {
     en: "Key — enemy elements",
     zh: "圖例 — 敵軍單位"
-  },
-  "scenario.035": {
-    en: "Ref",
-    zh: "編號"
   },
   "scenario.036": {
     en: "Element",
@@ -546,14 +534,6 @@ window.D3A_LANG_ZH = {
   "scenario.049": {
     en: "Move along the road at night between the supply point and the fighting positions.",
     zh: "夜間沿道路在補給點與戰鬥陣地之間往返。"
-  },
-  "scenario.050": {
-    en: "Reconnaissance squad",
-    zh: "偵察班"
-  },
-  "scenario.051": {
-    en: "The only enemy element on <strong>our</strong> side of the river, behind our own forward line.",
-    zh: "唯一位於河川<strong>我方</strong>這一側的敵軍單位，在我軍前緣的後方。"
   },
   "scenario.052": {
     en: "120&nbsp;mm mortar platoon",
@@ -636,24 +616,12 @@ window.D3A_LANG_ZH = {
     zh: "敵軍很可能派出其<strong>工兵小組</strong>，破壞或阻絕橋樑。我們研判這將在未來24小時內發生。目前該處尚無動作。該小組一旦開始，約一小時的作業就足以使橋樑無法使用。"
   },
   "scenario.031": {
-    en: "The enemy will use his <strong>mortar platoon</strong> to fire on friendly forces as we concentrate at the bridge. The engineer team, the ATGM team, or a reconnaissance team may call for this fire. The bridge is a known location, so we can expect his weapons are already laid on it — he may not use an observer at all.",
-    zh: "我軍在橋樑集結時，敵軍將以其<strong>迫擊砲排</strong>對友軍射擊。工兵小組、ATGM小組或偵察小組都可能申請這項火力。橋樑是已知位置，因此可以預期其火砲已完成對橋樑的標定——他甚至可能完全不使用觀測員。"
+    en: "The enemy will use his <strong>mortar platoon</strong> to fire on friendly forces as we concentrate at the bridge. The engineer team or the ATGM team may call for this fire. The bridge is a known location, so we can expect his weapons are already laid on it — he may not use an observer at all.",
+    zh: ""
   },
   "scenario.064": {
     en: "If his own mortars are silenced or prove ineffective, his <strong>command post</strong> is how he requests fires from a higher echelon of enemy command.",
     zh: "若其本身的迫擊砲被壓制或成效不彰，敵軍就是透過其<strong>指揮所</strong>向敵軍上級指揮階層申請火力。"
-  },
-  "scenario.065": {
-    en: "What we know exists but have not found",
-    zh: "我們知道存在但尚未找到的部分"
-  },
-  "scenario.066": {
-    en: "The elements below have no location. They are on the list because the enemy needs them, not because we can see them. <em>Finding them is the work of Phase 2.</em>",
-    zh: "以下各單元沒有位置資料。它們列在清單上，是因為敵軍需要它們，而不是因為我們看得到它們。<em>找出它們是第2階段的工作。</em>"
-  },
-  "scenario.067": {
-    en: "His sustainment is an <strong>ammunition supply point</strong> assessed roughly 6&nbsp;km in depth holding mortar and ATGM stocks, <strong>logistics trucks</strong> that move forward at night, and a <strong>field kitchen</strong> with the rear-area trains. The S-2 further assesses that the enemy fighting positions <strong>already hold three days of ammunition forward</strong>, drawn before we attack.",
-    zh: "其後勤支援包括：一個<strong>彈藥補給點</strong>，研判位於縱深約6&nbsp;公里處，存放迫擊砲與ATGM彈藥；夜間向前輸送的<strong>後勤卡車</strong>；以及位於後方輜重區的<strong>野戰炊事站</strong>。S-2進一步研判，敵軍戰鬥陣地<strong>前方已囤積三日份彈藥</strong>，是在我軍攻擊前領取的。"
   },
   "scenario.068": {
     en: "Enemy element",
@@ -715,18 +683,6 @@ window.D3A_LANG_ZH = {
     en: "Assessed about 4&nbsp;km in depth. Controls the defense by radio and is the link to higher headquarters for additional fires. Relocates every 24 hours.",
     zh: "研判位於縱深約4&nbsp;公里處。以無線電管制其防禦，並且是向上級司令部申請增援火力的管道。每24小時轉移。"
   },
-  "scenario.084": {
-    en: "<strong>Reconnaissance squad</strong>",
-    zh: "<strong>偵察班</strong>"
-  },
-  "scenario.085": {
-    en: "Not found",
-    zh: "未找到"
-  },
-  "scenario.086": {
-    en: "Small dismounted teams on our side of the river. Report our movement and can adjust mortar fire. They move continuously.",
-    zh: "在我方河岸活動的徒步小組。回報我軍動態，並可修正迫擊砲火力。持續移動。"
-  },
   "scenario.087": {
     en: "<strong>Infantry platoon</strong>",
     zh: "<strong>步兵排</strong>"
@@ -748,8 +704,8 @@ window.D3A_LANG_ZH = {
     zh: "未找到"
   },
   "scenario.092": {
-    en: "Mortar and ATGM stocks, assessed roughly 6&nbsp;km in depth. The source of every round his mortars fire.",
-    zh: "存放迫擊砲與ATGM彈藥，研判位於縱深約6&nbsp;公里處。敵軍迫擊砲所射每一發彈藥的來源。"
+    en: "Mortar and ATGM stocks, assessed roughly 6&nbsp;km in depth. The source of every round his mortars fire. His fighting positions <strong>already hold three days of ammunition forward</strong>, drawn before we attack.",
+    zh: ""
   },
   "scenario.093": {
     en: "<strong>Logistics trucks</strong>",
@@ -776,8 +732,8 @@ window.D3A_LANG_ZH = {
     zh: "供應全營膳食。位於輜重區，遠在後方。"
   },
   "scenario.102": {
-    en: "These nine elements are what the S-2 judges important to the <em>enemy</em> commander. Deciding which of them are worth <em>our</em> ammunition is the work of Phase 1.",
-    zh: "這九個單元是S-2研判對<em>敵軍</em>指揮官重要的部分。決定其中哪些值得消耗<em>我軍</em>的彈藥，是第1階段的工作。"
+    en: "These eight elements are what the S-2 judges important to the <em>enemy</em> commander. Deciding which of them are worth <em>our</em> ammunition is the work of Phase 1.",
+    zh: ""
   },
   "scenario.103": {
     en: "4. Assets Available to You",
@@ -812,16 +768,16 @@ window.D3A_LANG_ZH = {
     zh: "射程遠——可涵蓋敵區內每一個目標。其砲彈會成坑，因此不得在橋樑附近使用。"
   },
   "scenario.111": {
-    en: "Mortar battery (120&nbsp;mm)",
-    zh: "迫擊砲連（120&nbsp;公釐）"
+    en: "105&nbsp;mm M101 howitzer battery",
+    zh: "105&nbsp;公釐 M101 榴彈砲連"
   },
   "scenario.112": {
     en: "Delivery",
     zh: "投射"
   },
   "scenario.113": {
-    en: "Short range, fast response. Best against targets close to our forward line.",
-    zh: "射程短，反應快。最適合打擊接近我軍前緣的目標。"
+    en: "The battery we hold the most rounds for. Its shells crater, so it may not be used near the bridge.",
+    zh: "我們持有最多彈藥的砲連。其砲彈會造成彈坑，因此不得在橋樑附近使用。"
   },
   "scenario.114": {
     en: "One-way attack UAS (OWA-UAS)",
@@ -872,8 +828,8 @@ window.D3A_LANG_ZH = {
     zh: "偵測無線電、wifi與衛星訊號，並推估其來源位置。對必須發訊的指揮所特別有效。提供的是一個<strong>區域</strong>，而不是一個點。"
   },
   "scenario.126": {
-    en: "Scout observation posts (OPs)",
-    zh: "偵察兵觀測所（OP）"
+    en: "Scout team",
+    zh: "偵察小組"
   },
   "scenario.127": {
     en: "Sensor",
@@ -950,6 +906,22 @@ window.D3A_LANG_ZH = {
   "scenario.145": {
     en: "Phase 1: Decide →",
     zh: "第 1 階段：擬定 →"
+  },
+  "scenario.146": {
+    en: "<strong>CFL</strong> — coordinated fire line",
+    zh: ""
+  },
+  "scenario.147": {
+    en: "Beyond this line, fires may be delivered without further coordination with the units in contact. Short of it, every mission must be cleared first.",
+    zh: ""
+  },
+  "scenario.148": {
+    en: "<strong>R</strong> — retain",
+    zh: ""
+  },
+  "scenario.149": {
+    en: "The friendly tactical task at the bridge: hold it, and deny its use to the enemy.",
+    zh: ""
   },
 
   /* ---------- decide.html ---------- */
@@ -1030,8 +1002,8 @@ window.D3A_LANG_ZH = {
     zh: "改編自 MCTP 3-31B 附錄 A。"
   },
   "decide.018": {
-    en: "At the end of the third page you will see all three products together on one worksheet, the way a fire support cell actually keeps them.",
-    zh: "在第三頁的最後，你會在同一張工作表上看到這三項成果，就像火力支援組實際保存它們的方式。"
+    en: "At the end of the third page you will see all three products together on one worksheet, the way a fire support coordination cell (FSCC) actually keeps them.",
+    zh: "在第三頁的最後，你會在同一張工作表上看到這三項成果，就像火力協調組（FSCC）實際保存它們的方式。"
   },
   "decide.019": {
     en: "Two kinds of targets",
@@ -1086,24 +1058,24 @@ window.D3A_LANG_ZH = {
     zh: "八個敵軍單位——HVT清單"
   },
   "decide.032": {
-    en: "All eight elements from the S-2's list are shown on the map. The map does not tell you which ones are high-payoff targets. That is your decision in the tasks below.",
-    zh: "S-2 清單上的八個單位都標示在地圖上。地圖不會告訴你哪些是高效益目標。那是你在以下課題中要做的決定。"
+    en: "All eight elements from the S-2's list are in the key below. Neither the map nor the key tells you which ones are high-payoff targets. That is your decision in the tasks below.",
+    zh: ""
   },
-  "decide.103": {
-    en: "Known to exist — location not established",
-    zh: "已知存在 — 位置尚未確定"
+  "decide.104": {
+    en: "Infantry platoon",
+    zh: ""
+  },
+  "decide.105": {
+    en: "In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.",
+    zh: ""
   },
   "decide.033": {
-    en: "This map shows what we have located, and the restricted fire area around the bridge. A dashed symbol is where we assess he will be. Elements we have not found are set apart below, with no position.",
-    zh: "本圖顯示我們已定位的目標，以及橋樑周邊的火力限制區。虛線符號代表我們研判敵軍將出現的位置。我們尚未發現的單位另列於下方，不標示位置。"
+    en: "The map shows the ground, the fire support coordination measures in effect, and the brigade's task at the bridge. A red <strong>?</strong> marks an enemy element we know exists but have not located. ",
+    zh: ""
   },
   "decide.034": {
     en: "Open the full map and its complete key",
     zh: "開啟完整地圖與其完整圖例"
-  },
-  "decide.035": {
-    en: "Ref",
-    zh: "編號"
   },
   "decide.036": {
     en: "Element",
@@ -1150,8 +1122,8 @@ window.D3A_LANG_ZH = {
     zh: "營指揮所"
   },
   "decide.047": {
-    en: "In the treeline, 4 km behind the river. Relocates every 24 hours.",
-    zh: "位於林線內，距河 4 公里。每 24 小時轉移一次。"
+    en: "Assessed in the treeline, about 4 km behind the river. Not located. Relocates every 24 hours.",
+    zh: ""
   },
   "decide.048": {
     en: "Logistics trucks",
@@ -1160,14 +1132,6 @@ window.D3A_LANG_ZH = {
   "decide.049": {
     en: "Move along the road at night between the supply point and the fighting positions.",
     zh: "夜間沿道路在補給點與戰鬥陣地之間往返。"
-  },
-  "decide.050": {
-    en: "Reconnaissance squad",
-    zh: "偵察班"
-  },
-  "decide.051": {
-    en: "The only enemy element on our side of the river.",
-    zh: "唯一位於我方河岸的敵軍單位。"
   },
   "decide.052": {
     en: "120 mm mortar platoon",
@@ -1240,14 +1204,6 @@ window.D3A_LANG_ZH = {
   "decide.070": {
     en: "HPT — the commander requires enemy command and control to be disrupted. The CP coordinates the defense, and it is how he would call for artillery or reinforcements.",
     zh: "HPT——指揮官要求癱瘓敵軍的指揮管制。CP負責協調防禦，也是他呼叫砲兵或增援的管道。"
-  },
-  "decide.071": {
-    en: "Reconnaissance squad",
-    zh: "偵察班"
-  },
-  "decide.072": {
-    en: "Your commander rejected this as an HPT. He is an observer — but the S-2 told you the mortar fires on the bridge are already laid on, so <em>he may not use an observer at all</em>. Killing the squad costs him accuracy and timing, not the ability to shoot. And we have not located it, and it moves continuously, so we would spend a sensor to buy very little.",
-    zh: "你的指揮官不將此列為HPT。它是觀測單位——但 S-2 告訴你，對橋樑的迫擊砲射擊諸元已預先裝定，因此<em>他可能根本不需要動用觀測員</em>。擊斃該班只會使他失去精度與時機掌握，而不是失去射擊能力。而且我們尚未定位它，它又持續移動，因此投入一具感測器所換得的效益極小。"
   },
   "decide.090": {
     en: "Infantry platoon",
@@ -1326,8 +1282,8 @@ window.D3A_LANG_ZH = {
     zh: "<strong>擾亂敵軍指揮與管制</strong>——敵軍得知友軍在橋樑附近集結時，很可能請求間接砲兵火力或增援，這是重大風險。我們必須擾亂其指揮與通信網路，以降低此風險。"
   },
   "decide.101": {
-    en: "Nothing may be allowed to stop a vehicle on the span. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”",
-    zh: "絕不可讓任何事物使車輛停在橋面上。橋上只要有一輛車起火，我們就等於替敵軍完成了爆破 — 我們將奪下一處自己無法通過的渡河點。ATGM分隊是敵軍戰鬥序列中唯一能做到這一點的兵力，而且它已經瞄準該渡河點。當我的車輛通過那個<em>瓶頸</em>時，絕不能讓ATGM小組影響它們。彈藥有限 — 每一次任務都必須服務於這個計畫。」"
+    en: "Nothing may be allowed to stop a vehicle on the bridge. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”",
+    zh: ""
   },
   "decide.102": {
     en: "His three requirements are already in priority order — but you have <strong>four</strong> targets, and the fourth is not simply added to the bottom. Read the last paragraph again and ask which losses would <em>end</em> the mission, and which would only hurt.",
@@ -1472,8 +1428,8 @@ window.D3A_LANG_ZH = {
     zh: "<strong>兵力限</strong>"
   },
   "decide-tss.027": {
-    en: "Is there enough of the target to be worth what we will spend?",
-    zh: "目標的數量是否足以值得我們所要付出的代價？"
+    en: "Is the target big enough to be worth the resources?",
+    zh: ""
   },
   "decide-tss.028": {
     en: "The <em>payoff</em>. What do we gain, against what we fire?",
@@ -1484,16 +1440,12 @@ window.D3A_LANG_ZH = {
     zh: "<strong>時限</strong>"
   },
   "decide-tss.030": {
-    en: "How long does the answer to the first two questions stay true?",
-    zh: "前兩個問題的答案能維持正確多久？"
+    en: "If we lose track of the target, how long until the target location is determined to be invalid?",
+    zh: ""
   },
   "decide-tss.031": {
     en: "The target's ability to move, or our weapon's ability to guide to the target.",
     zh: "目標的移動能力，或我方武器導引至目標的能力。"
-  },
-  "decide-tss.032": {
-    en: "Read them in that order. The first two describe the report at the moment it was made. The third is the clock running on both of them.",
-    zh: "請依此順序閱讀。前兩項描述回報產生當下的狀況。第三項則是對前兩項不斷計時的時鐘。"
   },
   "decide-tss.033": {
     en: "Standard 1 — Target location error",
@@ -1504,8 +1456,8 @@ window.D3A_LANG_ZH = {
     zh: "目標位置誤差量是我方<em>認為</em>目標所在的位置與目標<em>實際</em>所在位置之間的差距，以公尺計。它取決於感測器，而非目標。前進觀測員可能能將目標定位在 100 公尺以內。舉例而言，無人機感測器的精度則可能在 10 公尺以內。"
   },
   "decide-tss.035": {
-    en: "<strong>The weapon decides how much error it can absorb.</strong> The bigger the shell and the more guns firing, the more location error the mission can survive.",
-    zh: "<strong>武器決定它能吸收多少誤差。</strong>砲彈越大、射擊的火砲越多，該次任務所能承受的位置誤差就越大。"
+    en: "<strong>The weapon determines how much error can be accepted.</strong> The bigger the shell and the more guns firing, the more location error the mission can survive.",
+    zh: ""
   },
   "decide-tss.036": {
     en: "Weapon",
@@ -1524,8 +1476,8 @@ window.D3A_LANG_ZH = {
     zh: "200 公尺"
   },
   "decide-tss.040": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-tss.041": {
     en: "100 m",
@@ -1544,16 +1496,16 @@ window.D3A_LANG_ZH = {
     zh: "這些數字是為本想定所設定的。它們不是公開的準則。武器所能接受的位置誤差取決於多項因素，包括其圓形公算誤差、地形，以及單次齊射的彈數。"
   },
   "decide-tss.044": {
-    en: "The 105&nbsp;mm howitzer battery accepts <em>less</em> error than the 155&nbsp;mm howitzer, because a 105&nbsp;mm shell covers less ground than a 155&nbsp;mm shell. The same report can therefore be good enough for one weapon and useless for another.",
-    zh: "105&nbsp;公釐榴彈砲連所能接受的誤差比 155&nbsp;公釐榴彈砲<em>更小</em>，因為 105&nbsp;公釐砲彈涵蓋的地面小於 155&nbsp;公釐砲彈。因此同一份回報對某一種武器可能夠好，對另一種武器卻毫無用處。"
+    en: "The 105&nbsp;mm M101 howitzer battery accepts <em>less</em> error than the 155&nbsp;mm howitzer, because a 105&nbsp;mm shell covers less ground than a 155&nbsp;mm shell. The same report can therefore be good enough for one weapon and useless for another.",
+    zh: "105&nbsp;公釐 M101 榴彈砲連所能接受的誤差比 155&nbsp;公釐榴彈砲<em>更小</em>，因為 105&nbsp;公釐砲彈涵蓋的地面小於 155&nbsp;公釐砲彈。因此同一份回報對某一種武器可能夠好，對另一種武器卻毫無用處。"
   },
   "decide-tss.045": {
     en: "Task 1.7 — Is the location good enough?",
     zh: "課題 1.7 — 位置夠精確嗎？"
   },
   "decide-tss.048": {
-    en: "<span class=\"target-name\">Engineer obstacle team — one-way attack UAS</span><br><span class=\"target-desc\">Forward Observer: “Engineers on the far span. Accurate to about 100 metres.”</span>",
-    zh: "<span class=\"target-name\">工兵障礙小組 — 攻擊型無人機</span><br><span class=\"target-desc\">前進觀測員：「工兵位於對岸橋段。精度約 100 公尺。」</span>"
+    en: "<span class=\"target-name\">Engineer obstacle team — one-way attack UAS</span><br><span class=\"target-desc\">Forward Observer: “Engineers on the far bridge. Accurate to about 100 metres.”</span>",
+    zh: ""
   },
   "decide-tss.049": {
     en: "— choose —",
@@ -1600,8 +1552,8 @@ window.D3A_LANG_ZH = {
     zh: "不夠精確 — 先修正位置"
   },
   "decide-tss.060": {
-    en: "<span class=\"target-name\">ATGM section — 105 mm howitzer battery</span><br><span class=\"target-desc\">sUAS: “Possible launcher position on the high ground. Accurate to about 150 metres.”</span>",
-    zh: "<span class=\"target-name\">ATGM分隊 — 105 公釐榴彈砲連</span><br><span class=\"target-desc\">sUAS：「高地上可能的發射器陣地。精度約 150 公尺。」</span>"
+    en: "<span class=\"target-name\">ATGM section — 105 mm M101 howitzer battery</span><br><span class=\"target-desc\">sUAS: “Possible launcher position on the high ground. Accurate to about 150 metres.”</span>",
+    zh: "<span class=\\\"target-name\\\">ATGM分隊 — 105 公釐 M101 榴彈砲連</span><br><span class=\\\"target-desc\\\">sUAS：「高地上可能的發射器陣地。精度約 150 公尺。」</span>"
   },
   "decide-tss.061": {
     en: "— choose —",
@@ -1644,12 +1596,12 @@ window.D3A_LANG_ZH = {
     zh: "120&nbsp;公釐迫擊砲排"
   },
   "decide-tss.072": {
-    en: "2 of 3 tubes",
-    zh: "3 門砲管中的 2 門"
+    en: "1 mortar",
+    zh: ""
   },
   "decide-tss.073": {
-    en: "We are buying attrition. One tube is not worth a battery mission.",
-    zh: "我們買到的是消耗。一門砲管不值得動用一次砲兵連任務。"
+    en: "Any size that can damage the bridge is worth engaging.",
+    zh: ""
   },
   "decide-tss.074": {
     en: "ATGM section",
@@ -1684,8 +1636,8 @@ window.D3A_LANG_ZH = {
     zh: "一個攜帶爆破裝藥的小組"
   },
   "decide-tss.085": {
-    en: "We are not buying attrition here. We are preventing the loss of the bridge.",
-    zh: "我們在這裡要的不是消耗。我們要防止橋樑失守。"
+    en: "Any size that can damage the bridge is worth engaging. We are preventing the loss of the bridge.",
+    zh: ""
   },
   "decide-tss.086": {
     en: "Task 1.8 — Is there enough there?",
@@ -1704,8 +1656,8 @@ window.D3A_LANG_ZH = {
     zh: "目標：120 公釐迫擊砲排 · 回報時間：4 分鐘 · 精度：80 公尺"
   },
   "decide-tss.091": {
-    en: "“One mortar tube observed moving into a firing position. No other tubes visible in the area.”",
-    zh: "「觀察到一門迫擊砲進入發射陣地。該地區未見其他砲管。」"
+    en: "“Two mortar tubes observed moving into a firing position. No other tubes visible in the area.”",
+    zh: ""
   },
   "decide-tss.092": {
     en: "Meets minimum size — engage",
@@ -1716,16 +1668,16 @@ window.D3A_LANG_ZH = {
     zh: "低於兵力限 — 暫緩並持續監視"
   },
   "decide-tss.094": {
-    en: "Report 2 — Scout observation post",
-    zh: "回報 2 — 偵搜觀測所"
+    en: "Report 2 — Scout team",
+    zh: "回報 2 — 偵察小組"
   },
   "decide-tss.095": {
     en: "Target: Engineer obstacle team · Age: happening now · Accuracy: observed",
     zh: "目標：工兵障礙小組 · 回報時間：正在發生 · 精度：目視觀測"
   },
   "decide-tss.096": {
-    en: "“Two engineers on the far span with satchel charges. They are working at the abutment.”",
-    zh: "「兩名工兵攜帶炸藥包位於對岸橋跨上。他們正在橋臺作業。」"
+    en: "“Two engineers on the far bridge with satchel charges. They are working at the abutment.”",
+    zh: ""
   },
   "decide-tss.097": {
     en: "Meets minimum size — engage",
@@ -1796,8 +1748,8 @@ window.D3A_LANG_ZH = {
     zh: "套用旅的規則。每個目標都列出將對其接戰的兵力。凡是 S-2 已提供目標狀況維持不變的時間，取其四分之一。"
   },
   "decide-tss.115": {
-    en: "<span class=\"target-name\">Engineer obstacle team — 105 mm howitzer battery</span><br><span class=\"target-desc\">The team leaves as soon as the charges are set.</span>",
-    zh: "<span class=\"target-name\">工兵障礙小組 — 105 公釐榴彈砲連</span><br><span class=\"target-desc\">該小組一設好炸藥就會離開。</span>"
+    en: "<span class=\"target-name\">Engineer obstacle team — 105 mm M101 howitzer battery</span><br><span class=\"target-desc\">The team leaves as soon as the charges are set.</span>",
+    zh: "<span class=\\\"target-name\\\">工兵障礙小組 — 105 公釐 M101 榴彈砲連</span><br><span class=\\\"target-desc\\\">該小組一設好炸藥就會離開。</span>"
   },
   "decide-tss.116": {
     en: "— choose —",
@@ -1820,8 +1772,8 @@ window.D3A_LANG_ZH = {
     zh: "回報不超過 12 小時"
   },
   "decide-tss.121": {
-    en: "<span class=\"target-name\">Mortar platoon — 105 mm howitzer battery</span><br><span class=\"target-desc\">Displaces immediately after every fire mission.*</span><span class=\"src\">* In this scenario, friendly forces do not possess the capability of conducting counterbattery fire missions using counterbattery radar.</span>",
-    zh: "<span class=\"target-name\">迫擊砲排 — 105 公釐榴彈砲連</span><br><span class=\"target-desc\">每次射擊任務後立即轉移陣地。*</span><span class=\"src\">* 在本想定中，友軍不具備使用反砲兵雷達執行反砲兵射擊任務的能力。</span>"
+    en: "<span class=\"target-name\">Mortar platoon — 105 mm M101 howitzer battery</span><br><span class=\"target-desc\">Displaces immediately after every fire mission.*</span><span class=\"src\">* In this scenario, friendly forces do not possess the capability of conducting counterbattery fire missions using counterbattery radar.</span>",
+    zh: "<span class=\\\"target-name\\\">迫擊砲排 — 105 公釐 M101 榴彈砲連</span><br><span class=\\\"target-desc\\\">每次射擊任務後立即轉移陣地。*</span><span class=\\\"src\\\">* 在本想定中，友軍不具備使用反砲兵雷達執行反砲兵射擊任務的能力。</span>"
   },
   "decide-tss.122": {
     en: "— choose —",
@@ -1844,8 +1796,8 @@ window.D3A_LANG_ZH = {
     zh: "回報不超過 12 小時"
   },
   "decide-tss.127": {
-    en: "<span class=\"target-name\">ATGM section — 105 mm howitzer battery</span><br><span class=\"target-desc\">Dug in, but a small team that can move quickly. The commander accepts a short window of risk.</span>",
-    zh: "<span class=\"target-name\">ATGM分隊 — 105 公釐榴彈砲連</span><br><span class=\"target-desc\">已構築掩體，但是一個能快速移動的小組。指揮官接受一段短時間的風險。</span>"
+    en: "<span class=\"target-name\">ATGM section — 105 mm M101 howitzer battery</span><br><span class=\"target-desc\">Dug in, but a small team that can move quickly. The commander accepts a short window of risk.</span>",
+    zh: "<span class=\\\"target-name\\\">ATGM分隊 — 105 公釐 M101 榴彈砲連</span><br><span class=\\\"target-desc\\\">已構築掩體，但是一個能快速移動的小組。指揮官接受一段短時間的風險。</span>"
   },
   "decide-tss.128": {
     en: "— choose —",
@@ -1900,8 +1852,8 @@ window.D3A_LANG_ZH = {
     zh: "三項同時檢驗"
   },
   "decide-tss.141": {
-    en: "In the fire support cell no report is checked against one standard. It is checked against all of them, and it must pass every one.",
-    zh: "在火力支援組裡，沒有任何回報只用一項條件檢驗。它要對照全部條件檢驗，而且必須每一項都通過。"
+    en: "In the fire support coordination cell (FSCC) no report is checked against one standard. It is checked against all of them, and it must pass every one.",
+    zh: "在火力協調組（FSCC）裡，沒有任何回報只用一項條件檢驗。它要對照全部條件檢驗，而且必須每一項都通過。"
   },
   "decide-tss.142": {
     en: "Task 1.10 — Judge a real report",
@@ -1956,8 +1908,8 @@ window.D3A_LANG_ZH = {
     zh: "整份工作表"
   },
   "decide-tss.164": {
-    en: "You built three products across three pages. In a fire support cell they are not three pieces of paper. They are three bands of <strong>one</strong> worksheet, sometimes called the <strong>HAT</strong> — HPTL, AGM, TSS. Read a column downwards and you have the complete instruction for one target: what it is, how good a report must be, and what happens when a report arrives.",
-    zh: "你在三個頁面中完成了三項成品。在火力支援組裡，它們不是三張紙。它們是<strong>同一份</strong>工作表的三個區段，有時稱為<strong>HAT</strong> — HPTL、AGM、TSS。由上往下讀一欄，你就得到某一個目標的完整指示：它是什麼、回報必須多好、以及回報送達時要做什麼。"
+    en: "You built three products across three pages. In the FSCC they are not three pieces of paper. They are three bands of <strong>one</strong> worksheet, sometimes called the <strong>HAT</strong> — HPTL, AGM, TSS. Read a column downwards and you have the complete instruction for one target: what it is, how good a report must be, and what happens when a report arrives.",
+    zh: "你在三個頁面中完成了三項成品。在FSCC裡，它們不是三張紙。它們是<strong>同一份</strong>工作表的三個區段，有時稱為<strong>HAT</strong> — HPTL、AGM、TSS。由上往下讀一欄，你就得到某一個目標的完整指示：它是什麼、回報必須多好、以及回報送達時要做什麼。"
   },
   "decide-tss.018": {
     en: "77th Combined Arms Brigade — HPTL / AGM / TSS — Operation RIVER GATE",
@@ -1988,8 +1940,8 @@ window.D3A_LANG_ZH = {
     zh: "營指揮所"
   },
   "decide-tss.087": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-tss.113": {
     en: "<span>Maximum location error</span>",
@@ -2024,8 +1976,8 @@ window.D3A_LANG_ZH = {
     zh: "確認一具發射器"
   },
   "decide-tss.171": {
-    en: "Two of three tubes",
-    zh: "三門中的兩門"
+    en: "1 mortar",
+    zh: ""
   },
   "decide-tss.172": {
     en: "Command vehicle or structure",
@@ -2088,8 +2040,8 @@ window.D3A_LANG_ZH = {
     zh: "確認一具發射器"
   },
   "decide-tss.187": {
-    en: "Two of three tubes",
-    zh: "三門中的兩門"
+    en: "2 mortars",
+    zh: ""
   },
   "decide-tss.188": {
     en: "Command vehicle or structure",
@@ -2152,8 +2104,8 @@ window.D3A_LANG_ZH = {
     zh: "確認一具發射器"
   },
   "decide-tss.203": {
-    en: "Two of three tubes",
-    zh: "三門中的兩門"
+    en: "1 mortar",
+    zh: ""
   },
   "decide-tss.204": {
     en: "Command vehicle or structure",
@@ -2268,8 +2220,8 @@ window.D3A_LANG_ZH = {
     zh: "關閉"
   },
   "decide-tss.d5-c1.why": {
-    en: "The standard is two of three tubes. Firing the howitzer battery at one tube spends the ammunition we will need when the whole platoon is located — and it tells the enemy we are watching that area. Keep the sensor on it and wait.",
-    zh: "條件是三門中確認兩門。為了一門砲就出動榴彈砲連射擊，會耗掉我們在掌握整個排時所需的彈藥——而且會讓敵軍知道我們正在監視那個區域。繼續以感測器盯住，等待。"
+    en: "The standard for the mortar platoon is one mortar tube. Two tubes are observed here, which already meets it — any size that can damage the bridge is worth engaging.",
+    zh: ""
   },
   "decide-tss.d5-c1.hint": {
     en: "What is the minimum size for the mortar platoon, and how many tubes does this report show?",
@@ -2349,6 +2301,14 @@ window.D3A_LANG_ZH = {
     en: "<span class=\"step\">1D</span><span>Target Synchronization Matrix</span>",
     zh: "<span class=\"step\">1D</span><span>目標同步矩陣</span>"
   },
+  "decide-agm.256": {
+    en: "Otherwise, targets may be struck <em>as acquired</em>, meaning they will be struck in the order of their priority.",
+    zh: ""
+  },
+  "decide-agm.257": {
+    en: "This is the order that will be argued about, and it is the one to argue about. Reverse it — drone first, then 155 — and you have a defensible matrix for a different assumption about what the command post turns out to be. What settles it is where the target is and how well we have located it, which is the next page.",
+    zh: ""
+  },
   "decide-agm.013": {
     en: "Product 2 of 3",
     zh: "三項成果之二"
@@ -2410,8 +2370,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.120": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.121": {
     en: "155 mm M109A2 battery",
@@ -2429,10 +2389,6 @@ window.D3A_LANG_ZH = {
     en: "The first column of the matrix says <em>when</em> a target is attacked. There are three answers:",
     zh: "矩陣的第一欄說明目標<em>何時</em>被打擊。答案有三種："
   },
-  "decide-agm.082": {
-    en: "Code",
-    zh: "代碼"
-  },
   "decide-agm.083": {
     en: "Meaning",
     zh: "意義"
@@ -2440,10 +2396,6 @@ window.D3A_LANG_ZH = {
   "decide-agm.084": {
     en: "What it does to the fight",
     zh: "對戰鬥的影響"
-  },
-  "decide-agm.085": {
-    en: "I",
-    zh: "I"
   },
   "decide-agm.086": {
     en: "<strong>Immediate</strong>",
@@ -2453,10 +2405,6 @@ window.D3A_LANG_ZH = {
     en: "<strong>Preempts all other routine missions.</strong> The target is attacked as soon as it is positively identified, ahead of every <em>as acquired</em> target waiting, whatever its place on the HPTL.",
     zh: "<strong>優先於所有其他例行任務。</strong>目標一經確認識別即予打擊，優先於所有等待中的<em>發現即打</em>目標，不論其在HPTL上的順位為何。"
   },
-  "decide-agm.088": {
-    en: "A",
-    zh: "A"
-  },
   "decide-agm.089": {
     en: "<strong>As acquired</strong>",
     zh: "<strong>發現即打</strong>"
@@ -2464,10 +2412,6 @@ window.D3A_LANG_ZH = {
   "decide-agm.090": {
     en: "<strong>Engaged in HPTL order.</strong> When several targets are waiting, the one highest on the HPTL is engaged first, provided an asset is free and is not already committed to an <em>immediate</em> or a scheduled <em>planned</em> mission. Two targets of the same priority are engaged in the order they were acquired.",
     zh: "<strong>依HPTL順序接戰。</strong>當有數個目標等待時，HPTL上順位最高者先接戰，前提是有兵力可用，且未投入<em>立即</em>或已排定的<em>計畫</em>任務。優先順序相同的兩個目標，依發現的先後順序接戰。"
-  },
-  "decide-agm.091": {
-    en: "P",
-    zh: "P"
   },
   "decide-agm.092": {
     en: "<strong>Planned</strong>",
@@ -2482,12 +2426,12 @@ window.D3A_LANG_ZH = {
     zh: "兩個問題決定一個目標適用哪一種："
   },
   "decide-agm.095": {
-    en: "<strong>Is the threat happening right now?</strong> If the target is killing the mission at this moment, it is <em>Immediate</em>.",
-    zh: "<strong>威脅是不是正在發生？</strong>如果這個目標此刻正在扼殺任務，它就是<em>立即</em>。"
+    en: "<strong>Will we lose the target if it is not struck immediately? Does this target pose an immediate danger to the mission?</strong> If either is true, it is <em>Immediate</em>.",
+    zh: ""
   },
   "decide-agm.096": {
-    en: "<strong>If not — is the effect temporary, or would hitting it early reveal the plan?</strong> If either is true, it is <em>Planned</em>. Otherwise it is <em>As acquired</em>.",
-    zh: "<strong>如果不是——效果是不是暫時的？提前打擊會不會暴露計畫？</strong>只要其中一項成立，它就是<em>計畫</em>。否則就是<em>發現即打</em>。"
+    en: "<strong>Does this target need to be struck at a specific time?</strong> If it does, it is <em>Planned</em>.",
+    zh: ""
   },
   "decide-agm.100": {
     en: "Task 1.4 — Set the timing",
@@ -2498,24 +2442,24 @@ window.D3A_LANG_ZH = {
     zh: "對每個HPT運用這兩個問題。"
   },
   "decide-agm.103": {
-    en: "<span class=\"target-name\">1. Engineer obstacle team</span><br><span class=\"target-desc\">Placing charges on the span at this moment. If they finish, the mission is over.</span>",
-    zh: "<span class=\"target-name\">1. 工兵障礙小組</span><br><span class=\"target-desc\">此刻正在橋跨上安放炸藥。一旦他們完成，任務就結束了。</span>"
+    en: "<span class=\"target-name\">1. Engineer obstacle team</span><br><span class=\"target-desc\">Placing charges on the bridge at this moment. If they finish, the mission is over.</span>",
+    zh: ""
   },
   "decide-agm.104": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
   "decide-agm.105": {
-    en: "I — Immediate",
-    zh: "I — 立即"
+    en: "Immediate",
+    zh: ""
   },
   "decide-agm.106": {
-    en: "A — As acquired",
-    zh: "A — 發現即打"
+    en: "As acquired",
+    zh: ""
   },
   "decide-agm.107": {
-    en: "P — Planned",
-    zh: "P — 計畫"
+    en: "Planned",
+    zh: ""
   },
   "decide-agm.019": {
     en: "Commander agrees: this preempts every other mission. If the engineer team is not engaged immediately we risk losing the bridge.",
@@ -2534,16 +2478,16 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-agm.115": {
-    en: "I — Immediate",
-    zh: "I — 立即"
+    en: "Immediate",
+    zh: ""
   },
   "decide-agm.116": {
-    en: "A — As acquired",
-    zh: "A — 發現即打"
+    en: "As acquired",
+    zh: ""
   },
   "decide-agm.117": {
-    en: "P — Planned",
-    zh: "P — 計畫"
+    en: "Planned",
+    zh: ""
   },
   "decide-agm.031": {
     en: "Commander agrees: the section has been located and is unlikely to move, so we can schedule it. We will strike it in coordination with our movement, otherwise we risk the enemy sending another section that we have not located.",
@@ -2562,16 +2506,16 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-agm.110": {
-    en: "I — Immediate",
-    zh: "I — 立即"
+    en: "Immediate",
+    zh: ""
   },
   "decide-agm.111": {
-    en: "A — As acquired",
-    zh: "A — 發現即打"
+    en: "As acquired",
+    zh: ""
   },
   "decide-agm.112": {
-    en: "P — Planned",
-    zh: "P — 計畫"
+    en: "Planned",
+    zh: ""
   },
   "decide-agm.033": {
     en: "Commander agrees: the mortars are an imminent danger to our soldiers at the crossing, and they can only be found while they fire, so they preempt every other mission. Waiting loses both the target and our soldiers.",
@@ -2590,16 +2534,16 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-agm.125": {
-    en: "I — Immediate",
-    zh: "I — 立即"
+    en: "Immediate",
+    zh: ""
   },
   "decide-agm.126": {
-    en: "A — As acquired",
-    zh: "A — 發現即打"
+    en: "As acquired",
+    zh: ""
   },
   "decide-agm.127": {
-    en: "P — Planned",
-    zh: "P — 計畫"
+    en: "Planned",
+    zh: ""
   },
   "decide-agm.041": {
     en: "Commander agrees: the command post is not an imminent danger to our forces, and no friendly action waits on its destruction, so it does not warrant dropping a higher-priority task. We engage it in its turn on the HPTL, when an asset is free.",
@@ -2625,10 +2569,6 @@ window.D3A_LANG_ZH = {
     en: "The second column of the matrix says <em>what</em> the attack must do to the target. There are three answers. They are not three strengths of the same thing. Each one buys a different result, for a different length of time, at a different cost in ammunition.",
     zh: "矩陣的第二欄說明打擊必須對目標造成<em>什麼</em>。答案有三種。它們不是同一件事的三種強度。每一種換來不同的結果、不同的持續時間，以及不同的彈藥代價。"
   },
-  "decide-agm.051": {
-    en: "Code",
-    zh: "代碼"
-  },
   "decide-agm.052": {
     en: "Meaning",
     zh: "意義"
@@ -2640,10 +2580,6 @@ window.D3A_LANG_ZH = {
   "decide-agm.054": {
     en: "How long it lasts",
     zh: "持續多久"
-  },
-  "decide-agm.060": {
-    en: "S",
-    zh: "S"
   },
   "decide-agm.061": {
     en: "<strong>Suppress</strong>",
@@ -2657,10 +2593,6 @@ window.D3A_LANG_ZH = {
     en: "<strong>Only while our rounds are landing.</strong> It ends the moment we stop firing.",
     zh: "<strong>僅在我方彈著期間有效。</strong>我們一停止射擊，效果即結束。"
   },
-  "decide-agm.065": {
-    en: "N",
-    zh: "N"
-  },
   "decide-agm.066": {
     en: "<strong>Neutralize</strong>",
     zh: "<strong>癱瘓</strong>"
@@ -2672,10 +2604,6 @@ window.D3A_LANG_ZH = {
   "decide-agm.068": {
     en: "<strong>Temporary.</strong> The unit can recover if we give it time.",
     zh: "<strong>暫時性。</strong>只要給予時間，該部隊即可恢復。"
-  },
-  "decide-agm.072": {
-    en: "D",
-    zh: "D"
   },
   "decide-agm.073": {
     en: "<strong>Destroy</strong>",
@@ -2698,24 +2626,12 @@ window.D3A_LANG_ZH = {
     zh: "為每一個HPT選擇所望效果。請以計畫註記作為判斷依據。"
   },
   "decide-agm.025": {
-    en: "Priority / HPT",
-    zh: "優先順序 / HPT"
-  },
-  "decide-agm.026": {
-    en: "Planning notes",
-    zh: "計畫註記"
-  },
-  "decide-agm.027": {
-    en: "Effect",
-    zh: "效果"
+    en: "<strong>Mandate only the minimum effect the mission requires.</strong> Every step up, from suppress to neutralize to destroy, costs more ammunition. The smallest effect that still serves the plan is the right one; only the commander can ask for more than the mission needs. Check each target as you finish it, and the reasoning will appear beneath it.",
+    zh: ""
   },
   "decide-agm.029": {
-    en: "<strong>1. Engineer obstacle team</strong>",
-    zh: "<strong>1. 工兵障礙小組</strong>"
-  },
-  "decide-agm.030": {
-    en: "They are working <em>on the bridge itself</em>. The bridge must survive. Their primary function is to block or destroy it, and they must be stopped from completing it.",
-    zh: "他們正<em>在橋樑本體上</em>作業。橋樑必須保全。他們的主要功能是封鎖或破壞橋樑，必須阻止他們完成作業。"
+    en: "<span class=\"target-name\">1. Engineer obstacle team</span><br><span class=\"target-desc\">They are working <em>on the bridge itself</em>. The bridge must survive. Their primary function is to block or destroy it, and they must be stopped from completing it.</span>",
+    zh: ""
   },
   "decide-agm.035": {
     en: "— choose —",
@@ -2733,13 +2649,17 @@ window.D3A_LANG_ZH = {
     en: "Suppress",
     zh: "制壓"
   },
-  "decide-agm.049": {
-    en: "<strong>2. ATGM section</strong>",
-    zh: "<strong>2. ATGM 分隊</strong>"
+  "decide-agm.026": {
+    en: "Check answer",
+    zh: "檢查答案"
+  },
+  "decide-agm.027": {
+    en: "We only require that the engineers be stopped from completing their primary function, blocking or destroying the bridge, not that the team be destroyed. Neutralize takes away the capability we care about, and that is usually all the plan requires.",
+    zh: ""
   },
   "decide-agm.050": {
-    en: "Dug in on high ground, looking straight down on the crossing. Commander's word: the ATGM team must not be able to affect our vehicles as they cross that chokepoint.",
-    zh: "於高地構築掩體，俯瞰渡河點。指揮官指示：該ATGM小組絕不能在我方車輛通過該隘口時對其造成影響。"
+    en: "<span class=\"target-name\">2. ATGM section</span><br><span class=\"target-desc\">Dug in on high ground, looking straight down on the crossing. Commander's word: the ATGM team must not be able to affect our vehicles as they cross that chokepoint.</span>",
+    zh: ""
   },
   "decide-agm.055": {
     en: "— choose —",
@@ -2757,13 +2677,17 @@ window.D3A_LANG_ZH = {
     en: "Suppress",
     zh: "制壓"
   },
+  "decide-agm.030": {
+    en: "Check answer",
+    zh: "檢查答案"
+  },
   "decide-agm.039": {
-    en: "<strong>3. 120&nbsp;mm mortar platoon</strong>",
-    zh: "<strong>3. 120&nbsp;公釐迫擊砲排</strong>"
+    en: "We only care about the ATGM section during the crossing. It only has to be unable to shoot accurately while our vehicles are on the chokepoint, and suppress buys exactly that, for exactly as long as we need it, at the lowest cost in ammunition.",
+    zh: ""
   },
   "decide-agm.040": {
-    en: "Deep behind the river, moves after each mission. The commander requires this enemy capability removed for the duration of the mission, about a day.",
-    zh: "位於河川後方縱深，每次任務後轉移。指揮官要求在任務期間排除敵軍此一能力，約一天。"
+    en: "<span class=\"target-name\">3. 120&nbsp;mm mortar platoon</span><br><span class=\"target-desc\">Deep behind the river, moves after each mission. The commander requires this enemy capability removed for the duration of the mission, about a day.</span>",
+    zh: ""
   },
   "decide-agm.045": {
     en: "— choose —",
@@ -2781,13 +2705,17 @@ window.D3A_LANG_ZH = {
     en: "Suppress",
     zh: "制壓"
   },
-  "decide-agm.069": {
-    en: "<strong>4. Battalion command post</strong>",
-    zh: "<strong>4. 營指揮所</strong>"
+  "decide-agm.049": {
+    en: "Check answer",
+    zh: "檢查答案"
+  },
+  "decide-agm.051": {
+    en: "The commander only requires that this enemy capability be removed for the duration of the mission, about a day. That is a temporary effect, so neutralize is enough; destroy would spend more ammunition than the mission needs.",
+    zh: ""
   },
   "decide-agm.070": {
-    en: "4&nbsp;km behind the river. Neutralize is enough to keep the defense from coordinating while we cross, and the commander's written requirement is only to “disrupt” his command and control. The commander has decided otherwise: if we are going to strike a command post, he wants it gone for good, not one staff officer missing and one radio replaced. He accepts what that costs in ammunition.",
-    zh: "位於河川後方 4&nbsp;公里。癱瘓已足以使敵軍防禦在我方渡河期間無法協調，而指揮官的書面要求也僅是「打亂」其指揮管制。指揮官另有決定：若要打擊一個指揮所，他要它永久消失，而不是少一名幕僚軍官、換一部無線電。他接受這在彈藥上的代價。"
+    en: "<span class=\"target-name\">4. Battalion command post</span><br><span class=\"target-desc\">Assessed roughly 4&nbsp;km behind the river, though not yet located. Neutralize is enough to keep the defense from coordinating while we cross, and the commander's written requirement is only to “disrupt” his command and control. The commander has decided otherwise: if we are going to strike a command post, he wants it gone for good, not one staff officer missing and one radio replaced. He accepts what that costs in ammunition.</span>",
+    zh: ""
   },
   "decide-agm.075": {
     en: "— choose —",
@@ -2805,9 +2733,13 @@ window.D3A_LANG_ZH = {
     en: "Suppress",
     zh: "制壓"
   },
-  "decide-agm.079": {
-    en: "Check the Matrix",
-    zh: "檢查矩陣"
+  "decide-agm.060": {
+    en: "Check answer",
+    zh: "檢查答案"
+  },
+  "decide-agm.065": {
+    en: "The command post is the exception, and the mission did not make it one. Neutralize would have served: it keeps the defense from coordinating while we cross. But the commander decided that if we strike a command post he wants it gone for good, not one staff officer missing and one radio replaced. He accepts what that costs in ammunition. Only the commander can ask for more than the mission needs.",
+    zh: ""
   },
   "decide-agm.129": {
     en: "Preferred method of engagement",
@@ -2826,8 +2758,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.059": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.064": {
     en: "155 mm M109A2 battery",
@@ -2838,8 +2770,8 @@ window.D3A_LANG_ZH = {
     zh: "<strong>射程</strong>"
   },
   "decide-agm.098": {
-    en: "About 1 km",
-    zh: "約 1 公里"
+    en: "About 3 km",
+    zh: ""
   },
   "decide-agm.099": {
     en: "Every target",
@@ -2974,16 +2906,16 @@ window.D3A_LANG_ZH = {
     zh: "<span class=\"pick-label\">主要</span><span class=\"pick-answer\">OWA-UAS</span>"
   },
   "decide-agm.162": {
-    en: "<span class=\"pick-label\">Alternate</span><span class=\"pick-answer\">105 mm howitzer battery</span>",
-    zh: "<span class=\"pick-label\">備用</span><span class=\"pick-answer\">105 公釐榴彈砲連</span>"
+    en: "<span class=\"pick-label\">Alternate</span><span class=\"pick-answer\">105 mm M101 howitzer battery</span>",
+    zh: "<span class=\\\"pick-label\\\">備用</span><span class=\\\"pick-answer\\\">105 公釐 M101 榴彈砲連</span>"
   },
   "decide-agm.163": {
     en: "<strong>Primary, OWA-UAS.</strong> I do not want to risk missing, since they are vital to friendly mission success. Likely a small team carrying explosives or mines.",
     zh: "<strong>主要，OWA-UAS。</strong>我不想冒著失手的風險，因為他們對友軍任務成功至關重要。可能是一支攜帶炸藥或地雷的小型小組。"
   },
   "decide-agm.164": {
-    en: "<strong>Alternate, 105 mm howitzer battery.</strong> If I have to use indirect fire, I might as well use the cheapest and most abundant round, given the small and unprotected nature of the target.",
-    zh: "<strong>備用，105 公釐榴彈砲連。</strong>如果必須使用間接火力，考量到目標小而無防護，不如使用最便宜、數量最多的彈藥。"
+    en: "<strong>Alternate, 105 mm M101 howitzer battery.</strong> If I have to use indirect fire, I might as well use the cheapest and most abundant round, given the small and unprotected nature of the target.",
+    zh: "<strong>備用，105 公釐 M101 榴彈砲連。</strong>如果必須使用間接火力，考量到目標小而無防護，不如使用最便宜、數量最多的彈藥。"
   },
   "decide-agm.165": {
     en: "<strong>Fires guidance.</strong> “We are targeting a small team with a missile. They may still be able to employ it under fire, especially if they are in a protected position.”",
@@ -3006,8 +2938,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.171": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.172": {
     en: "155 mm M109A2 battery",
@@ -3026,8 +2958,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.176": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.177": {
     en: "155 mm M109A2 battery",
@@ -3042,8 +2974,8 @@ window.D3A_LANG_ZH = {
     zh: "<strong>主要，OWA-UAS。</strong>我們要打擊的是一支持有飛彈的小型小組。他們在遭受火力時仍可能將其發射，尤其是在有防護的陣地內。"
   },
   "decide-agm.179": {
-    en: "<strong>Alternate, 105 mm howitzer battery.</strong> No reason not to use the cheaper and more abundant round, all things being equal.",
-    zh: "<strong>備用，105 公釐榴彈砲連。</strong>在其他條件相同的情況下，沒有理由不使用較便宜、數量較多的彈藥。"
+    en: "<strong>Alternate, 105 mm M101 howitzer battery.</strong> No reason not to use the cheaper and more abundant round, all things being equal.",
+    zh: "<strong>備用，105 公釐 M101 榴彈砲連。</strong>在其他條件相同的情況下，沒有理由不使用較便宜、數量較多的彈藥。"
   },
   "decide-agm.180": {
     en: "<strong>Fires guidance.</strong> “This is an area target.”",
@@ -3066,8 +2998,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.185": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.186": {
     en: "155 mm M109A2 battery",
@@ -3086,8 +3018,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.190": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.193": {
     en: "155 mm M109A2 battery",
@@ -3098,8 +3030,8 @@ window.D3A_LANG_ZH = {
     zh: "檢查答案"
   },
   "decide-agm.194": {
-    en: "<strong>Primary, 105 mm howitzer battery.</strong> An area fire weapon against an area target. No reason not to use the cheaper munition.",
-    zh: "<strong>主要：105 公釐榴彈砲連。</strong>以面積射擊武器對付面積目標。沒有理由不使用較便宜的彈藥。"
+    en: "<strong>Primary, 105 mm M101 howitzer battery.</strong> An area fire weapon against an area target. No reason not to use the cheaper munition.",
+    zh: "<strong>主要：105 公釐 M101 榴彈砲連。</strong>以面積射擊武器對付面積目標。沒有理由不使用較便宜的彈藥。"
   },
   "decide-agm.195": {
     en: "<strong>Alternate, 155 mm M109A2 battery.</strong> Also an area fire weapon against an area target.",
@@ -3110,8 +3042,8 @@ window.D3A_LANG_ZH = {
     zh: "<strong>火力指導。</strong>「敵軍指揮所可能只是一頂軟殼帳篷，也可能是數頂帳篷與車輛。我希望把第一次齊射未命中的風險降到最低。若第一次齊射未達成條件，敵軍很可能迅速轉移，我們就可能失去消耗其關鍵通信裝備與無線電的機會。」"
   },
   "decide-agm.198": {
-    en: "<span class=\"target-name\">4. Battalion command post — Destroy</span><br><span class=\"target-desc\">4&nbsp;km behind the river. Not located yet, and it relocates every 24 hours.</span>",
-    zh: "<span class=\"target-name\">4. 營指揮所 — 破壞</span><br><span class=\"target-desc\">位於河後方 4&nbsp;公里。尚未定位，且每 24 小時轉移一次。</span>"
+    en: "<span class=\"target-name\">4. Battalion command post — Destroy</span><br><span class=\"target-desc\">Not located yet, and it relocates every 24 hours. Because it is unlocated we do not yet know what we are striking: it may be a large static compound of tents and vehicles, or it may be a single mobile command vehicle. Order your two choices so that the first covers the compound and the second covers the vehicle.</span>",
+    zh: ""
   },
   "decide-agm.199": {
     en: "Primary",
@@ -3126,8 +3058,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.202": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.203": {
     en: "155 mm M109A2 battery",
@@ -3146,8 +3078,8 @@ window.D3A_LANG_ZH = {
     zh: "OWA-UAS"
   },
   "decide-agm.213": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-agm.214": {
     en: "155 mm M109A2 battery",
@@ -3158,24 +3090,24 @@ window.D3A_LANG_ZH = {
     zh: "檢查答案"
   },
   "decide-agm.215": {
-    en: "<strong>Primary, 155 mm M109A2 battery.</strong> I wish to minimize the risk of missing on the first salvo. The 155 covers a greater area.",
-    zh: "<strong>主要：155 公釐 M109A2 砲連。</strong>我希望把第一次齊射未命中的風險降到最低。155 公釐涵蓋的面積較大。"
+    en: "<strong>Primary, 155 mm M109A2 battery.</strong> If the command post is a <strong>large static compound</strong> — several tents and vehicles spread over some ground — it is an area target, and the 155 covers the most ground on the first salvo. I wish to minimize the risk of missing, because if we do not meet the criteria on that first salvo the enemy displaces and we lose the opportunity.",
+    zh: ""
   },
   "decide-agm.216": {
-    en: "<strong>Alternate, OWA-UAS.</strong> The drone buys precision and a guaranteed hit.",
-    zh: "<strong>備用：OWA-UAS。</strong>無人機可換得精度並確保命中。"
+    en: "<strong>Alternate, OWA-UAS.</strong> If instead it proves to be a <strong>single mobile command vehicle</strong>, that is a point target, and the drone buys precision and a guaranteed hit on it.",
+    zh: ""
   },
   "decide-agm.219": {
-    en: "Attack guidance is not an exact science. The approved matrix may reflect the opinions of the commander.",
-    zh: "攻擊指導不是精確的科學。核定的矩陣可能反映指揮官的個人見解。"
+    en: "<strong>Attack guidance is not an exact science.</strong> The approved matrix may reflect the opinions of the commander. Two competent staff officers will order the same three assets differently for the same target and both will be able to defend it. The order also turns on something this page has not given you yet — <strong>where the target is</strong>, and how accurately and how recently we have located it. That is the work of the <strong>target selection standards</strong>, on the next page. Target 4 below is the clearest case: read the commander's reasoning, then ask whether you would have written the same order.",
+    zh: ""
   },
   "decide-agm.220": {
     en: "The completed attack guidance matrix",
     zh: "完成的攻擊矩陣"
   },
   "decide-agm.221": {
-    en: "This is the product you have just built. It goes to the fire support cell as part of the order, and it is read from left to right: what the target is, when it is attacked, what the attack must do, and what attacks it.",
-    zh: "這就是你剛才建立的產品。它會作為命令的一部分送交火力支援組，並由左至右閱讀：目標是什麼、何時攻擊、攻擊必須達成什麼、以及由什麼攻擊。"
+    en: "This is the product you have just built. It goes to the fire support coordination cell (FSCC) as part of the order, and it is read from left to right: what the target is, when it is attacked, what the attack must do, and what attacks it.",
+    zh: "這就是你剛才建立的產品。它會作為命令的一部分送交火力協調組（FSCC），並由左至右閱讀：目標是什麼、何時攻擊、攻擊必須達成什麼、以及由什麼攻擊。"
   },
   "decide-agm.222": {
     en: "Priority / HPT",
@@ -3298,8 +3230,8 @@ window.D3A_LANG_ZH = {
     zh: "105 公釐"
   },
   "decide-agm.252": {
-    en: "105 mm is the 105 mm howitzer battery. 155 mm is the 155 mm M109A2 battery. OWA-UAS is the one-way attack UAS.",
-    zh: "105 公釐是指 105 公釐榴彈砲連。155 公釐是指 155 公釐 M109A2 砲連。OWA-UAS是指攻擊型無人機。"
+    en: "105 mm is the 105 mm M101 howitzer battery. 155 mm is the 155 mm M109A2 battery. OWA-UAS is the one-way attack UAS.",
+    zh: "105 公釐是指 105 公釐 M101 榴彈砲連。155 公釐是指 155 公釐 M109A2 砲連。OWA-UAS是指攻擊型無人機。"
   },
   "decide-agm.253": {
     en: "Finish all three tasks on this page and your completed attack guidance matrix will appear above.",
@@ -3456,8 +3388,8 @@ window.D3A_LANG_ZH = {
     zh: "S-2 評估 — Operation RIVER GATE"
   },
   "decide-sync.038": {
-    en: "<strong>TAI 1.</strong> The ATGM section cannot cover the crossing from anywhere else. To engage our vehicles on the span it must emplace inside TAI 1.",
-    zh: "<strong>TAI 1。</strong>ATGM 分隊無法從其他任何地方涵蓋渡河點。要接戰橋面上的我方車輛，它必須在TAI 1 之內佔領陣地。"
+    en: "<strong>TAI 1.</strong> The ATGM section cannot cover the crossing from anywhere else. To engage our vehicles on the bridge it must emplace inside TAI 1.",
+    zh: ""
   },
   "decide-sync.039": {
     en: "<strong>NAI 2.</strong> A crossroads. Anything the enemy moves forward toward the bridge passes through it, engineer equipment included.",
@@ -3492,8 +3424,8 @@ window.D3A_LANG_ZH = {
     zh: "ATGM 分隊"
   },
   "decide-sync.047": {
-    en: "The only ground from which he can engage vehicles on the span. We intend to attack him here.",
-    zh: "他唯一能接戰橋面上車輛的地形。我們打算在此攻擊他。"
+    en: "The only ground from which he can engage vehicles on the bridge. We intend to attack him here.",
+    zh: ""
   },
   "decide-sync.048": {
     en: "120 mm mortar platoon",
@@ -3588,8 +3520,8 @@ window.D3A_LANG_ZH = {
     zh: "偵察小組<br>sUAS<br>長程情監偵無人機"
   },
   "decide-sync.065": {
-    en: "105 mm howitzer battery<br>155 mm M109A2 battery<br>One-way attack UAS",
-    zh: "105 公釐榴彈砲連<br>155 公釐 M109A2 砲連<br>攻擊型無人機"
+    en: "105 mm M101 howitzer battery<br>155 mm M109A2 battery<br>One-way attack UAS",
+    zh: "105 公釐 M101 榴彈砲連<br>155 公釐 M109A2 砲連<br>攻擊型無人機"
   },
   "decide-sync.066": {
     en: "Electronic signals indication is not offered here. You saw why in Task 1.10: it reports an area rather than a point, and it never sees the target itself, so its report fails both target location error and minimum size. It cues another sensor. It does not carry a package on its own.",
@@ -3664,8 +3596,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.084": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.085": {
     en: "155 mm M109A2 battery",
@@ -3684,8 +3616,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.089": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.090": {
     en: "155 mm M109A2 battery",
@@ -3768,8 +3700,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.110": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.111": {
     en: "155 mm M109A2 battery",
@@ -3788,8 +3720,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.115": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.116": {
     en: "155 mm M109A2 battery",
@@ -3872,8 +3804,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.136": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.137": {
     en: "155 mm M109A2 battery",
@@ -3892,8 +3824,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.141": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.142": {
     en: "155 mm M109A2 battery",
@@ -3976,8 +3908,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.162": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.163": {
     en: "155 mm M109A2 battery",
@@ -3996,8 +3928,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.167": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.168": {
     en: "155 mm M109A2 battery",
@@ -4028,8 +3960,8 @@ window.D3A_LANG_ZH = {
     zh: "當目標包裹與矩陣不一致時"
   },
   "decide-sync.175": {
-    en: "Three of your four packages copy the attack guidance matrix exactly. One does not. Against the engineer obstacle team the matrix ranks the one-way attack UAS first, and your package ranks the 105 mm howitzer battery first.",
-    zh: "你的四個目標包裹中有三個完全照抄攻擊矩陣，有一個不是。對工兵障礙小組，矩陣將攻擊型無人機列為第一順位，而你的目標包裹將 105 公釐榴彈砲連列為第一順位。"
+    en: "Three of your four packages copy the attack guidance matrix exactly. One does not. Against the engineer obstacle team the matrix ranks the one-way attack UAS first, and your package ranks the 105 mm M101 howitzer battery first.",
+    zh: "你的四個目標包裹中有三個完全照抄攻擊矩陣，有一個不是。對工兵障礙小組，矩陣將攻擊型無人機列為第一順位，而你的目標包裹將 105 公釐 M101 榴彈砲連列為第一順位。"
   },
   "decide-sync.176": {
     en: "That is not an error in either product. They answer different questions.",
@@ -4044,8 +3976,8 @@ window.D3A_LANG_ZH = {
     zh: "課題 1.12 — 目標包裹為何改變了順序"
   },
   "decide-sync.179": {
-    en: "<span class=\"target-name\">Why does the package put the 105 mm howitzer battery first against the engineers?</span><br><span class=\"target-desc\">The attack guidance matrix ranks the one-way attack UAS first against this target.</span>",
-    zh: "<span class=\"target-name\">對工兵而言，目標包裹為何將 105 公釐榴彈砲連列為第一順位？</span><br><span class=\"target-desc\">攻擊矩陣對這個目標將攻擊型無人機列為第一順位。</span>"
+    en: "<span class=\"target-name\">Why does the package put the 105 mm M101 howitzer battery first against the engineers?</span><br><span class=\"target-desc\">The attack guidance matrix ranks the one-way attack UAS first against this target.</span>",
+    zh: "<span class=\\\"target-name\\\">對工兵而言，目標包裹為何將 105 公釐 M101 榴彈砲連列為第一順位？</span><br><span class=\\\"target-desc\\\">攻擊矩陣對這個目標將攻擊型無人機列為第一順位。</span>"
   },
   "decide-sync.180": {
     en: "— choose —",
@@ -4092,8 +4024,8 @@ window.D3A_LANG_ZH = {
     zh: "— 請選擇 —"
   },
   "decide-sync.191": {
-    en: "Because if the engineers get past NAI 2 and reach the span they are inside the restricted fire area, where the drone is the only asset permitted to fire",
-    zh: "因為工兵一旦通過 NAI 2 並抵達橋跨，他們就進入了火力限制區，而在該區內無人機是唯一獲准射擊的兵力"
+    en: "Because if the engineers get past NAI 2 and reach the bridge they are inside the restricted fire area, where the drone is the only asset permitted to fire",
+    zh: ""
   },
   "decide-sync.192": {
     en: "Because the 105 mm battery must displace for 20 minutes after every fire mission",
@@ -4268,8 +4200,8 @@ window.D3A_LANG_ZH = {
     zh: "迫擊砲 / 指揮所"
   },
   "decide-sync.235": {
-    en: "105 mm howitzer battery",
-    zh: "105 公釐榴彈砲連"
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.236": {
     en: "Engineer team",
@@ -4393,31 +4325,1137 @@ window.D3A_LANG_ZH = {
     en: "Glossary",
     zh: "詞彙表"
   },
+  "detect.118": {
+    en: "<span class=\"step\">2A</span><span>Collection Plan</span>",
+    zh: "<span class=\"step\">2A</span><span>情報蒐集計畫</span>"
+  },
+  "detect.151": {
+    en: "<span class=\"step\">2B</span><span>F2T2EA</span>",
+    zh: "<span class=\"step\">2B</span><span>F2T2EA</span>"
+  },
   "detect.011": {
-    en: "Coming soon",
-    zh: "即將推出"
+    en: "Phase 2 of 4",
+    zh: "第 2 階段（共 4 階段）"
   },
   "detect.012": {
-    en: "Phase 2: Detect",
-    zh: "第 2 階段：監測"
+    en: "Detect: The Collection Plan",
+    zh: "監測：情報蒐集計畫"
   },
   "detect.013": {
-    en: "Task your sensors to find the targets, and check what they report against your standards.",
-    zh: "指派偵蒐裝備去找出目標，並以你的條件檢核它們的回報。"
+    en: "Task your sensors to find the targets, then judge what they report.",
+    zh: "派遣你的感測器去找出目標，再判斷它們回報的內容。"
   },
   "detect.014": {
-    en: "This phase is being written. Its lessons and tasks will appear here.",
-    zh: "本階段正在編寫中。其課程與課題將於此處呈現。"
+    en: "<span>Detect happens while the operation is running. The intelligence and operations staff execute the collection plan, the sensors report what they see, and the <strong>fire support coordination cell (FSCC)</strong> checks every report against the standards you set in 1C. Remember that an asset kept watching one target is not available to find another.</span>",
+    zh: "<span>監測發生在作戰進行之中。情報與作戰參謀執行情報蒐集計畫，感測器回報所見，<strong>火力協調組（FSCC）</strong>再依你在 1C 訂定的目標選擇條件檢核每一份回報。請記住：一項被用來持續監視某個目標的兵力，就無法同時去找出另一個目標。</span>"
   },
   "detect.015": {
-    en: "<strong>Phase 1, Decide, is finished and ready to work through.</strong> Start with the scenario, then build the four products in order.",
-    zh: "<strong>第 1 階段「決心」已經完成，可以開始演練。</strong>請先從想定開始，再依序完成四項產品。"
+    en: "The collection plan",
+    zh: "情報蒐集計畫"
+  },
+  "detect.018": {
+    en: "The collection plan is how the brigade turns the commander's questions into instructions for the people and the aircraft that can answer them. It is written by the intelligence staff, not by the FSCC, and the fires plan you built in Phase 1 depends on it entirely. Not every question on it is about a target, and not every target is on it.",
+    zh: "情報蒐集計畫是全旅把指揮官的問題，轉換成給能回答這些問題的人員與航空器的指令。它由情報參謀撰寫，不是由FSCC撰寫，而你在第 1 階段建立的火力計畫完全依賴它。計畫上的問題並非每一個都與目標有關，你的目標也並非每一個都在計畫上。"
+  },
+  "detect.019": {
+    en: "Term",
+    zh: "名詞"
+  },
+  "detect.020": {
+    en: "What it is",
+    zh: "這是什麼"
+  },
+  "detect.021": {
+    en: "<strong>Priority intelligence requirement (PIR)</strong>",
+    zh: "<strong>優先情報需求（PIR）</strong>"
+  },
+  "detect.022": {
+    en: "A question the commander must have answered in order to make a decision.",
+    zh: "指揮官為了作出決心，必須得到解答的問題。"
+  },
+  "detect.023": {
+    en: "<strong>Specific information requirement (SIR)</strong>",
+    zh: "<strong>特定資訊需求（SIR）</strong>"
+  },
+  "detect.024": {
+    en: "A smaller question. Answer the SIRs and you have answered the PIR.",
+    zh: "較小的問題。回答完所有SIR，就等於回答了PIR。"
+  },
+  "detect.025": {
+    en: "<strong>Indicator</strong>",
+    zh: "<strong>徵候</strong>"
+  },
+  "detect.026": {
+    en: "What that activity looks like on the ground, written so that a soldier or an aircrew knows it when they see it.",
+    zh: "該項活動在地面上看起來的樣子，寫法要讓士兵或機組員一看就認得出來。"
+  },
+  "detect.027": {
+    en: "<strong>Latest time information is of value (LTIOV)</strong>",
+    zh: "<strong>情報最後有效時間（LTIOV）</strong>"
+  },
+  "detect.028": {
+    en: "The time after which the answer no longer helps, because the decision it feeds has already been made.",
+    zh: "過了這個時間，答案就不再有幫助，因為它所支持的決心已經作成。"
+  },
+  "detect.029": {
+    en: "You have already set one clock. In 1C, <strong>timeliness</strong> asked how long a location stays good enough to shoot at. <strong>LTIOV</strong> asks a different question: how late an answer can arrive and still let the commander choose. The same report can pass one and fail the other.",
+    zh: "你已經訂過一個時鐘。在 1C，<strong>時限</strong>問的是一個位置能維持多久，仍然好到可以射擊。<strong>LTIOV</strong>問的是另一個問題：答案最晚多久送到，指揮官仍然來得及作選擇。同一份回報可能通過其中一項，卻不通過另一項。"
+  },
+  "detect.030": {
+    en: "Areas of interest — Operation RIVER GATE",
+    zh: "偵查區 — Operation RIVER GATE"
+  },
+  "detect.031": {
+    en: "Area",
+    zh: "區域"
+  },
+  "detect.032": {
+    en: "What we are trying to learn there",
+    zh: "我們想在該處查明什麼"
+  },
+  "detect.033": {
+    en: "Whether an ATGM section occupies the only ground from which he can engage vehicles on the bridge, and whether infantry reinforce there.",
+    zh: ""
+  },
+  "detect.034": {
+    en: "Whether the 120 mm mortar platoon occupies the best firing position on this ground.",
+    zh: "120 公釐迫擊砲排是否進駐本地形上最佳的射擊陣地。"
+  },
+  "detect.035": {
+    en: "Whether engineer equipment is moving to the bridge, and what else is moving through the crossroads.",
+    zh: "是否有工兵裝備向橋樑移動，以及還有什麼通過這處十字路口。"
+  },
+  "detect.036": {
+    en: "Whether the mortars use the second position, and whether reinforcements are moving through it.",
+    zh: "迫擊砲是否使用第二處陣地，以及是否有增援部隊通過該處。"
+  },
+  "detect.037": {
+    en: "Task 2.1 — Set the latest time information is of value",
+    zh: "課題 2.1 — 訂定情報最後有效時間"
+  },
+  "detect.038": {
+    en: "Every column below is filled in except one. For each row, ask which decision the answer feeds, and when the commander makes that decision. Check a row before you move on to the next.",
+    zh: "下面每一欄都已填妥，只有一欄除外。針對每一列，請問這個答案支持哪一個決心，以及指揮官在什麼時候作出該決心。檢查完一列，再做下一列。"
+  },
+  "detect.039": {
+    en: "77th Combined Arms Brigade — Collection Plan — Operation RIVER GATE",
+    zh: "第 77 聯兵旅 — 情報蒐集計畫 — RIVER GATE 作戰"
+  },
+  "detect.040": {
+    en: "PIR",
+    zh: "PIR"
+  },
+  "detect.041": {
+    en: "SIR",
+    zh: "SIR"
+  },
+  "detect.042": {
+    en: "Indicator",
+    zh: "徵候"
+  },
+  "detect.043": {
+    en: "Where to look",
+    zh: "在哪裡找"
+  },
+  "detect.044": {
+    en: "Who looks",
+    zh: "由誰去找"
+  },
+  "detect.045": {
+    en: "LTIOV",
+    zh: "LTIOV"
+  },
+  "detect.046": {
+    en: "What it triggers",
+    zh: "觸發什麼"
+  },
+  "detect.048": {
+    en: "Will the bridge be usable when the lead battalion arrives?",
+    zh: "先頭營到達時，橋樑是否可以通行？"
+  },
+  "detect.049": {
+    en: "Is the bridge standing now, or are there obstacles?",
+    zh: "橋樑目前是否完好，或已經出現障礙？"
+  },
+  "detect.050": {
+    en: "Destroyed or blocked bridge",
+    zh: "橋樑遭破壞或阻塞"
+  },
+  "detect.051": {
+    en: "Bridge",
+    zh: "橋樑"
+  },
+  "detect.052": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "detect.053": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect.054": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "detect.055": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "detect.056": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "detect.057": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "detect.058": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "detect.059": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "detect.060": {
+    en: "Indefinite",
+    zh: "無期限"
+  },
+  "detect.047": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect.061": {
+    en: "Mission delay or abort. The commander needs to choose another route, or call for engineering vehicles to clear the bridge.",
+    zh: "任務延遲或中止。指揮官必須改走其他路線，或呼叫工兵車輛前來清除橋樑。"
+  },
+  "detect.063": {
+    en: "Will the enemy send an engineer team to block or destroy the bridge?",
+    zh: "敵軍是否會派出工兵小組來阻塞或破壞橋樑？"
+  },
+  "detect.064": {
+    en: "Engineering vehicles, or a team with explosives",
+    zh: "工兵車輛，或攜帶爆材的小組"
+  },
+  "detect.065": {
+    en: "NAI 2",
+    zh: "NAI 2"
+  },
+  "detect.066": {
+    en: "Long-range ISR UAS",
+    zh: "長程情監偵無人機"
+  },
+  "detect.067": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect.068": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "detect.069": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "detect.070": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "detect.071": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "detect.072": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "detect.073": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "detect.074": {
+    en: "Indefinite",
+    zh: "無期限"
+  },
+  "detect.062": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect.075": {
+    en: "If the threat is unmitigated, the friendly force delays their advance.",
+    zh: "若威脅未獲解除，友軍將延後其前進。"
+  },
+  "detect.077": {
+    en: "Will the enemy block the bridge with an ATGM team?",
+    zh: "敵軍是否會以 ATGM 小組封鎖橋樑？"
+  },
+  "detect.078": {
+    en: "A small team with a shoulder-fired precision munition",
+    zh: "攜帶肩射精準彈藥的小型小組"
+  },
+  "detect.079": {
+    en: "TAI 1",
+    zh: "TAI 1"
+  },
+  "detect.080": {
+    en: "Scout team, sUAS",
+    zh: "偵察小組、sUAS"
+  },
+  "detect.081": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect.082": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "detect.083": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "detect.084": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "detect.085": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "detect.086": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "detect.087": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "detect.088": {
+    en: "Indefinite",
+    zh: "無期限"
+  },
+  "detect.076": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect.089": {
+    en: "If the threat is unmitigated, the friendly force delays their advance.",
+    zh: "若威脅未獲解除，友軍將延後其前進。"
+  },
+  "detect.091": {
+    en: "Can the enemy mass a counter-attack?",
+    zh: "敵軍是否能集結兵力發動反擊？"
+  },
+  "detect.092": {
+    en: "Enemy reinforcements within 3 kilometres of the bridge",
+    zh: "橋樑 3 公里範圍內的敵軍增援"
+  },
+  "detect.093": {
+    en: "Two or more companies of infantry",
+    zh: "兩個連以上的步兵"
+  },
+  "detect.094": {
+    en: "TAI 1<br>NAI 2<br>NAI 3",
+    zh: "TAI 1<br>NAI 2<br>NAI 3"
+  },
+  "detect.095": {
+    en: "Scout team, sUAS<br>Long-range ISR UAS",
+    zh: "偵察小組、sUAS<br>長程情監偵無人機"
+  },
+  "detect.096": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect.097": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "detect.098": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "detect.099": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "detect.100": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "detect.101": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "detect.102": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "detect.103": {
+    en: "Indefinite",
+    zh: "無期限"
+  },
+  "detect.090": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect.104": {
+    en: "Mission delay or abort while we mitigate, or muster combat power.",
+    zh: "任務延遲或中止，直到我們解除威脅或集結戰力。"
+  },
+  "detect.106": {
+    en: "A company or more of mechanized or armored vehicles",
+    zh: "一個連以上的機械化或裝甲車輛"
+  },
+  "detect.107": {
+    en: "NAI 2<br>NAI 3",
+    zh: "NAI 2<br>NAI 3"
+  },
+  "detect.108": {
+    en: "Long-range ISR UAS",
+    zh: "長程情監偵無人機"
+  },
+  "detect.109": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect.110": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "detect.111": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "detect.112": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "detect.113": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "detect.114": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "detect.115": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "detect.116": {
+    en: "Indefinite",
+    zh: "無期限"
+  },
+  "detect.105": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect.117": {
+    en: "Mission delay or abort while we mitigate, or muster combat power.",
+    zh: "任務延遲或中止，直到我們解除威脅或集結戰力。"
+  },
+  "detect.119": {
+    en: "Where to look and who looks are read as pairs, line by line. In the last two rows the long-range ISR UAS takes every named area of interest listed, because they lie outside the range of the small UAS.",
+    zh: "「在哪裡找」與「由誰去找」要逐行成對閱讀。在最後兩列，所列出的每一個指定偵查區都由長程情監偵無人機負責，因為它們位於小型無人機的航程之外。"
+  },
+  "detect.120": {
+    en: "What each sensor was told to do",
+    zh: "每一具感測器接到的任務"
+  },
+  "detect.121": {
+    en: "The collection plan says what to look for, where, and by when. The synchronization matrix says who is where, hour by hour. These are the surveillance rows of the matrix you built in 1D. The attack rows are left out here, because they belong to Phase 3.",
+    zh: "情報蒐集計畫說明要找什麼、在哪裡找，以及最晚何時要有答案。同步矩陣則逐小時說明誰在什麼時間位於什麼位置。以下是你在 1D 建立的矩陣中的偵蒐列。打擊列不列在這裡，因為它們屬於第 3 階段。"
+  },
+  "detect.122": {
+    en: "77th Combined Arms Brigade — Surveillance Rows — Operation RIVER GATE",
+    zh: "第 77 聯兵旅 — 偵蒐列 — RIVER GATE 作戰"
+  },
+  "detect.123": {
+    en: "Asset",
+    zh: "兵力"
+  },
+  "detect.124": {
+    en: "T-4",
+    zh: "T-4"
+  },
+  "detect.125": {
+    en: "T-3",
+    zh: "T-3"
+  },
+  "detect.126": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "detect.127": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "detect.128": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "detect.129": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "detect.130": {
+    en: "T+2",
+    zh: "T+2"
+  },
+  "detect.131": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "detect.132": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "detect.133": {
+    en: "T+5",
+    zh: "T+5"
+  },
+  "detect.134": {
+    en: "T+6",
+    zh: "T+6"
+  },
+  "detect.135": {
+    en: "T+7",
+    zh: "T+7"
+  },
+  "detect.136": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "detect.137": {
+    en: "Kordan Bridge / engineers",
+    zh: "Kordan 橋樑 / 工兵"
+  },
+  "detect.138": {
+    en: "TAI 1 / ATGM",
+    zh: "TAI 1 / ATGM"
+  },
+  "detect.139": {
+    en: "sUAS",
+    zh: "sUAS"
+  },
+  "detect.140": {
+    en: "TAI 1 / ATGM",
+    zh: "TAI 1 / ATGM"
+  },
+  "detect.141": {
+    en: "Long-range ISR UAS #1",
+    zh: "長程情監偵無人機 #1"
+  },
+  "detect.142": {
+    en: "NAI 2 / engineers",
+    zh: "NAI 2 / 工兵"
+  },
+  "detect.143": {
+    en: "NAI 1 / mortars",
+    zh: "NAI 1 / 迫擊砲"
+  },
+  "detect.144": {
+    en: "NAI 3 / mortars",
+    zh: "NAI 3 / 迫擊砲"
+  },
+  "detect.145": {
+    en: "Long-range ISR UAS #2",
+    zh: "長程情監偵無人機 #2"
+  },
+  "detect.146": {
+    en: "NAI 1 / mortars",
+    zh: "NAI 1 / 迫擊砲"
+  },
+  "detect.147": {
+    en: "NAI 3 / mortars",
+    zh: "NAI 3 / 迫擊砲"
+  },
+  "detect.148": {
+    en: "NAI 3 / mortars or command post",
+    zh: "NAI 3 / 迫擊砲或指揮所"
+  },
+  "detect.149": {
+    en: "<span class=\"key t-eng\">Engineer team</span> <span class=\"key t-atgm\">ATGM section</span> <span class=\"key t-mor\">120 mm mortar platoon</span> <span class=\"key t-cp\">Battalion command post</span>",
+    zh: "<span class=\"key t-eng\">工兵組</span> <span class=\"key t-atgm\">ATGM分隊</span> <span class=\"key t-mor\">120 公釐迫擊砲排</span> <span class=\"key t-cp\">營指揮所</span>"
+  },
+  "detect.150": {
+    en: "A surveillance block names the area being watched and the target expected there. An empty cell means the asset is unassigned and available.",
+    zh: "一個偵蒐區塊標示所監視的區域，以及預期在該處的目標。空白格代表該兵力未指派任務，可供運用。"
   },
   "detect.016": {
     en: "← Target Synchronization Matrix",
     zh: "← 目標同步矩陣"
   },
   "detect.017": {
+    en: "Next: F2T2EA →",
+    zh: "下一頁：F2T2EA →"
+  },
+
+  /* ---------- detect-f2t2ea.html ---------- */
+  "detect-f2t2ea.001": {
+    en: "The Fires Lab",
+    zh: "火力實驗室"
+  },
+  "detect-f2t2ea.002": {
+    en: "Mastering Targeting Through Practical Application",
+    zh: "透過實務應用精通目標選定"
+  },
+  "detect-f2t2ea.003": {
+    en: "Decide · Detect · Deliver · Assess",
+    zh: "擬定 · 監測 · 執行 · 評估"
+  },
+  "detect-f2t2ea.004": {
+    en: "Home",
+    zh: "首頁"
+  },
+  "detect-f2t2ea.005": {
+    en: "Scenario",
+    zh: "想定"
+  },
+  "detect-f2t2ea.006": {
+    en: "1. Decide",
+    zh: "1. 擬定"
+  },
+  "detect-f2t2ea.007": {
+    en: "2. Detect",
+    zh: "2. 監測"
+  },
+  "detect-f2t2ea.008": {
+    en: "3. Deliver",
+    zh: "3. 執行"
+  },
+  "detect-f2t2ea.009": {
+    en: "4. Assess",
+    zh: "4. 評估"
+  },
+  "detect-f2t2ea.010": {
+    en: "Glossary",
+    zh: "詞彙表"
+  },
+  "detect-f2t2ea.011": {
+    en: "<span class=\"step\">2A</span><span>Collection Plan</span>",
+    zh: "<span class=\"step\">2A</span><span>情報蒐集計畫</span>"
+  },
+  "detect-f2t2ea.012": {
+    en: "<span class=\"step\">2B</span><span>F2T2EA</span>",
+    zh: "<span class=\"step\">2B</span><span>F2T2EA</span>"
+  },
+  "detect-f2t2ea.013": {
+    en: "Phase 2 of 4",
+    zh: "第 2 階段（共 4 階段）"
+  },
+  "detect-f2t2ea.014": {
+    en: "Detect: Find, Fix, Track, Target, Engage, Assess",
+    zh: "監測：發現、定位、追蹤、目標處理、接戰、評估"
+  },
+  "detect-f2t2ea.015": {
+    en: "The six steps one target passes through once the operation is running.",
+    zh: "一個目標在作戰執行期間所經歷的六個步驟。"
+  },
+  "detect-f2t2ea.016": {
+    en: "<span>Decide, Detect, Deliver, and Assess is the entire deliberate targeting cycle that runs continuously throughout the entire operation. Within this cycle, targets may be <strong><em>dynamically acquired or deliberately planned</em></strong>. All target types are engaged using the mnemonic F2T2EA, used to understand the status of a given target within current operations.</span>",
+    zh: "<span>擬定、監測、執行、評估是完整的預劃目標獲取循環，在整個作戰期間持續運行。在此循環之內，目標可能是<strong><em>動態獲取，也可能是預劃排定</em></strong>。所有類型的目標都以F2T2EA這個口訣來接戰，用以掌握特定目標在當前作戰中的狀態。</span>"
+  },
+  "detect-f2t2ea.019": {
+    en: "Decide",
+    zh: "擬定"
+  },
+  "detect-f2t2ea.026": {
+    en: "Detect",
+    zh: "監測"
+  },
+  "detect-f2t2ea.027": {
+    en: "Deliver",
+    zh: "執行"
+  },
+  "detect-f2t2ea.028": {
+    en: "Assess",
+    zh: "評估"
+  },
+  "detect-f2t2ea.031": {
+    en: "<span class=\"n\">1</span>Find",
+    zh: "<span class=\"n\">1</span>發現"
+  },
+  "detect-f2t2ea.032": {
+    en: "<span class=\"n\">2</span>Fix",
+    zh: "<span class=\"n\">2</span>定位"
+  },
+  "detect-f2t2ea.033": {
+    en: "<span class=\"n\">3</span>Track",
+    zh: "<span class=\"n\">3</span>追蹤"
+  },
+  "detect-f2t2ea.036": {
+    en: "<span class=\"n\">4</span>Target",
+    zh: "<span class=\"n\">4</span>目標處理"
+  },
+  "detect-f2t2ea.037": {
+    en: "<span class=\"n\">5</span>Engage",
+    zh: "<span class=\"n\">5</span>接戰"
+  },
+  "detect-f2t2ea.038": {
+    en: "<span class=\"n\">6</span>Assess",
+    zh: "<span class=\"n\">6</span>評估"
+  },
+  "detect-f2t2ea.041": {
+    en: "no step",
+    zh: "無步驟"
+  },
+  "detect-f2t2ea.020": {
+    en: "The six steps",
+    zh: "六個步驟"
+  },
+  "detect-f2t2ea.021": {
+    en: "Term",
+    zh: "名詞"
+  },
+  "detect-f2t2ea.022": {
+    en: "Doctrinal definition",
+    zh: "準則定義"
+  },
+  "detect-f2t2ea.024": {
+    en: "<strong>Find</strong><span class=\"own own-detect\">Detect</span>",
+    zh: "<strong>發現（Find）</strong><span class=\"own own-detect\">監測</span>"
+  },
+  "detect-f2t2ea.025": {
+    en: "An emerging target is detected within an area of interest. Location is approximate and identity is unknown.",
+    zh: "在感興趣區域內偵測到一個新興目標。位置為概略位置，身份不明。"
+  },
+  "detect-f2t2ea.029": {
+    en: "<strong>Fix</strong><span class=\"own own-detect\">Detect</span>",
+    zh: "<strong>定位（Fix）</strong><span class=\"own own-detect\">監測</span>"
+  },
+  "detect-f2t2ea.030": {
+    en: "Target identity is positively confirmed (<strong>PID</strong>) and location accuracy is refined (<strong>low TLE</strong>) to enable weapon engagement.",
+    zh: "目標身份獲得確認（<strong>PID</strong>），且位置精度提升至可供武器接戰的程度（<strong>低目標位置誤差量</strong>）。"
+  },
+  "detect-f2t2ea.034": {
+    en: "<strong>Track</strong><span class=\"own own-detect\">Detect</span>",
+    zh: "<strong>追蹤（Track）</strong><span class=\"own own-detect\">監測</span>"
+  },
+  "detect-f2t2ea.035": {
+    en: "Continuous sensor custody is maintained on the fixed target over time to monitor movement and preserve targetable data until strike execution.",
+    zh: "對已定位的目標持續保持感測器掌握，隨時間監視其移動，並在攻擊執行前維持可供接戰的目標資料。"
+  },
+  "detect-f2t2ea.039": {
+    en: "<strong>Target</strong><span class=\"own own-deliver\">Deliver</span>",
+    zh: "<strong>目標處理（Target）</strong><span class=\"own own-deliver\">執行</span>"
+  },
+  "detect-f2t2ea.040": {
+    en: "Engagement authority is requested/granted, the target is validated against <strong>ROE</strong> and <strong>Collateral Damage Estimation (CDE)</strong>, and a weapon system is paired.",
+    zh: "請求並取得接戰權責，依<strong>接戰規定（ROE）</strong>與<strong>附帶損害評估（CDE）</strong>對目標進行審核，並配對武器系統。"
+  },
+  "detect-f2t2ea.044": {
+    en: "<strong>Engage</strong><span class=\"own own-deliver\">Deliver</span>",
+    zh: "<strong>接戰（Engage）</strong><span class=\"own own-deliver\">執行</span>"
+  },
+  "detect-f2t2ea.045": {
+    en: "The strike order is issued and the selected weapon system executes the attack (dispatch, launch, or terminal prosecution).",
+    zh: "下達攻擊命令，由選定的武器系統執行攻擊（派遣、發射或終端接戰）。"
+  },
+  "detect-f2t2ea.049": {
+    en: "<strong>Assess</strong><span class=\"own own-assess\">Assess</span>",
+    zh: "<strong>評估（Assess）</strong><span class=\"own own-assess\">評估</span>"
+  },
+  "detect-f2t2ea.050": {
+    en: "Combat Assessment and Battle Damage Assessment (<strong>BDA</strong>) are conducted to evaluate strike effectiveness and determine if a re-attack is required.",
+    zh: "實施戰鬥評估與戰果（<strong>BDA</strong>）評估，以判定攻擊成效並決定是否需要再次攻擊。"
+  },
+  "detect-f2t2ea.017": {
+    en: "Task 2.2 — Example Cycle (Not Operation RIVER GATE)",
+    zh: "課題 2.2 — 範例循環（非 RIVER GATE 作戰）"
+  },
+  "detect-f2t2ea.018": {
+    en: "One enemy tank, from the first sighting to the last report. For each situation, name the F2T2EA step it belongs to. The next situation appears once you have the current one right.",
+    zh: "一輛敵軍戰車，從最初的發現到最後的回報。針對每一個狀況，指出它屬於F2T2EA的哪一個步驟。答對之後，下一個狀況才會出現。"
+  },
+  "detect-f2t2ea.023": {
+    en: "Ground scout reports a potential enemy vehicle disappearing into the tree line at a distance.",
+    zh: "地面偵察兵回報，遠處有一輛可能的敵軍車輛消失在林線之中。"
+  },
+  "detect-f2t2ea.042": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.043": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.046": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.047": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.048": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.051": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.052": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.053": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.054": {
+    en: "Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates.",
+    zh: "小型無人機接近至足以確認該車輛為敵軍戰車，並產生可供接戰的座標。"
+  },
+  "detect-f2t2ea.062": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.063": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.064": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.065": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.066": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.067": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.068": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.069": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.070": {
+    en: "sUAS battery dies before a decision on how to engage the tank is made. Last seen moving toward friendly position.",
+    zh: "在決定如何接戰該戰車之前，小型無人機的電池耗盡。最後一次目擊時，戰車正朝我方陣地移動。"
+  },
+  "detect-f2t2ea.071": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.072": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.073": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.074": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.075": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.076": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.077": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.078": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.079": {
+    en: "Custody is lost, so the tank is no longer fixed and no longer tracked. Its location is approximate again, and the cycle drops back to Find.",
+    zh: "掌握中斷，戰車既未定位也未受追蹤。它的位置再度成為概略位置，循環退回發現步驟。"
+  },
+  "detect-f2t2ea.080": {
+    en: "Forward Scout Team reports they have “eyes-on” a tank near last known position.",
+    zh: "前進偵察小組回報，他們在最後已知位置附近「目視」到一輛戰車。"
+  },
+  "detect-f2t2ea.081": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.082": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.083": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.084": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.085": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.086": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.087": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.088": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.089": {
+    en: "Order sent to anti-tank one-way-attack UAS unit to engage the tank under observation by the scout team.",
+    zh: "命令下達給反裝甲單向攻擊無人機單位，接戰該輛由偵察小組持續觀測的戰車。"
+  },
+  "detect-f2t2ea.090": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.091": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.092": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.093": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.094": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.095": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.096": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.097": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.098": {
+    en: "Scout team observes attack drone strike near the tank. From the explosion they observe the tank quickly driving away, presumably intact.",
+    zh: "偵察小組觀察到攻擊無人機在戰車附近命中。他們看到戰車自爆炸中迅速駛離，推測並未受損。"
+  },
+  "detect-f2t2ea.099": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.100": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.101": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.102": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.103": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.104": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.105": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.106": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.107": {
+    en: "Long range ISR is tasked with and re-acquires a slightly damaged tank.",
+    zh: "長程情監偵獲派任務，並重新捕獲一輛受到輕微損傷的戰車。"
+  },
+  "detect-f2t2ea.108": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.109": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.110": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.111": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.112": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.113": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.114": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.115": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.116": {
+    en: "Finding it again is not the whole of it. The ISR is tasked to hold the tank, and holding custody over time is Track.",
+    zh: "重新找到並不是全部。長程情監偵所受領的任務是持續掌握該戰車，而隨時間保持掌握就是追蹤。"
+  },
+  "detect-f2t2ea.117": {
+    en: "Headquarters element requests permission to re-task an attack helicopter.",
+    zh: "司令部單位請求核准改派一架攻擊直升機。"
+  },
+  "detect-f2t2ea.118": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.119": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.120": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.121": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.122": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.123": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.124": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.125": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.126": {
+    en: "Commander approves the re-tasking. Mission is sent to the pilots flying.",
+    zh: "指揮官核准改派。任務下達給正在空中的飛行員。"
+  },
+  "detect-f2t2ea.127": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.128": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.129": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.130": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.131": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.132": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.133": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.134": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.135": {
+    en: "Pilots record video of the tank being destroyed by a Hellfire missile.",
+    zh: "飛行員錄下戰車遭地獄火飛彈摧毀的影像。"
+  },
+  "detect-f2t2ea.136": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.137": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.138": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.139": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.140": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.141": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.142": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.143": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.055": {
+    en: "The steps overlap",
+    zh: "各步驟會重疊"
+  },
+  "detect-f2t2ea.056": {
+    en: "While the steps are listed in the order presented to ease explanation, several steps are accomplished simultaneously and overlapped. For example, the track step frequently continues through the completion of the assess step.",
+    zh: "這些步驟依序列出是為了便於說明，實際上有數個步驟同時進行且互相重疊。例如追蹤步驟經常持續到評估步驟結束為止。"
+  },
+  "detect-f2t2ea.057": {
+    en: "FM 3-60, Appendix A.",
+    zh: "FM 3-60，附錄A。"
+  },
+  "detect-f2t2ea.058": {
+    en: "Two things follow from that, and both of them are already in your plan. The first is that <strong>Track does not stop when the order to fire is given.</strong> The sensor that held custody of the target is the sensor that will tell you whether the strike worked, so it is still committed long after Engage. The second is that <strong>Assess can send a target back to Target rather than out of the cycle.</strong> A target that was struck but is still working has not left the cycle. It returns to be paired with a weapon a second time.",
+    zh: "由此可以得出兩點，而這兩點在您的計畫中都已經存在。第一，<strong>下達射擊命令後追蹤並不會停止。</strong>掌握該目標的感測器，就是將要告訴您攻擊是否奏效的感測器，因此在接戰之後它仍然被佔用。第二，<strong>評估可能把目標送回目標處理步驟，而不是送出循環之外。</strong>遭到攻擊但仍能運作的目標並未離開循環，它會回到步驟中，第二次與武器配對。"
+  },
+  "detect-f2t2ea.060": {
+    en: "← Collection Plan",
+    zh: "← 情報蒐集計畫"
+  },
+  "detect-f2t2ea.061": {
     en: "Phase 3: Deliver →",
     zh: "第 3 階段：執行 →"
   },
@@ -4464,32 +5502,1880 @@ window.D3A_LANG_ZH = {
     zh: "詞彙表"
   },
   "deliver.011": {
-    en: "Coming soon",
-    zh: "即將推出"
+    en: "Phase 3 of 4",
+    zh: "第 3 階段（共 4 階段）"
   },
   "deliver.012": {
     en: "Phase 3: Deliver",
     zh: "第 3 階段：執行"
   },
   "deliver.013": {
-    en: "Engage a valid target with the right asset, and clear the fires before anything leaves the tube.",
-    zh: "以正確的兵力接戰合格的目標，並在彈藥離開砲管之前完成火力安全查證。"
+    en: "The Deliver function's main objective is to attack targets in accordance with the attack guidance provided.",
+    zh: "執行功能的主要目的，是依據所提供的攻擊指導打擊目標。"
   },
   "deliver.014": {
-    en: "This phase is being written. Its lessons and tasks will appear here.",
-    zh: "本階段正在編寫中。其課程與課題將於此處呈現。"
+    en: "The tactical solution (the selection of a weapon system, or a combination of weapon systems) leads to a technical solution for the selected weapon. The technical solution includes the following:",
+    zh: "戰術方案（選擇一種武器系統，或數種武器系統的組合）導出所選武器的技術方案。技術方案包含下列項目："
   },
   "deliver.015": {
-    en: "<strong>Phase 1, Decide, is finished and ready to work through.</strong> Start with the scenario, then build the four products in order.",
-    zh: "<strong>第 1 階段「決心」已經完成，可以開始演練。</strong>請先從想定開始，再依序完成四項產品。"
+    en: "Specific attack unit",
+    zh: "指定的攻擊單位"
   },
   "deliver.016": {
+    en: "Type of ordnance",
+    zh: "彈藥種類"
+  },
+  "deliver.228": {
+    en: "Time of attack",
+    zh: "攻擊時間"
+  },
+  "deliver.229": {
+    en: "Coordinating instructions",
+    zh: "協調事項"
+  },
+  "deliver.230": {
+    en: "Current Operations",
+    zh: "當前作戰"
+  },
+  "deliver.017": {
+    en: "T-4",
+    zh: "T-4"
+  },
+  "deliver.222": {
+    en: "T-3",
+    zh: "T-3"
+  },
+  "deliver.223": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "deliver.224": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "deliver.225": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "deliver.226": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "deliver.227": {
+    en: "T+2",
+    zh: "T+2"
+  },
+  "deliver.110": {
+    en: "HPTL / AGM / TSS or HAT",
+    zh: "HPTL / AGM / TSS 或 HAT"
+  },
+  "deliver.111": {
+    en: "Target Sync Matrix",
+    zh: "目標同步矩陣"
+  },
+  "deliver.233": {
+    en: "Map",
+    zh: "地圖"
+  },
+  "deliver.022": {
+    en: "HPTL",
+    zh: "HPTL"
+  },
+  "deliver.023": {
+    en: "<span class=\"wb-n\">1</span>Find",
+    zh: "<span class=\"wb-n\">1</span>發現"
+  },
+  "deliver.262": {
+    en: "<span class=\"wb-n\">2</span>Fix",
+    zh: "<span class=\"wb-n\">2</span>定位"
+  },
+  "deliver.263": {
+    en: "<span class=\"wb-n\">3</span>Track",
+    zh: "<span class=\"wb-n\">3</span>追蹤"
+  },
+  "deliver.264": {
+    en: "<span class=\"wb-n\">4</span>Target",
+    zh: "<span class=\"wb-n\">4</span>目標處理"
+  },
+  "deliver.265": {
+    en: "<span class=\"wb-n\">5</span>Engage",
+    zh: "<span class=\"wb-n\">5</span>接戰"
+  },
+  "deliver.266": {
+    en: "<span class=\"wb-n\">6</span>Assess",
+    zh: "<span class=\"wb-n\">6</span>評估"
+  },
+  "deliver.267": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.268": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.269": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.270": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.271": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.272": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.273": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.274": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.275": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.276": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.277": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.278": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.279": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.280": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.281": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.282": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.283": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.284": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.285": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.286": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.287": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.288": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.289": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.290": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.291": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.292": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.293": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.294": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.077": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.078": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.079": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.080": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.081": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.082": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.083": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.346": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.350": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.351": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.352": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.353": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.354": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.355": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "deliver.020": {
+    en: "T-3:45",
+    zh: "T-3:45"
+  },
+  "deliver.021": {
+    en: "The long-range ISR UAS acquires a bulldozer and other construction equipment headed north toward the intersection in NAI 2. No personnel are visible. The vehicles look suspicious, but it is uncertain who they are or what they intend.",
+    zh: "長程情監偵無人機捕獲一輛推土機及其他工程機具，正沿路北上駛向NAI 2的路口。未見人員。這些車輛可疑，但無法確定他們是誰，也不清楚其意圖。"
+  },
+  "deliver.024": {
+    en: "Move the <strong>engineer team</strong> box to the column it now belongs in, then check.",
+    zh: "請將<strong>工兵小組</strong>方塊移到它此刻所屬的欄位，然後檢查。"
+  },
+  "deliver.025": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.026": {
+    en: "<strong>Why it is Find:</strong> The <strong>Find</strong> phase detects a potential target based on intelligence, surveillance, and reconnaissance (ISR) collection aligned with named areas of interest (NAIs). At T-3:45, ISR acquires equipment, but because identity and intent are explicitly uncertain, the asset remains an unconfirmed potential target.",
+    zh: "<strong>為何是發現：</strong><strong>發現</strong>階段是依據對準指定偵查區（NAI）的情報、監視與偵察（ISR）蒐集，偵測到一個潛在目標。在T-3:45，情監偵捕獲了機具，但由於身份與意圖明確地無法確定，該目標仍是一個未經確認的潛在目標。"
+  },
+  "deliver.027": {
+    en: "<strong>Why it is NOT Fix:</strong> <strong>Fix</strong> requires continuous tracking and positive identification (PID) to confirm the entity matches HPTL criteria. Without visible personnel or clear identity, you cannot satisfy PID or establish a fixed target file.",
+    zh: "<strong>為何不是定位：</strong><strong>定位</strong>需要持續追蹤與目標識別確認（PID），以確認該對象符合高效益目標清單的條件。在看不到人員、身份不明的情況下，您無法滿足PID，也無法建立確定的目標檔案。"
+  },
+  "deliver.028": {
+    en: "T-3:40",
+    zh: "T-3:40"
+  },
+  "deliver.029": {
+    en: "The vehicles stop at the intersection. A group of personnel exit the vehicles and appear to be having a meeting. We can now clearly see uniforms and they appear to be armed with rifles.",
+    zh: "車輛在路口停下。一群人員下車，看起來正在開會。我們現在可以清楚看見制服，他們似乎持有步槍。"
+  },
+  "deliver.030": {
+    en: "Move the <strong>engineer team</strong> box to the column it now belongs in, then check.",
+    zh: "請將<strong>工兵小組</strong>方塊移到它此刻所屬的欄位，然後檢查。"
+  },
+  "deliver.031": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.032": {
+    en: "<strong>Why it is Target:</strong> PID is confirmed (uniforms and weapons). This target is already on our HPTL and included in the TSM plan. We already know our commander wants us to shoot this target.",
+    zh: "<strong>為何是目標處理：</strong>PID已確認（制服與武器）。這個目標已列在我們的高效益目標清單上，也已納入目標同步矩陣的計畫之中。我們早已知道指揮官要我們打擊這個目標。"
+  },
+  "deliver.033": {
+    en: "<strong>Why it is NOT Track:</strong> <strong>Track</strong> is the maintenance phase, holding sensor coverage while awaiting a decision or maintaining custody during movement. Because this target is on the HPTL with pre-planned fire support, PID immediately triggers active weapon-target pairing rather than passive holding.",
+    zh: "<strong>為何不是追蹤：</strong><strong>追蹤</strong>是維持階段，在等待決心或目標移動期間持續保持感測器涵蓋與掌握。由於這個目標已列在高效益目標清單上並有預劃的火力支援，PID一經確認就直接觸發武器與目標的配對，而不是被動地保持掌握。"
+  },
+  "deliver.034": {
+    en: "<strong>Why it is NOT Engage:</strong> <strong>Engage</strong> only starts when the authorization or fire order is transmitted to the firing unit. The target remains in <strong>Target</strong> while final coordination of how and when we are going to engage the target occurs.",
+    zh: "<strong>為何不是接戰：</strong><strong>接戰</strong>要到授權或射擊命令傳達給射擊單位時才開始。在最後協調如何以及何時打擊這個目標的期間，目標仍停留在<strong>目標處理</strong>。"
+  },
+  "deliver.035": {
+    en: "Select the asset to engage this target.",
+    zh: "選擇打擊這個目標的射擊單位。"
+  },
+  "deliver.036": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.037": {
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "deliver.038": {
+    en: "155 mm M109A2 battery",
+    zh: "155 公釐 M109A2 砲連"
+  },
+  "deliver.039": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "deliver.040": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.041": {
+    en: "The engineer target package in 1D names the 105 mm battery as the primary asset. NAI 2 is a crossroads outside the restricted fire area, so the guns may fire there.",
+    zh: "1D的工兵目標包裹指定105公釐砲連為主要打擊單位。NAI 2是位於火力限制區之外的路口，因此火砲可以在該處射擊。"
+  },
+  "deliver.042": {
+    en: "The attack guidance matrix ranks the drone first for this target, and it is the right answer once the engineers reach the bridge itself. Here they are still at the crossroads, where the guns can reach them.",
+    zh: ""
+  },
+  "deliver.043": {
+    en: "The 155 mm battery is third for this target and is not on line until T-2.",
+    zh: "155公釐砲連就這個目標而言排在第三順位，而且要到T-2才進入陣地。"
+  },
+  "deliver.044": {
+    en: "T-3:30",
+    zh: "T-3:30"
+  },
+  "deliver.045": {
+    en: "The fire order has been sent to the firing unit.",
+    zh: "射擊命令已下達給射擊單位。"
+  },
+  "deliver.046": {
+    en: "Update the target tracker: move the <strong>engineer team</strong> box, then check.",
+    zh: "更新目標追蹤看板：請移動<strong>工兵小組</strong>方塊，然後檢查。"
+  },
+  "deliver.047": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.048": {
+    en: "T-3:25",
+    zh: "T-3:25"
+  },
+  "deliver.049": {
+    en: "The 105 mm M101 howitzer battery engages the target. The long-range ISR UAS observes and records all of the engineering vehicles catching fire and becoming immobile.",
+    zh: "105 公釐 M101 榴彈砲連對該目標實施射擊。長程情監偵無人機觀測並記錄到所有工程車輛起火並失去機動能力。"
+  },
+  "deliver.050": {
+    en: "Update the target tracker: move the <strong>engineer team</strong> box, then check.",
+    zh: "更新目標追蹤看板：請移動<strong>工兵小組</strong>方塊，然後檢查。"
+  },
+  "deliver.051": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.052": {
+    en: "Engagement complete. We will conduct a battle damage assessment and recommend a re-attack if needed. We assess these engineering vehicles are destroyed.",
+    zh: "接戰完成。我們將實施戰果評估，並在必要時建議再次攻擊。我們研判這些工程車輛已被摧毀。"
+  },
+  "deliver.053": {
+    en: "For this class we will leave the target here on the board. In practice you may move it to an archive position.",
+    zh: "在本課程中，我們讓目標留在看板上的這個位置。在實務上，您可以將它移到封存位置。"
+  },
+  "deliver.054": {
+    en: "T-3:10",
+    zh: "T-3:10"
+  },
+  "deliver.055": {
+    en: "The Scout team identifies four heat signatures across the river inside TAI 1. The battery of the small UAS was about to die, so the sUAS was forced to return before investigating further. The Scout team reports it will be 20 minutes before another drone can be launched.",
+    zh: "偵察小組在河對岸、TAI 1 之內辨識出四個熱訊號。小型無人機的電池即將耗盡，因此在進一步偵察之前就被迫返航。偵察小組回報，還要二十分鐘才能再放飛另一架無人機。"
+  },
+  "deliver.056": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.057": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.058": {
+    en: "We do not have PID or continuous monitoring.",
+    zh: "我們既沒有PID，也沒有持續監視。"
+  },
+  "deliver.059": {
+    en: "T-2:50",
+    zh: "T-2:50"
+  },
+  "deliver.060": {
+    en: "The Scout team's sUAS has returned and now identifies the four individuals sheltering in a fighting position with what appears to be a rocket launcher. The sUAS returns for more battery shortly after the report is sent.",
+    zh: "偵察小組的小型無人機已返航，現在辨識出那四名人員掩蔽在一處戰鬥陣地內，並持有看似火箭發射器的裝備。回報送出後不久，小型無人機再度返航充電。"
+  },
+  "deliver.061": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.062": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.063": {
+    en: "We have PID and an exact location, but not continuous observation, which is required for Track.",
+    zh: "我們掌握了PID與精確位置，但沒有持續觀測，而持續觀測正是追蹤所要求的。"
+  },
+  "deliver.064": {
+    en: "T-2:30",
+    zh: "T-2:30"
+  },
+  "deliver.065": {
+    en: "The Scout team's sUAS has returned and has observation of the ATGM section.",
+    zh: "偵察小組的小型無人機已返航，並對ATGM分隊保持觀測。"
+  },
+  "deliver.066": {
+    en: "Select the appropriate action. <span class=\"hint\">Hint: check the HAT.</span>",
+    zh: "選擇適當的行動。<span class=\"hint\">提示：查看HAT。</span>"
+  },
+  "deliver.067": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.068": {
+    en: "Send an immediate one-way attack UAS fire mission",
+    zh: "下達立即性的單向攻擊無人機射擊任務"
+  },
+  "deliver.069": {
+    en: "Send an immediate 105 mm M101 howitzer mission",
+    zh: "下達立即性的105公釐M101榴彈砲射擊任務"
+  },
+  "deliver.070": {
+    en: "Continue to observe the target",
+    zh: "繼續觀測該目標"
+  },
+  "deliver.071": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.072": {
+    en: "The ATGM section is a <strong>planned</strong> target per the HAT, based on the commander's guidance. The commander does not want to engage it until T-1:00, to maximize surprise.",
+    zh: "依據指揮官的指導，ATGM分隊在HAT上是<strong>預劃</strong>目標。指揮官不希望在T-1:00之前打擊它，以求發揮奇襲效果。"
+  },
+  "deliver.073": {
+    en: "Update the target tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新目標追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.074": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.075": {
+    en: "<strong>Why it is Track:</strong> The target is under continuous observation and cannot be struck until the designated time window (T-1:00). The active function is maintaining sensor custody and target track while holding for the operational trigger.",
+    zh: "<strong>為何是追蹤：</strong>該目標處於持續觀測之下，且在指定的時間窗（T-1:00）之前不得打擊。此刻的主要作為，是在等待作戰觸發條件的同時，維持感測器掌握與目標追蹤。"
+  },
+  "deliver.076": {
+    en: "<strong>Why it is NOT Target:</strong> Having potential attack options during a required wait period keeps the target in <strong>Track</strong> until you initiate active strike coordination near T-1:00.",
+    zh: "<strong>為何不是目標處理：</strong>在必須等待的期間內雖然握有可用的攻擊選項，目標仍停留在<strong>追蹤</strong>，直到接近T-1:00、開始實際進行打擊協調為止。"
+  },
+  "deliver.018": {
+    en: "T-1:15",
+    zh: "T-1:15"
+  },
+  "deliver.019": {
+    en: "We send a fire mission to the one-way attack UAS unit with a time on target of T-1:00. The drones must not strike before that time. The unit acknowledges and launches two drones.",
+    zh: "我們對攻擊型無人機單位下達射擊任務，彈著時間為 T-1:00。無人機不得在該時間之前發起攻擊。該單位回報收到，並起飛兩架無人機。"
+  },
+  "deliver.090": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.091": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.092": {
+    en: "The fire mission has been sent and the one-way attack drones have launched.",
+    zh: "射擊任務已下達，攻擊型無人機也已起飛。"
+  },
+  "deliver.303": {
+    en: "The drones are the shooter. The Scout team's sUAS stays on the target as our observer, so we will see the strike and can assess it.",
+    zh: "無人機是射手。偵察小組的 sUAS 則持續留在目標上擔任觀測者，因此我們仍能看到這次打擊，並據以評估。"
+  },
+  "deliver.084": {
+    en: "T-1:07",
+    zh: "T-1:07"
+  },
+  "deliver.085": {
+    en: "The Scout team observes two groups of uniformed personnel approaching the bridge. They are carrying bags and wire. It appears as if they may be attempting to destroy the bridge.",
+    zh: "偵察小組觀察到兩組著制服的人員正接近橋樑。他們攜帶著袋子與電線，看起來可能正打算炸毀橋樑。"
+  },
+  "deliver.086": {
+    en: "A second engineer team has been added to the board. Update the tracker: move the <strong>Engineer team 2</strong> box, then check.",
+    zh: "看板上已新增第二支工兵小組。更新追蹤看板：請移動<strong>工兵小組 2</strong>方塊，然後檢查。"
+  },
+  "deliver.087": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.088": {
+    en: "We have continuous observation and PID, which makes this at least <strong>Track</strong>. We also have clear guidance to engage threats to the bridge or an engineer team. That authority moves it to <strong>Target</strong>.",
+    zh: "我們具備持續觀測與 PID，這使它至少達到<strong>追蹤</strong>。我們也有明確指導，可打擊橋樑威脅或工兵小組。該權責使它進到<strong>目標處理</strong>。"
+  },
+  "deliver.089": {
+    en: "<strong>Why it is not Engage:</strong> a fire mission has not been sent yet.",
+    zh: "<strong>為何不是接戰：</strong>射擊任務尚未下達。"
+  },
+  "deliver.093": {
+    en: "T-1:06",
+    zh: "T-1:06"
+  },
+  "deliver.094": {
+    en: "Two targets are now live at the same time.",
+    zh: "目前有兩個目標同時在循環中處理。"
+  },
+  "deliver.095": {
+    en: "Which target is the most urgent, and the highest priority?",
+    zh: "哪一個目標最為緊急，也是優先順序最高的？"
+  },
+  "deliver.096": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.097": {
+    en: "ATGM section",
+    zh: "ATGM 分隊"
+  },
+  "deliver.098": {
+    en: "Engineer team 2",
+    zh: "工兵小組 2"
+  },
+  "deliver.099": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.100": {
+    en: "The engineer obstacle team is <strong>priority 1</strong> on the HPTL and its guidance is <strong>Immediate</strong>. The ATGM section is priority 2 and <strong>Planned</strong>. It is also the more urgent of the two: this team is at the bridge with charges and wire, and the bridge is the objective of the operation.",
+    zh: ""
+  },
+  "deliver.101": {
+    en: "Here priority and urgency point the same way. They will not always, and when they disagree the commander’s guidance decides.",
+    zh: "在這裡，優先順序與緊急程度指向同一個目標。但情況並非總是如此；當兩者不一致時，由指揮官的火力指導決定。"
+  },
+  "deliver.102": {
+    en: "T-1:05",
+    zh: "T-1:05"
+  },
+  "deliver.103": {
+    en: "The enemy engineer team is on the bridge.",
+    zh: "敵工兵小組已在橋上。"
+  },
+  "deliver.104": {
+    en: "Which fires asset will you choose to engage the engineer threat?",
+    zh: "您將選擇哪一項火力兵力來接戰這個工兵威脅？"
+  },
+  "deliver.105": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.106": {
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "deliver.107": {
+    en: "155 mm M109A2 battery",
+    zh: "155 公釐 M109A2 砲連"
+  },
+  "deliver.254": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "deliver.255": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.256": {
+    en: "The attack guidance matrix ranks the <strong>one-way attack UAS</strong> first against the engineer team. It is also the only asset that may fire: the team is on the bridge, inside the restricted fire area, where cratering munitions are forbidden.",
+    zh: "攻擊矩陣將<strong>攻擊型無人機</strong>列為對付工兵小組的第一順位手段。它同時也是唯一可以射擊的兵力：該小組位於橋上，也就是火力限制區之內，區內禁止使用會造成彈坑的彈藥。"
+  },
+  "deliver.257": {
+    en: "Neither gun battery can shoot this mission at any priority. The control measure decides it before the matrix does.",
+    zh: "兩個砲兵連無論優先順序如何，都不能執行這項射擊任務。在矩陣發揮作用之前，管制措施就已經決定了答案。"
+  },
+  "deliver.258": {
+    en: "T-1:04",
+    zh: "T-1:04"
+  },
+  "deliver.259": {
+    en: "The one-way attack UAS unit reports a malfunction and cannot launch any more drones. The two drones already in the air are on their way to the ATGM section.",
+    zh: "攻擊型無人機單位回報發生故障，無法再起飛任何無人機。已經升空的兩架無人機，正飛向 ATGM 分隊。"
+  },
+  "deliver.260": {
+    en: "Do you abort that mission and re-task the drones to the engineers on the bridge?",
+    zh: "您要中止該任務，將這兩架無人機改派攻擊橋上的工兵嗎？"
+  },
+  "deliver.261": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.295": {
+    en: "Yes, abort and re-task them to the engineers",
+    zh: "是，中止並改派攻擊工兵"
+  },
+  "deliver.296": {
+    en: "No, continue the strike on the ATGM section",
+    zh: "否，繼續打擊 ATGM 分隊"
+  },
+  "deliver.297": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.298": {
+    en: "The two drones in the air are now the only asset that can strike inside the restricted fire area, and they are flying against the lower priority. Re-task them.",
+    zh: "空中這兩架無人機，現在是唯一能在火力限制區內實施打擊的兵力，而它們正飛向優先順序較低的目標。應予改派。"
+  },
+  "deliver.299": {
+    en: "The ATGM section is a planned target under <strong>Suppress</strong> guidance. It stays under continuous observation and can be struck later. The bridge cannot be rebuilt.",
+    zh: "ATGM 分隊是計畫目標，火力指導為<strong>制壓</strong>。它仍在連續觀察之下，稍後仍可打擊。但橋樑一旦被毀，就無法重建。"
+  },
+  "deliver.300": {
+    en: "You re-task the one-way attack drones to the engineers on the bridge. Update the tracker: move the <strong>Engineer team 2</strong> box, then check.",
+    zh: "您將攻擊型無人機改派攻擊橋上的工兵。更新追蹤看板：請移動<strong>工兵小組 2</strong>方塊，然後檢查。"
+  },
+  "deliver.301": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.302": {
+    en: "The drones are now flying against the engineer team, so that target moves to <strong>Engage</strong>. As at T-1:15, Engage begins with the re-task order, not with the impact.",
+    zh: "無人機現在正飛向工兵小組，因此該目標移到<strong>接戰</strong>。與 T-1:15 相同，接戰是從改派命令下達的那一刻開始，而不是從彈著的那一刻開始。"
+  },
+  "deliver.304": {
+    en: "One target is still in the wrong column. Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "還有一個目標留在錯誤的欄位。更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.305": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.306": {
+    en: "Nothing is flying at the ATGM section any more. We have continuous observation and authority to engage the target. We just need to decide how, and that is <strong>Target</strong>.",
+    zh: "已經沒有任何兵力飛向 ATGM 分隊。我們具備持續觀測，也有打擊該目標的權責，只需決定如何打擊，而這就是<strong>目標處理</strong>。"
+  },
+  "deliver.307": {
+    en: "<strong>Why it is not Assess:</strong> the section was never struck, so there is nothing to assess.",
+    zh: "<strong>為何不是評估：</strong>該分隊從未遭到打擊，因此沒有可供評估的事項。"
+  },
+  "deliver.308": {
+    en: "<strong>Boxes move backwards as well as forwards.</strong> A target leaves a step as soon as the conditions for that step stop being true, not only when the next step begins.",
+    zh: "<strong>方塊會往回移動，不只會往前移動。</strong>只要某一個步驟的條件不再成立，目標就會離開該步驟，而不是等到下一個步驟開始才離開。"
+  },
+  "deliver.309": {
+    en: "T-1:00",
+    zh: "T-1:00"
+  },
+  "deliver.310": {
+    en: "The Scout team observes the drone strike on the bridge. It reports that all of Engineer team 2 appear to be dead and that the bridge is safe.",
+    zh: "偵察小組觀察到無人機對橋樑的打擊。回報工兵小組 2 似乎全部陣亡，橋樑安全無恙。"
+  },
+  "deliver.311": {
+    en: "Update the tracker: move the <strong>Engineer team 2</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>工兵小組 2</strong>方塊，然後檢查。"
+  },
+  "deliver.312": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.313": {
+    en: "The drones have struck and the Scout team is watching the target, so we can judge the result. That is <strong>Assess</strong>.",
+    zh: "無人機已完成打擊，偵察小組正在觀察該目標，因此我們可以判定成效。這就是<strong>評估</strong>。"
+  },
+  "deliver.314": {
+    en: "In practice this assessment would be made very quickly and the target moved to an archive. Our tracker ends at Assess, so we will leave it there for this course.",
+    zh: "在實務上，這項評估會很快完成，該目標隨即移入封存。本課程的追蹤看板到評估為止，因此我們就把它留在該欄。"
+  },
+  "deliver.315": {
+    en: "The Scout team reports two things: the engineers are dead, and the bridge is safe. The second one is the reason we fired.",
+    zh: "偵察小組回報了兩件事：工兵已陣亡，以及橋樑安全無恙。第二件事才是我們開火的理由。"
+  },
+  "deliver.316": {
+    en: "T-0:59",
+    zh: "T-0:59"
+  },
+  "deliver.317": {
+    en: "The ATGM section still has to be engaged. The Scout team's sUAS has 15 minutes of battery left.",
+    zh: "ATGM 分隊仍有待接戰。偵察小組的 sUAS 只剩十五分鐘電量。"
+  },
+  "deliver.318": {
+    en: "The one-way attack UAS is no longer an option. Which asset will you send the fire mission to?",
+    zh: "攻擊型無人機已無法使用。您要將射擊任務下達給哪一項兵力？"
+  },
+  "deliver.319": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.320": {
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "deliver.321": {
+    en: "155 mm M109A2 battery",
+    zh: "155 公釐 M109A2 砲連"
+  },
+  "deliver.322": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.323": {
+    en: "We have a HAT and a synchronization matrix for exactly this reason. On the HAT the <strong>105 mm M101 howitzer battery</strong> is the alternate against the ATGM section, behind the drone. On the matrix it comes onto that target at T-1:00, so it is on line and tasked for this.",
+    zh: "我們之所以有 HAT 與同步矩陣，正是為了這種情況。在 HAT 上，對付 ATGM 分隊時，<strong>105 公釐 M101 榴彈砲連</strong>是僅次於無人機的備用手段。在矩陣上，該砲連自 T-1:00 起接手這個目標，因此已經就位，也已受命執行這項任務。"
+  },
+  "deliver.324": {
+    en: "The 155 mm battery is third against this target, and the matrix has it committed to the mortars and the command post from T-2. It is not available.",
+    zh: "155 公釐砲連對付這個目標排序第三，而且矩陣自 T-2 起已將它指派給迫擊砲與指揮所。它無法使用。"
+  },
+  "deliver.325": {
+    en: "The ATGM section sits outside the restricted fire area, so a gun battery is allowed to fire on it.",
+    zh: "ATGM 分隊位於火力限制區之外，因此砲兵連可以對它射擊。"
+  },
+  "deliver.326": {
+    en: "T-0:55",
+    zh: "T-0:55"
+  },
+  "deliver.327": {
+    en: "The fire mission has been sent to the 105 mm M101 howitzer battery.",
+    zh: "射擊任務已下達給 105 公釐 M101 榴彈砲連。"
+  },
+  "deliver.328": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.329": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.330": {
+    en: "The fire mission is sent, so the target is in the Engage step.",
+    zh: "射擊任務已經下達，因此該目標處於接戰步驟。"
+  },
+  "deliver.331": {
+    en: "T-0:48",
+    zh: "T-0:48"
+  },
+  "deliver.332": {
+    en: "The sUAS records rounds impacting the ATGM section's position. The video makes it look likely the mission was successful, but the battery died before we could be sure.",
+    zh: "sUAS 記錄到彈藥命中 ATGM 分隊的陣地。從無人機影像看來，這次任務很可能成功，但電池在我們能夠確認之前就耗盡了。"
+  },
+  "deliver.333": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.334": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.335": {
+    en: "This is a standard example of Assess. The engagement is complete, but we still have to confirm we achieved what the attack guidance matrix required, which is to suppress the ATGM section for as long as our vehicles are on the bridge.",
+    zh: ""
+  },
+  "deliver.336": {
+    en: "Notice that we move the target to Assess even though we are not sure. Assess is where a target waits while we work out what the strike achieved.",
+    zh: "請注意，即使我們無法確認，仍要將目標移到評估。目標會停留在評估，直到我們釐清這次打擊達成了什麼效果。"
+  },
+  "deliver.337": {
+    en: "Notice that at this time we have three targets in the <strong>Assess</strong> column. For two of them, the engineer teams, the assessment has been made and the cycle is complete. For the ATGM section, we are still conducting the assessment. For this reason, we will remove the engineer teams from the tracker.",
+    zh: "請注意，此時我們在<strong>評估</strong>欄有三個目標。其中兩個是工兵小組，評估已經完成，循環也已結束。至於 ATGM 分隊，我們仍在進行評估。因此，我們要將工兵小組從追蹤看板上移除。"
+  },
+  "deliver.338": {
+    en: "Remove the engineer teams",
+    zh: "移除工兵小組"
+  },
+  "deliver.339": {
+    en: "The engineer teams are off the board. The ATGM section stays until we know whether we suppressed it.",
+    zh: "工兵小組已從看板上移除。ATGM 分隊會留在原位，直到我們確認是否已將其制壓。"
+  },
+  "deliver.400": {
+    en: "T-0:46",
+    zh: "T-0:46"
+  },
+  "deliver.401": {
+    en: "The 105 mm M101 howitzer battery is asking for a battle damage assessment and the mission status. It will be fifteen minutes before the next sUAS can observe the target.",
+    zh: "105 公釐 M101 榴彈砲連要求提供戰果評估與任務狀況。還要十五分鐘，下一架 sUAS 才能觀察該目標。"
+  },
+  "deliver.402": {
+    en: "What do you tell the battery?",
+    zh: "你要如何回覆該砲連？"
+  },
+  "deliver.403": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.404": {
+    en: "Mission successful. The ATGM section is destroyed",
+    zh: "任務成功。ATGM 分隊已被殲滅。"
+  },
+  "deliver.405": {
+    en: "Status unknown. Continue suppressive fire, unobserved",
+    zh: "狀況不明。在無觀察的情況下繼續實施制壓射擊。"
+  },
+  "deliver.406": {
+    en: "Status unknown. Be ready to repeat once they relocate",
+    zh: "狀況不明。準備在他們轉移後再次射擊。"
+  },
+  "deliver.407": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.408": {
+    en: "More than one of these answers is defensible. Only the first is wrong, because it reports a result nobody has observed.",
+    zh: "這些答案中不只一個說得通。只有第一個是錯的，因為它回報了一項沒有人觀察到的結果。"
+  },
+  "deliver.409": {
+    en: "We have not finished the assessment. The sUAS battery died before we could be sure of anything.",
+    zh: "我們還沒有完成評估。sUAS 的電池在我們能夠確認任何事情之前就耗盡了。"
+  },
+  "deliver.410": {
+    en: "That is an option. The attack guidance matrix asks us to suppress the ATGM section, and firing keeps it pinned while we wait fifteen minutes to assess.",
+    zh: "這是一個可行的選項。攻擊矩陣要求我們制壓 ATGM 分隊，持續射擊可以把它壓制住，讓我們等十五分鐘後再評估。"
+  },
+  "deliver.411": {
+    en: "The cost is that the battery keeps firing from one position. The longer it stays there, the easier it is for the enemy to find it and fire back.",
+    zh: "代價是該砲連必須在同一個陣地持續射擊。停留愈久，敵軍就愈容易找到它並反擊。"
+  },
+  "deliver.412": {
+    en: "That is an option. If the section is alive it will relocate and we risk losing it, but we have over thirty minutes to find it again before the crossing.",
+    zh: "這是一個可行的選項。如果該分隊還活著，就會轉移，我們有可能跟丟；但在渡河之前，我們還有超過三十分鐘可以重新找到它。"
+  },
+  "deliver.340": {
+    en: "T-0:45",
+    zh: "T-0:45"
+  },
+  "deliver.356": {
+    en: "The FSCC chooses to wait fifteen minutes for the next sUAS to observe the ATGM section again. We will not fire to suppress in the meantime.",
+    zh: "FSCC 決定等待十五分鐘，讓下一架 sUAS 再次觀察 ATGM 分隊。在這段期間我們不實施制壓射擊。"
+  },
+  "deliver.360": {
+    en: "Next",
+    zh: "下一步"
+  },
+  "deliver.363": {
+    en: "If the ATGM section is still a threat and the 105 mm M101 howitzer battery is not ready, we may use the 155 mm M109A2 battery.",
+    zh: "如果 ATGM 分隊仍然構成威脅，而 105 公釐 M101 榴彈砲連尚未就緒，我們可以使用 155 公釐 M109A2 砲連。"
+  },
+  "deliver.364": {
+    en: "We have had no eyes on the target since the sUAS battery died, so anything we fired now would be fired blind.",
+    zh: "自從小型無人機沒電之後，我們就沒有人在監視這個目標，因此現在射擊等於是盲目射擊。"
+  },
+  "deliver.365": {
+    en: "T-0:30",
+    zh: "T-0:30"
+  },
+  "deliver.371": {
+    en: "The sUAS re-acquires the ATGM section's position. One man appears to be killed in action. The other three are missing, and the anti-tank weapon is gone.",
+    zh: "sUAS 重新獲得 ATGM 分隊的陣地。其中一人研判已陣亡，另外三人不知去向，反戰車武器也已不見。"
+  },
+  "deliver.372": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.373": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.374": {
+    en: "We know the section is still out there, but we no longer know where it is or where its weapon is. That is <strong>Find</strong>.",
+    zh: "我們知道這個分隊仍然存在，但已經不知道它在哪裡，也不知道武器在哪裡。這就是<strong>發現</strong>。"
+  },
+  "deliver.375": {
+    en: "This is the longest backwards move in the run, from Assess all the way to Find. The assessment has answered our question: the strike did not destroy the section.",
+    zh: "這是整個過程中往回移動最長的一次，從評估一路退回發現。評估已經回答了我們的問題：這次打擊並未殲滅該分隊。"
+  },
+  "deliver.376": {
+    en: "T-0:22",
+    zh: "T-0:22"
+  },
+  "deliver.377": {
+    en: "The sUAS has eyes on the rest of the section. They have relocated several hundred metres, but they are still in range of the bridge.",
+    zh: "sUAS 已目視到該分隊其餘人員。他們已轉移數百公尺，但仍在可對橋樑射擊的範圍內。"
+  },
+  "deliver.378": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.379": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.380": {
+    en: "We have the section in sight at a known location and it can still engage vehicles on the bridge. It is a threat to the crossing, so it goes straight to <strong>Target</strong> for weapon-target pairing.",
+    zh: ""
+  },
+  "deliver.381": {
+    en: "Same as the engineer team at T-3:40. A threat to the bridge does not wait in Track.",
+    zh: "與 T-3:40 的工兵小組相同。對橋樑構成威脅的目標不會停留在追蹤。"
+  },
+  "deliver.382": {
+    en: "T-0:20",
+    zh: "T-0:20"
+  },
+  "deliver.383": {
+    en: "The FSCC sends the fire mission to the 105 mm M101 howitzer battery.",
+    zh: "FSCC 將射擊任務下達給 105 公釐 M101 榴彈砲連。"
+  },
+  "deliver.384": {
+    en: "Update the tracker: move the <strong>ATGM</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>ATGM</strong>方塊，然後檢查。"
+  },
+  "deliver.385": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.386": {
+    en: "The fire mission is sent, so the target is in the Engage step.",
+    zh: "射擊任務已經下達，因此該目標處於接戰步驟。"
+  },
+  "deliver.387": {
+    en: "The battery is back on line. It fired at T-0:55 and needed twenty minutes to displace.",
+    zh: "該砲連已重新就位。它在 T-0:55 射擊，之後需要二十分鐘轉移陣地。"
+  },
+  "deliver.388": {
+    en: "T-0:15",
+    zh: "T-0:15"
+  },
+  "deliver.389": {
+    en: "Video clearly shows the destruction of the remaining ATGM section.",
+    zh: "影像清楚顯示 ATGM 分隊殘餘人員已被殲滅。"
+  },
+  "deliver.390": {
+    en: "Remove from the tracker",
+    zh: "從追蹤看板移除"
+  },
+  "deliver.391": {
+    en: "The assessment is made and the cycle is complete, so the target comes off the board. Unlike the strike at T-0:55, this one is conclusive. We watched it happen.",
+    zh: "評估已完成，循環也已結束，因此該目標從看板上移除。與 T-0:55 那次打擊不同，這一次的結果十分明確，我們親眼看到了。"
+  },
+  "deliver.392": {
+    en: "The commander's guidance named the ATGM section as the only thing in the enemy order of battle that can stop a vehicle on the bridge. It is gone.",
+    zh: ""
+  },
+  "deliver.393": {
+    en: "T-0:10",
+    zh: "T-0:10"
+  },
+  "deliver.341": {
+    en: "Long-range ISR UAS #2 detects an ammunition supply point inside NAI 1.",
+    zh: "長程情監偵無人機 #2 在 NAI 1 內偵獲一處彈藥補給點。"
+  },
+  "deliver.342": {
+    en: "According to our planning in the Decide phase, what is our decision about this target?",
+    zh: "依據我們在擬定階段的計畫，對這個目標我們的決定是什麼？"
+  },
+  "deliver.343": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.344": {
+    en: "It is a high value target: always strike it when we find it",
+    zh: "它是高價值目標：只要發現高價值目標就一定要打擊。"
+  },
+  "deliver.345": {
+    en: "It is not a high payoff target: do not strike it",
+    zh: "它不是高效益目標：不要打擊它。"
+  },
+  "deliver.347": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.348": {
+    en: "The ammunition supply point is a high value target. It is number 1 on the S-2's list and it holds the ammunition his mortars and his ATGM fire. It was deliberately left off the high-payoff target list.",
+    zh: "彈藥補給點是高價值目標。它在 S-2 的清單上排第 1，存放敵軍迫擊砲與 ATGM 所發射的彈藥。它是刻意未列入高效益目標清單的。"
+  },
+  "deliver.349": {
+    en: "The S-2 assessed that his fighting positions already hold three days of ammunition forward, so destroying the supply point would not stop one round inside our 48 hours. High value to the enemy is not the test. Payoff for our mission is. It stays on the high value target list and can be nominated later.",
+    zh: "S-2 研判敵軍的戰鬥陣地前推已存有三天份的彈藥，因此摧毀補給點在我們的 48 小時內連一發都擋不下來。對敵軍價值高並不是判斷標準，對我方任務的效益才是。它仍留在高價值目標清單上，日後可以再行提報。"
+  },
+  "deliver.394": {
+    en: "T-0:09",
+    zh: "T-0:09"
+  },
+  "deliver.357": {
+    en: "We do not have targeting guidance for this target.",
+    zh: "我們對這個目標沒有目標打擊指導。"
+  },
+  "deliver.358": {
+    en: "What do you recommend to the commander and the FSCC? <span class=\"hint\">Hint: the supply point is static and would take hours to move.</span>",
+    zh: "你要向指揮官與 FSCC 建議什麼？<span class=\"hint\">提示：這個補給點位置固定，要移動需要數小時。</span>"
+  },
+  "deliver.359": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.395": {
+    en: "Strike the supply point. One gun battery is free right now",
+    zh: "打擊補給點。目前有一個砲兵連有空。"
+  },
+  "deliver.361": {
+    en: "Note its position and keep the ISR searching for HPTs",
+    zh: "記錄它的位置，讓 ISR 繼續搜尋 HPT。"
+  },
+  "deliver.362": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.396": {
+    en: "Guidance from the commander: do not strike right now.",
+    zh: "指揮官指導：現在不要打擊。"
+  },
+  "deliver.397": {
+    en: "For the next nine minutes we have only one fires asset that can affect our unlocated high-payoff targets. The 105 mm battery fired at T-0:20 and needs twenty minutes to displace, so it is not ready until T=0, and the one-way attack UAS unit is still down. That leaves the 155 mm battery.",
+    zh: "在接下來的九分鐘內，我們只有一項火力兵力能夠對付尚未定位的高效益目標。105 公釐砲連在 T-0:20 射擊，需要二十分鐘轉移陣地，因此要到 T=0 才會就緒，而攻擊型無人機單位仍然無法出動。剩下的只有 155 公釐砲連。"
+  },
+  "deliver.398": {
+    en: "Only the long-range ISR reaches NAI 1 and NAI 3, so time it spends watching a strike on the supply point is time it is not spending looking for the enemy mortars.",
+    zh: "只有長程情監偵無人機到得了 NAI 1 與 NAI 3，因此它花在觀察補給點打擊的時間，就是沒有用來尋找敵軍迫擊砲的時間。"
+  },
+  "deliver.399": {
+    en: "We may return to the supply point later. It is not going anywhere, and we made this decision already in planning.",
+    zh: "我們日後可以再回頭處理這個補給點。它不會跑掉，而且我們在計畫階段就已經做了這個決定。"
+  },
+  "deliver.366": {
+    en: "The supply point has been added to the board. Update the tracker: move the <strong>Ammo supply point</strong> box, then check.",
+    zh: "補給點已加入看板。更新追蹤看板：請移動<strong>彈藥補給點</strong>方塊，然後檢查。"
+  },
+  "deliver.367": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.368": {
+    en: "We have recorded precisely what this target is and where it is, but we are choosing not to pursue continuous observation.",
+    zh: "我們已精確記錄這個目標是什麼、位置在哪裡，但我們選擇不對它進行持續觀察。"
+  },
+  "deliver.369": {
+    en: "This is the same reason the ATGM section was at Fix at T-2:50. We know what it is and where it is, but nobody is watching it. There the sUAS had no battery left. Here it is our own choice.",
+    zh: "這和 T-2:50 時 ATGM 分隊處於定位的理由相同。我們知道它是什麼、在哪裡，但沒有人在監視它。當時是小型無人機沒電了，這一次則是我們自己的選擇。"
+  },
+  "deliver.370": {
+    en: "A target does not have to be on the high-payoff target list to sit on the tracker.",
+    zh: "目標不一定要列在高效益目標清單上，才能放在追蹤看板上。"
+  },
+  "deliver.413": {
+    en: "T+0:15",
+    zh: "T+0:15"
+  },
+  "deliver.414": {
+    en: "Friendly forces secure the bridge.",
+    zh: "友軍已控制橋樑。"
+  },
+  "deliver.415": {
+    en: "Next",
+    zh: "下一步"
+  },
+  "deliver.416": {
+    en: "T+0:20",
+    zh: "T+0:20"
+  },
+  "deliver.417": {
+    en: "The FSCC decides to strike the ammunition supply point. They order Long-range ISR UAS #2 to re-acquire the target.",
+    zh: "FSCC 決定打擊彈藥補給點，並命令長程情監偵無人機 #2重新獲得該目標。"
+  },
+  "deliver.418": {
+    en: "Next",
+    zh: "下一步"
+  },
+  "deliver.419": {
+    en: "T+0:30",
+    zh: "T+0:30"
+  },
+  "deliver.420": {
+    en: "Long-range ISR UAS #2 re-acquires the ammunition supply point. The tracker moves it to Target.",
+    zh: "長程情監偵無人機 #2重新獲得彈藥補給點。追蹤看板已將它移到目標處理。"
+  },
+  "deliver.421": {
+    en: "Next",
+    zh: "下一步"
+  },
+  "deliver.422": {
+    en: "T+0:35",
+    zh: "T+0:35"
+  },
+  "deliver.423": {
+    en: "The FSCC decides to engage with the 155 mm M109A2 battery and sends the fire mission. The tracker moves the supply point to Engage.",
+    zh: "FSCC 決定以 155 公釐 M109A2 砲連接戰，並下達射擊任務。追蹤看板已將補給點移到接戰。"
+  },
+  "deliver.424": {
+    en: "Next",
+    zh: "下一步"
+  },
+  "deliver.425": {
+    en: "T+0:37",
+    zh: "T+0:37"
+  },
+  "deliver.426": {
+    en: "Before the rounds start landing on the ammunition supply point, friendly units report taking enemy mortar fire.",
+    zh: "在彈藥補給點的彈著開始之前，友軍單位回報遭到敵軍迫擊砲射擊。"
+  },
+  "deliver.427": {
+    en: "How do you task Long-range ISR UAS #2?",
+    zh: "你要如何運用長程情監偵無人機 #2？"
+  },
+  "deliver.428": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.429": {
+    en: "Start looking for the enemy mortars",
+    zh: "開始搜尋敵軍迫擊砲。"
+  },
+  "deliver.430": {
+    en: "Finish observing the ammunition supply point",
+    zh: "完成對彈藥補給點的觀察。"
+  },
+  "deliver.431": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.432": {
+    en: "The mortars are <strong>Immediate</strong> on the HAT. An immediate target is prosecuted ahead of everything else, and certainly ahead of a target that is not on the high-payoff target list at all.",
+    zh: "迫擊砲在 HAT 上屬於<strong>立即</strong>。立即目標的處理優先於其他一切，更不用說優先於一個根本不在高效益目標清單上的目標。"
+  },
+  "deliver.433": {
+    en: "The mortars are also firing on our own soldiers now. The supply point is not going anywhere.",
+    zh: "而且迫擊砲此刻正在射擊我方官兵。補給點不會跑掉。"
+  },
+  "deliver.434": {
+    en: "T+0:40",
+    zh: "T+0:40"
+  },
+  "deliver.435": {
+    en: "Long-range ISR UAS #2 locates smoke from a position just south of NAI 1. This is likely the mortar position.",
+    zh: "長程情監偵無人機 #2在 NAI 1 南側偵獲一處陣地冒煙。研判這是迫擊砲陣地。"
+  },
+  "deliver.436": {
+    en: "Update the tracker: move the <strong>Mortars</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>迫擊砲</strong>方塊，然後檢查。"
+  },
+  "deliver.437": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.438": {
+    en: "We know they are out there and roughly where, but we do not have them in sight and we cannot shoot smoke. That is <strong>Find</strong>.",
+    zh: "我們知道他們就在那裡，也大致知道位置，但沒有目視到他們，而且我們無法對煙霧射擊。這就是<strong>發現</strong>。"
+  },
+  "deliver.439": {
+    en: "This is the first move the mortars have made. They have been parked on the HPTL since the start, because nobody could find them.",
+    zh: "這是迫擊砲第一次移動。它從一開始就一直停在 HPTL 欄，因為沒有人找得到它。"
+  },
+  "deliver.440": {
+    en: "T+0:43",
+    zh: "T+0:43"
+  },
+  "deliver.441": {
+    en: "Long-range ISR UAS #2 has eyes on a section of mortars firing.",
+    zh: "長程情監偵無人機 #2已目視到一組正在射擊的迫擊砲。"
+  },
+  "deliver.442": {
+    en: "Update the tracker: move the <strong>Mortars</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>迫擊砲</strong>方塊，然後檢查。"
+  },
+  "deliver.443": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.444": {
+    en: "We have them in sight at a known location and they are firing on our soldiers. It goes straight to <strong>Target</strong> for weapon-target pairing, the same as the engineer team at T-3:40.",
+    zh: "我們目視到他們，也掌握其位置，而且他們正在射擊我方官兵。它直接進入<strong>目標處理</strong>，進行武器與目標配對，與 T-3:40 的工兵小組相同。"
+  },
+  "deliver.445": {
+    en: "T+0:44",
+    zh: "T+0:44"
+  },
+  "deliver.446": {
+    en: "The FSCC asks which asset should shoot this mission.",
+    zh: "FSCC 詢問這次射擊任務應該交給哪一項兵力。"
+  },
+  "deliver.447": {
+    en: "What asset do we send the fire mission to?",
+    zh: "我們要將射擊任務下達給哪一項兵力？"
+  },
+  "deliver.448": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.449": {
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "deliver.450": {
+    en: "155 mm M109A2 battery",
+    zh: "155 公釐 M109A2 砲連"
+  },
+  "deliver.451": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "deliver.452": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.453": {
+    en: "The HAT ranks the <strong>105 mm M101 howitzer battery</strong> first against the mortars, ahead of the 155 mm and the drone.",
+    zh: "在 HAT 上，對付迫擊砲時<strong>105 公釐 M101 榴彈砲連</strong>排序第一，優先於 155 公釐砲連與無人機。"
+  },
+  "deliver.454": {
+    en: "It is also the only asset free. The 155 mm battery is still shooting the supply point mission and does not report it complete until T+0:50, and the one-way attack UAS unit has not been able to launch since T-1:04.",
+    zh: "它也是唯一有空的兵力。155 公釐砲連仍在執行補給點的射擊任務，要到 T+0:50 才回報完成；而攻擊型無人機單位自 T-1:04 起就無法起飛。"
+  },
+  "deliver.455": {
+    en: "T+0:45",
+    zh: "T+0:45"
+  },
+  "deliver.456": {
+    en: "The fire mission has been sent to the 105 mm M101 howitzer battery.",
+    zh: "射擊任務已下達給 105 公釐 M101 榴彈砲連。"
+  },
+  "deliver.457": {
+    en: "Update the tracker: move the <strong>Mortars</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>迫擊砲</strong>方塊，然後檢查。"
+  },
+  "deliver.458": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.459": {
+    en: "The fire mission is sent, so the target is in the Engage step.",
+    zh: "射擊任務已經下達，因此該目標處於接戰步驟。"
+  },
+  "deliver.460": {
+    en: "T+0:50",
+    zh: "T+0:50"
+  },
+  "deliver.461": {
+    en: "The 155 mm M109A2 battery reports its fire mission complete and requests a battle damage assessment. At the same time, electronic signals indication picks up a large amount of traffic consistent with the enemy command radios, and places it somewhere inside NAI 3.",
+    zh: "155 公釐 M109A2 砲連回報射擊任務完成，並要求提供戰果評估。同一時間，訊號交測偵獲大量通信量，與敵軍指揮無線電相符，並將位置研判在 NAI 3 之內。"
+  },
+  "deliver.462": {
+    en: "Where do we direct Long-range ISR UAS #2 to look?",
+    zh: "我們要將長程情監偵無人機 #2導向何處？"
+  },
+  "deliver.463": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "deliver.464": {
+    en: "Battle damage assessment on the supply point",
+    zh: "對彈藥補給點實施戰果評估。"
+  },
+  "deliver.465": {
+    en: "Battle damage assessment on the mortars",
+    zh: "對迫擊砲實施戰果評估。"
+  },
+  "deliver.466": {
+    en: "Find the command post, a high-payoff target",
+    zh: "尋找指揮所，一個高效益目標。"
+  },
+  "deliver.467": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.468": {
+    en: "The mortars are the <strong>Immediate</strong> target and they were firing on our soldiers a moment ago. We have to know whether that has stopped.",
+    zh: "迫擊砲是<strong>立即</strong>目標，而且它剛才還在射擊我方官兵。我們必須知道它是否已經停止。"
+  },
+  "deliver.469": {
+    en: "The command post is a high-payoff target, but it is priority 4 and its guidance is <strong>As acquired</strong>. The supply point is not on the list at all. Neither of them comes before confirming that the mortars are silent.",
+    zh: "指揮所確實是高效益目標，但它排序第四，指導是<strong>發現即打</strong>。補給點則根本不在清單上。兩者都不能排在確認迫擊砲已被壓制之前。"
+  },
+  "deliver.470": {
+    en: "T+1:00",
+    zh: "T+1:00"
+  },
+  "deliver.471": {
+    en: "Rounds complete on both targets, the ammunition supply point and the mortars.",
+    zh: "兩個目標的射擊均已完成：彈藥補給點與迫擊砲。"
+  },
+  "deliver.472": {
+    en: "Update the tracker: move the <strong>Ammo supply point</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>彈藥補給點</strong>方塊，然後檢查。"
+  },
+  "deliver.473": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.474": {
+    en: "The mission is over, so the target moves to <strong>Assess</strong>. We owe a battle damage assessment on it, and at the moment nobody is watching it.",
+    zh: "任務已經結束，因此該目標移到<strong>評估</strong>。我們仍欠它一份戰果評估，而目前沒有人在監視它。"
+  },
+  "deliver.475": {
+    en: "Update the tracker: move the <strong>Mortars</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>迫擊砲</strong>方塊，然後檢查。"
+  },
+  "deliver.476": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.477": {
+    en: "The same for the mortars, and this is the one we can actually answer. At T+0:50 we sent the long-range ISR to look at them.",
+    zh: "迫擊砲也一樣，而且這一個我們確實答得出來。在 T+0:50，我們已經把長程情監偵無人機導向它。"
+  },
+  "deliver.478": {
+    en: "Update the tracker: move the <strong>Command post</strong> box, then check.",
+    zh: "更新追蹤看板：請移動<strong>指揮所</strong>方塊，然後檢查。"
+  },
+  "deliver.479": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "deliver.480": {
+    en: "Electronic signals indication placed the command post somewhere inside NAI 3. That gives an area, not a point, so we know it is there but not where. That is <strong>Find</strong>.",
+    zh: "訊號交測把指揮所定位在 NAI 3 之內的某處。那是一塊區域，不是一個點，因此我們知道它在那裡，但不知道確切位置。這就是<strong>發現</strong>。"
+  },
+  "deliver.481": {
+    en: "This is the first time the command post has left the HPTL column. The whole operation has run its course and only now can we say roughly where it is.",
+    zh: "這是指揮所第一次離開 HPTL 欄。整場作戰都已經打完，我們到現在才能大致說出它在哪裡。"
+  },
+  "deliver.108": {
     en: "← Phase 2: Detect",
     zh: "← 第 2 階段：監測"
   },
-  "deliver.017": {
+  "deliver.109": {
     en: "Phase 4: Assess →",
     zh: "第 4 階段：評估 →"
+  },
+  "deliver.112": {
+    en: "The whole worksheet",
+    zh: "整份工作表"
+  },
+  "deliver.113": {
+    en: "77th Combined Arms Brigade — HPTL / AGM / TSS — Operation RIVER GATE",
+    zh: "第 77 聯兵旅 — HPTL / AGM / TSS — RIVER GATE 作戰"
+  },
+  "deliver.114": {
+    en: "Priority",
+    zh: "優先順序"
+  },
+  "deliver.115": {
+    en: "Target",
+    zh: "目標"
+  },
+  "deliver.116": {
+    en: "Engineer obstacle team",
+    zh: "工兵障礙小組"
+  },
+  "deliver.117": {
+    en: "ATGM section",
+    zh: "ATGM 分隊"
+  },
+  "deliver.118": {
+    en: "120 mm mortar platoon",
+    zh: "120 公釐迫擊砲排"
+  },
+  "deliver.119": {
+    en: "Battalion command post",
+    zh: "營指揮所"
+  },
+  "deliver.120": {
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "deliver.121": {
+    en: "<span>Maximum location error</span>",
+    zh: "<span>最大位置誤差</span>"
+  },
+  "deliver.122": {
+    en: "<b class=\"order\">2</b>100 m",
+    zh: "<b class=\"order\">2</b>100 公尺"
+  },
+  "deliver.123": {
+    en: "<b class=\"order\">2</b>100 m",
+    zh: "<b class=\"order\">2</b>100 公尺"
+  },
+  "deliver.124": {
+    en: "<b class=\"order\">1</b>100 m",
+    zh: "<b class=\"order\">1</b>100 公尺"
+  },
+  "deliver.125": {
+    en: "<b class=\"order\">3</b>100 m",
+    zh: "<b class=\"order\">3</b>100 公尺"
+  },
+  "deliver.126": {
+    en: "Minimum size",
+    zh: "兵力限"
+  },
+  "deliver.127": {
+    en: "One team with charges",
+    zh: "一個攜帶爆破裝藥的小組"
+  },
+  "deliver.128": {
+    en: "One launcher confirmed",
+    zh: "確認一具發射器"
+  },
+  "deliver.129": {
+    en: "1 mortar",
+    zh: ""
+  },
+  "deliver.130": {
+    en: "Command vehicle or structure",
+    zh: "指揮車輛或建物"
+  },
+  "deliver.131": {
+    en: "Timeliness",
+    zh: "時限"
+  },
+  "deliver.132": {
+    en: "Continuous observation",
+    zh: "持續監視"
+  },
+  "deliver.133": {
+    en: "15 minutes",
+    zh: "15 分鐘"
+  },
+  "deliver.134": {
+    en: "Continuous observation",
+    zh: "持續監視"
+  },
+  "deliver.135": {
+    en: "6 hours",
+    zh: "6 小時"
+  },
+  "deliver.136": {
+    en: "155 mm M109A2 battery",
+    zh: "155 公釐 M109A2 砲連"
+  },
+  "deliver.137": {
+    en: "<span>Maximum location error</span>",
+    zh: "<span>最大位置誤差</span>"
+  },
+  "deliver.138": {
+    en: "<b class=\"order\">3</b>200 m",
+    zh: "<b class=\"order\">3</b>200 公尺"
+  },
+  "deliver.139": {
+    en: "<b class=\"order\">3</b>200 m",
+    zh: "<b class=\"order\">3</b>200 公尺"
+  },
+  "deliver.140": {
+    en: "<b class=\"order\">2</b>200 m",
+    zh: "<b class=\"order\">2</b>200 公尺"
+  },
+  "deliver.141": {
+    en: "<b class=\"order\">1</b>200 m",
+    zh: "<b class=\"order\">1</b>200 公尺"
+  },
+  "deliver.142": {
+    en: "Minimum size",
+    zh: "兵力限"
+  },
+  "deliver.143": {
+    en: "One team with charges",
+    zh: "一個攜帶爆破裝藥的小組"
+  },
+  "deliver.144": {
+    en: "One launcher confirmed",
+    zh: "確認一具發射器"
+  },
+  "deliver.145": {
+    en: "2 mortars",
+    zh: ""
+  },
+  "deliver.146": {
+    en: "Command vehicle or structure",
+    zh: "指揮車輛或建物"
+  },
+  "deliver.147": {
+    en: "Timeliness",
+    zh: "時限"
+  },
+  "deliver.148": {
+    en: "Continuous observation",
+    zh: "持續監視"
+  },
+  "deliver.149": {
+    en: "15 minutes",
+    zh: "15 分鐘"
+  },
+  "deliver.150": {
+    en: "Continuous observation",
+    zh: "持續監視"
+  },
+  "deliver.151": {
+    en: "6 hours",
+    zh: "6 小時"
+  },
+  "deliver.152": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "deliver.153": {
+    en: "<span>Maximum location error</span>",
+    zh: "<span>最大位置誤差</span>"
+  },
+  "deliver.154": {
+    en: "<b class=\"order\">1</b>1,000 m",
+    zh: "<b class=\"order\">1</b>1,000 公尺"
+  },
+  "deliver.155": {
+    en: "<b class=\"order\">1</b>1,000 m",
+    zh: "<b class=\"order\">1</b>1,000 公尺"
+  },
+  "deliver.156": {
+    en: "<b class=\"order\">3</b>1,000 m",
+    zh: "<b class=\"order\">3</b>1,000 公尺"
+  },
+  "deliver.157": {
+    en: "<b class=\"order\">2</b>1,000 m",
+    zh: "<b class=\"order\">2</b>1,000 公尺"
+  },
+  "deliver.158": {
+    en: "Minimum size",
+    zh: "兵力限"
+  },
+  "deliver.159": {
+    en: "One team with charges",
+    zh: "一個攜帶爆破裝藥的小組"
+  },
+  "deliver.160": {
+    en: "One launcher confirmed",
+    zh: "確認一具發射器"
+  },
+  "deliver.161": {
+    en: "1 mortar",
+    zh: ""
+  },
+  "deliver.162": {
+    en: "Command vehicle or structure",
+    zh: "指揮車輛或建物"
+  },
+  "deliver.163": {
+    en: "Timeliness",
+    zh: "時限"
+  },
+  "deliver.164": {
+    en: "15 minutes",
+    zh: "15 分鐘"
+  },
+  "deliver.165": {
+    en: "1 hour",
+    zh: "1 小時"
+  },
+  "deliver.166": {
+    en: "15 minutes",
+    zh: "15 分鐘"
+  },
+  "deliver.167": {
+    en: "6 hours",
+    zh: "6 小時"
+  },
+  "deliver.168": {
+    en: "When",
+    zh: "時機"
+  },
+  "deliver.169": {
+    en: "Immediate",
+    zh: "立即"
+  },
+  "deliver.170": {
+    en: "Planned",
+    zh: "計畫"
+  },
+  "deliver.171": {
+    en: "Immediate",
+    zh: "立即"
+  },
+  "deliver.172": {
+    en: "As acquired",
+    zh: "發現即打"
+  },
+  "deliver.173": {
+    en: "Damage",
+    zh: "毀傷"
+  },
+  "deliver.174": {
+    en: "Neutralize",
+    zh: "癱瘓"
+  },
+  "deliver.175": {
+    en: "Suppress",
+    zh: "制壓"
+  },
+  "deliver.176": {
+    en: "Neutralize",
+    zh: "癱瘓"
+  },
+  "deliver.177": {
+    en: "Destroy",
+    zh: "破壞"
+  },
+  "deliver.178": {
+    en: "<b class=\"order\">1</b> <span>The yellow number on each location error cell is the <strong>attack order</strong> from 1B. Read it <em>down</em> a column: against that one target, 1 is the primary means, 2 the alternate, 3 the tertiary.</span>",
+    zh: "<b class=\"order\">1</b> <span>每個位置誤差欄位上的黃色數字，就是 1B 設定的<strong>攻擊順序</strong>。請<em>由上而下</em>讀一整欄：對該目標而言，1 是主要手段，2 是備用手段，3 是第三順位。</span>"
+  },
+  "deliver.179": {
+    en: "Close",
+    zh: "關閉"
+  },
+  "deliver.180": {
+    en: "The synchronization matrix",
+    zh: "同步矩陣"
+  },
+  "deliver.181": {
+    en: "77th Combined Arms Brigade — Target Synchronization Matrix — Operation RIVER GATE",
+    zh: "第 77 聯兵旅－目標同步矩陣－「河門」作戰"
+  },
+  "deliver.182": {
+    en: "Asset",
+    zh: "兵力"
+  },
+  "deliver.183": {
+    en: "T-4",
+    zh: "T-4"
+  },
+  "deliver.184": {
+    en: "T-3",
+    zh: "T-3"
+  },
+  "deliver.185": {
+    en: "T-2",
+    zh: "T-2"
+  },
+  "deliver.186": {
+    en: "T-1",
+    zh: "T-1"
+  },
+  "deliver.187": {
+    en: "T=0",
+    zh: "T=0"
+  },
+  "deliver.188": {
+    en: "T+1",
+    zh: "T+1"
+  },
+  "deliver.189": {
+    en: "T+2",
+    zh: "T+2"
+  },
+  "deliver.190": {
+    en: "T+3",
+    zh: "T+3"
+  },
+  "deliver.191": {
+    en: "T+4",
+    zh: "T+4"
+  },
+  "deliver.192": {
+    en: "T+5",
+    zh: "T+5"
+  },
+  "deliver.193": {
+    en: "T+6",
+    zh: "T+6"
+  },
+  "deliver.194": {
+    en: "T+7",
+    zh: "T+7"
+  },
+  "deliver.195": {
+    en: "Surveillance assets",
+    zh: "偵蒐兵力"
+  },
+  "deliver.196": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "deliver.197": {
+    en: "Kordan Bridge / engineers",
+    zh: "Kordan 橋樑 / 工兵"
+  },
+  "deliver.198": {
+    en: "TAI 1 / ATGM",
+    zh: "TAI 1 / ATGM"
+  },
+  "deliver.199": {
+    en: "sUAS",
+    zh: "sUAS"
+  },
+  "deliver.200": {
+    en: "TAI 1 / ATGM",
+    zh: "TAI 1 / ATGM"
+  },
+  "deliver.201": {
+    en: "Long-range ISR UAS #1",
+    zh: "長程情監偵無人機 #1"
+  },
+  "deliver.202": {
+    en: "NAI 2 / engineers",
+    zh: "NAI 2 / 工兵"
+  },
+  "deliver.203": {
+    en: "NAI 1 / mortars",
+    zh: "NAI 1 / 迫擊砲"
+  },
+  "deliver.204": {
+    en: "NAI 3 / mortars",
+    zh: "NAI 3 / 迫擊砲"
+  },
+  "deliver.205": {
+    en: "Long-range ISR UAS #2",
+    zh: "長程情監偵無人機 #2"
+  },
+  "deliver.206": {
+    en: "NAI 1 / mortars",
+    zh: "NAI 1 / 迫擊砲"
+  },
+  "deliver.207": {
+    en: "NAI 3 / mortars",
+    zh: "NAI 3 / 迫擊砲"
+  },
+  "deliver.208": {
+    en: "NAI 3 / mortars or command post",
+    zh: "NAI 3 / 迫擊砲或指揮所"
+  },
+  "deliver.209": {
+    en: "Attack assets",
+    zh: "打擊兵力"
+  },
+  "deliver.210": {
+    en: "155 mm M109A2 battery",
+    zh: "155 公釐 M109A2 砲連"
+  },
+  "deliver.211": {
+    en: "Mortars / command post",
+    zh: "迫擊砲 / 指揮所"
+  },
+  "deliver.212": {
+    en: "105 mm M101 howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "deliver.213": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.214": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.215": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "deliver.216": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "deliver.217": {
+    en: "Engineer team",
+    zh: "工兵組"
+  },
+  "deliver.218": {
+    en: "ATGM",
+    zh: "ATGM"
+  },
+  "deliver.219": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "deliver.220": {
+    en: "<span class=\"key t-eng\">Engineer team</span> <span class=\"key t-atgm\">ATGM section</span> <span class=\"key t-mor\">120 mm mortar platoon</span> <span class=\"key t-cp\">Battalion command post</span>",
+    zh: "<span class=\"key t-eng\">工兵組</span> <span class=\"key t-atgm\">ATGM分隊</span> <span class=\"key t-mor\">120 公釐迫擊砲排</span> <span class=\"key t-cp\">營指揮所</span>"
+  },
+  "deliver.221": {
+    en: "Close",
+    zh: "關閉"
+  },
+  "deliver.234": {
+    en: "Areas of interest",
+    zh: "要域"
+  },
+  "deliver.235": {
+    en: "Areas of interest — Operation RIVER GATE",
+    zh: "偵查區 — Operation RIVER GATE"
+  },
+  "deliver.236": {
+    en: "Area",
+    zh: "區域"
+  },
+  "deliver.237": {
+    en: "What we are looking for",
+    zh: "我們在找什麼"
+  },
+  "deliver.238": {
+    en: "Why there",
+    zh: "為何在該處"
+  },
+  "deliver.239": {
+    en: "ATGM section",
+    zh: "ATGM 分隊"
+  },
+  "deliver.240": {
+    en: "The only ground from which he can engage vehicles on the bridge. We intend to attack him here.",
+    zh: ""
+  },
+  "deliver.241": {
+    en: "120 mm mortar platoon",
+    zh: "120 公釐迫擊砲排"
+  },
+  "deliver.242": {
+    en: "The best mortar firing position on this ground.",
+    zh: "本地形上最佳的迫擊砲射擊陣地。"
+  },
+  "deliver.243": {
+    en: "Engineer obstacle team",
+    zh: "工兵障礙小組"
+  },
+  "deliver.244": {
+    en: "A crossroads on the route forward. Engineer equipment moving to the bridge is seen here first.",
+    zh: "前推路線上的一處十字路口。向橋樑移動的工兵裝備會先在此被看到。"
+  },
+  "deliver.245": {
+    en: "120 mm mortar platoon",
+    zh: "120 公釐迫擊砲排"
+  },
+  "deliver.246": {
+    en: "A second, less suitable mortar position. Watched after NAI 1.",
+    zh: "第二處較不適合的迫擊砲陣地。在NAI 1 之後監視。"
+  },
+  "deliver.247": {
+    en: "Restricted fire area, Kordan Bridge",
+    zh: "火力限制區，Kordan Bridge"
+  },
+  "deliver.248": {
+    en: "Cratering munitions are not permitted inside it. The one-way attack UAS is the only asset that may fire here.",
+    zh: "成坑彈藥不得在其內使用。攻擊型無人機是唯一可以在此射擊的兵力。"
+  },
+  "deliver.249": {
+    en: "Range of the small UAS",
+    zh: "小型UAS的航程"
+  },
+  "deliver.250": {
+    en: "The sUAS cannot see past this line. TAI 1 is inside it. All three named areas of interest are outside it, so only the long-range ISR UAS can watch them.",
+    zh: "sUAS看不到這條線以外。TAI 1 在線內。三個指定偵查區都在線外，因此只有長程情監偵無人機能監視它們。"
+  },
+  "deliver.251": {
+    en: "Range of the one-way attack UAS",
+    zh: "攻擊型無人機的航程"
+  },
+  "deliver.252": {
+    en: "The drone cannot strike past this line. TAI 1 and NAI 2 are well inside it. NAI 1 and NAI 3 straddle it, so only part of each can be reached.",
+    zh: "無人機無法打擊這條線以外。TAI 1 與NAI 2 都在線內很深處。NAI 1 與NAI 3 跨在線上，因此各只有一部分打得到。"
+  },
+  "deliver.253": {
+    en: "Close",
+    zh: "關閉"
   },
 
   /* ---------- assess.html ---------- */
@@ -4533,25 +7419,501 @@ window.D3A_LANG_ZH = {
     en: "Glossary",
     zh: "詞彙表"
   },
-  "assess.011": {
-    en: "Coming soon",
-    zh: "即將推出"
-  },
   "assess.012": {
     en: "Phase 4: Assess",
     zh: "第 4 階段：評估"
   },
+  "assess.011": {
+    en: "The assess function has been present at every step of this operation.",
+    zh: "評估功能在這場作戰的每一個步驟中都一直存在。"
+  },
   "assess.013": {
-    en: "Judge what the attack achieved, and decide what the cell does next.",
-    zh: "判斷這次打擊達成了什麼，並決定目標小組下一步要做什麼。"
+    en: "If combat assessment reveals that the commander's guidance has not been met, the detect and deliver functions of the targeting process must continue to focus on the targets involved. This feedback may result in changes to the original decisions made during the decide function.",
+    zh: "如果戰鬥評估顯示指揮官指導尚未達成，目標選定程序中的監測與執行功能就必須繼續盯住相關目標。這項回饋可能導致擬定功能中原先所做決定的改變。"
   },
   "assess.014": {
-    en: "This phase is being written. Its lessons and tasks will appear here.",
-    zh: "本階段正在編寫中。其課程與課題將於此處呈現。"
+    en: "In current operations we have completed the <strong>Assess</strong> step for several active targets, but in our timeline we have not completed BDA on two active targets. This is one example of the Assess step.",
+    zh: "在當前作戰中，我們已對數個現行目標完成<strong>評估</strong>步驟，但在我們的時程中，尚有兩個現行目標的 BDA 未完成。這是評估步驟的一個例子。"
   },
   "assess.015": {
-    en: "<strong>Phase 1, Decide, is finished and ready to work through.</strong> Start with the scenario, then build the four products in order.",
-    zh: "<strong>第 1 階段「決心」已經完成，可以開始演練。</strong>請先從想定開始，再依序完成四項產品。"
+    en: "HPTL",
+    zh: "HPTL"
+  },
+  "assess.018": {
+    en: "<span class=\"wb-n\">1</span>Find",
+    zh: "<span class=\"wb-n\">1</span>發現"
+  },
+  "assess.019": {
+    en: "<span class=\"wb-n\">2</span>Fix",
+    zh: "<span class=\"wb-n\">2</span>定位"
+  },
+  "assess.020": {
+    en: "<span class=\"wb-n\">3</span>Track",
+    zh: "<span class=\"wb-n\">3</span>追蹤"
+  },
+  "assess.021": {
+    en: "<span class=\"wb-n\">4</span>Target",
+    zh: "<span class=\"wb-n\">4</span>目標處理"
+  },
+  "assess.022": {
+    en: "<span class=\"wb-n\">5</span>Engage",
+    zh: "<span class=\"wb-n\">5</span>接戰"
+  },
+  "assess.023": {
+    en: "<span class=\"wb-n\">6</span>Assess",
+    zh: "<span class=\"wb-n\">6</span>評估"
+  },
+  "assess.024": {
+    en: "Mortars",
+    zh: "迫擊砲"
+  },
+  "assess.025": {
+    en: "Command post",
+    zh: "指揮所"
+  },
+  "assess.026": {
+    en: "Ammo supply point",
+    zh: "彈藥補給點"
+  },
+  "assess.027": {
+    en: "Operations process",
+    zh: "作戰程序"
+  },
+  "assess.028": {
+    en: "D3A",
+    zh: "D3A"
+  },
+  "assess.029": {
+    en: "<span>Continuous assessment</span>",
+    zh: "<span>持續評估</span>"
+  },
+  "assess.030": {
+    en: "Planning",
+    zh: "規劃階段"
+  },
+  "assess.031": {
+    en: "Decide",
+    zh: "擬定"
+  },
+  "assess.032": {
+    en: "In Decide, we adjust the plan when information changes, based on continuous assessment.",
+    zh: "在擬定階段，當情報改變時，我們依據持續評估調整計畫。"
+  },
+  "assess.033": {
+    en: "Preparation",
+    zh: "準備階段"
+  },
+  "assess.034": {
+    en: "Detect",
+    zh: "監測"
+  },
+  "assess.035": {
+    en: "In Detect, we adjust when we assess new information as it is detected.",
+    zh: "在監測階段，我們在評估新偵獲的情報後進行調整。"
+  },
+  "assess.036": {
+    en: "Execution",
+    zh: "執行階段"
+  },
+  "assess.037": {
+    en: "Deliver",
+    zh: "執行"
+  },
+  "assess.038": {
+    en: "In Deliver, we make recommendations following attacks.",
+    zh: "在執行階段，我們在攻擊後提出建議。"
+  },
+  "assess.039": {
+    en: "Assess",
+    zh: "評估"
+  },
+  "assess.040": {
+    en: "<strong>And at the end of the mission, we assess our overall targeting strategy's measure of performance and measure of effectiveness.</strong>",
+    zh: "<strong>而在任務結束時，我們評估整體目標選定策略的積效評估與效益評估。</strong>"
+  },
+  "assess.041": {
+    en: "Combat assessment",
+    zh: "戰鬥評估"
+  },
+  "assess.042": {
+    en: "Combat assessment is the determination of the effectiveness of force employment during military operations.",
+    zh: "戰鬥評估是在軍事行動中判定兵力運用成效的作為。"
+  },
+  "assess.043": {
+    en: "FM 3-60, Chapter 2.",
+    zh: "FM 3-60，第 2 章。"
+  },
+  "assess.044": {
+    en: "Combat assessment is what the Assess function does after an engagement. It has three parts, and each one asks a different question.",
+    zh: "戰鬥評估是評估功能在接戰之後所做的事。它有三個部分，每一個部分問的問題都不一樣。"
+  },
+  "assess.045": {
+    en: "Part",
+    zh: "部分"
+  },
+  "assess.046": {
+    en: "The question it answers",
+    zh: "它所回答的問題"
+  },
+  "assess.047": {
+    en: "Who answers it",
+    zh: "由誰回答"
+  },
+  "assess.048": {
+    en: "<strong>Battle damage assessment (BDA)</strong>",
+    zh: "<strong>戰果評估（BDA）</strong>"
+  },
+  "assess.049": {
+    en: "What did the attack do to the target?",
+    zh: "這次攻擊對目標造成了什麼？"
+  },
+  "assess.050": {
+    en: "The S-2, with the FSCC",
+    zh: "S-2，與 FSCC 共同進行"
+  },
+  "assess.051": {
+    en: "<strong>Munitions effectiveness assessment</strong>",
+    zh: "<strong>彈藥效能評估</strong>"
+  },
+  "assess.052": {
+    en: "Was our weapon, our munition and our method the right choice?",
+    zh: "我方的武器、彈藥與方法是否選擇正確？"
+  },
+  "assess.053": {
+    en: "The FSCC",
+    zh: "FSCC"
+  },
+  "assess.054": {
+    en: "<strong>Re-attack recommendation</strong>",
+    zh: "<strong>再次打擊建議</strong>"
+  },
+  "assess.055": {
+    en: "Do we strike it again, strike something else, or change the plan?",
+    zh: "我們要再打一次、改打別的目標，還是修改計畫？"
+  },
+  "assess.056": {
+    en: "The S-2 and the FSCC, to the commander",
+    zh: "S-2 與 FSCC，向指揮官提出"
+  },
+  "assess.057": {
+    en: "BDA and munitions effectiveness assessment run at the same time and feed each other. Together they tell the commander what his fires have done to the enemy's ability to fight. The re-attack recommendation is what he does about it.",
+    zh: "戰果評估與彈藥效能評估同時進行，並互相提供資訊。兩者合起來告訴指揮官，他的火力對敵軍的作戰能力造成了什麼影響。再次打擊建議則是他要據此採取的作為。"
+  },
+  "assess.058": {
+    en: "Assessment is not free. The assets that assess a strike are the same assets that find the next target, so every assessment costs collection. At T+0:50 the FSCC held one long-range ISR UAS and had three jobs for it: assess the mortars, assess the ammunition supply point, or find the command post. It chose the mortars, and the supply point reached T+1:00 sitting in Assess with nobody watching it.",
+    zh: "評估不是免費的。用來評估一次打擊的兵力，就是用來尋找下一個目標的兵力，所以每一次評估都要付出情報蒐集的代價。在 T+0:50，FSCC 手上只有一架長程情監偵無人機，卻有三件工作要它做：評估迫擊砲、評估彈藥補給點，或是尋找指揮所。它選擇了迫擊砲，於是補給點到了 T+1:00 仍停在評估欄，沒有人在監視它。"
+  },
+  "assess.059": {
+    en: "Battle damage assessment",
+    zh: "戰果評估"
+  },
+  "assess.060": {
+    en: "BDA in the targeting process pertains to the results of attacks on targets designated by the commander.",
+    zh: "目標選定程序中的戰果評估，針對的是對指揮官所指定目標實施攻擊後的結果。"
+  },
+  "assess.061": {
+    en: "FM 3-60, Chapter 2.",
+    zh: "FM 3-60，第 2 章。"
+  },
+  "assess.062": {
+    en: "One strike produces three assessments. They ask different questions, they need different sensors, and they arrive on different timelines.",
+    zh: "一次打擊會產生三種評估。它們問的問題不同，需要的偵蒐裝備不同，得出結果的時間也不同。"
+  },
+  "assess.063": {
+    en: "Assessment",
+    zh: "評估項目"
+  },
+  "assess.064": {
+    en: "The question",
+    zh: "問題"
+  },
+  "assess.065": {
+    en: "The first strike on the ATGM section",
+    zh: "對 ATGM 分隊的第一次打擊"
+  },
+  "assess.066": {
+    en: "<strong>Physical damage</strong>",
+    zh: "<strong>物理損害</strong>"
+  },
+  "assess.067": {
+    en: "How much of the target was physically damaged?",
+    zh: "目標在物理上被毀損了多少？"
+  },
+  "assess.068": {
+    en: "At T-0:30 the sUAS finds one man killed and the position abandoned.",
+    zh: "在 T-0:30，sUAS 發現一人陣亡，陣地已被放棄。"
+  },
+  "assess.069": {
+    en: "<strong>Functional damage</strong>",
+    zh: "<strong>功能損害</strong>"
+  },
+  "assess.070": {
+    en: "Can the target still do its job, and for how long?",
+    zh: "目標是否還能執行它的任務？還能維持多久？"
+  },
+  "assess.071": {
+    en: "At T-0:22 the rest of the section has moved several hundred metres and is still in range of the bridge. It can still do its job.",
+    zh: "在 T-0:22，該分隊其餘人員已轉移數百公尺，但仍在可對橋樑射擊的範圍內。它仍然能執行它的任務。"
+  },
+  "assess.072": {
+    en: "<strong>Target system</strong>",
+    zh: "<strong>目標系統</strong>"
+  },
+  "assess.073": {
+    en: "What has the attack done to the enemy capability this target belongs to?",
+    zh: "這次攻擊對該目標所屬的敵軍能力造成了什麼？"
+  },
+  "assess.074": {
+    en: "While that section can still fire on the crossing, the enemy can still stop a vehicle on the bridge. Nothing the commander asked for has been achieved.",
+    zh: ""
+  },
+  "assess.075": {
+    en: "The last one is the reason we assess at all. A target matters because of what it lets the enemy do, so the useful question is always which capability he has lost. The ATGM section was priority 1 because the commander's guidance said it was the only thing in his order of battle that could stop a vehicle on the bridge. Taking it off the board at T-0:15 took that capability away from him.",
+    zh: ""
+  },
+  "assess.076": {
+    en: "Every target on the list sits inside a system. The 120 mm mortar platoon is the enemy's indirect fire against the crossing. The ammunition supply point holds the rounds his mortars and his ATGM fire. The battalion command post directs all of it. Striking one changes what the others can do, and the target system assessment is where the staff says so.",
+    zh: "清單上的每一個目標都處在一個系統之中。120 公釐迫擊砲排是敵軍對渡河點的間接火力。彈藥補給點存放敵軍迫擊砲與 ATGM 所發射的彈藥。營指揮所指揮這一切。打擊其中一個，就會改變其他目標所能做的事，而目標系統評估就是幕僚把這一點講出來的地方。"
+  },
+  "assess.077": {
+    en: "BDA does not always come from looking at the target. Whether the enemy moves, digs in, changes his communications or simply stops firing tells us as much as a picture of the ground. We never see the mortar tubes in this operation. What the long-range ISR is sent to confirm at T+0:50 is whether rounds have stopped landing on our soldiers.",
+    zh: "戰果評估不一定來自直接觀察目標。敵軍是否轉移、是否構工、是否改變通信，或者乾脆停止射擊，這些告訴我們的和一張現地照片一樣多。在這場作戰中，我們從來沒有看見迫擊砲管。在 T+0:50 派長程情監偵去確認的，是砲彈是否已經不再落在我方官兵身上。"
+  },
+  "assess.078": {
+    en: "An assessment can also reopen decisions made in Phase 1. The high-payoff target list, the target selection standards, the attack guidance matrix and the collection plan are all open to revision on the strength of a BDA. At T-0:30 the assessment moved the ATGM section from Assess back to Find, and the detect and deliver cycle ran again on the same target.",
+    zh: "評估也可能重新掀開第 1 階段所做的決定。高效益目標清單、目標選擇條件、攻擊矩陣與情報蒐集計畫，都可能因為一份戰果評估而修改。在 T-0:30，評估把 ATGM 分隊從評估退回發現，監測與執行的循環又在同一個目標上跑了一次。"
+  },
+  "assess.079": {
+    en: "Look again at the tracker above. Two targets are sitting in Assess and neither assessment is finished. Which sensor would you task, and what would you ask it to look for?",
+    zh: "再看一次上面的追蹤表。有兩個目標停在評估欄，兩份評估都還沒完成。你會派哪一項偵蒐裝備？你會要它去看什麼？"
+  },
+  "assess.080": {
+    en: "Munitions effectiveness assessment",
+    zh: "彈藥效能評估"
+  },
+  "assess.081": {
+    en: "BDA looks at the enemy. Munitions effectiveness assessment looks at us. It asks whether the weapon system, the munition, the method of attack and the delivery were the right ones, and it runs alongside the BDA rather than after it.",
+    zh: "戰果評估看的是敵軍，彈藥效能評估看的是我方。它問的是武器系統、彈藥、攻擊方法與投射方式是否正確，而且它與戰果評估同時進行，不是等戰果評估做完才開始。"
+  },
+  "assess.082": {
+    en: "The first strike on the ATGM section shows the difference. The BDA finding is that the section survived, moved, and could still engage the bridge. The munitions effectiveness question is a separate one. Was a 105 mm mission the right way to suppress a dug-in section, was the volume of fire enough to hold the effect for as long as we needed it, and should the second mission be fired differently? The product is a recommendation to change the method, the tactics, the weapon system, the munition, or how it is delivered.",
+    zh: ""
+  },
+  "assess.083": {
+    en: "It also feeds ammunition planning. If an effect costs more rounds than the plan allowed, the required supply rate is wrong. In this operation ammunition is the constraint the commander named.",
+    zh: "它同時也提供彈藥計畫所需的資訊。如果達成一項效果所耗的砲彈超過計畫所容許的數量，需求補給率就訂錯了。在這場作戰中，彈藥正是指揮官親自指明的限制。"
+  },
+  "assess.084": {
+    en: "Re-attack recommendation",
+    zh: "再次打擊建議"
+  },
+  "assess.085": {
+    en: "With both assessments in hand, the staff makes a recommendation to the commander. It addresses the target, its critical elements, the target system it belongs to, and the enemy combat strength that remains.",
+    zh: "兩份評估都到手之後，幕僚向指揮官提出建議。建議的內容涵蓋該目標、目標的要害、目標所屬的目標系統，以及敵軍所剩的戰鬥力。"
+  },
+  "assess.086": {
+    en: "Re-attack is only one of the answers available. The others are to strike something else, to change the guidance, or to accept the result and move on. At T-0:30 the answer was re-attack, and it cost a second full cycle on a target we had already engaged once. At T-0:15, after the second strike, the answer was that the target was finished and the row could come off the tracker.",
+    zh: "再次打擊只是其中一種答案。其他的答案是改打別的目標、修改指導，或是接受結果並繼續前進。在 T-0:30，答案是再次打擊，代價是在一個已經打過一次的目標上，再跑完一整輪循環。在 T-0:15，第二次打擊之後，答案是這個目標已經處理完畢，該列可以從追蹤表上移除。"
+  },
+  "assess.087": {
+    en: "Measure of performance and measure of effectiveness",
+    zh: "積效評估與效益評估"
+  },
+  "assess.088": {
+    en: "Combat assessment judges one engagement. Measure of performance and measure of effectiveness judge whether the targeting strategy as a whole is working.",
+    zh: "戰鬥評估判斷的是一次接戰。積效評估與效益評估判斷的，是整體目標選定策略是否有效。"
+  },
+  "assess.089": {
+    en: "Measure of performance (MOP)",
+    zh: "積效評估（MOP）"
+  },
+  "assess.090": {
+    en: "Measure of effectiveness (MOE)",
+    zh: "效益評估（MOE）"
+  },
+  "assess.091": {
+    en: "<strong>The question</strong>",
+    zh: "<strong>問題</strong>"
+  },
+  "assess.092": {
+    en: "Are we doing things right?",
+    zh: "我們把事情做對了嗎？"
+  },
+  "assess.093": {
+    en: "Are we doing the right things?",
+    zh: "我們做的是對的事嗎？"
+  },
+  "assess.094": {
+    en: "<strong>What it measures</strong>",
+    zh: "<strong>衡量什麼</strong>"
+  },
+  "assess.095": {
+    en: "Task performance. Was the action taken, and was it done to standard?",
+    zh: "任務執行。行動有沒有做？有沒有做到標準？"
+  },
+  "assess.096": {
+    en: "Change in the enemy, in what he can do or in how he behaves.",
+    zh: "敵軍的改變，包括他能做什麼，以及他如何行動。"
+  },
+  "assess.097": {
+    en: "<strong>How it is made</strong>",
+    zh: "<strong>如何得出</strong>"
+  },
+  "assess.098": {
+    en: "Usually counted. Rounds fired, missions sent, minutes taken.",
+    zh: "通常用數的。射了幾發、送出幾次任務、花了幾分鐘。"
+  },
+  "assess.099": {
+    en: "Usually observed and interpreted. Often a trend rather than a single number.",
+    zh: "通常靠觀察與判讀。多半是一個趨勢，而不是單一數字。"
+  },
+  "assess.100": {
+    en: "<strong>From this operation</strong>",
+    zh: "<strong>本次作戰的例子</strong>"
+  },
+  "assess.101": {
+    en: "The fire mission reached the 105 mm M101 howitzer battery four minutes after the report arrived, and the battery fired.",
+    zh: "回報進來四分鐘後，射擊任務就送到 105 公釐 M101 榴彈砲連，該連也完成射擊。"
+  },
+  "assess.102": {
+    en: "The ATGM section could not engage our vehicles while they were on the bridge.",
+    zh: ""
+  },
+  "assess.103": {
+    en: "The two can disagree, and that is why we measure both. At T-0:55 the mission went to the right battery within four minutes and the rounds landed on the ATGM position. Every measure of performance was met. The measure of effectiveness was not, because at T-0:30 the section was still able to engage the crossing. Counting missions alone would never have shown it.",
+    zh: "兩者可能得出不同的結論，這正是我們兩種都要衡量的原因。在 T-0:55，任務在四分鐘內送到正確的砲連，砲彈也落在 ATGM 陣地上。每一項積效評估都達成了。效益評估卻沒有，因為在 T-0:30，該分隊仍然能對渡河點接戰。只計算任務次數，永遠看不出這一點。"
+  },
+  "assess.104": {
+    en: "Task 4.1 — Performance or effect",
+    zh: "課題 4.1 — 積效或效益"
+  },
+  "assess.105": {
+    en: "Each line below is a statement about Operation RIVER GATE. Decide whether it is a measure of performance or a measure of effectiveness.",
+    zh: "下面每一行都是關於 RIVER GATE 作戰的一句陳述。判斷它屬於積效評估還是效益評估。"
+  },
+  "assess.106": {
+    en: "1. The FSCC sent the fire mission to the 105 mm M101 howitzer battery four minutes after the report arrived.",
+    zh: "1. 回報進來四分鐘後，FSCC 就把射擊任務送到 105 公釐 M101 榴彈砲連。"
+  },
+  "assess.107": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "assess.108": {
+    en: "MOP — measure of performance",
+    zh: "MOP — 積效評估"
+  },
+  "assess.109": {
+    en: "MOE — measure of effectiveness",
+    zh: "MOE — 效益評估"
+  },
+  "assess.110": {
+    en: "This measures our own action against a standard. It says nothing about the ATGM section.",
+    zh: "這衡量的是我方自己的行動，並且對照一個標準。它完全沒有講到 ATGM 分隊。"
+  },
+  "assess.111": {
+    en: "Nothing here has changed for the enemy. The line measures how quickly we carried out our own task, and that is performance.",
+    zh: "這裡沒有任何敵軍的改變。這一行衡量的是我們把自己的任務執行得多快，那就是積效。"
+  },
+  "assess.112": {
+    en: "2. The ATGM section was unable to engage vehicles on the bridge while the lead battalion crossed.",
+    zh: ""
+  },
+  "assess.113": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "assess.114": {
+    en: "MOP — measure of performance",
+    zh: "MOP — 積效評估"
+  },
+  "assess.115": {
+    en: "MOE — measure of effectiveness",
+    zh: "MOE — 效益評估"
+  },
+  "assess.116": {
+    en: "This is the effect the commander's guidance asked for, written as a change in what the enemy can do.",
+    zh: "這正是指揮官指導所要求的效果，而且是以敵軍能力的改變寫出來的。"
+  },
+  "assess.117": {
+    en: "No friendly task is named here. The statement is about the enemy's capability, and a change in enemy capability is an effect.",
+    zh: "這裡沒有提到任何我方的任務。這句話講的是敵軍的能力，而敵軍能力的改變就是效果。"
+  },
+  "assess.118": {
+    en: "3. The 155 mm M109A2 battery fired its complete mission on the ammunition supply point and reported it complete at T+0:50.",
+    zh: "3. 155 公釐 M109A2 砲連對彈藥補給點完成整個射擊任務，並在 T+0:50 回報任務完成。"
+  },
+  "assess.119": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "assess.120": {
+    en: "MOP — measure of performance",
+    zh: "MOP — 積效評估"
+  },
+  "assess.121": {
+    en: "MOE — measure of effectiveness",
+    zh: "MOE — 效益評估"
+  },
+  "assess.122": {
+    en: "The task was carried out. Whether it achieved anything is a separate question, and at T+1:00 no sensor is watching the supply point to answer it.",
+    zh: "任務執行了。它有沒有達成什麼是另一個問題，而在 T+1:00，沒有任何偵蒐裝備在監視補給點，也就無法回答。"
+  },
+  "assess.123": {
+    en: "The line stops at the moment our rounds finished. It measures the task, not what the task achieved.",
+    zh: "這一行只寫到我方砲彈打完為止。它衡量的是任務本身，不是任務達成了什麼。"
+  },
+  "assess.124": {
+    en: "4. Enemy mortar rounds stopped landing on our soldiers at the crossing site.",
+    zh: "4. 敵軍迫擊砲彈不再落在渡河點的我方官兵身上。"
+  },
+  "assess.125": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "assess.126": {
+    en: "MOP — measure of performance",
+    zh: "MOP — 積效評估"
+  },
+  "assess.127": {
+    en: "MOE — measure of effectiveness",
+    zh: "MOE — 效益評估"
+  },
+  "assess.128": {
+    en: "We never see the tubes. The change we can observe is the enemy's fire, and stopping that fire is what the commander wanted.",
+    zh: "我們從來沒有看見砲管。我們能觀察到的改變是敵軍的射擊，而讓那個射擊停止正是指揮官要的。"
+  },
+  "assess.129": {
+    en: "Nobody's task is being measured. This is a change in enemy behaviour, and that is an effect.",
+    zh: "這裡沒有衡量任何人的任務。這是敵軍行動的改變，那就是效果。"
+  },
+  "assess.130": {
+    en: "5. The bridge was seized intact and stayed usable.",
+    zh: "5. 橋樑被完整奪取，而且維持可以通行。"
+  },
+  "assess.131": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "assess.132": {
+    en: "MOP — measure of performance",
+    zh: "MOP — 積效評估"
+  },
+  "assess.133": {
+    en: "MOE — measure of effectiveness",
+    zh: "MOE — 效益評估"
+  },
+  "assess.134": {
+    en: "This is the end state the commander set. Every task in the operation exists to serve it.",
+    zh: "這是指揮官所訂的終期狀態。作戰中的每一項任務都是為了它而存在。"
+  },
+  "assess.135": {
+    en: "No task is named here. The line states a condition that either holds or does not, which makes it an effect.",
+    zh: "這裡沒有提到任何任務。這一行陳述的是一個成立或不成立的狀態，所以它是效果。"
+  },
+  "assess.136": {
+    en: "Check the Measures",
+    zh: "檢查衡量標準"
   },
   "assess.016": {
     en: "← Phase 3: Deliver",
@@ -4643,6 +8005,14 @@ window.D3A_LANG_ZH = {
     en: "The estimate of damage and effect achieved on a target after an engagement.",
     zh: "接戰後對目標所達成之損害與效果的估計。"
   },
+  "glossary.094": {
+    en: "CDE — collateral damage estimation",
+    zh: "CDE — 附帶損害評估"
+  },
+  "glossary.095": {
+    en: "The estimate, made before an attack, of what damage it would cause to civilians, civilian property, or anything else we are required to protect. It is done alongside the check against the rules of engagement, before a weapon is assigned to the target.",
+    zh: "在攻擊之前所做的評估，判斷該次攻擊會對平民、民用財產，或其他我方負有保護義務的事物造成何種損害。它與接戰規定的查核同時進行，在為該目標配賦武器之前完成。"
+  },
   "glossary.020": {
     en: "Clearance of fires",
     zh: "安全目標確認"
@@ -4650,6 +8020,14 @@ window.D3A_LANG_ZH = {
   "glossary.021": {
     en: "The check made before firing to confirm no friendly forces (or other restrictions) are in or near the target area.",
     zh: "射擊前所做的查證，用以確認目標區內或其附近沒有友軍（或其他限制）。"
+  },
+  "glossary.084": {
+    en: "Collection plan",
+    zh: "情報蒐集計畫"
+  },
+  "glossary.085": {
+    en: "The intelligence staff's plan for finding what the commander needs to know. It names the question, what the activity looks like on the ground, where to look, who looks, and by when the answer must arrive.",
+    zh: "情報參謀為找出指揮官所需資訊而擬定的計畫。它列出問題本身、該項活動在地面上的樣子、在哪裡找、由誰去找，以及答案最晚何時必須送到。"
   },
   "glossary.022": {
     en: "Combat assessment",
@@ -4672,8 +8050,8 @@ window.D3A_LANG_ZH = {
     zh: "D3A — 擬定、監測、執行、評估"
   },
   "glossary.027": {
-    en: "The tactical-level targeting methodology taught in this course. Its four functions form a continuous cycle.",
-    zh: "本課程所教授的戰術層級目標選定方法。其四項功能構成一個連續的循環。"
+    en: "The targeting methodology taught in this course. Its four functions form a continuous cycle.",
+    zh: ""
   },
   "glossary.028": {
     en: "Destroy",
@@ -4683,6 +8061,22 @@ window.D3A_LANG_ZH = {
     en: "Desired effect: put the target permanently out of action.",
     zh: "期望效果：使目標永久喪失作用。"
   },
+  "glossary.096": {
+    en: "Dynamic targeting",
+    zh: "動態目標獲取"
+  },
+  "glossary.097": {
+    en: "Attacking a target that was never planned, or changing the plan for one that was, while the operation is running. It follows the F2T2EA steps. The work you did in the decide phase produced the plan; dynamic targeting handles what the plan did not foresee.",
+    zh: "在作戰進行之中，攻擊原本未列入計畫的目標，或變更原有目標的計畫。其程序即F2T2EA六個步驟。您在擬定階段所做的工作產生了計畫；動態目標獲取則處理計畫未能預見的狀況。"
+  },
+  "glossary.098": {
+    en: "Emerging target",
+    zh: "新興目標"
+  },
+  "glossary.099": {
+    en: "Something a sensor has detected which shows enough of the characteristics of a target to be worth developing, but which has not yet been confirmed as one. It is what the find step produces.",
+    zh: "感測器所偵測到、具備足夠目標特徵而值得繼續發展，但尚未確認為目標的事物。它是發現步驟的產物。"
+  },
   "glossary.030": {
     en: "ESI — electronic signals indication",
     zh: "ESI — 訊號交測"
@@ -4691,13 +8085,29 @@ window.D3A_LANG_ZH = {
     en: "Detecting enemy electronic emissions — radio, wifi, or satellite communication — and estimating where they come from. It gives an area, not an exact point, so it is normally used to cue another sensor.",
     zh: "偵測敵軍的電子發射訊號——無線電、wifi 或衛星通信——並推估其來源方位。它得到的是一塊區域，而非精確的點位，因此通常用於引導另一個感測器。"
   },
+  "glossary.100": {
+    en: "F2T2EA — find, fix, track, target, engage, assess",
+    zh: "F2T2EA — 發現、定位、追蹤、目標處理、接戰、評估"
+  },
+  "glossary.101": {
+    en: "The six steps one target passes through while the operation is running. It sits inside D3A rather than beside it. Find, fix and track are the work of the detect function, target and engage belong to deliver, and assess is the fourth function.",
+    zh: "一個目標在作戰執行期間所經歷的六個步驟。它位於D3A之內，而非與D3A並列。發現、定位與追蹤是監測功能的工作，目標處理與接戰屬於執行功能，評估則是第四項功能。"
+  },
+  "glossary.080": {
+    en: "FSCC — fire support coordination cell",
+    zh: "FSCC — 火力協調組"
+  },
+  "glossary.081": {
+    en: "The staff cell that runs targeting for the brigade. It holds the three decide-function products, checks every report against them, and orders the attack.",
+    zh: "旅幕僚中負責目標選定的編組。它保存擬定功能的三項產物，依這些產物檢核每一份回報，並下令攻擊。"
+  },
   "glossary.054": {
     en: "HAT — HPTL, AGM, TSS",
     zh: "HAT — HPTL、AGM、TSS"
   },
   "glossary.055": {
-    en: "The single worksheet a fire support cell keeps, holding all three decide-function products together. One column per priority target; read a column downwards and you have the complete instruction for that target.",
-    zh: "火力支援小組所保存的單一工作表，將擬定功能的三項產物合而為一。每個優先目標一欄；由上往下讀完一欄，就得到該目標的完整指示。"
+    en: "The single worksheet the FSCC keeps, holding all three decide-function products together. One column per priority target; read a column downwards and you have the complete instruction for that target.",
+    zh: "FSCC所保存的單一工作表，將擬定功能的三項產物合而為一。每個優先目標一欄；由上往下讀完一欄，就得到該目標的完整指示。"
   },
   "glossary.032": {
     en: "HPT — high-payoff target",
@@ -4715,6 +8125,14 @@ window.D3A_LANG_ZH = {
     en: "The prioritized list of HPTs for a phase of an operation. A key product of the decide phase.",
     zh: "作戰某一階段中依優先順序排列的HPT清單。擬定階段的關鍵產物。"
   },
+  "glossary.102": {
+    en: "HVI — high-value individual",
+    zh: "HVI — 高價值人物"
+  },
+  "glossary.103": {
+    en: "A person the enemy commander needs in order to accomplish his mission. Do not confuse it with HVT, which may be a unit, a vehicle, a position, or anything else. No HVI appears in Operation RIVER GATE. The term is here because it is used in the F2T2EA examples.",
+    zh: "敵軍指揮官為達成其任務所需要的人員。不要與高價值目標（HVT）混淆，後者可能是一支部隊、一輛車、一處陣地，或其他任何事物。「河門作戰」中沒有任何高價值人物。此處收錄本詞，是因為F2T2EA的範例用到它。"
+  },
   "glossary.036": {
     en: "HVT — high-value target",
     zh: "HVT — 高價值目標清單"
@@ -4722,6 +8140,14 @@ window.D3A_LANG_ZH = {
   "glossary.037": {
     en: "A target the <em>enemy</em> commander needs to accomplish his mission.",
     zh: "<em>敵軍</em>指揮官達成其任務所需要的目標。"
+  },
+  "glossary.086": {
+    en: "Indicator",
+    zh: "徵候"
+  },
+  "glossary.087": {
+    en: "What an enemy activity looks like on the ground, written so that a soldier or an aircrew recognises it when they see it.",
+    zh: "敵軍某項活動在地面上看起來的樣子，寫法要讓士兵或機組員一看就認得出來。"
   },
   "glossary.038": {
     en: "IPOE — intelligence preparation of the operational environment",
@@ -4746,6 +8172,22 @@ window.D3A_LANG_ZH = {
   "glossary.060": {
     en: "A large unmanned aircraft that flies deep over the enemy area for many hours with a powerful camera. It can watch one place continuously and report at once. In this course it is the sensor that finds targets far behind the river.",
     zh: "一種大型無人航空器，配備高性能攝影機，能在敵軍地區縱深上空飛行數小時。它可以持續監視同一個地點並立即回報。在本課程中，它是發現河川後方縱深目標的感測器。"
+  },
+  "glossary.088": {
+    en: "LTIOV — latest time information is of value",
+    zh: "LTIOV — 情報最後有效時間"
+  },
+  "glossary.089": {
+    en: "The time after which an answer no longer helps, because the decision it feeds has already been made. It is set by the decision, not by the sensor and not by the target.",
+    zh: "過了這個時間，答案就不再有幫助，因為它所支持的決心已經作成。它由決心決定，不是由感測器，也不是由目標決定。"
+  },
+  "glossary.082": {
+    en: "M101",
+    zh: "M101"
+  },
+  "glossary.083": {
+    en: "A 105 mm howitzer. In this course it equips the battery we hold the most rounds for. Its shells crater, so it may not be used near the bridge.",
+    zh: "一種 105 公釐榴彈砲。在本課程中，它裝備我們持有最多彈藥的砲連。其砲彈會造成彈坑，因此不得在橋樑附近使用。"
   },
   "glossary.061": {
     en: "M109A2",
@@ -4787,14 +8229,6 @@ window.D3A_LANG_ZH = {
     en: "Desired effect: make the target unable to perform its function for a period of time.",
     zh: "期望效果：使目標在一段時間內無法發揮其功能。"
   },
-  "glossary.048": {
-    en: "OP — observation post",
-    zh: "OP — 觀測所"
-  },
-  "glossary.049": {
-    en: "A hidden position from which soldiers observe an assigned area.",
-    zh: "供士兵觀測所指定區域的隱蔽陣地。"
-  },
   "glossary.063": {
     en: "OWA-UAS — one-way attack UAS",
     zh: "OWA-UAS — 攻擊型無人機"
@@ -4802,6 +8236,22 @@ window.D3A_LANG_ZH = {
   "glossary.064": {
     en: "A small unmanned aircraft that searches for a target and then flies into it and explodes. Its warhead is small and precise, so it destroys what it hits without heavy damage around it. It is used once. In this course it is the only asset permitted to strike a target on or beside the bridge.",
     zh: "一種小型無人航空器，會搜索目標，然後撞上目標並爆炸。其彈頭小而精準，因此能破壞所命中的物體，而不會對周圍造成嚴重損害。它只使用一次。在本課程中，它是唯一獲准打擊橋樑上或橋樑旁目標的兵力。"
+  },
+  "glossary.104": {
+    en: "PID — positive identification",
+    zh: "PID — 正面識別"
+  },
+  "glossary.105": {
+    en: "Confirmation that what the sensor is looking at really is what we believe it to be, and that it is a lawful target. Without it we may not engage, however accurate the location is.",
+    zh: "確認感測器所觀察的對象確實就是我方所認定的對象，而且是合法的攻擊目標。未經確認，無論位置多麼精確，我方都不得接戰。"
+  },
+  "glossary.090": {
+    en: "PIR — priority intelligence requirement",
+    zh: "PIR — 優先情報需求"
+  },
+  "glossary.091": {
+    en: "A question the commander must have answered in order to make a decision. The collection plan exists to answer them.",
+    zh: "指揮官為了作出決心，必須得到解答的問題。情報蒐集計畫存在的目的就是回答這些問題。"
   },
   "glossary.077": {
     en: "RFA — restricted fire area",
@@ -4811,6 +8261,14 @@ window.D3A_LANG_ZH = {
     en: "A fire support coordination measure. It marks an area of ground where fires are limited in a stated way, and fires beyond that limit are not permitted without further coordination. In this course the RFA is the circle around the bridge, badge G on the map. Cratering munitions are forbidden inside it, and only the one-way attack UAS may strike there.",
     zh: "一種火力支援協調措施。它標示出一塊地面區域，該區域內的火力受到明訂方式的限制，超出該限制的火力未經進一步協調不得實施。在本課程中，RFA是橋樑周圍的圓圈，即地圖上的 G 標記。其內禁用成坑彈藥，只有攻擊型無人機可以在該處打擊。"
   },
+  "glossary.106": {
+    en: "ROE — rules of engagement",
+    zh: "ROE — 接戰規定"
+  },
+  "glossary.107": {
+    en: "The commander's rules for when, where, and against whom force may be used. Every target is checked against them before a weapon is assigned to it.",
+    zh: "指揮官對於何時、何地、可對何人使用武力所訂的規定。每一個目標在配賦武器之前都要依此查核。"
+  },
   "glossary.050": {
     en: "S-2",
     zh: "S-2"
@@ -4818,6 +8276,22 @@ window.D3A_LANG_ZH = {
   "glossary.051": {
     en: "The intelligence officer/section of a battalion or brigade staff.",
     zh: "營或旅幕僚中的情報官／情報科。"
+  },
+  "glossary.048": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "glossary.049": {
+    en: "Soldiers in hidden positions, an observation post (OP), watching an assigned area. Very reliable, but they see only the ground in front of them.",
+    zh: "士兵位於隱蔽陣地，即觀測所（OP），觀測所指定的區域。非常可靠，但只能看到正前方的地面。"
+  },
+  "glossary.092": {
+    en: "SIR — specific information requirement",
+    zh: "SIR — 特定資訊需求"
+  },
+  "glossary.093": {
+    en: "A smaller question that helps answer a priority intelligence requirement. Answer all of the SIRs and the PIR is answered.",
+    zh: "有助於回答優先情報需求的較小問題。回答完所有 SIR，優先情報需求也就得到了解答。"
   },
   "glossary.065": {
     en: "sUAS — small unmanned aircraft system",
@@ -4848,16 +8322,24 @@ window.D3A_LANG_ZH = {
     zh: "TLE — 目標位置誤差量"
   },
   "glossary.072": {
-    en: "The difference between where we think a target is and where it actually is, in metres. It comes from the sensor. How much of it we can accept is set by the weapon: the M109A2 battalion accepts 200 m, the mortar battery 100 m.",
-    zh: "我方認為目標所在位置與其實際位置之間的差距，以公尺表示。它來自感測器。我方能接受多少誤差由武器決定：M109A2 營接受 200 公尺，迫擊砲連接受 100 公尺。"
+    en: "The difference between where we think a target is and where it actually is, in metres. It comes from the sensor. How much of it we can accept is set by the weapon: the M109A2 battalion accepts 200 m, the 105 mm M101 howitzer battery 100 m.",
+    zh: "我方認為目標所在位置與其實際位置之間的差距，以公尺表示。它來自感測器。我方能接受多少誤差由武器決定：M109A2 營接受 200 公尺，105 公釐 M101 榴彈砲連接受 100 公尺。"
+  },
+  "glossary.108": {
+    en: "TOT — time on target",
+    zh: "TOT — 彈著時間"
+  },
+  "glossary.109": {
+    en: "The clock time at which fires must arrive on the target. It restricts when the effect lands, not when the mission is sent. A fire mission sent at T-1:15 with a time on target of T-1:00 moves that target to <strong>Engage</strong> straight away, even though nothing has been struck yet.",
+    zh: "火力必須抵達目標的時刻。它限制的是效果落下的時間，而不是任務下達的時間。在 T-1:15 下達、彈著時間為 T-1:00 的射擊任務，會讓該目標立即移到<strong>接戰</strong>，即使當下尚未有任何打擊發生。"
   },
   "glossary.073": {
     en: "Track",
     zh: "追蹤"
   },
   "glossary.074": {
-    en: "Continuous observation of a target. Timeliness begins to run at the moment track is lost, not at the moment the report was written.",
-    zh: "對目標的持續觀測。時限自失去追蹤的那一刻起算，而不是自回報寫成的那一刻起算。"
+    en: "Continuous observation of a target. Timeliness begins to run at the moment track is lost, not at the moment the report was written. Track is also the third step of F2T2EA, where one sensor keeps custody of a confirmed target until the strike, and usually past it, so that the same sensor can report the result.",
+    zh: "對目標的持續觀測。時限自失去追蹤的那一刻起算，而不是自回報寫成的那一刻起算。追蹤同時也是F2T2EA的第三個步驟，由一具感測器掌握已確認的目標直到攻擊發起，通常還會延續到攻擊之後，以便由同一具感測器回報結果。"
   },
   "glossary.075": {
     en: "TSS — target selection standards",
@@ -4898,8 +8380,8 @@ window.D3A_LANG_ZH = {
     zh: "請檢查你的答案。"
   },
   "ui.tryagain": {
-    en: "Not quite — try again.",
-    zh: "不完全正確——請再試一次。"
+    en: "Not quite. Try again.",
+    zh: "不完全正確。請再試一次。"
   },
   "ui.selectfirst": {
     en: "Select an answer first.",
@@ -4921,11 +8403,23 @@ window.D3A_LANG_ZH = {
     en: "Reset all course progress? This cannot be undone.",
     zh: "要重設所有課程進度嗎？此動作無法復原。"
   },
+  "ui.ladstep": {
+    en: "Situation {n} of {total}",
+    zh: "第 {n} 個狀況，共 {total} 個"
+  },
+  "ui.laddone": {
+    en: "All {total} situations answered.",
+    zh: "{total} 個狀況全部答畢。"
+  },
+  "ui.movefirst": {
+    en: "Move the target on the board first.",
+    zh: "請先在看板上移動目標。"
+  },
 
   /* ---------- scenario-1.html ---------- */
   "scenario-1.ok": {
-    en: "Hold on to this. The mission is the standard every target is judged against. In Phase 1 you will be given nine enemy elements and asked which of them threaten the crossing — not which are worth the most to the enemy.",
-    zh: "請牢記這一點。任務就是判斷每個目標所依據的條件。在第一階段，你會拿到九個敵軍單位，並被問到其中哪些威脅到渡河——而不是哪些對敵軍價值最高。"
+    en: "Hold on to this. The mission is the standard every target is judged against. In Phase 1 you will be given eight enemy elements and asked which of them threaten the crossing — not which are worth the most to the enemy.",
+    zh: ""
   },
   "scenario-1.bad": {
     en: "Re-read the mission statement at the top of this page. Ask what has to be true when the operation ends for us to have succeeded.",
@@ -4934,8 +8428,8 @@ window.D3A_LANG_ZH = {
 
   /* ---------- decide-1.html ---------- */
   "decide-1.ok": {
-    en: "These four directly enable the seizure of the bridge. Now look at what you left off. The ammunition supply point is a real military target and it holds the rounds the enemy mortars fire — but his fighting positions already hold three days forward, so destroying it does not stop one round inside our 48 hours. The infantry platoon will shoot at our soldiers, but only after the crossing it cannot prevent. And the reconnaissance squad can only make his fires better, not possible. High value to the enemy is not the test. Payoff for OUR mission is.",
-    zh: "這四個目標直接促成奪取橋樑。現在看看你漏掉的部分。彈藥補給點是一個確實的軍事目標，也存放著敵軍迫擊砲發射的砲彈——但他的戰鬥陣地前方已囤積三天份的彈藥，因此摧毀補給點，在我方的 48 小時內連一發砲彈都擋不下來。步兵排會向我方士兵射擊，但那只發生在它無法阻止的渡河之後。而偵察班只能讓他的火力更好，而不是讓他的火力成為可能。對敵軍價值高並不是判斷標準。對我方任務的效益才是。"
+    en: "These four directly enable the seizure of the bridge. Now look at what you left off. The ammunition supply point is a real military target and it holds the rounds the enemy mortars fire — but his fighting positions already hold three days forward, so destroying it does not stop one round inside our 48 hours. The infantry platoon will shoot at our soldiers, but only after the crossing it cannot prevent. High value to the enemy is not the test. Payoff for OUR mission is.",
+    zh: ""
   },
   "decide-1.bad": {
     en: "You proposed this list to the commander and he did not approve it. Yellow = an HPT you left off. Red = a target he rejected. Ask of each one: if I destroy this, does the bridge fall into our hands sooner? Read what he said under each item, then adjust and nominate again.",
@@ -4954,12 +8448,12 @@ window.D3A_LANG_ZH = {
 
   /* ---------- decide-3.html ---------- */
   "decide-3.ok": {
-    en: "The rule behind this order: rank by what would DEFEAT the mission, not by what would hurt most. The engineers and the ATGM section can both end the operation in one event — one drops the bridge, the other leaves a burning vehicle on a span we then cannot cross. The mortars are attritional: they hurt, and we can mitigate them. The command post is last because it is the hardest to find and the slowest to pay off, not because it does not matter.",
-    zh: "這個排序背後的規則：依「什麼會使任務失敗」來排序，而不是依「什麼傷害最大」來排序。工兵與ATGM分隊都能以單一事件終結整個行動——一個炸斷橋樑，另一個讓一輛燃燒的車輛留在橋面上，使我們之後無法通過。迫擊砲屬於消耗性威脅：它們會造成傷害，但我們可以減輕。指揮所排在最後，是因為它最難找到、見效也最慢，而不是因為它不重要。"
+    en: "The rule behind this order: rank by what would DEFEAT the mission, not by what would hurt most. The engineers and the ATGM section can both end the operation in one event — one drops the bridge, the other leaves a burning vehicle on a bridge we then cannot cross. The mortars are attritional: they hurt, and we can mitigate them. The command post is last because it is the hardest to find and the slowest to pay off, not because it does not matter.",
+    zh: ""
   },
   "decide-3.bad": {
-    en: "You proposed this order to the commander and he rejected it. He wants the list ranked by what would DEFEAT the mission, not by what would hurt most. Green rows are already where he wants them. Ask of each target: would losing this END the mission, or only hurt? Everything that can end it goes above everything that can only hurt — then re-read what he said about a vehicle stopped on the span.",
-    zh: "你向指揮官提出這個排序，他否決了。他要求這份清單依「什麼會使任務失敗」排序，而不是依「什麼傷害最大」排序。綠色的列已經在他要的位置上。對每個目標自問：失去這一項會終結任務，還是只會造成傷害？凡是能終結任務的，都要排在只會造成傷害的之上——然後再讀一次他對於一輛車停在橋面上所說的話。"
+    en: "You proposed this order to the commander and he rejected it. He wants the list ranked by what would DEFEAT the mission, not by what would hurt most. Green rows are already where he wants them. Ask of each target: would losing this END the mission, or only hurt? Everything that can end it goes above everything that can only hurt — then re-read what he said about a vehicle stopped on the bridge.",
+    zh: ""
   },
 
   /* ---------- decide-4.html ---------- */
@@ -5008,8 +8502,8 @@ window.D3A_LANG_ZH = {
     zh: "<ul class=\"fb-list\"><li><strong>HPTL 排序 = 指揮官的作戰權重</strong>（<em>對達成整體機動構想而言，什麼最重要？</em>）</li><li><strong>AGM 時機（「立即」）= 弱點／危險視窗</strong>（<em>我們多快會失去打擊它的機會，或者它多快會傷害我們？</em>）</li></ul>"
   },
   "decide-9.bad": {
-    en: "Ask the first question of each target: is the threat happening right now? If it is not, ask whether the effect wears off, or whether an early strike would tell the enemy where we intend to cross.",
-    zh: "對每個目標先問第一個問題：這項威脅是否正在發生？如果不是，就問效果會不會消退，或者提早打擊會不會讓敵軍知道我們打算在哪裡渡河。"
+    en: "Ask the first question of each target: will we lose it if we do not strike it immediately, or does it endanger the mission right now? If neither, ask whether it has to be struck at a specific time. If it does not, it is struck as acquired, in the order of its priority.",
+    zh: ""
   },
 
   /* ---------- decide-10.html ---------- */
@@ -5040,5 +8534,35 @@ window.D3A_LANG_ZH = {
   "decide-12.bad": {
     en: "Ask what changed between the two products. Nothing about the weapons changed. What changed is that we now know where we expect to see this target, and one piece of ground on this map forbids most of what we own.",
     zh: "自問這兩項產品之間改變了什麼。武器方面沒有任何改變。改變的是：我們現在知道預期會在哪裡看到這個目標，而這張地圖上有一塊地形，排除了我們手上大部分的兵力。"
+  },
+
+  /* ---------- detect-1.html ---------- */
+  "detect-1.ok": {
+    en: "Read that column downwards and you have the shape of the operation. Everything bearing on whether the bridge can be crossed stops being useful at T=0, because by then the lead battalion is at the bridge and the decision has been made. The ATGM section runs three hours past that, because the commander assessed it stops being important at T+4. The counter-attack has no deadline at all, because he can act on that news at any point in the operation.",
+    zh: "由上往下讀那一欄，你就看到整個作戰的形狀。凡是關係到橋樑能否通行的事項，到 T=0 就不再有用，因為那時先頭營已經抵達橋樑，決心也已經作成。ATGM 分隊比那晚三個小時，因為指揮官判斷它到 T+4 才不再重要。反擊完全沒有期限，因為他在作戰的任何時點都還可以據此行動。"
+  },
+  "detect-1.bad": {
+    en: "For each row, ask which decision the answer feeds, and when the commander makes that decision. LTIOV is set by the decision. It is not set by the sensor, and it is not set by the target.",
+    zh: "針對每一列，請問這個答案支持哪一個決心，以及指揮官在什麼時候作出該決心。LTIOV 由決心決定，不是由感測器決定，也不是由目標決定。"
+  },
+
+  /* ---------- detect-3.html ---------- */
+  "detect-3.ok": {
+    en: "That is one target through the whole cycle, and it did not run in a straight line. It fell back to Find when the small UAS died, and back to Target when the first attack failed. A target only leaves the cycle when the assessment says it is finished.",
+    zh: "這就是一個目標走完整個循環的過程，而它並不是直線前進的。小型無人機失效時，它退回發現步驟；第一次攻擊失敗後，它退回目標處理步驟。唯有評估判定任務完成，目標才會離開循環。"
+  },
+  "detect-3.bad": {
+    en: "Read the situation again and ask what is being done at that moment, not what is about to be done next. The six definitions are in the table above.",
+    zh: "請重讀該狀況，並自問此刻正在做的是什麼，而不是接下來將要做什麼。六項定義就在上方的表格中。"
+  },
+
+  /* ---------- assess-1.html ---------- */
+  "assess-1.ok": {
+    en: "Every measure of performance names something we did. Every measure of effectiveness names something that changed for the enemy, or for the mission. Both are needed. If every task was performed correctly and the effect still did not happen, the plan was wrong, and that is what the commander needs to hear.",
+    zh: "每一項積效評估都指出我們做了什麼。每一項效益評估都指出敵軍或任務發生了什麼改變。兩者都需要。如果每一項任務都正確執行，效果卻仍然沒有出現，那就是計畫錯了，而這正是指揮官必須聽到的話。"
+  },
+  "assess-1.bad": {
+    en: "Ask one question of each line. Does it name something we did, or something that changed? Something we did is a measure of performance. Something that changed for the enemy, or for the mission, is a measure of effectiveness.",
+    zh: "對每一行問同一個問題：它講的是我們做的事，還是發生了改變的事？我們做的事是積效評估。敵軍或任務發生的改變是效益評估。"
   }
 };

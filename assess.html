@@ -44,13 +44,312 @@
 
 <main>
   <div class="panel">
-    <span class="soon-tag" data-i18n="assess.011">Coming soon</span>
     <h1 data-i18n="assess.012">Phase 4: Assess</h1>
-    <p class="lede" data-i18n="assess.013">Judge what the attack achieved, and decide what the cell does next.</p>
+    <p class="lede" data-i18n="assess.011">The assess function has been present at every step of this operation.</p>
+    <p data-i18n="assess.013">If combat assessment reveals that the commander's guidance has not been met, the detect and deliver functions of the targeting process must continue to focus on the targets involved. This feedback may result in changes to the original decisions made during the decide function.</p>
 
-    <p data-i18n="assess.014">This phase is being written. Its lessons and tasks will appear here.</p>
-    <p data-i18n="assess.015"><strong>Phase 1, Decide, is finished and ready to work through.</strong> Start with the scenario, then build the four products in order.</p>
+  </div>
 
+  <div class="panel">
+    <p data-i18n="assess.014">In current operations we have completed the <strong>Assess</strong> step for several active targets, but in our timeline we have not completed BDA on two active targets. This is one example of the Assess step.</p>
+
+    <div class="workbench">
+      <table class="wb">
+        <thead>
+        <tr>
+          <th scope="col" data-i18n="assess.015">HPTL</th>
+          <th scope="col" data-i18n="assess.018"><span class="wb-n">1</span>Find</th>
+          <th scope="col" data-i18n="assess.019"><span class="wb-n">2</span>Fix</th>
+          <th scope="col" data-i18n="assess.020"><span class="wb-n">3</span>Track</th>
+          <th scope="col" data-i18n="assess.021"><span class="wb-n">4</span>Target</th>
+          <th scope="col" data-i18n="assess.022"><span class="wb-n">5</span>Engage</th>
+          <th scope="col" data-i18n="assess.023"><span class="wb-n">6</span>Assess</th>
+        </tr>
+        </thead>
+        <tbody>
+          <tr class="wb-row" data-target="mortars">
+            <th scope="row"><span class="wb-cell"><input type="radio" name="aw-mortars" value="hptl" disabled=""><span class="wb-slot"></span></span></th>
+            <td><span class="wb-cell"><input type="radio" name="aw-mortars" value="find" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-mortars" value="fix" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-mortars" value="track" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-mortars" value="target" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-mortars" value="engage" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-mortars" value="assess" checked="" disabled=""><span class="wb-slot"></span><div class="wb-tag" data-i18n="assess.024">Mortars</div></span></td>
+          </tr>
+          <tr class="wb-row" data-target="cp">
+            <th scope="row"><span class="wb-cell"><input type="radio" name="aw-cp" value="hptl" disabled=""><span class="wb-slot"></span></span></th>
+            <td><span class="wb-cell"><input type="radio" name="aw-cp" value="find" checked="" disabled=""><span class="wb-slot"></span><div class="wb-tag" data-i18n="assess.025">Command post</div></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-cp" value="fix" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-cp" value="track" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-cp" value="target" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-cp" value="engage" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-cp" value="assess" disabled=""><span class="wb-slot"></span></span></td>
+          </tr>
+          <tr class="wb-row" data-target="asp">
+            <th scope="row"><span class="wb-cell"><input type="radio" name="aw-asp" value="hptl" disabled=""><span class="wb-slot"></span></span></th>
+            <td><span class="wb-cell"><input type="radio" name="aw-asp" value="find" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-asp" value="fix" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-asp" value="track" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-asp" value="target" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-asp" value="engage" disabled=""><span class="wb-slot"></span></span></td>
+            <td><span class="wb-cell"><input type="radio" name="aw-asp" value="assess" checked="" disabled=""><span class="wb-slot"></span><div class="wb-tag" data-i18n="assess.026">Ammo supply point</div></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ops-scroll">
+      <table class="doc ops-d3a">
+      <thead>
+        <tr>
+          <th scope="col">&nbsp;</th>
+          <th scope="col" data-i18n="assess.027">Operations process</th>
+          <th scope="col" data-i18n="assess.028">D3A</th>
+          <th scope="col">&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row" rowspan="4" class="ops-side" data-i18n="assess.029"><span>Continuous assessment</span></th>
+          <td class="ops-phase" data-i18n="assess.030">Planning</td>
+          <th scope="row" class="ops-fn" data-i18n="assess.031">Decide</th>
+          <td data-i18n="assess.032">In Decide, we adjust the plan when information changes, based on continuous assessment.</td>
+        </tr>
+        <tr>
+          <td class="ops-phase" data-i18n="assess.033">Preparation</td>
+          <th scope="row" class="ops-fn" data-i18n="assess.034">Detect</th>
+          <td data-i18n="assess.035">In Detect, we adjust when we assess new information as it is detected.</td>
+        </tr>
+        <tr>
+          <td class="ops-phase" data-i18n="assess.036">Execution</td>
+          <th scope="row" class="ops-fn" data-i18n="assess.037">Deliver</th>
+          <td data-i18n="assess.038">In Deliver, we make recommendations following attacks.</td>
+        </tr>
+        <tr>
+          <td class="ops-phase"></td>
+          <th scope="row" class="ops-fn" data-i18n="assess.039">Assess</th>
+          <td data-i18n="assess.040"><strong>And at the end of the mission, we assess our overall targeting strategy's measure of performance and measure of effectiveness.</strong></td>
+        </tr>
+      </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ combat assessment ============ -->
+  <div class="panel">
+    <h2 data-i18n="assess.041">Combat assessment</h2>
+
+    <div class="doctrine"><span data-i18n="assess.042">Combat assessment is the determination of the effectiveness of force employment during military operations.</span><span class="src" data-i18n="assess.043">FM 3-60, Chapter 2.</span></div>
+
+    <p data-i18n="assess.044">Combat assessment is what the Assess function does after an engagement. It has three parts, and each one asks a different question.</p>
+
+    <table class="doc">
+      <tbody>
+        <tr>
+          <th data-i18n="assess.045">Part</th>
+          <th data-i18n="assess.046">The question it answers</th>
+          <th data-i18n="assess.047">Who answers it</th>
+        </tr>
+        <tr>
+          <td data-i18n="assess.048"><strong>Battle damage assessment (BDA)</strong></td>
+          <td data-i18n="assess.049">What did the attack do to the target?</td>
+          <td data-i18n="assess.050">The S-2, with the FSCC</td>
+        </tr>
+        <tr>
+          <td data-i18n="assess.051"><strong>Munitions effectiveness assessment</strong></td>
+          <td data-i18n="assess.052">Was our weapon, our munition and our method the right choice?</td>
+          <td data-i18n="assess.053">The FSCC</td>
+        </tr>
+        <tr>
+          <td data-i18n="assess.054"><strong>Re-attack recommendation</strong></td>
+          <td data-i18n="assess.055">Do we strike it again, strike something else, or change the plan?</td>
+          <td data-i18n="assess.056">The S-2 and the FSCC, to the commander</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p data-i18n="assess.057">BDA and munitions effectiveness assessment run at the same time and feed each other. Together they tell the commander what his fires have done to the enemy's ability to fight. The re-attack recommendation is what he does about it.</p>
+
+    <p data-i18n="assess.058">Assessment is not free. The assets that assess a strike are the same assets that find the next target, so every assessment costs collection. At T+0:50 the FSCC held one long-range ISR UAS and had three jobs for it: assess the mortars, assess the ammunition supply point, or find the command post. It chose the mortars, and the supply point reached T+1:00 sitting in Assess with nobody watching it.</p>
+  </div>
+
+  <!-- ============ battle damage assessment ============ -->
+  <div class="panel">
+    <h2 data-i18n="assess.059">Battle damage assessment</h2>
+
+    <div class="doctrine"><span data-i18n="assess.060">BDA in the targeting process pertains to the results of attacks on targets designated by the commander.</span><span class="src" data-i18n="assess.061">FM 3-60, Chapter 2.</span></div>
+
+    <p data-i18n="assess.062">One strike produces three assessments. They ask different questions, they need different sensors, and they arrive on different timelines.</p>
+
+    <div class="ops-scroll">
+      <table class="doc">
+        <tbody>
+          <tr>
+            <th data-i18n="assess.063">Assessment</th>
+            <th data-i18n="assess.064">The question</th>
+            <th data-i18n="assess.065">The first strike on the ATGM section</th>
+          </tr>
+          <tr>
+            <td data-i18n="assess.066"><strong>Physical damage</strong></td>
+            <td data-i18n="assess.067">How much of the target was physically damaged?</td>
+            <td data-i18n="assess.068">At T-0:30 the sUAS finds one man killed and the position abandoned.</td>
+          </tr>
+          <tr>
+            <td data-i18n="assess.069"><strong>Functional damage</strong></td>
+            <td data-i18n="assess.070">Can the target still do its job, and for how long?</td>
+            <td data-i18n="assess.071">At T-0:22 the rest of the section has moved several hundred metres and is still in range of the bridge. It can still do its job.</td>
+          </tr>
+          <tr>
+            <td data-i18n="assess.072"><strong>Target system</strong></td>
+            <td data-i18n="assess.073">What has the attack done to the enemy capability this target belongs to?</td>
+            <td data-i18n="assess.074">While that section can still fire on the crossing, the enemy can still stop a vehicle on the bridge. Nothing the commander asked for has been achieved.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p data-i18n="assess.075">The last one is the reason we assess at all. A target matters because of what it lets the enemy do, so the useful question is always which capability he has lost. The ATGM section was priority 1 because the commander's guidance said it was the only thing in his order of battle that could stop a vehicle on the bridge. Taking it off the board at T-0:15 took that capability away from him.</p>
+
+    <p data-i18n="assess.076">Every target on the list sits inside a system. The 120 mm mortar platoon is the enemy's indirect fire against the crossing. The ammunition supply point holds the rounds his mortars and his ATGM fire. The battalion command post directs all of it. Striking one changes what the others can do, and the target system assessment is where the staff says so.</p>
+
+    <p data-i18n="assess.077">BDA does not always come from looking at the target. Whether the enemy moves, digs in, changes his communications or simply stops firing tells us as much as a picture of the ground. We never see the mortar tubes in this operation. What the long-range ISR is sent to confirm at T+0:50 is whether rounds have stopped landing on our soldiers.</p>
+
+    <p data-i18n="assess.078">An assessment can also reopen decisions made in Phase 1. The high-payoff target list, the target selection standards, the attack guidance matrix and the collection plan are all open to revision on the strength of a BDA. At T-0:30 the assessment moved the ATGM section from Assess back to Find, and the detect and deliver cycle ran again on the same target.</p>
+
+    <p data-i18n="assess.079">Look again at the tracker above. Two targets are sitting in Assess and neither assessment is finished. Which sensor would you task, and what would you ask it to look for?</p>
+  </div>
+
+  <!-- ============ munitions effectiveness and re-attack ============ -->
+  <div class="panel">
+    <h2 data-i18n="assess.080">Munitions effectiveness assessment</h2>
+
+    <p data-i18n="assess.081">BDA looks at the enemy. Munitions effectiveness assessment looks at us. It asks whether the weapon system, the munition, the method of attack and the delivery were the right ones, and it runs alongside the BDA rather than after it.</p>
+
+    <p data-i18n="assess.082">The first strike on the ATGM section shows the difference. The BDA finding is that the section survived, moved, and could still engage the bridge. The munitions effectiveness question is a separate one. Was a 105 mm mission the right way to suppress a dug-in section, was the volume of fire enough to hold the effect for as long as we needed it, and should the second mission be fired differently? The product is a recommendation to change the method, the tactics, the weapon system, the munition, or how it is delivered.</p>
+
+    <p data-i18n="assess.083">It also feeds ammunition planning. If an effect costs more rounds than the plan allowed, the required supply rate is wrong. In this operation ammunition is the constraint the commander named.</p>
+
+    <h2 data-i18n="assess.084">Re-attack recommendation</h2>
+
+    <p data-i18n="assess.085">With both assessments in hand, the staff makes a recommendation to the commander. It addresses the target, its critical elements, the target system it belongs to, and the enemy combat strength that remains.</p>
+
+    <p data-i18n="assess.086">Re-attack is only one of the answers available. The others are to strike something else, to change the guidance, or to accept the result and move on. At T-0:30 the answer was re-attack, and it cost a second full cycle on a target we had already engaged once. At T-0:15, after the second strike, the answer was that the target was finished and the row could come off the tracker.</p>
+  </div>
+
+  <!-- ============ MOP and MOE ============ -->
+  <div class="panel">
+    <h2 data-i18n="assess.087">Measure of performance and measure of effectiveness</h2>
+
+    <p data-i18n="assess.088">Combat assessment judges one engagement. Measure of performance and measure of effectiveness judge whether the targeting strategy as a whole is working.</p>
+
+    <div class="ops-scroll">
+      <table class="doc">
+        <tbody>
+          <tr>
+            <th>&nbsp;</th>
+            <th data-i18n="assess.089">Measure of performance (MOP)</th>
+            <th data-i18n="assess.090">Measure of effectiveness (MOE)</th>
+          </tr>
+          <tr>
+            <td data-i18n="assess.091"><strong>The question</strong></td>
+            <td data-i18n="assess.092">Are we doing things right?</td>
+            <td data-i18n="assess.093">Are we doing the right things?</td>
+          </tr>
+          <tr>
+            <td data-i18n="assess.094"><strong>What it measures</strong></td>
+            <td data-i18n="assess.095">Task performance. Was the action taken, and was it done to standard?</td>
+            <td data-i18n="assess.096">Change in the enemy, in what he can do or in how he behaves.</td>
+          </tr>
+          <tr>
+            <td data-i18n="assess.097"><strong>How it is made</strong></td>
+            <td data-i18n="assess.098">Usually counted. Rounds fired, missions sent, minutes taken.</td>
+            <td data-i18n="assess.099">Usually observed and interpreted. Often a trend rather than a single number.</td>
+          </tr>
+          <tr>
+            <td data-i18n="assess.100"><strong>From this operation</strong></td>
+            <td data-i18n="assess.101">The fire mission reached the 105 mm M101 howitzer battery four minutes after the report arrived, and the battery fired.</td>
+            <td data-i18n="assess.102">The ATGM section could not engage our vehicles while they were on the bridge.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p data-i18n="assess.103">The two can disagree, and that is why we measure both. At T-0:55 the mission went to the right battery within four minutes and the rounds landed on the ATGM position. Every measure of performance was met. The measure of effectiveness was not, because at T-0:30 the section was still able to engage the crossing. Counting missions alone would never have shown it.</p>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="assess.104">Task 4.1 — Performance or effect</h3>
+        <span class="status" data-status="assess-1">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="assess.105">Each line below is a statement about Operation RIVER GATE. Decide whether it is a measure of performance or a measure of effectiveness.</p>
+
+        <div id="a1-match">
+          <div class="match-row">
+            <div data-i18n="assess.106">1. The FSCC sent the fire mission to the 105 mm M101 howitzer battery four minutes after the report arrived.</div>
+            <select data-answer="mop" aria-label="Statement 1">
+              <option value="" data-i18n="assess.107">— choose —</option>
+              <option value="mop" data-i18n="assess.108">MOP — measure of performance</option>
+              <option value="moe" data-i18n="assess.109">MOE — measure of effectiveness</option>
+            </select>
+            <p class="row-note ok" data-i18n="assess.110">This measures our own action against a standard. It says nothing about the ATGM section.</p>
+            <p class="row-note bad" data-i18n="assess.111">Nothing here has changed for the enemy. The line measures how quickly we carried out our own task, and that is performance.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="assess.112">2. The ATGM section was unable to engage vehicles on the bridge while the lead battalion crossed.</div>
+            <select data-answer="moe" aria-label="Statement 2">
+              <option value="" data-i18n="assess.113">— choose —</option>
+              <option value="mop" data-i18n="assess.114">MOP — measure of performance</option>
+              <option value="moe" data-i18n="assess.115">MOE — measure of effectiveness</option>
+            </select>
+            <p class="row-note ok" data-i18n="assess.116">This is the effect the commander's guidance asked for, written as a change in what the enemy can do.</p>
+            <p class="row-note bad" data-i18n="assess.117">No friendly task is named here. The statement is about the enemy's capability, and a change in enemy capability is an effect.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="assess.118">3. The 155 mm M109A2 battery fired its complete mission on the ammunition supply point and reported it complete at T+0:50.</div>
+            <select data-answer="mop" aria-label="Statement 3">
+              <option value="" data-i18n="assess.119">— choose —</option>
+              <option value="mop" data-i18n="assess.120">MOP — measure of performance</option>
+              <option value="moe" data-i18n="assess.121">MOE — measure of effectiveness</option>
+            </select>
+            <p class="row-note ok" data-i18n="assess.122">The task was carried out. Whether it achieved anything is a separate question, and at T+1:00 no sensor is watching the supply point to answer it.</p>
+            <p class="row-note bad" data-i18n="assess.123">The line stops at the moment our rounds finished. It measures the task, not what the task achieved.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="assess.124">4. Enemy mortar rounds stopped landing on our soldiers at the crossing site.</div>
+            <select data-answer="moe" aria-label="Statement 4">
+              <option value="" data-i18n="assess.125">— choose —</option>
+              <option value="mop" data-i18n="assess.126">MOP — measure of performance</option>
+              <option value="moe" data-i18n="assess.127">MOE — measure of effectiveness</option>
+            </select>
+            <p class="row-note ok" data-i18n="assess.128">We never see the tubes. The change we can observe is the enemy's fire, and stopping that fire is what the commander wanted.</p>
+            <p class="row-note bad" data-i18n="assess.129">Nobody's task is being measured. This is a change in enemy behaviour, and that is an effect.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="assess.130">5. The bridge was seized intact and stayed usable.</div>
+            <select data-answer="moe" aria-label="Statement 5">
+              <option value="" data-i18n="assess.131">— choose —</option>
+              <option value="mop" data-i18n="assess.132">MOP — measure of performance</option>
+              <option value="moe" data-i18n="assess.133">MOE — measure of effectiveness</option>
+            </select>
+            <p class="row-note ok" data-i18n="assess.134">This is the end state the commander set. Every task in the operation exists to serve it.</p>
+            <p class="row-note bad" data-i18n="assess.135">No task is named here. The line states a condition that either holds or does not, which makes it an effect.</p>
+          </div>
+        </div>
+
+        <div class="btn-row"><button class="btn" id="a1-check" data-i18n="assess.136">Check the Measures</button></div>
+        <div class="feedback" id="a1-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="page-nav">
       <a class="btn secondary" href="deliver.html" data-i18n="assess.016">← Phase 3: Deliver</a>
       <a class="btn" href="battle.html" data-i18n="assess.017">Back to the Battle home →</a>
@@ -62,7 +361,14 @@
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script>
-D3A.registerPage('assess', []);
+D3A.registerPage('assess', ['assess-1']);
+
+D3A.initSelectMatch({
+  containerId: 'a1-match', feedbackId: 'a1-feedback',
+  checkBtnId: 'a1-check', exerciseId: 'assess-1',
+  explainOk: 'Every measure of performance names something we did. Every measure of effectiveness names something that changed for the enemy, or for the mission. Both are needed. If every task was performed correctly and the effect still did not happen, the plan was wrong, and that is what the commander needs to hear.',
+  explainBad: 'Ask one question of each line. Does it name something we did, or something that changed? Something we did is a measure of performance. Something that changed for the enemy, or for the mission, is a measure of effectiveness.'
+});
 </script>
 
 

@@ -44,9 +44,7 @@
    No friendly symbols and no forward line of own troops. The single
    exception is the restricted fire area around the bridge (badge G): it is the
    commander's restriction, the Deliver phase turns on it, and it has to
-   be visible. The reconnaissance squad is a known element that has not
-   been located, so it is intentionally not plotted; it is carried in the
-   key table as unlocated. Do not "complete" the map by adding it.
+   be visible.
 
    SYMBOLOGY — APP-6 / MIL-STD-2525, as drawn in the source deck
    Every element is a hostile ground unit: red diamond frame.
@@ -166,12 +164,6 @@
       }, g);
     },
 
-    /* single diagonal — the cavalry sabre strap. Held for the recon
-       squad, which is not plotted on this map. */
-    recon: function (g, c) {
-      el('path', { d: 'M 10.9 -8.6 L -10.9 8.6', stroke: c, 'stroke-width': 2.2, fill: 'none' }, g);
-    },
-
     /* shaft with a chevron head, two bars, ball base */
     mortar: function (g, c) {
       el('path', {
@@ -256,12 +248,15 @@
      arbitrary labels and must stay that way: do not re-sort them into
      priority, depth, or any other meaningful order.
 
-     Badge 7 is the reconnaissance squad. It is unlocated, so it lives in
-     the strip rather than on the drawing — it is not a gap. */
+     The reconnaissance squad was removed from the scenario. Its badge (7)
+     was closed up by moving the mortar platoon to 7 and the infantry
+     platoon to 8, which preserves the scatter: the high-payoff targets are
+     now 2, 4, 5 and 7, and the elements the commander rejects are 1, 3, 6
+     and 8. Keep it that way. */
   var UNITS = [
     /* LOCATED — reconnaissance flights found these */
     { id: 'atgm',      badge: '2', state: 'located',   x: 639.1, y: 369.8, icon: 'antiTank', bx: -34, by: 24 },
-    { id: 'infantry',  badge: '9', state: 'located',   x: 615.7, y: 534.0, icon: 'infantry' },
+    { id: 'infantry',  badge: '8', state: 'located',   x: 615.7, y: 534.0, icon: 'infantry' },
 
     /* TEMPLATED — not there yet. The S-2 assesses he commits the engineer
        team to the bridge within 24 h, and the bridge is the only place he
@@ -276,8 +271,7 @@
     { id: 'kitchen',   badge: '3', state: 'unlocated', icon: 'kitchen' },
     { id: 'cp',        badge: '5', state: 'unlocated', icon: 'headquarters' },
     { id: 'trucks',    badge: '6', state: 'unlocated', icon: 'transport' },
-    { id: 'recon',     badge: '7', state: 'unlocated', icon: 'recon' },
-    { id: 'mortars',   badge: '8', state: 'unlocated', icon: 'mortar' }
+    { id: 'mortars',   badge: '7', state: 'unlocated', icon: 'mortar' }
   ];
 
   /* Terrain the tasks refer to by letter. The photograph carries the

@@ -11,7 +11,7 @@
 --><html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>D3A Course — Phase 2: Detect (Coming Soon)</title>
+<title>D3A Course — Phase 2: Detect</title>
 <meta name="author" content="Catherine Lake Creations LLC">
 <meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
 <meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
@@ -42,18 +42,241 @@
   </div>
 </header>
 
+<nav class="subphases">
+  <a href="detect.html" data-sub="detect.html" class="active"><span data-i18n="detect.118"><span class="step">2A</span><span>Collection Plan</span></span><span class="check"> ✔</span></a>
+  <a href="detect-f2t2ea.html" data-sub="detect-f2t2ea.html"><span data-i18n="detect.151"><span class="step">2B</span><span>F2T2EA</span></span><span class="check"> ✔</span></a>
+</nav>
+
 <main>
   <div class="panel">
-    <span class="soon-tag" data-i18n="detect.011">Coming soon</span>
-    <h1 data-i18n="detect.012">Phase 2: Detect</h1>
-    <p class="lede" data-i18n="detect.013">Task your sensors to find the targets, and check what they report against your standards.</p>
+    <span class="phase-tag" data-i18n="detect.011">Phase 2 of 4</span>
+    <h1 data-i18n="detect.012">Detect: The Collection Plan</h1>
+    <p class="lede" data-i18n="detect.013">Task your sensors to find the targets, then judge what they report.</p>
 
-    <p data-i18n="detect.014">This phase is being written. Its lessons and tasks will appear here.</p>
-    <p data-i18n="detect.015"><strong>Phase 1, Decide, is finished and ready to work through.</strong> Start with the scenario, then build the four products in order.</p>
+    <div class="doctrine" data-i18n="detect.014"><span>Detect happens while the operation is running. The intelligence and operations staff execute the collection plan, the sensors report what they see, and the <strong>fire support coordination cell (FSCC)</strong> checks every report against the standards you set in 1C. Remember that an asset kept watching one target is not available to find another.</span></div>
+  </div>
 
+  <!-- ============ the collection plan ============ -->
+  <div class="panel">
+    <h2 data-i18n="detect.015">The collection plan</h2>
+    <p data-i18n="detect.018">The collection plan is how the brigade turns the commander's questions into instructions for the people and the aircraft that can answer them. It is written by the intelligence staff, not by the FSCC, and the fires plan you built in Phase 1 depends on it entirely. Not every question on it is about a target, and not every target is on it.</p>
+
+    <table class="doc">
+      <tbody><tr><th data-i18n="detect.019">Term</th><th data-i18n="detect.020">What it is</th></tr>
+      <tr><td data-i18n="detect.021"><strong>Priority intelligence requirement (PIR)</strong></td><td data-i18n="detect.022">A question the commander must have answered in order to make a decision.</td></tr>
+      <tr><td data-i18n="detect.023"><strong>Specific information requirement (SIR)</strong></td><td data-i18n="detect.024">A smaller question. Answer the SIRs and you have answered the PIR.</td></tr>
+      <tr><td data-i18n="detect.025"><strong>Indicator</strong></td><td data-i18n="detect.026">What that activity looks like on the ground, written so that a soldier or an aircrew knows it when they see it.</td></tr>
+      <tr><td data-i18n="detect.027"><strong>Latest time information is of value (LTIOV)</strong></td><td data-i18n="detect.028">The time after which the answer no longer helps, because the decision it feeds has already been made.</td></tr>
+    </tbody></table>
+
+    <p data-i18n="detect.029">You have already set one clock. In 1C, <strong>timeliness</strong> asked how long a location stays good enough to shoot at. <strong>LTIOV</strong> asks a different question: how late an answer can arrive and still let the commander choose. The same report can pass one and fail the other.</p>
+
+    <div class="map-figure">
+      <img class="nai-map" src="img/kordan-nai-map-detect.jpg" alt="The Kordan River valley with four areas marked. TAI 1 is a red box just west of the bridge. NAI 1 is a yellow box in the west of the picture, NAI 2 a yellow box south of the bridge, NAI 3 a yellow box in the south. A small solid circle marks the restricted fire area at the bridge. A black dashed arc around the bridge, running off the top of the picture, marks the range of the small UAS, and a much larger red dashed arc across the south west marks the range of the one-way attack UAS.">
+    </div>
+
+    <table class="map-key">
+      <caption data-i18n="detect.030">Areas of interest — Operation RIVER GATE</caption>
+      <tbody><tr><th data-i18n="detect.031">Area</th><th data-i18n="detect.032">What we are trying to learn there</th></tr>
+      <tr><td class="ref">TAI 1</td><td data-i18n="detect.033">Whether an ATGM section occupies the only ground from which he can engage vehicles on the bridge, and whether infantry reinforce there.</td></tr>
+      <tr><td class="ref">NAI 1</td><td data-i18n="detect.034">Whether the 120 mm mortar platoon occupies the best firing position on this ground.</td></tr>
+      <tr><td class="ref">NAI 2</td><td data-i18n="detect.035">Whether engineer equipment is moving to the bridge, and what else is moving through the crossroads.</td></tr>
+      <tr><td class="ref">NAI 3</td><td data-i18n="detect.036">Whether the mortars use the second position, and whether reinforcements are moving through it.</td></tr>
+    </tbody></table>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="detect.037">Task 2.1 — Set the latest time information is of value</h3>
+        <span class="status" data-status="detect-1">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="detect.038">Every column below is filled in except one. For each row, ask which decision the answer feeds, and when the commander makes that decision. Check a row before you move on to the next.</p>
+
+        <div id="d1-cpm">
+          <div class="tsm-scroll">
+            <table class="cpm">
+              <caption data-i18n="detect.039">77th Combined Arms Brigade — Collection Plan — Operation RIVER GATE</caption>
+              <thead>
+                <tr>
+                  <th scope="col" data-i18n="detect.040">PIR</th>
+                  <th scope="col" data-i18n="detect.041">SIR</th>
+                  <th scope="col" data-i18n="detect.042">Indicator</th>
+                  <th scope="col" class="col-where" data-i18n="detect.043">Where to look</th>
+                  <th scope="col" data-i18n="detect.044">Who looks</th>
+                  <th scope="col" data-i18n="detect.045">LTIOV</th>
+                  <th scope="col" data-i18n="detect.046">What it triggers</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="pir" rowspan="3" data-i18n="detect.048">Will the bridge be usable when the lead battalion arrives?</td>
+                  <td class="sir" data-i18n="detect.049">Is the bridge standing now, or are there obstacles?</td>
+                  <td data-i18n="detect.050">Destroyed or blocked bridge</td>
+                  <td class="pair where" data-i18n="detect.051">Bridge</td>
+                  <td class="pair" data-i18n="detect.052">Scout team</td>
+                  <td class="ltiov">
+                    <select data-answer="t0">
+                      <option value="" data-i18n="detect.053">— choose —</option>
+                      <option value="t-2" data-i18n="detect.054">T-2</option>
+                      <option value="t-1" data-i18n="detect.055">T-1</option>
+                      <option value="t0" data-i18n="detect.056">T=0</option>
+                      <option value="t+1" data-i18n="detect.057">T+1</option>
+                      <option value="t+3" data-i18n="detect.058">T+3</option>
+                      <option value="t+4" data-i18n="detect.059">T+4</option>
+                      <option value="ind" data-i18n="detect.060">Indefinite</option>
+                    </select>
+                    <button class="btn row-check" data-i18n="detect.047">Check</button>
+                  </td>
+                  <td class="trigger" data-i18n="detect.061">Mission delay or abort. The commander needs to choose another route, or call for engineering vehicles to clear the bridge.</td>
+                </tr>
+                <tr>
+                  <td class="sir" data-i18n="detect.063">Will the enemy send an engineer team to block or destroy the bridge?</td>
+                  <td data-i18n="detect.064">Engineering vehicles, or a team with explosives</td>
+                  <td class="pair where" data-i18n="detect.065">NAI 2</td>
+                  <td class="pair" data-i18n="detect.066">Long-range ISR UAS</td>
+                  <td class="ltiov">
+                    <select data-answer="t0">
+                      <option value="" data-i18n="detect.067">— choose —</option>
+                      <option value="t-2" data-i18n="detect.068">T-2</option>
+                      <option value="t-1" data-i18n="detect.069">T-1</option>
+                      <option value="t0" data-i18n="detect.070">T=0</option>
+                      <option value="t+1" data-i18n="detect.071">T+1</option>
+                      <option value="t+3" data-i18n="detect.072">T+3</option>
+                      <option value="t+4" data-i18n="detect.073">T+4</option>
+                      <option value="ind" data-i18n="detect.074">Indefinite</option>
+                    </select>
+                    <button class="btn row-check" data-i18n="detect.062">Check</button>
+                  </td>
+                  <td class="trigger" data-i18n="detect.075">If the threat is unmitigated, the friendly force delays their advance.</td>
+                </tr>
+                <tr>
+                  <td class="sir" data-i18n="detect.077">Will the enemy block the bridge with an ATGM team?</td>
+                  <td data-i18n="detect.078">A small team with a shoulder-fired precision munition</td>
+                  <td class="pair where" data-i18n="detect.079">TAI 1</td>
+                  <td class="pair" data-i18n="detect.080">Scout team, sUAS</td>
+                  <td class="ltiov">
+                    <select data-answer="t+3">
+                      <option value="" data-i18n="detect.081">— choose —</option>
+                      <option value="t-2" data-i18n="detect.082">T-2</option>
+                      <option value="t-1" data-i18n="detect.083">T-1</option>
+                      <option value="t0" data-i18n="detect.084">T=0</option>
+                      <option value="t+1" data-i18n="detect.085">T+1</option>
+                      <option value="t+3" data-i18n="detect.086">T+3</option>
+                      <option value="t+4" data-i18n="detect.087">T+4</option>
+                      <option value="ind" data-i18n="detect.088">Indefinite</option>
+                    </select>
+                    <button class="btn row-check" data-i18n="detect.076">Check</button>
+                  </td>
+                  <td class="trigger" data-i18n="detect.089">If the threat is unmitigated, the friendly force delays their advance.</td>
+                </tr>
+                <tr>
+                  <td class="pir" rowspan="2" data-i18n="detect.091">Can the enemy mass a counter-attack?</td>
+                  <td class="sir" rowspan="2" data-i18n="detect.092">Enemy reinforcements within 3 kilometres of the bridge</td>
+                  <td data-i18n="detect.093">Two or more companies of infantry</td>
+                  <td class="pair where" data-i18n="detect.094">TAI 1<br>NAI 2<br>NAI 3</td>
+                  <td class="pair" data-i18n="detect.095">Scout team, sUAS<br>Long-range ISR UAS</td>
+                  <td class="ltiov">
+                    <select data-answer="ind">
+                      <option value="" data-i18n="detect.096">— choose —</option>
+                      <option value="t-2" data-i18n="detect.097">T-2</option>
+                      <option value="t-1" data-i18n="detect.098">T-1</option>
+                      <option value="t0" data-i18n="detect.099">T=0</option>
+                      <option value="t+1" data-i18n="detect.100">T+1</option>
+                      <option value="t+3" data-i18n="detect.101">T+3</option>
+                      <option value="t+4" data-i18n="detect.102">T+4</option>
+                      <option value="ind" data-i18n="detect.103">Indefinite</option>
+                    </select>
+                    <button class="btn row-check" data-i18n="detect.090">Check</button>
+                  </td>
+                  <td class="trigger" data-i18n="detect.104">Mission delay or abort while we mitigate, or muster combat power.</td>
+                </tr>
+                <tr>
+                  <td data-i18n="detect.106">A company or more of mechanized or armored vehicles</td>
+                  <td class="pair where" data-i18n="detect.107">NAI 2<br>NAI 3</td>
+                  <td class="pair" data-i18n="detect.108">Long-range ISR UAS</td>
+                  <td class="ltiov">
+                    <select data-answer="ind">
+                      <option value="" data-i18n="detect.109">— choose —</option>
+                      <option value="t-2" data-i18n="detect.110">T-2</option>
+                      <option value="t-1" data-i18n="detect.111">T-1</option>
+                      <option value="t0" data-i18n="detect.112">T=0</option>
+                      <option value="t+1" data-i18n="detect.113">T+1</option>
+                      <option value="t+3" data-i18n="detect.114">T+3</option>
+                      <option value="t+4" data-i18n="detect.115">T+4</option>
+                      <option value="ind" data-i18n="detect.116">Indefinite</option>
+                    </select>
+                    <button class="btn row-check" data-i18n="detect.105">Check</button>
+                  </td>
+                  <td class="trigger" data-i18n="detect.117">Mission delay or abort while we mitigate, or muster combat power.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="src" data-i18n="detect.119">Where to look and who looks are read as pairs, line by line. In the last two rows the long-range ISR UAS takes every named area of interest listed, because they lie outside the range of the small UAS.</p>
+        <div class="feedback" id="d1-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ the surveillance half of the synchronization matrix ============ -->
+  <div class="panel">
+    <h2 data-i18n="detect.120">What each sensor was told to do</h2>
+    <p data-i18n="detect.121">The collection plan says what to look for, where, and by when. The synchronization matrix says who is where, hour by hour. These are the surveillance rows of the matrix you built in 1D. The attack rows are left out here, because they belong to Phase 3.</p>
+
+    <div class="tsm-scroll">
+      <table class="tsm">
+        <caption data-i18n="detect.122">77th Combined Arms Brigade — Surveillance Rows — Operation RIVER GATE</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="tsm-asset" data-i18n="detect.123">Asset</th>
+            <th scope="col" data-i18n="detect.124">T-4</th><th scope="col" data-i18n="detect.125">T-3</th><th scope="col" data-i18n="detect.126">T-2</th><th scope="col" data-i18n="detect.127">T-1</th>
+            <th scope="col" class="tsm-h" data-i18n="detect.128">T=0</th>
+            <th scope="col" data-i18n="detect.129">T+1</th><th scope="col" data-i18n="detect.130">T+2</th><th scope="col" data-i18n="detect.131">T+3</th>
+            <th scope="col" data-i18n="detect.132">T+4</th><th scope="col" data-i18n="detect.133">T+5</th><th scope="col" data-i18n="detect.134">T+6</th><th scope="col" data-i18n="detect.135">T+7</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="detect.136">Scout team</th>
+            <td colspan="4" class="blk t-eng" data-i18n="detect.137">Kordan Bridge / engineers</td>
+            <td colspan="8" class="blk t-atgm" data-i18n="detect.138">TAI 1 / ATGM</td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="detect.139">sUAS</th>
+            <td colspan="6" class="blk t-atgm" data-i18n="detect.140">TAI 1 / ATGM</td>
+            <td colspan="6" class="blk empty"></td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="detect.141">Long-range ISR UAS #1</th>
+            <td colspan="2" class="blk t-eng" data-i18n="detect.142">NAI 2 / engineers</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="detect.143">NAI 1 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="detect.144">NAI 3 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+          </tr>
+          <tr>
+            <th scope="row" class="tsm-asset" data-i18n="detect.145">Long-range ISR UAS #2</th>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="detect.146">NAI 1 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-mor" data-i18n="detect.147">NAI 3 / mortars</td>
+            <td colspan="2" class="blk empty"></td>
+            <td colspan="2" class="blk t-cp" data-i18n="detect.148">NAI 3 / mortars or command post</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tsm-legend" data-i18n="detect.149"><span class="key t-eng">Engineer team</span> <span class="key t-atgm">ATGM section</span> <span class="key t-mor">120 mm mortar platoon</span> <span class="key t-cp">Battalion command post</span></p>
+    <p class="src" data-i18n="detect.150">A surveillance block names the area being watched and the target expected there. An empty cell means the asset is unassigned and available.</p>
+
+  </div>
+
+  <div class="panel">
     <div class="page-nav">
       <a class="btn secondary" href="decide-sync.html" data-i18n="detect.016">← Target Synchronization Matrix</a>
-      <a class="btn" href="deliver.html" data-i18n="detect.017">Phase 3: Deliver →</a>
+      <a class="btn" href="detect-f2t2ea.html" data-i18n="detect.017">Next: F2T2EA →</a>
     </div>
   </div>
 </main>
@@ -62,9 +285,15 @@
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script>
-D3A.registerPage('detect', []);
-</script>
+D3A.registerPage('detect', ['detect-1']);
 
+D3A.initSelectMatch({
+  containerId: 'd1-cpm', feedbackId: 'd1-feedback',
+  exerciseId: 'detect-1',
+  explainOk: 'Read that column downwards and you have the shape of the operation. Everything bearing on whether the bridge can be crossed stops being useful at T=0, because by then the lead battalion is at the bridge and the decision has been made. The ATGM section runs three hours past that, because the commander assessed it stops being important at T+4. The counter-attack has no deadline at all, because he can act on that news at any point in the operation.',
+  explainBad: 'For each row, ask which decision the answer feeds, and when the commander makes that decision. LTIOV is set by the decision. It is not set by the sensor, and it is not set by the target.'
+});
+</script>
 
 
 </body></html>

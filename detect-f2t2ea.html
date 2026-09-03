@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D3A Course — Phase 2: Detect — F2T2EA</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-phase="detect">
+
+<header class="site">
+  <div class="header-inner">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title" data-i18n="detect-f2t2ea.001">The Fires Lab</p>
+          <p class="site-strap" data-i18n="detect-f2t2ea.002">Mastering Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub" data-i18n="detect-f2t2ea.003">Decide · Detect · Deliver · Assess</p>
+      </div>
+    </a>
+    <nav class="phases">
+      <a href="battle.html" data-i18n="detect-f2t2ea.004">Home</a>
+      <a href="scenario.html" data-phase="scenario"><span data-i18n="detect-f2t2ea.005">Scenario</span><span class="check"> ✔</span></a>
+      <a href="decide.html" data-phase="decide"><span data-i18n="detect-f2t2ea.006">1. Decide</span><span class="check"> ✔</span></a>
+      <a href="detect.html" class="active" data-phase="detect"><span data-i18n="detect-f2t2ea.007">2. Detect</span><span class="check"> ✔</span></a>
+      <a href="deliver.html" data-phase="deliver"><span data-i18n="detect-f2t2ea.008">3. Deliver</span><span class="check"> ✔</span></a>
+      <a href="assess.html" data-phase="assess"><span data-i18n="detect-f2t2ea.009">4. Assess</span><span class="check"> ✔</span></a>
+      <a href="glossary.html" data-i18n="detect-f2t2ea.010">Glossary</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="subphases">
+  <a href="detect.html" data-sub="detect.html"><span data-i18n="detect-f2t2ea.011"><span class="step">2A</span><span>Collection Plan</span></span><span class="check"> ✔</span></a>
+  <a href="detect-f2t2ea.html" data-sub="detect-f2t2ea.html" class="active"><span data-i18n="detect-f2t2ea.012"><span class="step">2B</span><span>F2T2EA</span></span><span class="check"> ✔</span></a>
+</nav>
+
+<main>
+  <div class="panel">
+    <span class="phase-tag" data-i18n="detect-f2t2ea.013">Phase 2 of 4</span>
+    <h1 data-i18n="detect-f2t2ea.014">Detect: Find, Fix, Track, Target, Engage, Assess</h1>
+    <p class="lede" data-i18n="detect-f2t2ea.015">The six steps one target passes through once the operation is running.</p>
+
+    <div class="doctrine" data-i18n="detect-f2t2ea.016"><span>Decide, Detect, Deliver, and Assess is the entire deliberate targeting cycle that runs continuously throughout the entire operation. Within this cycle, targets may be <strong><em>dynamically acquired or deliberately planned</em></strong>. All target types are engaged using the mnemonic F2T2EA, used to understand the status of a given target within current operations.</span></div>
+
+
+    <figure class="cycle">
+      <div class="cycle-ring">
+        <svg class="cycle-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false" role="presentation">
+          <circle class="ring-arc" cx="50" cy="50" r="36"></circle>
+          <path class="ring-head" d="M -2.4 -1.9 L 2.4 0 L -2.4 1.9 Z" transform="translate(75.46 24.54) rotate(45)"></path>
+          <path class="ring-head" d="M -2.4 -1.9 L 2.4 0 L -2.4 1.9 Z" transform="translate(75.46 75.46) rotate(135)"></path>
+          <path class="ring-head" d="M -2.4 -1.9 L 2.4 0 L -2.4 1.9 Z" transform="translate(24.54 75.46) rotate(225)"></path>
+          <path class="ring-head" d="M -2.4 -1.9 L 2.4 0 L -2.4 1.9 Z" transform="translate(24.54 24.54) rotate(315)"></path>
+        </svg>
+        <div class="cyc-phase cyc-decide at-decide" data-i18n="detect-f2t2ea.019">Decide</div>
+        <div class="cyc-phase cyc-detect at-detect" data-i18n="detect-f2t2ea.026">Detect</div>
+        <div class="cyc-phase cyc-deliver at-deliver" data-i18n="detect-f2t2ea.027">Deliver</div>
+        <div class="cyc-phase cyc-assess at-assess" data-i18n="detect-f2t2ea.028">Assess</div>
+        <div class="cyc-step cyc-detect at-find" data-i18n="detect-f2t2ea.031"><span class="n">1</span>Find</div>
+        <div class="cyc-step cyc-detect at-fix" data-i18n="detect-f2t2ea.032"><span class="n">2</span>Fix</div>
+        <div class="cyc-step cyc-detect at-track" data-i18n="detect-f2t2ea.033"><span class="n">3</span>Track</div>
+        <div class="cyc-step cyc-deliver at-target" data-i18n="detect-f2t2ea.036"><span class="n">4</span>Target</div>
+        <div class="cyc-step cyc-deliver at-engage" data-i18n="detect-f2t2ea.037"><span class="n">5</span>Engage</div>
+        <div class="cyc-step cyc-assess at-assessstep" data-i18n="detect-f2t2ea.038"><span class="n">6</span>Assess</div>
+        <div class="cyc-none at-none" data-i18n="detect-f2t2ea.041">no step</div>
+      </div>
+    </figure>
+
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="detect-f2t2ea.020">The six steps</h2>
+
+    <table class="doc f2t2ea">
+      <tbody>
+        <tr><th data-i18n="detect-f2t2ea.021">Term</th><th data-i18n="detect-f2t2ea.022">Doctrinal definition</th></tr>
+
+        <tr>
+          <td class="f2-step" data-i18n="detect-f2t2ea.024"><strong>Find</strong><span class="own own-detect">Detect</span></td>
+          <td data-i18n="detect-f2t2ea.025">An emerging target is detected within an area of interest. Location is approximate and identity is unknown.</td>
+        </tr>
+
+        <tr>
+          <td class="f2-step" data-i18n="detect-f2t2ea.029"><strong>Fix</strong><span class="own own-detect">Detect</span></td>
+          <td data-i18n="detect-f2t2ea.030">Target identity is positively confirmed (<strong>PID</strong>) and location accuracy is refined (<strong>low TLE</strong>) to enable weapon engagement.</td>
+        </tr>
+
+        <tr>
+          <td class="f2-step" data-i18n="detect-f2t2ea.034"><strong>Track</strong><span class="own own-detect">Detect</span></td>
+          <td data-i18n="detect-f2t2ea.035">Continuous sensor custody is maintained on the fixed target over time to monitor movement and preserve targetable data until strike execution.</td>
+        </tr>
+
+        <tr>
+          <td class="f2-step" data-i18n="detect-f2t2ea.039"><strong>Target</strong><span class="own own-deliver">Deliver</span></td>
+          <td data-i18n="detect-f2t2ea.040">Engagement authority is requested/granted, the target is validated against <strong>ROE</strong> and <strong>Collateral Damage Estimation (CDE)</strong>, and a weapon system is paired.</td>
+        </tr>
+
+        <tr>
+          <td class="f2-step" data-i18n="detect-f2t2ea.044"><strong>Engage</strong><span class="own own-deliver">Deliver</span></td>
+          <td data-i18n="detect-f2t2ea.045">The strike order is issued and the selected weapon system executes the attack (dispatch, launch, or terminal prosecution).</td>
+        </tr>
+
+        <tr>
+          <td class="f2-step" data-i18n="detect-f2t2ea.049"><strong>Assess</strong><span class="own own-assess">Assess</span></td>
+          <td data-i18n="detect-f2t2ea.050">Combat Assessment and Battle Damage Assessment (<strong>BDA</strong>) are conducted to evaluate strike effectiveness and determine if a re-attack is required.</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+
+  <div class="panel">
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="detect-f2t2ea.017">Task 2.2 — Example Cycle (Not Operation RIVER GATE)</h3>
+        <span class="status" data-status="detect-3">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="detect-f2t2ea.018">One enemy tank, from the first sighting to the last report. For each situation, name the F2T2EA step it belongs to. The next situation appears once you have the current one right.</p>
+        <p class="lad-count" id="d2-count"></p>
+        <ol id="d2-ladder" class="ladder">
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.023">Ground scout reports a potential enemy vehicle disappearing into the tree line at a distance.</p>
+          <div class="lad-pick">
+            <select data-answer="find">
+              <option value="" data-i18n="detect-f2t2ea.042">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.043">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.046">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.047">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.048">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.051">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.052">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.053">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.054">Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates.</p>
+          <div class="lad-pick">
+            <select data-answer="fix">
+              <option value="" data-i18n="detect-f2t2ea.062">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.063">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.064">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.065">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.066">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.067">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.068">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.069">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.070">sUAS battery dies before a decision on how to engage the tank is made. Last seen moving toward friendly position.</p>
+          <div class="lad-pick">
+            <select data-answer="find">
+              <option value="" data-i18n="detect-f2t2ea.071">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.072">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.073">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.074">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.075">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.076">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.077">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.078">Check</button>
+          </div>
+          <p class="row-note ok" data-i18n="detect-f2t2ea.079">Custody is lost, so the tank is no longer fixed and no longer tracked. Its location is approximate again, and the cycle drops back to Find.</p>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.080">Forward Scout Team reports they have “eyes-on” a tank near last known position.</p>
+          <div class="lad-pick">
+            <select data-answer="fix">
+              <option value="" data-i18n="detect-f2t2ea.081">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.082">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.083">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.084">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.085">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.086">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.087">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.088">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.089">Order sent to anti-tank one-way-attack UAS unit to engage the tank under observation by the scout team.</p>
+          <div class="lad-pick">
+            <select data-answer="engage">
+              <option value="" data-i18n="detect-f2t2ea.090">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.091">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.092">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.093">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.094">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.095">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.096">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.097">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.098">Scout team observes attack drone strike near the tank. From the explosion they observe the tank quickly driving away, presumably intact.</p>
+          <div class="lad-pick">
+            <select data-answer="assess">
+              <option value="" data-i18n="detect-f2t2ea.099">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.100">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.101">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.102">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.103">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.104">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.105">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.106">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.107">Long range ISR is tasked with and re-acquires a slightly damaged tank.</p>
+          <div class="lad-pick">
+            <select data-answer="track">
+              <option value="" data-i18n="detect-f2t2ea.108">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.109">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.110">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.111">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.112">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.113">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.114">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.115">Check</button>
+          </div>
+          <p class="row-note ok" data-i18n="detect-f2t2ea.116">Finding it again is not the whole of it. The ISR is tasked to hold the tank, and holding custody over time is Track.</p>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.117">Headquarters element requests permission to re-task an attack helicopter.</p>
+          <div class="lad-pick">
+            <select data-answer="target">
+              <option value="" data-i18n="detect-f2t2ea.118">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.119">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.120">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.121">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.122">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.123">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.124">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.125">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.126">Commander approves the re-tasking. Mission is sent to the pilots flying.</p>
+          <div class="lad-pick">
+            <select data-answer="engage">
+              <option value="" data-i18n="detect-f2t2ea.127">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.128">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.129">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.130">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.131">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.132">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.133">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.134">Check</button>
+          </div>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.135">Pilots record video of the tank being destroyed by a Hellfire missile.</p>
+          <div class="lad-pick">
+            <select data-answer="assess">
+              <option value="" data-i18n="detect-f2t2ea.136">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.137">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.138">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.139">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.140">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.141">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.142">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.143">Check</button>
+          </div>
+        </li>
+        </ol>
+        <div class="feedback" id="d2-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 data-i18n="detect-f2t2ea.055">The steps overlap</h2>
+    <div class="doctrine"><span data-i18n="detect-f2t2ea.056">While the steps are listed in the order presented to ease explanation, several steps are accomplished simultaneously and overlapped. For example, the track step frequently continues through the completion of the assess step.</span><span class="src" data-i18n="detect-f2t2ea.057">FM 3-60, Appendix A.</span></div>
+
+    <p data-i18n="detect-f2t2ea.058">Two things follow from that, and both of them are already in your plan. The first is that <strong>Track does not stop when the order to fire is given.</strong> The sensor that held custody of the target is the sensor that will tell you whether the strike worked, so it is still committed long after Engage. The second is that <strong>Assess can send a target back to Target rather than out of the cycle.</strong> A target that was struck but is still working has not left the cycle. It returns to be paired with a weapon a second time.</p>
+
+  </div>
+
+  <div class="panel">
+    <div class="page-nav">
+      <a class="btn secondary" href="detect.html" data-i18n="detect-f2t2ea.060">← Collection Plan</a>
+      <a class="btn" href="deliver.html" data-i18n="detect-f2t2ea.061">Phase 3: Deliver →</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/lang-zh.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script>
+D3A.registerPage('detect', ['detect-3']);
+
+D3A.initStepLadder({
+  containerId: 'd2-ladder', feedbackId: 'd2-feedback', counterId: 'd2-count',
+  exerciseId: 'detect-3',
+  explainOk: 'That is one target through the whole cycle, and it did not run in a straight line. It fell back to Find when the small UAS died, and back to Target when the first attack failed. A target only leaves the cycle when the assessment says it is finished.',
+  explainBad: 'Read the situation again and ask what is being done at that moment, not what is about to be done next. The six definitions are in the table above.'
+});
+</script>
+
+
+</body></html>
