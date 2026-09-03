@@ -2,8 +2,19 @@
 # reader to extract a folder, which makes no sense on the hosted site.
 OPEN ME FIRST.txt
 
+# Working files. They live in this folder so that Claude Code picks up
+# CLAUDE.md automatically and so the test suite sits beside the pages it
+# tests, but none of them may reach GitHub — and because Vercel deploys
+# what is in the repo, keeping them untracked also keeps them off the
+# live site. Do not remove these lines without deciding both questions.
+CLAUDE.md
+test-runtime.js
+TRANSLATION-GUIDE.md
+README-dev.md
+
 # build artefacts and OS cruft
 *.zip
 Thumbs.db
 .DS_Store
 ~$*
+node_modules/

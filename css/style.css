@@ -2067,3 +2067,198 @@ table.ops-d3a tr:nth-child(even) td { background: transparent; }
 @media (max-width: 600px) {
   table.ops-d3a .ops-phase, table.ops-d3a .ops-fn { width: auto; white-space: normal; }
 }
+
+/* ============ EMLCOA scene reel (scenario.html) ============
+   Four scenes lifted from Lee's "EMLCOA animation.pptx". Each scene is a
+   flattened base image with the animated pieces layered over it as
+   transparent PNGs, so the artwork stays his. Arrows and dots change scene;
+   the sequence inside a scene loops. Keyframe percentages are generated from
+   the deck's motion paths and delays — see the generated block below. */
+.ecoa { margin: 20px 0 4px; }
+
+.ecoa-stage {
+  background: #f7f8f3;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px 8px;
+  /* the reel reads better small — it is a diagram, not the situation map */
+  max-width: 600px;
+  margin: 0 auto;
+}
+.ecoa-scene { position: relative; display: none; }
+.ecoa-scene.is-on { display: block; }
+.ecoa-base { display: block; width: 100%; height: auto; border-radius: 2px; }
+.ecoa-lyr {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: auto;
+  opacity: 0;
+  pointer-events: none;
+}
+.ecoa-scene.is-on .ecoa-lyr {
+  animation-duration: var(--loop, 4.5s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.ecoa-scene.is-on .ecoa1-eng    { animation-name: ecoa1-eng; }
+.ecoa-scene.is-on .ecoa1-blast  { animation-name: ecoa1-blast; }
+.ecoa-scene.is-on .ecoa2-veh1   { animation-name: ecoa2-veh1; }
+.ecoa-scene.is-on .ecoa2-arrow  { animation-name: ecoa2-arrow; }
+.ecoa-scene.is-on .ecoa2-blast  { animation-name: ecoa2-blast; }
+.ecoa-scene.is-on .ecoa3-round  { animation-name: ecoa3-round; }
+.ecoa-scene.is-on .ecoa3-blast  { animation-name: ecoa3-blast; }
+.ecoa-scene.is-on .ecoa4-bubble { animation-name: ecoa4-bubble; }
+.ecoa-scene.is-on .ecoa4-arrow  { animation-name: ecoa4-arrow; }
+.ecoa-scene.is-on .ecoa4-blasts { animation-name: ecoa4-blasts; }
+
+.ecoa-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 10px 0 2px;
+}
+.ecoa-arrow {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 6px 14px;
+  border: 1px solid var(--phase);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--phase);
+  cursor: pointer;
+}
+.ecoa-arrow:hover { background: var(--phase-tint); }
+.ecoa-arrow:focus-visible { outline: 2px solid var(--phase); outline-offset: 2px; }
+.ecoa-dots { display: flex; gap: 9px; }
+.ecoa-dot {
+  width: 12px; height: 12px;
+  padding: 0;
+  border: 1px solid var(--phase);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.ecoa-dot.is-on { background: var(--phase); }
+.ecoa-dot:focus-visible { outline: 2px solid var(--phase); outline-offset: 2px; }
+
+.ecoa-note { display: none; }
+.ecoa-note.is-on { display: block; }
+.ecoa-note h4 {
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--phase);
+  margin: 12px 0 4px;
+}
+:lang(zh-Hant) .ecoa-note h4 { text-transform: none; letter-spacing: normal; }
+
+/* the relocation interval for whichever element the scene shows — the input
+   Phase 1's quarter rule is built from, kept beside the picture that names it */
+.ecoa-note .ecoa-timing {
+  font-size: .92rem;
+  color: var(--muted);
+  border-left: 3px solid var(--phase);
+  padding-left: 11px;
+  margin-top: 10px;
+}
+
+/* ============ EMLCOA scene reel (scenario.html) ============
+   Generated from "EMLCOA animation.pptx" — motion paths, delays and
+   durations are read from the deck. Do not hand-edit the keyframe
+   percentages; regenerate them if the deck changes. */
+@keyframes ecoa1-eng {
+  0% { transform: translate(0.00%, 0.00%); opacity: 1; }
+  6.9% { transform: translate(0.74%, -12.75%); opacity: 1; }
+  11.92% { transform: translate(-6.97%, -17.94%); opacity: 1; }
+  17.63% { transform: translate(-9.03%, -28.31%); opacity: 1; }
+  23.47% { transform: translate(1.78%, -28.31%); opacity: 1; }
+  27.93% { transform: translate(8.45%, -33.19%); opacity: 1; }
+  31.86% { transform: translate(8.45%, -40.46%); opacity: 1; }
+  36.01% { transform: translate(8.45%, -48.15%); opacity: 1; }
+  40.04% { transform: translate(6.23%, -55.28%); opacity: 1; }
+  44.12% { transform: translate(5.92%, -62.82%); opacity: 1; }
+  44.44% { transform: translate(6.50%, -62.96%); opacity: 1; }
+  96% { transform: translate(6.50%, -62.96%); opacity: 1; }
+  99%, 100% { transform: translate(6.50%, -62.96%); opacity: 0; }
+}
+@keyframes ecoa1-blast {
+  0%, 48.89% { opacity: 0; }
+  54.45%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+@keyframes ecoa2-veh1 {
+  0% { transform: translate(0.00%, 0.00%); opacity: 1; }
+  19.49% { transform: translate(-7.78%, 6.11%); opacity: 1; }
+  35.65% { transform: translate(-6.25%, 14.17%); opacity: 1; }
+  44.44% { transform: translate(-6.67%, 18.61%); opacity: 1; }
+  96% { transform: translate(-6.67%, 18.61%); opacity: 1; }
+  99%, 100% { transform: translate(-6.67%, 18.61%); opacity: 0; }
+}
+@keyframes ecoa2-arrow {
+  0%, 44.44% { opacity: 0; }
+  50%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+@keyframes ecoa2-blast {
+  0%, 66.67% { opacity: 0; }
+  72.23%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+@keyframes ecoa3-round {
+  0% { transform: translate(0.00%, 0.00%); opacity: 1; }
+  13.05% { transform: translate(10.26%, -18.24%); opacity: 1; }
+  13.89% { transform: translate(10.93%, -19.41%); opacity: 1; }
+  14.75% { transform: translate(11.71%, -20.53%); opacity: 1; }
+  15.62% { transform: translate(12.61%, -21.60%); opacity: 1; }
+  16.5% { transform: translate(13.60%, -22.61%); opacity: 1; }
+  17.39% { transform: translate(14.68%, -23.55%); opacity: 1; }
+  18.3% { transform: translate(15.84%, -24.43%); opacity: 1; }
+  19.22% { transform: translate(17.08%, -25.22%); opacity: 1; }
+  20.15% { transform: translate(18.39%, -25.93%); opacity: 1; }
+  21.08% { transform: translate(19.76%, -26.54%); opacity: 1; }
+  22.03% { transform: translate(21.18%, -27.06%); opacity: 1; }
+  23.11% { transform: translate(22.82%, -27.60%); opacity: 1; }
+  24.14% { transform: translate(24.43%, -28.02%); opacity: 1; }
+  25.14% { transform: translate(26.00%, -28.32%); opacity: 1; }
+  26.1% { transform: translate(27.53%, -28.49%); opacity: 1; }
+  27.03% { transform: translate(29.02%, -28.55%); opacity: 1; }
+  27.93% { transform: translate(30.47%, -28.48%); opacity: 1; }
+  28.82% { transform: translate(31.87%, -28.30%); opacity: 1; }
+  29.68% { transform: translate(33.23%, -28.00%); opacity: 1; }
+  30.54% { transform: translate(34.53%, -27.59%); opacity: 1; }
+  31.38% { transform: translate(35.79%, -27.06%); opacity: 1; }
+  44.44% { transform: translate(55.09%, -18.96%); opacity: 1; }
+  96% { transform: translate(55.09%, -18.96%); opacity: 1; }
+  99%, 100% { transform: translate(55.09%, -18.96%); opacity: 0; }
+}
+@keyframes ecoa3-blast {
+  0%, 46.67% { opacity: 0; }
+  52.23%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+
+@keyframes ecoa4-bubble {
+  0%, 6.67% { opacity: 0; }
+  12.23%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+@keyframes ecoa4-arrow {
+  0%, 26.67% { opacity: 0; }
+  32.23%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+@keyframes ecoa4-blasts {
+  0%, 53.33% { opacity: 0; }
+  58.89%, 96% { opacity: 1; }
+  99%, 100% { opacity: 0; }
+}
+
+/* Reduced motion: show the finished state instead of the sequence. */
+@media (prefers-reduced-motion: reduce) {
+  .ecoa-scene .ecoa-lyr { animation: none !important; opacity: 1; }
+  .ecoa-scene .ecoa-lyr.ecoa1-eng { transform: translate(6.50%, -62.96%); }
+  .ecoa-scene .ecoa-lyr.ecoa2-veh1 { transform: translate(-6.67%, 18.61%); }
+  .ecoa-scene .ecoa-lyr.ecoa3-round { transform: translate(55.09%, -18.96%); }
+}

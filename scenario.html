@@ -59,31 +59,27 @@
     <h2 data-i18n="scenario.013">1. Situation</h2>
 
     <figure class="map-figure">
-      <div class="map-frame"><img class="map-img" src="img/kordan-situation-map.jpg" width="772" height="774" alt="Situation map of the Kordan bridge sector, showing the coordinated fire line, the retain task at the bridge, and the locations still to be searched."></div>
-      <figcaption class="map-caption" data-i18n="scenario.015">The map shows the ground, the fire support coordination measures in effect, and the brigade's task at the bridge. A red <strong>?</strong> marks an enemy element we know exists but have <strong>not located</strong>. What the S-2 knows about each one is in the intelligence brief below.</figcaption>
+      <div class="map-frame"><img class="map-img" src="img/kordan-situation-map.jpg" width="694" height="693" alt="Situation map of the Kordan bridge sector, showing the coordinated fire line, the restricted fire area and the retain task at the bridge, and the suspected enemy locations."></div>
+      <figcaption class="map-caption" data-i18n="scenario.015">The map depicts an estimate of the enemy situation. We know the units the enemy possesses, and we know the terrain. The <strong>?</strong> icons represent our estimate of suspected enemy locations.</figcaption>
     </figure>
 
     <table class="map-key">
-      <caption data-i18n="scenario.016">Key — ground and control measures</caption>
-      <tbody><tr><th data-i18n="scenario.018">Feature</th><th data-i18n="scenario.019">Why it matters</th></tr>
-      <tr><td data-i18n="scenario.020">Kordan River</td><td data-i18n="scenario.021">Cannot be crossed by vehicles anywhere except the bridge.</td></tr>
-      <tr><td data-i18n="scenario.022">The bridge</td><td data-i18n="scenario.023">The mission. It must be taken usable.</td></tr>
-      <tr><td data-i18n="scenario.146"><strong>CFL</strong> — coordinated fire line</td><td data-i18n="scenario.147">Beyond this line, fires may be delivered without further coordination with the units in contact. Short of it, every mission must be cleared first.</td></tr>
+      <tbody><tr><th data-i18n="scenario.018">Feature</th><th data-i18n="scenario.019">Definition</th></tr>
+      <tr><td data-i18n="scenario.146"><strong>CFL</strong> — coordinated fire line</td><td data-i18n="scenario.147">Beyond this line, fires may be delivered without further coordination with the units in contact. Short of it, every mission must be cleared first. The CFL will move south to the 27th northing at T=0, when friendly units take the bridge.</td></tr>
       <tr><td data-i18n="scenario.148"><strong>R</strong> — retain</td><td data-i18n="scenario.149">The friendly tactical task at the bridge: hold it, and deny its use to the enemy.</td></tr>
-      <tr><td data-i18n="scenario.032">Restricted fire area (RFA) around the bridge</td><td data-i18n="scenario.033">The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here. It is not drawn on this map.</td></tr>
+      <tr><td data-i18n="scenario.032">Restricted fire area (RFA) around the bridge</td><td data-i18n="scenario.033">The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here.</td></tr>
     </tbody></table>
 
     <table class="map-key">
-      <caption data-i18n="scenario.034">Key — enemy elements</caption>
-      <tbody><tr><th data-i18n="scenario.036">Element</th><th data-i18n="scenario.037">Where it sits</th></tr>
-      <tr><td data-i18n="scenario.038">Ammunition supply point</td><td data-i18n="scenario.039">Well to the rear, 6 km behind the river.</td></tr>
-      <tr><td data-i18n="scenario.040">ATGM section</td><td data-i18n="scenario.041">Dug in on the high ground, looking straight down onto the crossing.</td></tr>
-      <tr><td data-i18n="scenario.042">Field kitchen</td><td data-i18n="scenario.043">Furthest back of all, with the rear-area trains.</td></tr>
-      <tr><td data-i18n="scenario.044">Engineer obstacle team</td><td data-i18n="scenario.045">On the bridge itself.</td></tr>
-      <tr><td data-i18n="scenario.046">Battalion command post</td><td data-i18n="scenario.047">Deep, hidden inside the treeline. It must transmit to control the defense.</td></tr>
-      <tr><td data-i18n="scenario.048">Logistics trucks</td><td data-i18n="scenario.049">Move along the road at night between the supply point and the fighting positions.</td></tr>
-      <tr><td data-i18n="scenario.052">120&nbsp;mm mortar platoon</td><td data-i18n="scenario.053">Deepest of the fighting elements, but still close enough to range the bridge.</td></tr>
-      <tr><td data-i18n="scenario.054">Infantry platoon</td><td data-i18n="scenario.055">In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.</td></tr>
+      <tbody><tr><th data-i18n="scenario.016">Suspected enemy</th><th data-i18n="scenario.017">Status</th></tr>
+      <tr><td data-i18n="scenario.020">Command post</td><td data-i18n="scenario.021">Unlocated.</td></tr>
+      <tr><td data-i18n="scenario.022">Logistics vehicles</td><td data-i18n="scenario.023">Unlocated.</td></tr>
+      <tr><td data-i18n="scenario.024">Infantry platoon</td><td data-i18n="scenario.026">Unlocated. Assessed to be near grid 945 270.</td></tr>
+      <tr><td data-i18n="scenario.027">Mortar platoon</td><td data-i18n="scenario.028">Unlocated.</td></tr>
+      <tr><td data-i18n="scenario.031">Field kitchen</td><td data-i18n="scenario.034">Unlocated.</td></tr>
+      <tr><td data-i18n="scenario.035">Anti-tank guided missile (ATGM) team</td><td data-i18n="scenario.036">Located. Detected by a reconnaissance flight 12 hours ago, directly south of the bridge, grid 950 280.</td></tr>
+      <tr><td data-i18n="scenario.037">Engineering team</td><td data-i18n="scenario.038">Unlocated. Assessed to destroy or block the bridge.</td></tr>
+      <tr><td data-i18n="scenario.039">Ammunition supply point</td><td data-i18n="scenario.040">Unlocated.</td></tr>
     </tbody></table>
   </div>
 
@@ -108,29 +104,77 @@
   <!-- ============ 3. INTELLIGENCE BRIEF ============ -->
   <div class="panel">
     <h2 data-i18n="scenario.069">3. Intelligence Brief (S-2)</h2>
-    <p data-i18n="scenario.025">IPOE is complete. The enemy will defend the southern side of the river. We assess he is likely to take the following action.</p>
+    <p data-i18n="scenario.025">Intelligence Preparation of the Operating Environment (IPOE) is complete. The enemy is likely to defend, then delay, on the southern side of the river.</p>
 
-    <h3 data-i18n="scenario.026">What we have located</h3>
-    <p data-i18n="scenario.027">Reconnaissance flights have detected an <strong>anti-tank guided missile (ATGM) team</strong> on the southern side of the river. This team will likely fire on vehicles as they cross the bridge or attempt to remove the obstacles. He displaces these positions every 48 hours, so this location will not stay good for long.</p>
-    <p data-i18n="scenario.028">An <strong>infantry platoon</strong> is held in reserve in dispersed positions south of the bridge. It is unlikely to engage us at the crossing given our artillery superiority, and will more likely attempt to delay friendly forces after we cross.</p>
+    <h3 data-i18n="scenario.029">Enemy Most Likely Course of Action</h3>
+    <p data-i18n="scenario.030">The enemy will take every action to block our advance to the south.</p>
 
-    <h3 data-i18n="scenario.029">What we assess he will do</h3>
-    <p data-i18n="scenario.030">The enemy will likely deploy his <strong>engineer team</strong> to destroy or block the bridge. We assess this will occur within the next 24 hours. Nothing is there yet. Once the team begins, about one hour of work is enough to make the bridge unusable.</p>
-    <p data-i18n="scenario.031">The enemy will use his <strong>mortar platoon</strong> to fire on friendly forces as we concentrate at the bridge. The engineer team or the ATGM team may call for this fire. The bridge is a known location, so we can expect his weapons are already laid on it — he may not use an observer at all.</p>
-    <p data-i18n="scenario.064">If his own mortars are silenced or prove ineffective, his <strong>command post</strong> is how he requests fires from a higher echelon of enemy command.</p>
+    <div class="ecoa" id="emlcoa">
+      <div class="ecoa-stage">
 
-    <table class="doc">
-      <tbody><tr><th data-i18n="scenario.068">Enemy element</th><th data-i18n="scenario.070">Location</th><th data-i18n="scenario.071">What the S-2 knows after IPOE</th></tr>
-      <tr><td data-i18n="scenario.072"><strong>Engineer team</strong></td><td data-i18n="scenario.073">Assessed</td><td data-i18n="scenario.074">Not yet committed. Assessed to deploy to the bridge within 24 hours. About one hour of work will make the bridge unusable. They do not relocate once they begin.</td></tr>
-      <tr><td data-i18n="scenario.075"><strong>ATGM team</strong></td><td data-i18n="scenario.076">Found</td><td data-i18n="scenario.077">Detected by reconnaissance flights, south of the river and covering the crossing. Displaces every 48 hours. Can also observe and call for fire.</td></tr>
-      <tr><td data-i18n="scenario.078"><strong>120&nbsp;mm mortar platoon</strong></td><td data-i18n="scenario.079">Not found</td><td data-i18n="scenario.080">In depth, ranging the bridge. Fires are pre-planned on the crossing. Displaces immediately after every fire mission.</td></tr>
-      <tr><td data-i18n="scenario.081"><strong>Battalion command post</strong></td><td data-i18n="scenario.082">Not found</td><td data-i18n="scenario.083">Assessed about 4&nbsp;km in depth. Controls the defense by radio and is the link to higher headquarters for additional fires. Relocates every 24 hours.</td></tr>
-      <tr><td data-i18n="scenario.087"><strong>Infantry platoon</strong></td><td data-i18n="scenario.088">Found</td><td data-i18n="scenario.089">Dispersed positions south of the bridge, held in reserve. More likely to delay us after the crossing than to fight for it.</td></tr>
-      <tr><td data-i18n="scenario.090"><strong>Ammunition supply point (ASP)</strong></td><td data-i18n="scenario.091">Not found</td><td data-i18n="scenario.092">Mortar and ATGM stocks, assessed roughly 6&nbsp;km in depth. The source of every round his mortars fire. His fighting positions <strong>already hold three days of ammunition forward</strong>, drawn before we attack.</td></tr>
-      <tr><td data-i18n="scenario.093"><strong>Logistics trucks</strong></td><td data-i18n="scenario.094">Not found</td><td data-i18n="scenario.095">Move supplies forward at night between the ASP and the fighting positions.</td></tr>
-      <tr><td data-i18n="scenario.096"><strong>Field kitchen</strong></td><td data-i18n="scenario.097">Not found</td><td data-i18n="scenario.098">Feeds the battalion. With the trains area, well to the rear.</td></tr>
-    </tbody></table>
-    <p data-i18n="scenario.102">These eight elements are what the S-2 judges important to the <em>enemy</em> commander. Deciding which of them are worth <em>our</em> ammunition is the work of Phase 1.</p>
+        <div class="ecoa-scene is-on" data-scene="1" style="--loop: 4.5s">
+          <img class="ecoa-base" src="img/emlcoa-1-base.jpg" width="900" height="900" alt="The bridge sector. The engineer team is on the road south of the river.">
+          <img class="ecoa-lyr ecoa1-eng" src="img/emlcoa-1-eng.png" width="900" height="900" alt="">
+          <img class="ecoa-lyr ecoa1-blast" src="img/emlcoa-1-blast.png" width="900" height="900" alt="">
+        </div>
+
+        <div class="ecoa-scene" data-scene="2" style="--loop: 4.5s">
+          <img class="ecoa-base" src="img/emlcoa-2-base.jpg" width="900" height="900" alt="Close view of the crossing. The ATGM team is dug in south-west of the bridge.">
+          <img class="ecoa-lyr ecoa2-veh1" src="img/emlcoa-2-veh1.png" width="900" height="900" alt="">
+          <img class="ecoa-lyr ecoa2-arrow" src="img/emlcoa-2-arrow.png" width="900" height="900" alt="">
+          <img class="ecoa-lyr ecoa2-blast" src="img/emlcoa-2-blast.png" width="900" height="900" alt="">
+        </div>
+
+        <div class="ecoa-scene" data-scene="3" style="--loop: 4.5s">
+          <img class="ecoa-base" src="img/emlcoa-3-base.jpg" width="900" height="900" alt="Friendly units concentrated at the crossing, with the enemy mortar platoon in depth to the west.">
+          <img class="ecoa-lyr ecoa3-round" src="img/emlcoa-3-round.png" width="900" height="900" alt="">
+          <img class="ecoa-lyr ecoa3-blast" src="img/emlcoa-3-blast.png" width="900" height="900" alt="">
+        </div>
+
+        <div class="ecoa-scene" data-scene="4" style="--loop: 4.5s">
+          <img class="ecoa-base" src="img/emlcoa-4-base.jpg" width="900" height="900" alt="The enemy command post calling for fire support from a higher headquarters.">
+          <img class="ecoa-lyr ecoa4-bubble" src="img/emlcoa-4-bubble.png" width="900" height="900" alt="">
+          <img class="ecoa-lyr ecoa4-arrow" src="img/emlcoa-4-arrow.png" width="900" height="900" alt="">
+          <img class="ecoa-lyr ecoa4-blasts" src="img/emlcoa-4-blasts.png" width="900" height="900" alt="">
+        </div>
+
+      </div>
+
+      <div class="ecoa-bar">
+        <button type="button" class="ecoa-arrow" data-step="-1" aria-label="Previous">←</button>
+        <div class="ecoa-dots">
+          <button type="button" class="ecoa-dot is-on" data-go="1" aria-label="Scene 1"></button>
+          <button type="button" class="ecoa-dot" data-go="2" aria-label="Scene 2"></button>
+          <button type="button" class="ecoa-dot" data-go="3" aria-label="Scene 3"></button>
+          <button type="button" class="ecoa-dot" data-go="4" aria-label="Scene 4"></button>
+        </div>
+        <button type="button" class="ecoa-arrow" data-step="1" aria-label="Next">→</button>
+      </div>
+
+      <div class="ecoa-note is-on" data-note="1">
+        <h4 data-i18n="scenario.043">Destroy or block the bridge</h4>
+        <p data-i18n="scenario.044">The enemy is assessed to accomplish this by attempting to destroy or alter the bridge with their <strong>engineer team</strong>.</p>
+        <p class="ecoa-timing" data-i18n="scenario.041">The engineer team is not on the bridge yet, and once it begins work about one hour is enough to make the bridge unusable.</p>
+      </div>
+      <div class="ecoa-note" data-note="2">
+        <h4 data-i18n="scenario.045">Ambush the crossing</h4>
+        <p data-i18n="scenario.046">If unsuccessful, they will attempt to ambush friendly forces as we are vulnerable when crossing the bridge. We have already detected their <strong>anti-tank guided missile (ATGM) team</strong>, which is in position for this ambush.</p>
+        <p data-i18n="scenario.051">It is not likely that the enemy engages friendly forces directly with the <strong>infantry</strong>, because our mechanized vehicles are too powerful. Instead, they will likely harass and delay friendly forces south of the bridge.</p>
+        <p class="ecoa-timing" data-i18n="scenario.042">The ATGM team displaces every 48 hours, so the position we have will not stay good for long.</p>
+      </div>
+      <div class="ecoa-note" data-note="3">
+        <h4 data-i18n="scenario.047">Fires on the choke-point</h4>
+        <p data-i18n="scenario.048">It is also highly likely that the enemy will engage us with their <strong>mortar platoon</strong> when we are at the known choke-point on or near the bridge.</p>
+        <p class="ecoa-timing" data-i18n="scenario.052">His mortar platoon displaces immediately after every fire mission.</p>
+      </div>
+      <div class="ecoa-note" data-note="4">
+        <h4 data-i18n="scenario.049">Ask for fires from a higher headquarters</h4>
+        <p data-i18n="scenario.050">Lastly, the enemy <strong>command post</strong> has the capability to request fire missions from their higher headquarters, which they may do as a last resort.</p>
+        <p class="ecoa-timing" data-i18n="scenario.053">The enemy relocates his command post every 24 hours.</p>
+      </div>
+    </div>
+
+
   </div>
 
   <!-- ============ 4. ASSETS ============ -->
@@ -187,6 +231,33 @@
 <script src="js/app.js"></script>
 <script>
 D3A.registerPage('scenario', ['scenario-1']);
+(function () {
+  /* EMLCOA scene reel. Four scenes from Lee's animation deck; the sequence
+     inside a scene loops, the arrows and dots move between scenes. No strings
+     are written from JavaScript, so nothing here needs I18N. */
+  var reel = document.getElementById('emlcoa');
+  if (!reel) return;
+  var scenes = reel.querySelectorAll('.ecoa-scene');
+  var notes  = reel.querySelectorAll('.ecoa-note');
+  var dots   = reel.querySelectorAll('.ecoa-dot');
+  var at = 0;
+  function show(i) {
+    at = (i + scenes.length) % scenes.length;
+    for (var k = 0; k < scenes.length; k++) {
+      scenes[k].classList.toggle('is-on', k === at);
+      notes[k].classList.toggle('is-on', k === at);
+      dots[k].classList.toggle('is-on', k === at);
+      dots[k].setAttribute('aria-current', k === at ? 'true' : 'false');
+    }
+  }
+  reel.addEventListener('click', function (e) {
+    var step = e.target.closest('.ecoa-arrow');
+    if (step) { show(at + parseInt(step.getAttribute('data-step'), 10)); return; }
+    var go = e.target.closest('.ecoa-dot');
+    if (go) show(parseInt(go.getAttribute('data-go'), 10) - 1);
+  });
+  show(0);
+})();
 D3A.initSingleSelect({
   containerId: 'sc1-choices', checkBtnId: 'sc1-check', feedbackId: 'sc1-feedback',
   exerciseId: 'scenario-1', correct: 'seize',

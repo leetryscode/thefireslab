@@ -180,7 +180,7 @@ window.D3A_LANG_ZH = {
     zh: "本課程<strong>從作戰環境情報準備（IPOE）完成之後開始</strong>。你的情報單位已經研究過敵軍與地形。現在你的工作，是運用這些情報來計畫並執行<strong>目標選定</strong>：找出正確的敵軍目標，並在正確的時間與地點接戰，以支援指揮官的計畫。"
   },
   "battle.014": {
-    en: "<strong>What is D3A?</strong> D3A is a targeting methodology. It helps a unit integrate and synchronize all of its capabilities to engage the right target, at the right place and time, to create the effect the commander wants. Its four functions are:\n      ",
+    en: "<strong>What is D3A?</strong> D3A is a targeting methodology. It helps a unit integrate and synchronize all of its capabilities to engage the right target, at the right place and time, to create the effect the commander wants. Its four functions are:",
     zh: ""
   },
   "battle.015": {
@@ -436,120 +436,112 @@ window.D3A_LANG_ZH = {
     zh: ""
   },
   "scenario.015": {
-    en: "The map shows the ground, the fire support coordination measures in effect, and the brigade's task at the bridge. A red <strong>?</strong> marks an enemy element we know exists but have <strong>not located</strong>. What the S-2 knows about each one is in the intelligence brief below.",
+    en: "The map depicts an estimate of the enemy situation. We know the units the enemy possesses, and we know the terrain. The <strong>?</strong> icons represent our estimate of suspected enemy locations.",
     zh: ""
-  },
-  "scenario.016": {
-    en: "Key — ground and control measures",
-    zh: "圖例 — 地形與管制措施"
   },
   "scenario.018": {
     en: "Feature",
     zh: "地形地物"
   },
   "scenario.019": {
-    en: "Why it matters",
-    zh: "重要性"
+    en: "Definition",
+    zh: ""
   },
-  "scenario.020": {
-    en: "Kordan River",
-    zh: "Kordan 河"
+  "scenario.146": {
+    en: "<strong>CFL</strong> — coordinated fire line",
+    zh: ""
   },
-  "scenario.021": {
-    en: "Cannot be crossed by vehicles anywhere except the bridge.",
-    zh: "除橋樑外，車輛無法從任何地點渡河。"
+  "scenario.147": {
+    en: "Beyond this line, fires may be delivered without further coordination with the units in contact. Short of it, every mission must be cleared first. The CFL will move south to the 27th northing at T=0, when friendly units take the bridge.",
+    zh: ""
   },
-  "scenario.022": {
-    en: "The bridge",
-    zh: "橋樑"
+  "scenario.148": {
+    en: "<strong>R</strong> — retain",
+    zh: ""
   },
-  "scenario.023": {
-    en: "The mission. It must be taken usable.",
-    zh: "任務所在。必須在可用的狀態下奪取。"
+  "scenario.149": {
+    en: "The friendly tactical task at the bridge: hold it, and deny its use to the enemy.",
+    zh: ""
   },
   "scenario.032": {
     en: "Restricted fire area (RFA) around the bridge",
     zh: "橋樑周邊的火力限制區（RFA）"
   },
   "scenario.033": {
-    en: "The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here. It is not drawn on this map.",
+    en: "The commander forbids cratering munitions inside it. Only the one-way attack UAS may strike here.",
     zh: ""
   },
-  "scenario.034": {
-    en: "Key — enemy elements",
-    zh: "圖例 — 敵軍單位"
+  "scenario.016": {
+    en: "Suspected enemy",
+    zh: ""
   },
-  "scenario.036": {
-    en: "Element",
-    zh: "單位"
+  "scenario.017": {
+    en: "Status",
+    zh: ""
   },
-  "scenario.037": {
-    en: "Where it sits",
-    zh: "所在位置"
+  "scenario.020": {
+    en: "Command post",
+    zh: "指揮所"
   },
-  "scenario.038": {
-    en: "Ammunition supply point",
-    zh: "彈藥補給點"
+  "scenario.021": {
+    en: "Unlocated.",
+    zh: ""
   },
-  "scenario.039": {
-    en: "Well to the rear, 6 km behind the river.",
-    zh: "位於深遠後方，河後 6 公里。"
+  "scenario.022": {
+    en: "Logistics vehicles",
+    zh: ""
   },
-  "scenario.040": {
-    en: "ATGM section",
-    zh: "ATGM 分隊"
+  "scenario.023": {
+    en: "Unlocated.",
+    zh: ""
   },
-  "scenario.041": {
-    en: "Dug in on the high ground, looking straight down onto the crossing.",
-    zh: "在高地構工掩蔽，直接俯瞰渡河點。"
-  },
-  "scenario.042": {
-    en: "Field kitchen",
-    zh: "野戰廚房"
-  },
-  "scenario.043": {
-    en: "Furthest back of all, with the rear-area trains.",
-    zh: "位於全部單位的最後方，與後方輜重在一起。"
-  },
-  "scenario.044": {
-    en: "Engineer obstacle team",
-    zh: "工兵障礙小組"
-  },
-  "scenario.045": {
-    en: "On the bridge itself.",
-    zh: "就在橋樑上。"
-  },
-  "scenario.046": {
-    en: "Battalion command post",
-    zh: "營指揮所"
-  },
-  "scenario.047": {
-    en: "Deep, hidden inside the treeline. It must transmit to control the defense.",
-    zh: "位於深遠後方，隱藏在林線內。它必須發訊才能指揮防禦。"
-  },
-  "scenario.048": {
-    en: "Logistics trucks",
-    zh: "後勤卡車"
-  },
-  "scenario.049": {
-    en: "Move along the road at night between the supply point and the fighting positions.",
-    zh: "夜間沿道路在補給點與戰鬥陣地之間往返。"
-  },
-  "scenario.052": {
-    en: "120&nbsp;mm mortar platoon",
-    zh: "120&nbsp;公釐迫擊砲排"
-  },
-  "scenario.053": {
-    en: "Deepest of the fighting elements, but still close enough to range the bridge.",
-    zh: "戰鬥單位中位置最深遠，但仍近到足以將橋樑納入射程。"
-  },
-  "scenario.054": {
+  "scenario.024": {
     en: "Infantry platoon",
     zh: "步兵排"
   },
-  "scenario.055": {
-    en: "In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.",
-    zh: "位於橋樑對岸的既設陣地，就在我軍渡河後突擊必須通過的地面上。"
+  "scenario.026": {
+    en: "Unlocated. Assessed to be near grid 945 270.",
+    zh: ""
+  },
+  "scenario.027": {
+    en: "Mortar platoon",
+    zh: ""
+  },
+  "scenario.028": {
+    en: "Unlocated.",
+    zh: ""
+  },
+  "scenario.031": {
+    en: "Field kitchen",
+    zh: "野戰廚房"
+  },
+  "scenario.034": {
+    en: "Unlocated.",
+    zh: ""
+  },
+  "scenario.035": {
+    en: "Anti-tank guided missile (ATGM) team",
+    zh: ""
+  },
+  "scenario.036": {
+    en: "Located. Detected by a reconnaissance flight 12 hours ago, directly south of the bridge, grid 950 280.",
+    zh: ""
+  },
+  "scenario.037": {
+    en: "Engineering team",
+    zh: ""
+  },
+  "scenario.038": {
+    en: "Unlocated. Assessed to destroy or block the bridge.",
+    zh: ""
+  },
+  "scenario.039": {
+    en: "Ammunition supply point",
+    zh: "彈藥補給點"
+  },
+  "scenario.040": {
+    en: "Unlocated.",
+    zh: ""
   },
   "scenario.056": {
     en: "2. Our Mission and the Commander's Guidance",
@@ -592,147 +584,67 @@ window.D3A_LANG_ZH = {
     zh: "3. 情報簡報（S-2）"
   },
   "scenario.025": {
-    en: "IPOE is complete. The enemy will defend the southern side of the river. We assess he is likely to take the following action.",
-    zh: "IPOE已完成。敵軍將防守河川南岸。我們研判他可能採取下列行動。"
-  },
-  "scenario.026": {
-    en: "What we have located",
-    zh: "我們已定位的部分"
-  },
-  "scenario.027": {
-    en: "Reconnaissance flights have detected an <strong>anti-tank guided missile (ATGM) team</strong> on the southern side of the river. This team will likely fire on vehicles as they cross the bridge or attempt to remove the obstacles. He displaces these positions every 48 hours, so this location will not stay good for long.",
-    zh: "偵察飛行在河川南岸偵獲一個<strong>反裝甲飛彈（ATGM）小組</strong>。該小組很可能在車輛通過橋樑或嘗試排除障礙時對其射擊。敵軍每48小時轉移這些陣地，因此這個位置不會維持有效太久。"
-  },
-  "scenario.028": {
-    en: "An <strong>infantry platoon</strong> is held in reserve in dispersed positions south of the bridge. It is unlikely to engage us at the crossing given our artillery superiority, and will more likely attempt to delay friendly forces after we cross.",
-    zh: "一個<strong>步兵排</strong>以疏散配置位於橋樑以南，擔任預備隊。考量我方砲兵優勢，它不太可能在渡河點與我軍接戰，較可能在我軍渡河後遲滯友軍。"
+    en: "Intelligence Preparation of the Operating Environment (IPOE) is complete. The enemy is likely to defend, then delay, on the southern side of the river.",
+    zh: ""
   },
   "scenario.029": {
-    en: "What we assess he will do",
-    zh: "我們研判他將採取的行動"
+    en: "Enemy Most Likely Course of Action",
+    zh: ""
   },
   "scenario.030": {
-    en: "The enemy will likely deploy his <strong>engineer team</strong> to destroy or block the bridge. We assess this will occur within the next 24 hours. Nothing is there yet. Once the team begins, about one hour of work is enough to make the bridge unusable.",
-    zh: "敵軍很可能派出其<strong>工兵小組</strong>，破壞或阻絕橋樑。我們研判這將在未來24小時內發生。目前該處尚無動作。該小組一旦開始，約一小時的作業就足以使橋樑無法使用。"
-  },
-  "scenario.031": {
-    en: "The enemy will use his <strong>mortar platoon</strong> to fire on friendly forces as we concentrate at the bridge. The engineer team or the ATGM team may call for this fire. The bridge is a known location, so we can expect his weapons are already laid on it — he may not use an observer at all.",
+    en: "The enemy will take every action to block our advance to the south.",
     zh: ""
   },
-  "scenario.064": {
-    en: "If his own mortars are silenced or prove ineffective, his <strong>command post</strong> is how he requests fires from a higher echelon of enemy command.",
-    zh: "若其本身的迫擊砲被壓制或成效不彰，敵軍就是透過其<strong>指揮所</strong>向敵軍上級指揮階層申請火力。"
-  },
-  "scenario.068": {
-    en: "Enemy element",
-    zh: "敵軍單元"
-  },
-  "scenario.070": {
-    en: "Location",
-    zh: "位置"
-  },
-  "scenario.071": {
-    en: "What the S-2 knows after IPOE",
-    zh: "S-2在IPOE之後掌握的情況"
-  },
-  "scenario.072": {
-    en: "<strong>Engineer team</strong>",
-    zh: "<strong>工兵小組</strong>"
-  },
-  "scenario.073": {
-    en: "Assessed",
-    zh: "研判"
-  },
-  "scenario.074": {
-    en: "Not yet committed. Assessed to deploy to the bridge within 24 hours. About one hour of work will make the bridge unusable. They do not relocate once they begin.",
-    zh: "尚未投入。研判將在24小時內部署至橋樑。約一小時的作業即可使橋樑無法使用。一旦開始作業就不會轉移。"
-  },
-  "scenario.075": {
-    en: "<strong>ATGM team</strong>",
-    zh: "<strong>ATGM小組</strong>"
-  },
-  "scenario.076": {
-    en: "Found",
-    zh: "已找到"
-  },
-  "scenario.077": {
-    en: "Detected by reconnaissance flights, south of the river and covering the crossing. Displaces every 48 hours. Can also observe and call for fire.",
-    zh: "由偵察飛行偵獲，位於河川以南，控制渡河點。每48小時轉移。也能觀測並申請火力。"
-  },
-  "scenario.078": {
-    en: "<strong>120&nbsp;mm mortar platoon</strong>",
-    zh: "<strong>120&nbsp;公釐迫擊砲排</strong>"
-  },
-  "scenario.079": {
-    en: "Not found",
-    zh: "未找到"
-  },
-  "scenario.080": {
-    en: "In depth, ranging the bridge. Fires are pre-planned on the crossing. Displaces immediately after every fire mission.",
-    zh: "位於縱深，射程涵蓋橋樑。已對渡河點完成預劃火力。每次射擊任務後立即轉移。"
-  },
-  "scenario.081": {
-    en: "<strong>Battalion command post</strong>",
-    zh: "<strong>營指揮所</strong>"
-  },
-  "scenario.082": {
-    en: "Not found",
-    zh: "未找到"
-  },
-  "scenario.083": {
-    en: "Assessed about 4&nbsp;km in depth. Controls the defense by radio and is the link to higher headquarters for additional fires. Relocates every 24 hours.",
-    zh: "研判位於縱深約4&nbsp;公里處。以無線電管制其防禦，並且是向上級司令部申請增援火力的管道。每24小時轉移。"
-  },
-  "scenario.087": {
-    en: "<strong>Infantry platoon</strong>",
-    zh: "<strong>步兵排</strong>"
-  },
-  "scenario.088": {
-    en: "Found",
-    zh: "已找到"
-  },
-  "scenario.089": {
-    en: "Dispersed positions south of the bridge, held in reserve. More likely to delay us after the crossing than to fight for it.",
-    zh: "以疏散陣地位於橋樑以南，擔任預備隊。比起爭奪渡河點，更可能在我軍渡河後遲滯我軍。"
-  },
-  "scenario.090": {
-    en: "<strong>Ammunition supply point (ASP)</strong>",
-    zh: "<strong>彈藥補給點（ASP）</strong>"
-  },
-  "scenario.091": {
-    en: "Not found",
-    zh: "未找到"
-  },
-  "scenario.092": {
-    en: "Mortar and ATGM stocks, assessed roughly 6&nbsp;km in depth. The source of every round his mortars fire. His fighting positions <strong>already hold three days of ammunition forward</strong>, drawn before we attack.",
+  "scenario.043": {
+    en: "Destroy or block the bridge",
     zh: ""
   },
-  "scenario.093": {
-    en: "<strong>Logistics trucks</strong>",
-    zh: "<strong>後勤卡車</strong>"
+  "scenario.044": {
+    en: "The enemy is assessed to accomplish this by attempting to destroy or alter the bridge with their <strong>engineer team</strong>.",
+    zh: ""
   },
-  "scenario.094": {
-    en: "Not found",
-    zh: "未找到"
+  "scenario.041": {
+    en: "The engineer team is not on the bridge yet, and once it begins work about one hour is enough to make the bridge unusable.",
+    zh: ""
   },
-  "scenario.095": {
-    en: "Move supplies forward at night between the ASP and the fighting positions.",
-    zh: "夜間在ASP與戰鬥陣地之間向前輸送補給。"
+  "scenario.045": {
+    en: "Ambush the crossing",
+    zh: ""
   },
-  "scenario.096": {
-    en: "<strong>Field kitchen</strong>",
-    zh: "<strong>野戰炊事站</strong>"
+  "scenario.046": {
+    en: "If unsuccessful, they will attempt to ambush friendly forces as we are vulnerable when crossing the bridge. We have already detected their <strong>anti-tank guided missile (ATGM) team</strong>, which is in position for this ambush.",
+    zh: ""
   },
-  "scenario.097": {
-    en: "Not found",
-    zh: "未找到"
+  "scenario.051": {
+    en: "It is not likely that the enemy engages friendly forces directly with the <strong>infantry</strong>, because our mechanized vehicles are too powerful. Instead, they will likely harass and delay friendly forces south of the bridge.",
+    zh: ""
   },
-  "scenario.098": {
-    en: "Feeds the battalion. With the trains area, well to the rear.",
-    zh: "供應全營膳食。位於輜重區，遠在後方。"
+  "scenario.042": {
+    en: "The ATGM team displaces every 48 hours, so the position we have will not stay good for long.",
+    zh: ""
   },
-  "scenario.102": {
-    en: "These eight elements are what the S-2 judges important to the <em>enemy</em> commander. Deciding which of them are worth <em>our</em> ammunition is the work of Phase 1.",
+  "scenario.047": {
+    en: "Fires on the choke-point",
+    zh: ""
+  },
+  "scenario.048": {
+    en: "It is also highly likely that the enemy will engage us with their <strong>mortar platoon</strong> when we are at the known choke-point on or near the bridge.",
+    zh: ""
+  },
+  "scenario.052": {
+    en: "His mortar platoon displaces immediately after every fire mission.",
+    zh: ""
+  },
+  "scenario.049": {
+    en: "Ask for fires from a higher headquarters",
+    zh: ""
+  },
+  "scenario.050": {
+    en: "Lastly, the enemy <strong>command post</strong> has the capability to request fire missions from their higher headquarters, which they may do as a last resort.",
+    zh: ""
+  },
+  "scenario.053": {
+    en: "The enemy relocates his command post every 24 hours.",
     zh: ""
   },
   "scenario.103": {
@@ -907,22 +819,6 @@ window.D3A_LANG_ZH = {
     en: "Phase 1: Decide →",
     zh: "第 1 階段：擬定 →"
   },
-  "scenario.146": {
-    en: "<strong>CFL</strong> — coordinated fire line",
-    zh: ""
-  },
-  "scenario.147": {
-    en: "Beyond this line, fires may be delivered without further coordination with the units in contact. Short of it, every mission must be cleared first.",
-    zh: ""
-  },
-  "scenario.148": {
-    en: "<strong>R</strong> — retain",
-    zh: ""
-  },
-  "scenario.149": {
-    en: "The friendly tactical task at the bridge: hold it, and deny its use to the enemy.",
-    zh: ""
-  },
 
   /* ---------- decide.html ---------- */
   "decide.001": {
@@ -1061,16 +957,8 @@ window.D3A_LANG_ZH = {
     en: "All eight elements from the S-2's list are in the key below. Neither the map nor the key tells you which ones are high-payoff targets. That is your decision in the tasks below.",
     zh: ""
   },
-  "decide.104": {
-    en: "Infantry platoon",
-    zh: ""
-  },
-  "decide.105": {
-    en: "In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.",
-    zh: ""
-  },
   "decide.033": {
-    en: "The map shows the ground, the fire support coordination measures in effect, and the brigade's task at the bridge. A red <strong>?</strong> marks an enemy element we know exists but have not located. ",
+    en: "The map depicts an estimate of the enemy situation. The <strong>?</strong> icons represent our estimate of suspected enemy locations.",
     zh: ""
   },
   "decide.034": {
@@ -1140,6 +1028,14 @@ window.D3A_LANG_ZH = {
   "decide.053": {
     en: "Deepest of the fighting elements, but still close enough to reach the bridge.",
     zh: "戰鬥單位中位置最深遠者，但仍近到足以打到橋樑。"
+  },
+  "decide.104": {
+    en: "Infantry platoon",
+    zh: "步兵排"
+  },
+  "decide.105": {
+    en: "In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.",
+    zh: "位於橋樑對岸的既設陣地，就在我軍渡河後突擊必須通過的地面上。"
   },
   "decide.054": {
     en: "Task 1.1 — Nominate the High-Payoff Targets",
@@ -2301,14 +2197,6 @@ window.D3A_LANG_ZH = {
     en: "<span class=\"step\">1D</span><span>Target Synchronization Matrix</span>",
     zh: "<span class=\"step\">1D</span><span>目標同步矩陣</span>"
   },
-  "decide-agm.256": {
-    en: "Otherwise, targets may be struck <em>as acquired</em>, meaning they will be struck in the order of their priority.",
-    zh: ""
-  },
-  "decide-agm.257": {
-    en: "This is the order that will be argued about, and it is the one to argue about. Reverse it — drone first, then 155 — and you have a defensible matrix for a different assumption about what the command post turns out to be. What settles it is where the target is and how well we have located it, which is the next page.",
-    zh: ""
-  },
   "decide-agm.013": {
     en: "Product 2 of 3",
     zh: "三項成果之二"
@@ -2433,6 +2321,10 @@ window.D3A_LANG_ZH = {
     en: "<strong>Does this target need to be struck at a specific time?</strong> If it does, it is <em>Planned</em>.",
     zh: ""
   },
+  "decide-agm.256": {
+    en: "Otherwise, targets may be struck <em>as acquired</em>, meaning they will be struck in the order of their priority.",
+    zh: ""
+  },
   "decide-agm.100": {
     en: "Task 1.4 — Set the timing",
     zh: "課題 1.4 — 設定時機"
@@ -2451,15 +2343,15 @@ window.D3A_LANG_ZH = {
   },
   "decide-agm.105": {
     en: "Immediate",
-    zh: ""
+    zh: "立即"
   },
   "decide-agm.106": {
     en: "As acquired",
-    zh: ""
+    zh: "發現即打"
   },
   "decide-agm.107": {
     en: "Planned",
-    zh: ""
+    zh: "計畫"
   },
   "decide-agm.019": {
     en: "Commander agrees: this preempts every other mission. If the engineer team is not engaged immediately we risk losing the bridge.",
@@ -2479,15 +2371,15 @@ window.D3A_LANG_ZH = {
   },
   "decide-agm.115": {
     en: "Immediate",
-    zh: ""
+    zh: "立即"
   },
   "decide-agm.116": {
     en: "As acquired",
-    zh: ""
+    zh: "發現即打"
   },
   "decide-agm.117": {
     en: "Planned",
-    zh: ""
+    zh: "計畫"
   },
   "decide-agm.031": {
     en: "Commander agrees: the section has been located and is unlikely to move, so we can schedule it. We will strike it in coordination with our movement, otherwise we risk the enemy sending another section that we have not located.",
@@ -2507,15 +2399,15 @@ window.D3A_LANG_ZH = {
   },
   "decide-agm.110": {
     en: "Immediate",
-    zh: ""
+    zh: "立即"
   },
   "decide-agm.111": {
     en: "As acquired",
-    zh: ""
+    zh: "發現即打"
   },
   "decide-agm.112": {
     en: "Planned",
-    zh: ""
+    zh: "計畫"
   },
   "decide-agm.033": {
     en: "Commander agrees: the mortars are an imminent danger to our soldiers at the crossing, and they can only be found while they fire, so they preempt every other mission. Waiting loses both the target and our soldiers.",
@@ -2535,15 +2427,15 @@ window.D3A_LANG_ZH = {
   },
   "decide-agm.125": {
     en: "Immediate",
-    zh: ""
+    zh: "立即"
   },
   "decide-agm.126": {
     en: "As acquired",
-    zh: ""
+    zh: "發現即打"
   },
   "decide-agm.127": {
     en: "Planned",
-    zh: ""
+    zh: "計畫"
   },
   "decide-agm.041": {
     en: "Commander agrees: the command post is not an imminent danger to our forces, and no friendly action waits on its destruction, so it does not warrant dropping a higher-priority task. We engage it in its turn on the HPTL, when an asset is free.",
@@ -2885,6 +2777,10 @@ window.D3A_LANG_ZH = {
     en: "There is no formula that produces the order for every target. It comes from what fires have to achieve against that particular target, and from what we can afford to spend doing it. The commander's fires guidance is therefore written for each high-payoff target, and it is given with the target below.",
     zh: "沒有一套公式能為每個目標產生這個順序。它取決於火力對該特定目標必須達成什麼，以及我們能為此付出多少代價。因此指揮官的火力指導是為每一個高效益目標分別擬定，並隨下方的目標一併提供。"
   },
+  "decide-agm.219": {
+    en: "<strong>Attack guidance is not an exact science.</strong> The approved matrix may reflect the opinions of the commander. Two competent staff officers will order the same three assets differently for the same target and both will be able to defend it. The order also turns on something this page has not given you yet — <strong>where the target is</strong>, and how accurately and how recently we have located it. That is the work of the <strong>target selection standards</strong>, on the next page. Target 4 below is the clearest case: read the commander's reasoning, then ask whether you would have written the same order.",
+    zh: ""
+  },
   "decide-agm.169": {
     en: "Task 1.6 — Choose the method",
     zh: "課題 1.6 — 選擇方式"
@@ -3097,8 +2993,8 @@ window.D3A_LANG_ZH = {
     en: "<strong>Alternate, OWA-UAS.</strong> If instead it proves to be a <strong>single mobile command vehicle</strong>, that is a point target, and the drone buys precision and a guaranteed hit on it.",
     zh: ""
   },
-  "decide-agm.219": {
-    en: "<strong>Attack guidance is not an exact science.</strong> The approved matrix may reflect the opinions of the commander. Two competent staff officers will order the same three assets differently for the same target and both will be able to defend it. The order also turns on something this page has not given you yet — <strong>where the target is</strong>, and how accurately and how recently we have located it. That is the work of the <strong>target selection standards</strong>, on the next page. Target 4 below is the clearest case: read the commander's reasoning, then ask whether you would have written the same order.",
+  "decide-agm.257": {
+    en: "This is the order that will be argued about, and it is the one to argue about. Reverse it — drone first, then 155 — and you have a defensible matrix for a different assumption about what the command post turns out to be. What settles it is where the target is and how well we have located it, which is the next page.",
     zh: ""
   },
   "decide-agm.220": {
