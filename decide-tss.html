@@ -25,7 +25,7 @@
       <div class="header-top">
         <div class="site-titles">
           <p class="site-title" data-i18n="decide-tss.001">The Fires Lab</p>
-          <p class="site-strap" data-i18n="decide-tss.002">Mastering Targeting Through Practical Application</p>
+          <p class="site-strap" data-i18n="decide-tss.002">Master Targeting Through Practical Application</p>
         </div>
         <p class="site-sub" data-i18n="decide-tss.233">Decide · Detect · Deliver · Assess</p>
       </div>
@@ -82,12 +82,12 @@
 
     <table class="doc">
       <tbody><tr><th data-i18n="decide-tss.036">Weapon</th><th data-i18n="decide-tss.037">Largest location error it can accept</th></tr>
-      <tr><td data-i18n="decide-tss.038">155&nbsp;mm M109A2 battery</td><td class="num" data-i18n="decide-tss.039">200 m</td></tr>
-      <tr><td data-i18n="decide-tss.040">105 mm M101 howitzer battery</td><td class="num" data-i18n="decide-tss.041">100 m</td></tr>
+      <tr><td data-i18n="decide-tss.038">M109 155&nbsp;mm battery</td><td class="num" data-i18n="decide-tss.039">200 m</td></tr>
+      <tr><td data-i18n="decide-tss.040">M101 105 mm howitzer battery</td><td class="num" data-i18n="decide-tss.041">100 m</td></tr>
       <tr><td data-i18n="decide-tss.042">One-way attack UAS</td><td class="num"><span data-i18n="decide-tss.043">1,000 m</span><button class="flag" data-modal="m-owa-tle" aria-label="Why is this number so large?">?</button></td></tr>
     </tbody></table>
     <p class="src" data-i18n="decide-tss.231">These figures are set for this scenario. They are not published doctrine. The location error a weapon can accept depends on several factors, including its circular error probable, the terrain, and the number of rounds in a given volley.</p>
-    <p data-i18n="decide-tss.044">The 105&nbsp;mm M101 howitzer battery accepts <em>less</em> error than the 155&nbsp;mm howitzer, because a 105&nbsp;mm shell covers less ground than a 155&nbsp;mm shell. The same report can therefore be good enough for one weapon and useless for another.</p>
+    <p data-i18n="decide-tss.044">The M101 105&nbsp;mm howitzer battery accepts <em>less</em> error than the 155&nbsp;mm howitzer, because a 105&nbsp;mm shell covers less ground than a 155&nbsp;mm shell. The same report can therefore be good enough for one weapon and useless for another.</p>
 
     <div class="exercise">
       <div class="exercise-head">
@@ -105,7 +105,7 @@
             </select>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-tss.052"><span class="target-name">Battalion command post — 155 mm M109A2 battery</span><br><span class="target-desc">ESI: “Command-net transmissions, emitter somewhere within about 1 kilometre.”</span></div>
+            <div data-i18n="decide-tss.052"><span class="target-name">Battalion command post — M109 155 mm battery</span><br><span class="target-desc">ESI: “Command-net transmissions, emitter somewhere within about 1 kilometre.”</span></div>
             <select data-answer="refine">
               <option value="" data-i18n="decide-tss.053">— choose —</option>
               <option value="engage" data-i18n="decide-tss.054">Location is good enough — engage</option>
@@ -113,7 +113,7 @@
             </select>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-tss.056"><span class="target-name">120&nbsp;mm mortar platoon — 155 mm M109A2 battery</span><br><span class="target-desc">Long-range ISR UAS: “Tubes in the open, grid read from video. Accurate to about 100 metres.”</span></div>
+            <div data-i18n="decide-tss.056"><span class="target-name">120&nbsp;mm mortar platoon — M109 155 mm battery</span><br><span class="target-desc">Long-range ISR UAS: “Tubes in the open, grid read from video. Accurate to about 100 metres.”</span></div>
             <select data-answer="engage">
               <option value="" data-i18n="decide-tss.057">— choose —</option>
               <option value="engage" data-i18n="decide-tss.058">Location is good enough — engage</option>
@@ -121,7 +121,7 @@
             </select>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-tss.060"><span class="target-name">ATGM section — 105 mm M101 howitzer battery</span><br><span class="target-desc">sUAS: “Possible launcher position on the high ground. Accurate to about 150 metres.”</span></div>
+            <div data-i18n="decide-tss.060"><span class="target-name">ATGM section — M101 105 mm howitzer battery</span><br><span class="target-desc">sUAS: “Possible launcher position on the high ground. Accurate to about 150 metres.”</span></div>
             <select data-answer="refine">
               <option value="" data-i18n="decide-tss.061">— choose —</option>
               <option value="engage" data-i18n="decide-tss.062">Location is good enough — engage</option>
@@ -153,7 +153,7 @@
         <span class="status" data-status="decide-5">NOT DONE</span>
       </div>
       <div class="exercise-body">
-        <p data-i18n="decide-tss.088">Three reports. Each meets its location and timeliness standards. Judge each one on <strong>minimum size only</strong>.</p>
+        <p data-i18n="decide-tss.088">Four reports. Each meets its location and timeliness standards. Judge each one on <strong>minimum size only</strong>.</p>
         <div id="d5-cards">
           <div class="report-card" id="d5-c1" data-answer="engage" data-why="The standard for the mortar platoon is one mortar tube. Two tubes are observed here, which already meets it — any size that can damage the bridge is worth engaging." data-hint="What is the minimum size for the mortar platoon, and how many tubes does this report show?" data-i18n-why="decide-tss.d5-c1.why" data-i18n-hint="decide-tss.d5-c1.hint">
             <h4 data-i18n="decide-tss.089">Report 1 — Long-range ISR UAS</h4>
@@ -187,8 +187,19 @@
             </div>
             <div class="drill-feedback"></div>
           </div>
+
+          <div class="report-card" id="d5-c4" data-answer="hold" data-why="Our standard for the command post is a command vehicle or a structure. Soldiers and a radio are neither. This may be a company command element, or an orders group that will have walked away in ten minutes. Destroying it would not remove the enemy's ability to command his defense." data-hint="Look up the minimum size for the command post, then ask whether this report shows it. Seeing people is not the same as seeing the thing the standard asks for." data-i18n-why="decide-tss.d5-c4.why" data-i18n-hint="decide-tss.d5-c4.hint">
+            <h4 data-i18n="decide-tss.032">Report 4 — Long-range ISR UAS</h4>
+            <p class="meta" data-i18n="decide-tss.222">Target: Battalion command post · Age: 35 minutes · Accuracy: 90 m</p>
+            <p data-i18n="decide-tss.223">“A group of soldiers around a map. A radio is nearby.”</p>
+            <div class="decision-btns">
+              <button data-value="engage" data-i18n="decide-tss.224">Meets minimum size — engage</button>
+              <button data-value="hold" data-i18n="decide-tss.225">Below minimum size — hold and keep watching</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
         </div>
-        <div class="feedback ok" id="decide-5-alldone" style="margin-top:14px;" data-i18n="decide-tss.104"><strong>All three judged correctly.</strong> Minimum size is set by what we gain, not by how many we can count.</div>
+        <div class="feedback ok" id="decide-5-alldone" style="margin-top:14px;" data-i18n="decide-tss.104"><strong>All four judged correctly.</strong> Minimum size is set by what we gain, not by how many we can count. A report can be fresh and accurate and still not show you the target.</div>
       </div>
     </div>
   </div>
@@ -196,15 +207,20 @@
   <!-- ============ Timeliness ============ -->
   <div class="panel">
     <h2 data-i18n="decide-tss.105">Standard 3 — Timeliness</h2>
-    <p data-i18n="decide-tss.106">Timeliness is the clock running on the other two standards. A location that was exact an hour ago describes a place the target has left. A size that was right an hour ago describes a platoon that has since dispersed.</p>
-    <p data-i18n="decide-tss.107">Some targets we watch continuously. For those, timeliness is <strong>zero</strong>: we fire while we still have the target in sight, and the clock starts the moment we lose it. For the rest, the brigade uses a rule:</p>
+    <p data-i18n="decide-tss.106"><strong>The timeliness standard only applies if we are not currently observing the target.</strong> It describes the amount of time a target can last <strong>unobserved</strong> before we decide we may not shoot. A target may move to a different location, causing us to miss if we do not continually observe it.</p>
+    <p data-i18n="decide-tss.107">For targets with the ability to move, shooting without constant observation is <strong>risky</strong>, and the commander must weigh this against <strong>missing the opportunity to engage it</strong>. For targets that continuously move, the timeliness standard is often <strong>zero</strong>.</p>
 
-    <div class="callout-cdr">
-      <h3 data-i18n="decide-tss.108">Extract — 77th Brigade Fire Support SOP</h3>
-      <p data-i18n="decide-tss.109"><strong>Setting timeliness.</strong> Intelligence tells us how often an enemy element relocates. He relocates on a schedule, because he cannot know when we have found him. What intelligence cannot tell us is <em>when he arrived</em>. Our report may have caught him in his first hour in position, or his last.</p>
-      <p data-i18n="decide-tss.110">To manage that risk, this brigade sets timeliness at <strong>one quarter</strong> of the time the element is expected to stay in place. This is not a guarantee. It is the commander accepting that some missions will land on empty ground, in exchange for being able to engage targets that nobody is watching at this moment.</p>
-      <p data-i18n="decide-tss.111">Where an element moves as soon as it is used — a mortar platoon after firing, a reconnaissance team on foot — no fraction is useful. Those targets require <strong>continuous observation</strong>.</p>
+    <div class="seesaw" role="img" aria-label="A see-saw weighing the opportunity to kill the enemy against wasting ammunition and missing the enemy.">
+      <div class="seesaw-label is-left is-good" data-i18n="decide-tss.226">Opportunity to kill the enemy</div>
+      <div class="seesaw-beam">
+        <svg viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <line class="seesaw-plank" x1="14" y1="60" x2="406" y2="60"></line>
+          <polygon class="seesaw-pivot" points="210,58 234,110 186,110"></polygon>
+        </svg>
+      </div>
+      <div class="seesaw-label is-right is-bad" data-i18n="decide-tss.227">Wasting ammunition and missing the enemy</div>
     </div>
+
 
     <div class="exercise">
       <div class="exercise-head">
@@ -212,46 +228,45 @@
         <span class="status" data-status="decide-6">NOT DONE</span>
       </div>
       <div class="exercise-body">
-        <p data-i18n="decide-tss.114">Apply the brigade rule. Each target is shown with the asset that will engage it. Where the S-2 has given you how long the target's situation stays unchanged, take one quarter of it.</p>
         <div id="d6-match">
           <div class="match-row">
-            <div data-i18n="decide-tss.115"><span class="target-name">Engineer obstacle team — 105 mm M101 howitzer battery</span><br><span class="target-desc">The team leaves as soon as the charges are set.</span></div>
-            <select data-answer="track">
-              <option value="" data-i18n="decide-tss.116">— choose —</option>
-              <option value="track" data-i18n="decide-tss.117">Continuous observation — no report accepted</option>
-              <option value="15min" data-i18n="decide-tss.118">Report no older than 15 minutes</option>
-              <option value="6hr" data-i18n="decide-tss.119">Report no older than 6 hours</option>
-              <option value="12hr" data-i18n="decide-tss.120">Report no older than 12 hours</option>
+            <div data-i18n="decide-tss.108"><span class="target-name">Engineering vehicles — M101 105&nbsp;mm howitzer battery</span><br><span class="target-desc">“The vehicles are stopped, on and running. They could move at any moment.”</span></div>
+            <select data-answer="zero">
+              <option value="" data-i18n="decide-tss.109">— choose —</option>
+              <option value="zero" data-i18n="decide-tss.110">Zero — continuous observation</option>
+              <option value="5min" data-i18n="decide-tss.111">5 minutes</option>
+              <option value="1hr" data-i18n="decide-tss.114">1 hour</option>
+              <option value="6hr" data-i18n="decide-tss.115">6 hours</option>
             </select>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-tss.121"><span class="target-name">Mortar platoon — 105 mm M101 howitzer battery</span><br><span class="target-desc">Displaces immediately after every fire mission.*</span><span class="src">* In this scenario, friendly forces do not possess the capability of conducting counterbattery fire missions using counterbattery radar.</span></div>
-            <select data-answer="track">
-              <option value="" data-i18n="decide-tss.122">— choose —</option>
-              <option value="track" data-i18n="decide-tss.123">Continuous observation — no report accepted</option>
-              <option value="15min" data-i18n="decide-tss.124">Report no older than 15 minutes</option>
-              <option value="6hr" data-i18n="decide-tss.125">Report no older than 6 hours</option>
-              <option value="12hr" data-i18n="decide-tss.126">Report no older than 12 hours</option>
+            <div data-i18n="decide-tss.116"><span class="target-name">Mortar platoon — M101 105&nbsp;mm howitzer battery</span><br><span class="target-desc">The mortar platoon displaces immediately following fire missions, but this takes about 10 minutes for a trained team.</span></div>
+            <select data-answer="5min">
+              <option value="" data-i18n="decide-tss.117">— choose —</option>
+              <option value="zero" data-i18n="decide-tss.118">Zero — continuous observation</option>
+              <option value="5min" data-i18n="decide-tss.119">5 minutes</option>
+              <option value="30min" data-i18n="decide-tss.120">30 minutes</option>
+              <option value="1hr" data-i18n="decide-tss.228">1 hour</option>
             </select>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-tss.127"><span class="target-name">ATGM section — 105 mm M101 howitzer battery</span><br><span class="target-desc">Dug in, but a small team that can move quickly. The commander accepts a short window of risk.</span></div>
-            <select data-answer="15min">
-              <option value="" data-i18n="decide-tss.128">— choose —</option>
-              <option value="track" data-i18n="decide-tss.129">Continuous observation — no report accepted</option>
-              <option value="15min" data-i18n="decide-tss.130">Report no older than 15 minutes</option>
-              <option value="6hr" data-i18n="decide-tss.131">Report no older than 6 hours</option>
-              <option value="12hr" data-i18n="decide-tss.132">Report no older than 12 hours</option>
+            <div data-i18n="decide-tss.229"><span class="target-name">ATGM team — M101 105&nbsp;mm howitzer battery</span><br><span class="target-desc">Dismounted and highly mobile.</span></div>
+            <select data-answer="zero">
+              <option value="" data-i18n="decide-tss.230">— choose —</option>
+              <option value="zero" data-i18n="decide-tss.121">Zero — continuous observation</option>
+              <option value="1hr" data-i18n="decide-tss.232">1 hour</option>
+              <option value="6hr" data-i18n="decide-tss.234">6 hours</option>
+              <option value="12hr" data-i18n="decide-tss.235">12 hours</option>
             </select>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-tss.133"><span class="target-name">Battalion command post — 155 mm M109A2 battery</span><br><span class="target-desc">The S-2 assesses the enemy relocates command posts every 24 hours.</span></div>
-            <select data-answer="6hr">
-              <option value="" data-i18n="decide-tss.134">— choose —</option>
-              <option value="track" data-i18n="decide-tss.135">Continuous observation — no report accepted</option>
-              <option value="15min" data-i18n="decide-tss.136">Report no older than 15 minutes</option>
-              <option value="6hr" data-i18n="decide-tss.137">Report no older than 6 hours</option>
-              <option value="12hr" data-i18n="decide-tss.138">Report no older than 12 hours</option>
+            <div data-i18n="decide-tss.237"><span class="target-name">Command post — M109 155&nbsp;mm battery</span><br><span class="target-desc">Intelligence assesses the enemy changes command locations every 48 hours. The commander will accept the risk up to a quarter of its standard relocation time.</span></div>
+            <select data-answer="12hr">
+              <option value="" data-i18n="decide-tss.238">— choose —</option>
+              <option value="zero" data-i18n="decide-tss.240">Zero — continuous observation</option>
+              <option value="1hr" data-i18n="decide-tss.241">1 hour</option>
+              <option value="12hr" data-i18n="decide-tss.244">12 hours</option>
+              <option value="48hr" data-i18n="decide-tss.245">48 hours</option>
             </select>
           </div>
         </div>
@@ -259,39 +274,12 @@
         <div class="feedback" id="d6-feedback"></div>
       </div>
     </div>
-  </div>
+  
 
-  <!-- ============ All three together ============ -->
-  <div class="panel">
-    <h2 data-i18n="decide-tss.140">All three at once</h2>
-    <p data-i18n="decide-tss.141">In the fire support coordination cell (FSCC) no report is checked against one standard. It is checked against all of them, and it must pass every one.</p>
-    <div class="exercise">
-      <div class="exercise-head">
-        <h3 data-i18n="decide-tss.142">Task 1.10 — Judge a real report</h3>
-        <span class="status" data-status="decide-7">NOT DONE</span>
-      </div>
-      <div class="exercise-body">
-        <p data-i18n="decide-tss.144">This report has just arrived. The target is the <strong>battalion command post</strong>, and your attack guidance assigns it to the <strong>155 mm M109A2 battery</strong>. Select <strong>every standard this report fails</strong>. If it passes a standard, leave it unchecked.</p>
-        <div class="callout-cdr">
-          <h3 data-i18n="decide-tss.145">Report — Electronic signals indication</h3>
-          <p class="meta" data-i18n="decide-tss.146">Time of acquisition: 5 hours ago · Accuracy: estimate only — within about 1 km</p>
-          <p data-i18n="decide-tss.147">“Strong repeated command-net transmissions. Estimated emitter location vicinity grid 38&nbsp;42XX&nbsp;65XX.”</p>
-        </div>
-        <div id="d7-choices">
-          <label class="choice"><input type="checkbox" value="tle"><span><span data-i18n="decide-tss.148">It fails <strong>target location error</strong></span><span class="why" data-i18n="decide-tss.149">Correct. The 155 mm M109A2 battery can accept 200 metres. This report gives a circle about a kilometre across. There is nothing to shoot at yet.</span></span></label>
-          <label class="choice"><input type="checkbox" value="size"><span><span data-i18n="decide-tss.150">It fails <strong>minimum size</strong></span><span class="why" data-i18n="decide-tss.151">Correct, and this one is easy to miss. The standard for the command post is a command vehicle or a structure. ESI has seen neither. It has detected a transmission, which tells us a radio is working somewhere inside that area. It does not tell us what is on the ground under it. The report does not answer the minimum size question at all, so it cannot pass it.</span></span></label>
-          <label class="choice"><input type="checkbox" value="time"><span><span data-i18n="decide-tss.152">It fails <strong>timeliness</strong></span><span class="why" data-i18n="decide-tss.153">No — this one passes. The command post standard is 6 hours and the report is 5 hours old. A report can be fresh and still be useless.</span></span></label>
-        </div>
-        <div class="btn-row"><button class="btn" id="d7-check" data-i18n="decide-tss.154">Check Answers</button></div>
-        <div class="feedback" id="d7-feedback"></div>
-      </div>
-    </div>
-
-  </div>
   <!-- ============ the HAT ============ -->
   <div class="panel">
-    <h2 data-i18n="decide-tss.163">The whole worksheet</h2>
-    <p data-i18n="decide-tss.164">You built three products across three pages. In the FSCC they are not three pieces of paper. They are three bands of <strong>one</strong> worksheet, sometimes called the <strong>HAT</strong> — HPTL, AGM, TSS. Read a column downwards and you have the complete instruction for one target: what it is, how good a report must be, and what happens when a report arrives.</p>
+    <h2 data-i18n="decide-tss.163">Combining three tables: HPTL - AGM - TSS</h2>
+    <p data-i18n="decide-tss.164">The High Payoff Target List, Attack Guidance Matrix, and Target Selection Standards can be combined into one table for ease of use. Below is the approved HPTL AGM TSS, often called the “HAT” that we will use for Operation RIVER GATE.</p>
 
     <div class="hat-scroll">
       <table class="hat">
@@ -305,24 +293,24 @@
             <td data-i18n="decide-tss.067">Engineer obstacle team</td><td data-i18n="decide-tss.077">ATGM section</td><td data-i18n="decide-tss.078">120 mm mortar platoon</td><td data-i18n="decide-tss.079">Battalion command post</td>
           </tr>
           <tr class="band-start">
-            <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.087">105 mm M101 howitzer battery</th>
+            <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.087">M101 105 mm howitzer battery</th>
             <th scope="row" class="hat-crit" data-i18n="decide-tss.113"><span>Maximum location error</span></th><td class="data ord" data-i18n="decide-tss.143"><b class="order">2</b>100 m</td><td class="data ord" data-i18n="decide-tss.165"><b class="order">2</b>100 m</td><td class="data ord" data-i18n="decide-tss.166"><b class="order">1</b>100 m</td><td class="data ord" data-i18n="decide-tss.167"><b class="order">3</b>100 m</td>
           </tr>
           <tr>
             <th scope="row" class="hat-crit" data-i18n="decide-tss.168">Minimum size</th><td data-i18n="decide-tss.169">One team with charges</td><td data-i18n="decide-tss.170">One launcher confirmed</td><td data-i18n="decide-tss.171">1 mortar</td><td data-i18n="decide-tss.172">Command vehicle or structure</td>
           </tr>
           <tr>
-            <th scope="row" class="hat-crit" data-i18n="decide-tss.173">Timeliness</th><td data-i18n="decide-tss.174">Continuous observation</td><td data-i18n="decide-tss.175">15 minutes</td><td data-i18n="decide-tss.176">Continuous observation</td><td data-i18n="decide-tss.177">6 hours</td>
+            <th scope="row" class="hat-crit" data-i18n="decide-tss.173">Timeliness</th><td data-i18n="decide-tss.174">Continuous observation</td><td data-i18n="decide-tss.175">Continuous observation</td><td data-i18n="decide-tss.176">5 minutes</td><td data-i18n="decide-tss.177">12 hours</td>
           </tr>
           <tr class="weapon-start">
-            <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.178">155 mm M109A2 battery</th>
+            <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.178">M109 155 mm battery</th>
             <th scope="row" class="hat-crit" data-i18n="decide-tss.179"><span>Maximum location error</span></th><td class="data ord" data-i18n="decide-tss.180"><b class="order">3</b>200 m</td><td class="data ord" data-i18n="decide-tss.181"><b class="order">3</b>200 m</td><td class="data ord" data-i18n="decide-tss.182"><b class="order">2</b>200 m</td><td class="data ord" data-i18n="decide-tss.183"><b class="order">1</b>200 m</td>
           </tr>
           <tr>
             <th scope="row" class="hat-crit" data-i18n="decide-tss.184">Minimum size</th><td data-i18n="decide-tss.185">One team with charges</td><td data-i18n="decide-tss.186">One launcher confirmed</td><td data-i18n="decide-tss.187">2 mortars</td><td data-i18n="decide-tss.188">Command vehicle or structure</td>
           </tr>
           <tr>
-            <th scope="row" class="hat-crit" data-i18n="decide-tss.189">Timeliness</th><td data-i18n="decide-tss.190">Continuous observation</td><td data-i18n="decide-tss.191">15 minutes</td><td data-i18n="decide-tss.192">Continuous observation</td><td data-i18n="decide-tss.193">6 hours</td>
+            <th scope="row" class="hat-crit" data-i18n="decide-tss.189">Timeliness</th><td data-i18n="decide-tss.190">Continuous observation</td><td data-i18n="decide-tss.191">Continuous observation</td><td data-i18n="decide-tss.192">5 minutes</td><td data-i18n="decide-tss.193">12 hours</td>
           </tr>
           <tr class="weapon-start">
             <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.194">One-way attack UAS</th>
@@ -332,7 +320,7 @@
             <th scope="row" class="hat-crit" data-i18n="decide-tss.200">Minimum size</th><td data-i18n="decide-tss.201">One team with charges</td><td data-i18n="decide-tss.202">One launcher confirmed</td><td data-i18n="decide-tss.203">1 mortar</td><td data-i18n="decide-tss.204">Command vehicle or structure</td>
           </tr>
           <tr>
-            <th scope="row" class="hat-crit" data-i18n="decide-tss.205">Timeliness</th><td data-i18n="decide-tss.206">15 minutes</td><td data-i18n="decide-tss.207">1 hour</td><td data-i18n="decide-tss.208">15 minutes</td><td data-i18n="decide-tss.209">6 hours</td>
+            <th scope="row" class="hat-crit"><span data-i18n="decide-tss.205">Timeliness</span><button class="flag" data-modal="m-owa-time" aria-label="Why does the drone get a window when the guns do not?">?</button></th><td data-i18n="decide-tss.206">15 minutes</td><td data-i18n="decide-tss.207">15 minutes</td><td data-i18n="decide-tss.208">5 minutes</td><td data-i18n="decide-tss.209">12 hours</td>
           </tr>
           <tr class="band-start">
             <th scope="row" colspan="2" data-i18n="decide-tss.210">When</th>
@@ -346,17 +334,79 @@
       </table>
     </div>
     <p class="hat-legend" data-i18n="decide-tss.239"><b class="order">1</b> <span>The yellow number on each location error cell is the <strong>attack order</strong> you set in 1B. Read it <em>down</em> a column: against that one target, 1 is the primary means, 2 the alternate, 3 the tertiary. The same weapon can be the alternate for more than one target.</span></p>
-    <p data-i18n="decide-tss.242">The three heavy lines divide the three products. The top band is the <strong>HPTL</strong> you built in 1A. The middle band is the <strong>TSS</strong> from 1C. The bottom band is the <strong>AGM</strong> from 1B.</p>
-    <p data-i18n="decide-tss.243">The middle band gives every weapon its own block of standards, because the standards are not the same for every weapon. Read one block across and you have the rule for that weapon against all four targets. Read one column down through all three blocks and you have every rule that applies to that target.</p>
+  </div>
 
-    <p data-i18n="decide-tss.220">The worksheet is finished and the commander approves it. One step is left before the fighting starts: turning an approved worksheet into a plan for this ground, at this hour.</p>
+  <!-- ============ HAT practice ============ -->
+  <div class="panel">
+    <h2 data-i18n="decide-tss.128">HPTL-AGM-TSS of HAT Practice</h2>
+    <p data-i18n="decide-tss.129">Use the HAT to determine the following, as if you were approving or sending fire missions in current operations.</p>
 
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="decide-tss.130">Task 1.10 — Approve the fire mission</h3>
+        <span class="status" data-status="decide-13">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="decide-tss.131">Three reports have arrived. Check each one against the worksheet above and decide what to engage it with. A weapon is only an option if the report clears <em>every</em> standard in that weapon's block. Check each row as you go.</p>
+        <div id="d13-match">
+
+          <div class="match-row">
+            <div data-i18n="decide-tss.132"><span class="target-name">1. 120&nbsp;mm mortar platoon</span><br><span class="target-desc">An enemy mortar position, spotted 15 minutes ago by long-range ISR that has since flown home to recharge its batteries. Location accurate to 50&nbsp;m.</span></div>
+            <div>
+              <select data-answer="none" aria-label="Engage the mortar platoon with">
+                <option value="" data-i18n="decide-tss.133">— choose —</option>
+                <option value="none" data-i18n="decide-tss.134">Do not engage</option>
+                <option value="105" data-i18n="decide-tss.135">M101 105&nbsp;mm howitzer battery</option>
+                <option value="155" data-i18n="decide-tss.136">M109 155&nbsp;mm battery</option>
+                <option value="owa" data-i18n="decide-tss.137">One-way attack UAS</option>
+              </select>
+              <div class="btn-row"><button class="btn row-check" data-i18n="decide-tss.138">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-tss.140">The location is not the problem. 50&nbsp;m is inside every location error on the worksheet, so all three weapons would accept the grid. <strong>Timeliness is what fails.</strong> The mortar platoon is allowed 5 minutes against all three weapons, because five minutes is how long it takes them to leave, and this report is already 15 minutes old. The ISR that found them has gone home, so nobody is watching that grid now. Whatever we fire lands on a position they have left. Do not engage: send it back and task a sensor to find them again.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="decide-tss.141"><span class="target-name">2. Battalion command post</span><br><span class="target-desc">Human intelligence reports the position of enemy command tents, with key leaders seen entering 6 hours ago. Location accurate to 50&nbsp;m.</span></div>
+            <div>
+              <select data-answer="155" aria-label="Engage the command post with">
+                <option value="" data-i18n="decide-tss.142">— choose —</option>
+                <option value="none" data-i18n="decide-tss.144">Do not engage</option>
+                <option value="105" data-i18n="decide-tss.145">M101 105&nbsp;mm howitzer battery</option>
+                <option value="155" data-i18n="decide-tss.146">M109 155&nbsp;mm battery</option>
+                <option value="owa" data-i18n="decide-tss.147">One-way attack UAS</option>
+              </select>
+              <div class="btn-row"><button class="btn row-check" data-i18n="decide-tss.148">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-tss.149">Every standard passes, and that is the point of this one. 50&nbsp;m is inside all three location errors. Command tents with key leaders answer the minimum size, which asks for a command vehicle or a structure. The command post is allowed 12 hours, so a report 6 hours old is still good. <strong>When more than one weapon is permitted, the attack order decides.</strong> Read the command post column down the location error cells: the M109 155&nbsp;mm battery carries the 1, so it is the primary means.</p>
+          </div>
+
+          <div class="match-row">
+            <div data-i18n="decide-tss.150"><span class="target-name">3. ATGM section</span><br><span class="target-desc">A small UAS is looking at the ATGM position right now. We are out of one-way attack drones. Location accurate to 200&nbsp;m.</span></div>
+            <div>
+              <select data-answer="155" aria-label="Engage the ATGM section with">
+                <option value="" data-i18n="decide-tss.151">— choose —</option>
+                <option value="none" data-i18n="decide-tss.152">Do not engage</option>
+                <option value="105" data-i18n="decide-tss.153">M101 105&nbsp;mm howitzer battery</option>
+                <option value="155" data-i18n="decide-tss.154">M109 155&nbsp;mm battery</option>
+              </select>
+              <div class="btn-row"><button class="btn row-check" data-i18n="decide-tss.220">Check answer</button></div>
+            </div>
+            <p class="row-note always" data-i18n="decide-tss.236">Timeliness passes: the ATGM section demands continuous observation from a gun, and the small UAS is watching it as the report arrives. Now walk the attack order down that column. The drone is the primary means, and we have none left. The M101 105&nbsp;mm howitzer battery is next, but it accepts only 100&nbsp;m and this report is 200&nbsp;m, so it is out on location error. The M109 155&nbsp;mm battery accepts 200&nbsp;m, which this report just meets. <strong>That is what the order is for:</strong> walk down it until you reach a weapon that is both available and inside its own standards.</p>
+          </div>
+
+        </div>
+        <div class="feedback" id="d13-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="page-nav">
       <a class="btn secondary" href="decide-agm.html" data-i18n="decide-tss.155">← Attack Guidance Matrix</a>
       <a class="btn" href="decide-sync.html" data-i18n="decide-tss.221">Next: Target Synchronization Matrix →</a>
     </div>
   </div>
-</main>
+</div></main>
 
 <!-- ---------- flagged-cell explanations ---------- -->
 <div class="modal" id="m-owa-tle">
@@ -370,11 +420,22 @@
   </div>
 </div>
 
+<div class="modal" id="m-owa-time">
+  <div class="modal-box">
+    <h4 data-i18n="decide-tss.122">Why does the drone get a window when the guns do not?</h4>
+    <p data-i18n="decide-tss.123">Timeliness asks how long a report stays good enough to act on. Against a gun that is a question about the target alone. A gun fires at a grid, so if the team has moved off that grid, the shells land on empty ground.</p>
+    <p data-i18n="decide-tss.124">A one-way attack UAS is not fired at a grid. It is flown to the area, it searches, and the operator puts it onto the target he can see. A report fifteen minutes old is still worth launching on, because the drone does the finding when it arrives.</p>
+    <p data-i18n="decide-tss.125">So the two targets that demand continuous observation from the guns can be given a fifteen minute window against the drone. It is the same fact that gives the drone the loosest location error on this worksheet: the drone searches, and the gun does not.</p>
+    <p data-i18n="decide-tss.126">Fifteen minutes is set for this scenario, as the location error is. Ask what your own unit uses.</p>
+    <div class="btn-row"><button class="btn modal-close" data-i18n="decide-tss.127">Close</button></div>
+  </div>
+</div>
+
 <script src="js/lang-zh.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script>
-D3A.registerPage('decide', ['decide-4','decide-5','decide-6','decide-7']);
+D3A.registerPage('decide', ['decide-4','decide-5','decide-6','decide-13']);
 
 D3A.initSelectMatch({
   containerId: 'd4-match', checkBtnId: 'd4-check', feedbackId: 'd4-feedback',
@@ -390,16 +451,15 @@ D3A.initDecisionCards({
 D3A.initSelectMatch({
   containerId: 'd6-match', checkBtnId: 'd6-check', feedbackId: 'd6-feedback',
   exerciseId: 'decide-6',
-  explainOk: 'Timeliness does not follow importance. It follows how long the target\'s situation stays true. The engineers and the mortars are allowed nothing at all, because both leave as soon as they have done their work. The ATGM section can move, so it gets minutes. Only the command post, which relocates on a 24-hour cycle, earns hours.',
-  explainBad: 'Only the command post row gives you a time to quarter. For the rest, judge how quickly that target can change its situation once it has been found.'
+  explainOk: 'Timeliness does not follow importance. It follows how long the target\'s situation stays true. The engineering vehicles are allowed nothing at all — they are running, and the moment we look away they may be somewhere else. The ATGM team is allowed nothing either, for the same reason by a different route: a dismounted team carries what it needs and can be gone on foot between one look and the next. The mortars give us a five minute window because that is how long they take to leave. Only the command post stays put long enough to put a number on it, and there a quarter of its relocation time is a risk the commander will accept.',
+  explainBad: 'Read the supplementary text beside each target again — it tells you what you need — then try again.'
 });
 
-D3A.initMultiSelect({
-  containerId: 'd7-choices', checkBtnId: 'd7-check', feedbackId: 'd7-feedback',
-  exerciseId: 'decide-7',
-  correct: ['tle','size'],
-  explainOk: 'This is the honest state of most reports: fresh, and still not enough to shoot. Send it back and cross-cue a sensor that can give you a point and a sighting. That is exactly the job waiting for you in Phase 2.',
-  explainBad: 'Check each standard separately. Ask of each: does this report answer that question, and is the answer good enough for the 155 mm M109A2 battery?'
+D3A.initSelectMatch({
+  containerId: 'd13-match', feedbackId: 'd13-feedback',
+  exerciseId: 'decide-13',
+  explainOk: 'All three answers came out of the same table. A report has to clear every standard in a weapon\'s block before that weapon is an option at all, and only then does the attack order decide which of the survivors goes. A target being important does not move it up the list, and a weapon being first on the list does not excuse a standard it fails.',
+  explainBad: 'Take one row at a time and one standard at a time. For the weapon you are considering, ask in order: is the location inside its error, is the target big enough, and is the report still young enough? A weapon that fails any one of the three is out, whatever the attack order says. Only when two or more weapons survive does the order break the tie.'
 });
 </script>
 

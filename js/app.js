@@ -102,7 +102,7 @@ const D3A = (() => {
   const PHASES = {
     scenario: ['scenario-1'],
     decide:  ['decide-1', 'decide-2', 'decide-3',
-              'decide-4', 'decide-5', 'decide-6', 'decide-7',
+              'decide-4', 'decide-5', 'decide-6', 'decide-13',
               'decide-8', 'decide-9', 'decide-10',
               'decide-11', 'decide-12'],
     /* Detect came back on 2026-08-24 with Task 2.1, the collection plan.
@@ -130,7 +130,7 @@ const D3A = (() => {
      own checkmark independently of the phase tab above it. */
   const SUBPAGES = {
     'decide.html':     ['decide-1', 'decide-2', 'decide-3'],
-    'decide-tss.html': ['decide-4', 'decide-5', 'decide-6', 'decide-7'],
+    'decide-tss.html': ['decide-4', 'decide-5', 'decide-6', 'decide-13'],
     'decide-agm.html': ['decide-8', 'decide-9', 'decide-10'],
     'decide-sync.html': ['decide-11', 'decide-12'],
     /* Detect's second-level nav, added 2026-08-27. 2B (F2T2EA) carries
@@ -921,11 +921,98 @@ const D3A = (() => {
     fb.innerHTML = '<strong>' + lead + '</strong> ' + body;
   }
 
+
+  /* ---------------------------------------------------------------
+     Asset status pies on the Deliver timeline.
+
+     Every event that carries a clock time also carries data-min, the
+     offset in minutes from T=0 (negative before H-hour). From that one
+     number plus a firing schedule we can say what each firing asset was
+     doing at that moment, so the student sees the guns go off line and
+     come back as the operation runs.
+
+     A tube asset is off line for `recover` minutes after it fires:
+     displace, re-occupy, lay in again. The red wedge is the share of
+     that wait still to run, so it is a full circle the moment the
+     rounds leave and shrinks to nothing as the battery comes back.
+
+     A drone unit is counted, not timed. It spends airframes when it
+     launches, and `downFrom` takes the whole unit off line for good
+     when the scenario breaks it.
+
+     Nothing here is stored or graded. It is a read-out of the scenario,
+     redrawn on a language switch like every other runtime string.
+     --------------------------------------------------------------- */
+  function initAssetStatus(cfg) {
+    const rows = [...document.querySelectorAll('li.ev[data-min]')];
+    if (!rows.length || !cfg || !cfg.assets) return;
+    const assets = cfg.assets.map(a =>
+      Object.assign({}, a, { fires: (a.fires || []).slice().sort((x, y) => x - y) }));
+
+    function stateOf(a, now) {
+      if (a.stock != null) {
+        if (a.downFrom != null && now >= a.downFrom) {
+          return { deg: 360, cls: 'is-down', note: t('ui.assetmalf', 'Malfunction') };
+        }
+        const gone = (a.sorties || []).reduce((n, s) => n + (s.at <= now ? s.n : 0), 0);
+        return { deg: 0, cls: 'is-ready',
+                 note: t('ui.assetdrones', '{n} of {total} drones',
+                         { n: a.stock - gone, total: a.stock }) };
+      }
+      let last = null;
+      a.fires.forEach(f => { if (f <= now) last = f; });
+      if (last === null || now - last >= a.recover) {
+        return { deg: 0, cls: 'is-ready', note: t('ui.assetavail', 'Available') };
+      }
+      const remain = a.recover - (now - last);
+      return { deg: Math.max(1, Math.round(360 * remain / a.recover)), cls: 'is-recovering',
+               note: t('ui.assetback', 'Back in {n} min', { n: remain }) };
+    }
+
+    function draw() {
+      rows.forEach(li => {
+        const time = li.querySelector('.ev-time');
+        if (!time) return;
+        const old = li.querySelector(':scope > .asset-status');
+        if (old) old.remove();
+        const now = Number(li.dataset.min);
+        if (!isFinite(now)) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'asset-status';
+        assets.forEach(a => {
+          const st = stateOf(a, now);
+          const item = document.createElement('div');
+          item.className = 'as-item ' + st.cls;
+          const pie = document.createElement('span');
+          pie.className = 'as-pie';
+          pie.style.setProperty('--as-deg', st.deg + 'deg');
+          const text = document.createElement('span');
+          text.className = 'as-text';
+          const lab = document.createElement('span');
+          lab.className = 'as-label';
+          lab.textContent = t(a.labelKey, a.label);
+          const note = document.createElement('span');
+          note.className = 'as-note';
+          note.textContent = st.note;
+          text.appendChild(lab); text.appendChild(note);
+          item.appendChild(pie); item.appendChild(text);
+          /* one sentence for a screen reader, since the wedge says nothing */
+          item.setAttribute('aria-label', t(a.labelKey, a.label) + ': ' + st.note);
+          wrap.appendChild(item);
+        });
+        time.insertAdjacentElement('afterend', wrap);
+      });
+    }
+
+    draw();
+    document.addEventListener('d3a:langchange', draw);
+  }
+
   initModals();
 
   return { registerPage, complete, isComplete, resetAll, refreshUI, PHASES, PARKED,
            initTimeline,
            initMultiSelect, initSingleSelect, initSortList, initSelectMatch, initDecisionCards,
-           initStepLadder, initWorkbench, initTargetEvents,
+           initStepLadder, initWorkbench, initTargetEvents, initAssetStatus,
            get storageAvailable() { return store.available; } };
 })();

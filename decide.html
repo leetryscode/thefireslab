@@ -25,7 +25,7 @@
       <div class="header-top">
         <div class="site-titles">
           <p class="site-title" data-i18n="decide.001">The Fires Lab</p>
-          <p class="site-strap" data-i18n="decide.002">Mastering Targeting Through Practical Application</p>
+          <p class="site-strap" data-i18n="decide.002">Master Targeting Through Practical Application</p>
         </div>
         <p class="site-sub" data-i18n="decide.055">Decide · Detect · Deliver · Assess</p>
       </div>
@@ -78,23 +78,11 @@
   </div>
 
   <div class="panel">
-    <h2 data-i18n="decide.031">The eight enemy elements — the HVT list</h2>
-    <p data-i18n="decide.032">All eight elements from the S-2's list are in the key below. Neither the map nor the key tells you which ones are high-payoff targets. That is your decision in the tasks below.</p>
-    <figure class="map-figure">
+    <h2 data-i18n="decide.031">Nominating High Payoff Targets from the High Value Target List</h2>
+    <figure class="map-figure is-small">
       <div class="map-frame"><img class="map-img" src="img/kordan-situation-map.jpg" width="694" height="693" alt="Situation map of the Kordan bridge sector, showing the coordinated fire line, the restricted fire area and the retain task at the bridge, and the suspected enemy locations."></div>
       <figcaption class="map-caption"><span data-i18n="decide.033">The map depicts an estimate of the enemy situation. The <strong>?</strong> icons represent our estimate of suspected enemy locations. </span><a href="scenario.html" data-i18n="decide.034">Open the full map and its complete key</a></figcaption>
     </figure>
-    <table class="map-key">
-      <tbody><tr><th data-i18n="decide.036">Element</th><th data-i18n="decide.037">Where it sits</th></tr>
-      <tr><td data-i18n="decide.038">Ammunition supply point</td><td data-i18n="decide.039">Well to the rear, 6 km behind the river. Holds the mortar and ATGM ammunition.</td></tr>
-      <tr><td data-i18n="decide.040">ATGM section</td><td data-i18n="decide.041">Dug in on the high ground overlooking the crossing.</td></tr>
-      <tr><td data-i18n="decide.042">Field kitchen</td><td data-i18n="decide.043">Furthest back of all, with the rear-area trains.</td></tr>
-      <tr><td data-i18n="decide.044">Engineer obstacle team</td><td data-i18n="decide.045">On the bridge itself.</td></tr>
-      <tr><td data-i18n="decide.046">Battalion command post</td><td data-i18n="decide.047">Assessed in the treeline, about 4 km behind the river. Not located. Relocates every 24 hours.</td></tr>
-      <tr><td data-i18n="decide.048">Logistics trucks</td><td data-i18n="decide.049">Move along the road at night between the supply point and the fighting positions.</td></tr>
-      <tr><td data-i18n="decide.052">120 mm mortar platoon</td><td data-i18n="decide.053">Deepest of the fighting elements, but still close enough to reach the bridge.</td></tr>
-      <tr><td data-i18n="decide.104">Infantry platoon</td><td data-i18n="decide.105">In prepared positions beyond the bridge, on the ground our assault must cross after the crossing.</td></tr>
-    </tbody></table>
   </div>
 
   <!-- decide-1: nominate the HPTs -->
@@ -105,7 +93,8 @@
         <span class="status" data-status="decide-1">NOT DONE</span>
       </div>
       <div class="exercise-body">
-        <p data-i18n="decide.056">Review the commander's guidance on the Scenario page. From the S-2's HVT list, select the elements that should become <strong>HPTs</strong>. Remember: ammunition is limited, the attack is in 48 hours, and every mission must serve the plan to seize the bridge intact.</p>
+        <p data-i18n="decide.056">From the S-2's HVT list, select the elements that should become <strong>HPTs</strong>. Remember: ammunition is limited, the attack is in 48 hours, and every mission must serve the plan to seize the bridge intact.</p>
+        <div class="btn-row"><button class="btn secondary" type="button" data-modal="m-cdr-guidance" data-i18n="decide.032">Review the commander's guidance</button></div>
         <div id="d1-choices">
           <label class="choice"><input type="checkbox" value="asp"><span><span data-i18n="decide.057">Ammunition supply point</span><span class="why" data-i18n="decide.058">Your commander rejected this as an HPT — and this is the hardest one. It is a real military target, it holds the mortar ammunition, and the commander wants the mortars silenced. But the enemy already has <strong>three days of ammunition forward at his firing positions</strong>. Destroying the ASP would not stop one mortar round during our 48 hours. High value to the enemy, no payoff for us in this fight. It stays on the HVT list and can be nominated later.</span></span></label>
           <label class="choice"><input type="checkbox" value="atgm"><span><span data-i18n="decide.059">ATGM section</span><span class="why" data-i18n="decide.060">HPT — must be destroyed before our lead vehicles are exposed at the bridge.</span></span></label>
@@ -152,16 +141,7 @@
       <div class="exercise-body">
         <p data-i18n="decide.086">Put the five HPTs in priority order using the ▲ and ▼ buttons. Everything you need is in the commander's guidance:</p>
 
-        <div class="callout-cdr">
-          <h3 data-i18n="decide.087">Reminder — Brigade Commander's Guidance</h3>
-          <p data-i18n="decide.088">“My intent is to seize the Kordan bridge <strong>intact</strong> and cross before the enemy can react. To do that, fires must accomplish three things:</p>
-          <ol>
-            <li data-i18n="decide.097"><strong>Protect the bridge</strong> — stop the enemy engineers before they can drop it.</li>
-            <li data-i18n="decide.098"><strong>Disrupt enemy indirect fire</strong> — do not allow the enemy to use mortars on friendly units as we are forced to concentrate near the bridge.</li>
-                        <li data-i18n="decide.100"><strong>Disrupt enemy command and control</strong> — there is a significant risk the enemy will request indirect artillery fire or reinforcements when he learns friendly forces are concentrated near the bridge. We must disrupt his command and communications network to mitigate this risk.</li>
-          </ol>
-          <p data-i18n="decide.101">Nothing may be allowed to stop a vehicle on the bridge. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”</p>
-        </div>
+        <div class="btn-row"><button class="btn secondary" type="button" data-modal="m-cdr-reminder" data-i18n="decide.043">Review the commander's guidance</button></div>
 
         <p data-i18n="decide.102">His three requirements are already in priority order — but you have <strong>four</strong> targets, and the fourth is not simply added to the bottom. Read the last paragraph again and ask which losses would <em>end</em> the mission, and which would only hurt.</p>
         <ul class="sortlist" id="d3-list">
@@ -181,6 +161,38 @@
     </div>
   </div>
 </main>
+
+<!-- ---------- the commander's guidance, verbatim from scenario.html ---------- -->
+<!-- ---------- Task 1.3: the same guidance, with the ATGM paragraph the puzzle turns on ---------- -->
+<div class="modal" id="m-cdr-reminder">
+  <div class="modal-box">
+    <h4 data-i18n="decide.044">Reminder — Brigade Commander's Guidance</h4>
+    <p data-i18n="decide.045">“My intent is to seize the Kordan bridge <strong>intact</strong> and cross before the enemy can react. To do that, fires must accomplish three things:</p>
+    <ol>
+    <li data-i18n="decide.046"><strong>Protect the bridge</strong> — stop the enemy engineers before they can drop it.</li>
+    <li data-i18n="decide.047"><strong>Disrupt enemy indirect fire</strong> — do not allow the enemy to use mortars on friendly units as we are forced to concentrate near the bridge.</li>
+    <li data-i18n="decide.048"><strong>Disrupt enemy command and control</strong> — there is a significant risk the enemy will request indirect artillery fire or reinforcements when he learns friendly forces are concentrated near the bridge. We must disrupt his command and communications network to mitigate this risk.</li>
+    </ol>
+    <p data-i18n="decide.049">Nothing may be allowed to stop a vehicle on the bridge. A single burning vehicle on that bridge and we have done the enemy's demolition for him — we will have seized a crossing we cannot cross. The ATGM section is the only thing in his order of battle that can do that, and it is already laid on the crossing. The ATGM team must not be able to affect my vehicles as they cross that <em>chokepoint</em>. Ammunition is limited — every mission must serve this plan.”</p>
+    <div class="btn-row"><button class="btn modal-close" data-i18n="decide.050">Close</button></div>
+  </div>
+</div>
+
+<div class="modal" id="m-cdr-guidance">
+  <div class="modal-box">
+    <h4 data-i18n="decide.035">Brigade Commander's Targeting Guidance</h4>
+    <p data-i18n="decide.036">“Fires must accomplish three things for me:</p>
+    <ol>
+      <li data-i18n="decide.037"><strong>Protect the bridge</strong> — stop the enemy engineers before they can drop it or block it.</li>
+      <li data-i18n="decide.038"><strong>Disrupt enemy indirect fire</strong> — do not allow the enemy to use mortars on friendly units as we are forced to concentrate near the bridge.</li>
+      <li data-i18n="decide.039"><strong>Disrupt enemy command and control</strong> — there is a significant risk the enemy will request indirect artillery fire or reinforcements when he learns friendly forces are concentrated near the bridge. We must disrupt his command and communications network to mitigate this risk.</li>
+    </ol>
+    <p data-i18n="decide.040"><strong>Restriction on fires near the bridge.</strong> “No cratering munitions on or near the bridge — nothing that could damage the span, the abutments, or the approach road. Artillery and mortars are forbidden inside 300 metres of the bridge.”</p>
+    <p class="src" data-i18n="decide.041">From the Scenario page. This is the commander's own wording.</p>
+    <div class="btn-row"><button class="btn modal-close" data-i18n="decide.042">Close</button></div>
+  </div>
+</div>
+
 
 <script src="js/lang-zh.js"></script>
 <script src="js/i18n.js"></script>

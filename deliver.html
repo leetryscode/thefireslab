@@ -25,7 +25,7 @@
       <div class="header-top">
         <div class="site-titles">
           <p class="site-title" data-i18n="deliver.001">The Fires Lab</p>
-          <p class="site-strap" data-i18n="deliver.002">Mastering Targeting Through Practical Application</p>
+          <p class="site-strap" data-i18n="deliver.002">Master Targeting Through Practical Application</p>
         </div>
         <p class="site-sub" data-i18n="deliver.003">Decide · Detect · Deliver · Assess</p>
       </div>
@@ -151,7 +151,7 @@
 
 
     <ol class="timeline" id="timeline">
-        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="find">
+        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="find" data-min="-225">
           <p class="ev-time" data-i18n="deliver.020">T-3:45</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.021">The long-range ISR UAS acquires a bulldozer and other construction equipment headed north toward the intersection in NAI 2. No personnel are visible. The vehicles look suspicious, but it is uncertain who they are or what they intend.</p>
@@ -165,7 +165,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="target">
+        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="target" data-min="-220">
           <p class="ev-time" data-i18n="deliver.028">T-3:40</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.029">The vehicles stop at the intersection. A group of personnel exit the vehicles and appear to be having a meeting. We can now clearly see uniforms and they appear to be armed with rifles.</p>
@@ -186,8 +186,8 @@
             <p class="tev-act">
               <select data-answer="105" aria-label="Asset to engage the engineer team">
                 <option value="" data-i18n="deliver.036">— choose —</option>
-                <option value="105" data-i18n="deliver.037">105 mm M101 howitzer battery</option>
-                <option value="155" data-i18n="deliver.038">155 mm M109A2 battery</option>
+                <option value="105" data-i18n="deliver.037">M101 105 mm howitzer battery</option>
+                <option value="155" data-i18n="deliver.038">M109 155 mm battery</option>
                 <option value="owa" data-i18n="deliver.039">One-way attack UAS</option>
               </select>
               <button class="btn row-check" data-i18n="deliver.040">Check</button>
@@ -201,7 +201,7 @@
             <p class="row-note bad" data-for="155" data-i18n="deliver.043">The 155 mm battery is third for this target and is not on line until T-2.</p>
           </div>
         </li>
-        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="engage">
+        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="engage" data-min="-210">
           <p class="ev-time" data-i18n="deliver.044">T-3:30</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.045">The fire order has been sent to the firing unit.</p>
@@ -214,10 +214,10 @@
 
           </div>
         </li>
-        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="assess">
+        <li class="ev tev" data-hour="1" data-target="engineers" data-answer="assess" data-min="-205">
           <p class="ev-time" data-i18n="deliver.048">T-3:25</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.049">The 105 mm M101 howitzer battery engages the target. The long-range ISR UAS observes and records all of the engineering vehicles catching fire and becoming immobile.</p>
+            <p class="ev-report" data-i18n="deliver.049">The M101 105 mm howitzer battery engages the target. The long-range ISR UAS observes and records all of the engineering vehicles catching fire and becoming immobile.</p>
             <p class="ev-q" data-i18n="deliver.050">Update the target tracker: move the <strong>engineer team</strong> box, then check.</p>
             <p class="tev-act"><button class="btn row-check" data-i18n="deliver.051">Check</button></p>
             <p class="tev-msg"></p>
@@ -228,7 +228,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="1" data-target="atgm" data-answer="find">
+        <li class="ev tev" data-hour="1" data-target="atgm" data-answer="find" data-min="-190">
           <p class="ev-time" data-i18n="deliver.054">T-3:10</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.055">The Scout team identifies four heat signatures across the river inside TAI 1. The battery of the small UAS was about to die, so the sUAS was forced to return before investigating further. The Scout team reports it will be 20 minutes before another drone can be launched.</p>
@@ -241,7 +241,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="2" data-target="atgm" data-answer="fix">
+        <li class="ev tev" data-hour="2" data-target="atgm" data-answer="fix" data-min="-170">
           <p class="ev-time" data-i18n="deliver.059">T-2:50</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.060">The Scout team's sUAS has returned and now identifies the four individuals sheltering in a fighting position with what appears to be a rocket launcher. The sUAS returns for more battery shortly after the report is sent.</p>
@@ -254,7 +254,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="2">
+        <li class="ev tev" data-hour="2" data-min="-150">
           <p class="ev-time" data-i18n="deliver.064">T-2:30</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.065">The Scout team's sUAS has returned and has observation of the ATGM section.</p>
@@ -263,7 +263,7 @@
               <select data-answer="observe" aria-label="Action for the ATGM section">
                 <option value="" data-i18n="deliver.067">— choose —</option>
                 <option value="owa" data-i18n="deliver.068">Send an immediate one-way attack UAS fire mission</option>
-                <option value="105" data-i18n="deliver.069">Send an immediate 105 mm M101 howitzer mission</option>
+                <option value="105" data-i18n="deliver.069">Send an immediate M101 105 mm howitzer mission</option>
                 <option value="observe" data-i18n="deliver.070">Continue to observe the target</option>
               </select>
               <button class="btn row-check" data-i18n="deliver.071">Check</button>
@@ -287,7 +287,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="3" data-target="atgm" data-answer="engage">
+        <li class="ev tev" data-hour="3" data-target="atgm" data-answer="engage" data-min="-75">
           <p class="ev-time" data-i18n="deliver.018">T-1:15</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.019">We send a fire mission to the one-way attack UAS unit with a time on target of T-1:00. The drones must not strike before that time. The unit acknowledges and launches two drones.</p>
@@ -301,7 +301,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="3" data-target="engineers2" data-answer="target" data-reveal-row="engineers2">
+        <li class="ev tev" data-hour="3" data-target="engineers2" data-answer="target" data-reveal-row="engineers2" data-min="-67">
           <p class="ev-time" data-i18n="deliver.084">T-1:07</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.085">The Scout team observes two groups of uniformed personnel approaching the bridge. They are carrying bags and wire. It appears as if they may be attempting to destroy the bridge.</p>
@@ -315,7 +315,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="3">
+        <li class="ev tev" data-hour="3" data-min="-66">
           <p class="ev-time" data-i18n="deliver.093">T-1:06</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.094">Two targets are now live at the same time.</p>
@@ -336,7 +336,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="3">
+        <li class="ev tev" data-hour="3" data-min="-65">
           <p class="ev-time" data-i18n="deliver.102">T-1:05</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.103">The enemy engineer team is on the bridge.</p>
@@ -344,8 +344,8 @@
             <p class="tev-act">
               <select data-answer="owa" aria-label="Asset to engage the second engineer team">
                 <option value="" data-i18n="deliver.105">— choose —</option>
-                <option value="105" data-i18n="deliver.106">105 mm M101 howitzer battery</option>
-                <option value="155" data-i18n="deliver.107">155 mm M109A2 battery</option>
+                <option value="105" data-i18n="deliver.106">M101 105 mm howitzer battery</option>
+                <option value="155" data-i18n="deliver.107">M109 155 mm battery</option>
                 <option value="owa" data-i18n="deliver.254">One-way attack UAS</option>
               </select>
               <button class="btn row-check" data-i18n="deliver.255">Check</button>
@@ -358,7 +358,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="3">
+        <li class="ev tev" data-hour="3" data-min="-64">
           <p class="ev-time" data-i18n="deliver.258">T-1:04</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.259">The one-way attack UAS unit reports a malfunction and cannot launch any more drones. The two drones already in the air are on their way to the ATGM section.</p>
@@ -403,7 +403,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-target="engineers2" data-answer="assess">
+        <li class="ev tev" data-hour="4" data-target="engineers2" data-answer="assess" data-min="-60">
           <p class="ev-time" data-i18n="deliver.309">T-1:00</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.310">The Scout team observes the drone strike on the bridge. It reports that all of Engineer team 2 appear to be dead and that the bridge is safe.</p>
@@ -418,7 +418,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4">
+        <li class="ev tev" data-hour="4" data-min="-59">
           <p class="ev-time" data-i18n="deliver.316">T-0:59</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.317">The ATGM section still has to be engaged. The Scout team's sUAS has 15 minutes of battery left.</p>
@@ -426,24 +426,24 @@
             <p class="tev-act">
               <select data-answer="105" aria-label="Asset to engage the ATGM section">
                 <option value="" data-i18n="deliver.319">— choose —</option>
-                <option value="105" data-i18n="deliver.320">105 mm M101 howitzer battery</option>
-                <option value="155" data-i18n="deliver.321">155 mm M109A2 battery</option>
+                <option value="105" data-i18n="deliver.320">M101 105 mm howitzer battery</option>
+                <option value="155" data-i18n="deliver.321">M109 155 mm battery</option>
               </select>
               <button class="btn row-check" data-i18n="deliver.322">Check</button>
             </p>
             <p class="tev-msg"></p>
             <div class="row-note always">
               <p class="tev-verdict"></p>
-              <p data-i18n="deliver.323">We have a HAT and a synchronization matrix for exactly this reason. On the HAT the <strong>105 mm M101 howitzer battery</strong> is the alternate against the ATGM section, behind the drone. On the matrix it comes onto that target at T-1:00, so it is on line and tasked for this.</p>
+              <p data-i18n="deliver.323">We have a HAT and a synchronization matrix for exactly this reason. On the HAT the <strong>M101 105 mm howitzer battery</strong> is the alternate against the ATGM section, behind the drone. On the matrix it comes onto that target at T-1:00, so it is on line and tasked for this.</p>
               <p data-i18n="deliver.324">The 155 mm battery is third against this target, and the matrix has it committed to the mortars and the command post from T-2. It is not available.</p>
               <p data-i18n="deliver.325">The ATGM section sits outside the restricted fire area, so a gun battery is allowed to fire on it.</p>
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="engage">
+        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="engage" data-min="-55">
           <p class="ev-time" data-i18n="deliver.326">T-0:55</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.327">The fire mission has been sent to the 105 mm M101 howitzer battery.</p>
+            <p class="ev-report" data-i18n="deliver.327">The fire mission has been sent to the M101 105 mm howitzer battery.</p>
             <p class="ev-q" data-i18n="deliver.328">Update the tracker: move the <strong>ATGM</strong> box, then check.</p>
             <p class="tev-act"><button class="btn row-check" data-i18n="deliver.329">Check</button></p>
             <p class="tev-msg"></p>
@@ -453,7 +453,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="assess">
+        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="assess" data-min="-48">
           <p class="ev-time" data-i18n="deliver.331">T-0:48</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.332">The sUAS records rounds impacting the ATGM section's position. The video makes it look likely the mission was successful, but the battery died before we could be sure.</p>
@@ -477,10 +477,10 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4">
+        <li class="ev tev" data-hour="4" data-min="-46">
           <p class="ev-time" data-i18n="deliver.400">T-0:46</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.401">The 105 mm M101 howitzer battery is asking for a battle damage assessment and the mission status. It will be fifteen minutes before the next sUAS can observe the target.</p>
+            <p class="ev-report" data-i18n="deliver.401">The M101 105 mm howitzer battery is asking for a battle damage assessment and the mission status. It will be fifteen minutes before the next sUAS can observe the target.</p>
             <p class="ev-q" data-i18n="deliver.402">What do you tell the battery?</p>
             <p class="tev-act">
               <select data-answer="suppress|repeat" aria-label="What to report to the firing battery">
@@ -508,19 +508,19 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-action="confirm">
+        <li class="ev tev" data-hour="4" data-action="confirm" data-min="-45">
           <p class="ev-time" data-i18n="deliver.340">T-0:45</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.356">The FSCC chooses to wait fifteen minutes for the next sUAS to observe the ATGM section again. We will not fire to suppress in the meantime.</p>
             <p class="tev-act"><button class="btn row-check" data-i18n="deliver.360">Next</button></p>
             <p class="tev-msg"></p>
             <div class="row-note always">
-              <p data-i18n="deliver.363">If the ATGM section is still a threat and the 105 mm M101 howitzer battery is not ready, we may use the 155 mm M109A2 battery.</p>
+              <p data-i18n="deliver.363">If the ATGM section is still a threat and the M101 105 mm howitzer battery is not ready, we may use the M109 155 mm battery.</p>
               <p data-i18n="deliver.364">We have had no eyes on the target since the sUAS battery died, so anything we fired now would be fired blind.</p>
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="find">
+        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="find" data-min="-30">
           <p class="ev-time" data-i18n="deliver.365">T-0:30</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.371">The sUAS re-acquires the ATGM section's position. One man appears to be killed in action. The other three are missing, and the anti-tank weapon is gone.</p>
@@ -534,7 +534,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="target">
+        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="target" data-min="-22">
           <p class="ev-time" data-i18n="deliver.376">T-0:22</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.377">The sUAS has eyes on the rest of the section. They have relocated several hundred metres, but they are still in range of the bridge.</p>
@@ -548,21 +548,21 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="engage">
+        <li class="ev tev" data-hour="4" data-target="atgm" data-answer="engage" data-min="-20">
           <p class="ev-time" data-i18n="deliver.382">T-0:20</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.383">The FSCC sends the fire mission to the 105 mm M101 howitzer battery.</p>
+            <p class="ev-report" data-i18n="deliver.383">The FSCC sends the fire mission to the M101 105 mm howitzer battery.</p>
             <p class="ev-q" data-i18n="deliver.384">Update the tracker: move the <strong>ATGM</strong> box, then check.</p>
             <p class="tev-act"><button class="btn row-check" data-i18n="deliver.385">Check</button></p>
             <p class="tev-msg"></p>
             <div class="row-note always">
               <p class="tev-verdict"></p>
               <p data-i18n="deliver.386">The fire mission is sent, so the target is in the Engage step.</p>
-              <p data-i18n="deliver.387">The battery is back on line. It fired at T-0:55 and needed twenty minutes to displace.</p>
+              <p data-i18n="deliver.387">The battery is back on line. It fired at T-0:55 and needed thirty minutes to displace and re-lay.</p>
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4" data-action="confirm" data-remove-row="atgm">
+        <li class="ev tev" data-hour="4" data-action="confirm" data-remove-row="atgm" data-min="-15">
           <p class="ev-time" data-i18n="deliver.388">T-0:15</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.389">Video clearly shows the destruction of the remaining ATGM section.</p>
@@ -574,7 +574,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4">
+        <li class="ev tev" data-hour="4" data-min="-10">
           <p class="ev-time" data-i18n="deliver.393">T-0:10</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.341">Long-range ISR UAS #2 detects an ammunition supply point inside NAI 1.</p>
@@ -595,7 +595,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="4">
+        <li class="ev tev" data-hour="4" data-min="-9">
           <p class="ev-time" data-i18n="deliver.394">T-0:09</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.357">We do not have targeting guidance for this target.</p>
@@ -631,7 +631,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-action="confirm">
+        <li class="ev tev" data-hour="5" data-action="confirm" data-min="15">
           <p class="ev-time" data-i18n="deliver.413">T+0:15</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.414">Friendly forces secure the bridge.</p>
@@ -639,7 +639,7 @@
             <p class="tev-msg"></p>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-action="confirm">
+        <li class="ev tev" data-hour="5" data-action="confirm" data-min="20">
           <p class="ev-time" data-i18n="deliver.416">T+0:20</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.417">The FSCC decides to strike the ammunition supply point. They order Long-range ISR UAS #2 to re-acquire the target.</p>
@@ -647,7 +647,7 @@
             <p class="tev-msg"></p>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-action="confirm" data-set="asp:target">
+        <li class="ev tev" data-hour="5" data-action="confirm" data-set="asp:target" data-min="30">
           <p class="ev-time" data-i18n="deliver.419">T+0:30</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.420">Long-range ISR UAS #2 re-acquires the ammunition supply point. The tracker moves it to Target.</p>
@@ -655,15 +655,15 @@
             <p class="tev-msg"></p>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-action="confirm" data-set="asp:engage">
+        <li class="ev tev" data-hour="5" data-action="confirm" data-set="asp:engage" data-min="35">
           <p class="ev-time" data-i18n="deliver.422">T+0:35</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.423">The FSCC decides to engage with the 155 mm M109A2 battery and sends the fire mission. The tracker moves the supply point to Engage.</p>
+            <p class="ev-report" data-i18n="deliver.423">The FSCC decides to engage with the M109 155 mm battery and sends the fire mission. The tracker moves the supply point to Engage.</p>
             <p class="tev-act"><button class="btn row-check" data-i18n="deliver.424">Next</button></p>
             <p class="tev-msg"></p>
           </div>
         </li>
-        <li class="ev tev" data-hour="5">
+        <li class="ev tev" data-hour="5" data-min="37">
           <p class="ev-time" data-i18n="deliver.425">T+0:37</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.426">Before the rounds start landing on the ammunition supply point, friendly units report taking enemy mortar fire.</p>
@@ -684,7 +684,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-target="mortars" data-answer="find">
+        <li class="ev tev" data-hour="5" data-target="mortars" data-answer="find" data-min="40">
           <p class="ev-time" data-i18n="deliver.434">T+0:40</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.435">Long-range ISR UAS #2 locates smoke from a position just south of NAI 1. This is likely the mortar position.</p>
@@ -698,7 +698,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-target="mortars" data-answer="target">
+        <li class="ev tev" data-hour="5" data-target="mortars" data-answer="target" data-min="43">
           <p class="ev-time" data-i18n="deliver.440">T+0:43</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.441">Long-range ISR UAS #2 has eyes on a section of mortars firing.</p>
@@ -711,7 +711,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="5">
+        <li class="ev tev" data-hour="5" data-min="44">
           <p class="ev-time" data-i18n="deliver.445">T+0:44</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.446">The FSCC asks which asset should shoot this mission.</p>
@@ -719,8 +719,8 @@
             <p class="tev-act">
               <select data-answer="105" aria-label="Asset to engage the mortars">
                 <option value="" data-i18n="deliver.448">— choose —</option>
-                <option value="105" data-i18n="deliver.449">105 mm M101 howitzer battery</option>
-                <option value="155" data-i18n="deliver.450">155 mm M109A2 battery</option>
+                <option value="105" data-i18n="deliver.449">M101 105 mm howitzer battery</option>
+                <option value="155" data-i18n="deliver.450">M109 155 mm battery</option>
                 <option value="owa" data-i18n="deliver.451">One-way attack UAS</option>
               </select>
               <button class="btn row-check" data-i18n="deliver.452">Check</button>
@@ -728,15 +728,15 @@
             <p class="tev-msg"></p>
             <div class="row-note always">
               <p class="tev-verdict"></p>
-              <p data-i18n="deliver.453">The HAT ranks the <strong>105 mm M101 howitzer battery</strong> first against the mortars, ahead of the 155 mm and the drone.</p>
+              <p data-i18n="deliver.453">The HAT ranks the <strong>M101 105 mm howitzer battery</strong> first against the mortars, ahead of the 155 mm and the drone.</p>
               <p data-i18n="deliver.454">It is also the only asset free. The 155 mm battery is still shooting the supply point mission and does not report it complete until T+0:50, and the one-way attack UAS unit has not been able to launch since T-1:04.</p>
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="5" data-target="mortars" data-answer="engage">
+        <li class="ev tev" data-hour="5" data-target="mortars" data-answer="engage" data-min="45">
           <p class="ev-time" data-i18n="deliver.455">T+0:45</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.456">The fire mission has been sent to the 105 mm M101 howitzer battery.</p>
+            <p class="ev-report" data-i18n="deliver.456">The fire mission has been sent to the M101 105 mm howitzer battery.</p>
             <p class="ev-q" data-i18n="deliver.457">Update the tracker: move the <strong>Mortars</strong> box, then check.</p>
             <p class="tev-act"><button class="btn row-check" data-i18n="deliver.458">Check</button></p>
             <p class="tev-msg"></p>
@@ -746,10 +746,10 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="5">
+        <li class="ev tev" data-hour="5" data-min="50">
           <p class="ev-time" data-i18n="deliver.460">T+0:50</p>
           <div class="ev-body">
-            <p class="ev-report" data-i18n="deliver.461">The 155 mm M109A2 battery reports its fire mission complete and requests a battle damage assessment. At the same time, electronic signals indication picks up a large amount of traffic consistent with the enemy command radios, and places it somewhere inside NAI 3.</p>
+            <p class="ev-report" data-i18n="deliver.461">The M109 155 mm battery reports its fire mission complete and requests a battle damage assessment. At the same time, electronic signals indication picks up a large amount of traffic consistent with the enemy command radios, and places it somewhere inside NAI 3.</p>
             <p class="ev-q" data-i18n="deliver.462">Where do we direct Long-range ISR UAS #2 to look?</p>
             <p class="tev-act">
               <select data-answer="bda-mortars" aria-label="Where to direct the long-range ISR next">
@@ -768,7 +768,7 @@
             </div>
           </div>
         </li>
-        <li class="ev tev" data-hour="6" data-target="asp" data-answer="assess">
+        <li class="ev tev" data-hour="6" data-target="asp" data-answer="assess" data-min="60">
           <p class="ev-time" data-i18n="deliver.470">T+1:00</p>
           <div class="ev-body">
             <p class="ev-report" data-i18n="deliver.471">Rounds complete on both targets, the ammunition supply point and the mortars.</p>
@@ -831,24 +831,24 @@
                   <td data-i18n="deliver.116">Engineer obstacle team</td><td data-i18n="deliver.117">ATGM section</td><td data-i18n="deliver.118">120 mm mortar platoon</td><td data-i18n="deliver.119">Battalion command post</td>
                 </tr>
                 <tr class="band-start">
-                  <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="deliver.120">105 mm M101 howitzer battery</th>
+                  <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="deliver.120">M101 105 mm howitzer battery</th>
                   <th scope="row" class="hat-crit" data-i18n="deliver.121"><span>Maximum location error</span></th><td class="data ord" data-i18n="deliver.122"><b class="order">2</b>100 m</td><td class="data ord" data-i18n="deliver.123"><b class="order">2</b>100 m</td><td class="data ord" data-i18n="deliver.124"><b class="order">1</b>100 m</td><td class="data ord" data-i18n="deliver.125"><b class="order">3</b>100 m</td>
                 </tr>
                 <tr>
                   <th scope="row" class="hat-crit" data-i18n="deliver.126">Minimum size</th><td data-i18n="deliver.127">One team with charges</td><td data-i18n="deliver.128">One launcher confirmed</td><td data-i18n="deliver.129">1 mortar</td><td data-i18n="deliver.130">Command vehicle or structure</td>
                 </tr>
                 <tr>
-                  <th scope="row" class="hat-crit" data-i18n="deliver.131">Timeliness</th><td data-i18n="deliver.132">Continuous observation</td><td data-i18n="deliver.133">15 minutes</td><td data-i18n="deliver.134">Continuous observation</td><td data-i18n="deliver.135">6 hours</td>
+                  <th scope="row" class="hat-crit" data-i18n="deliver.131">Timeliness</th><td data-i18n="deliver.132">Continuous observation</td><td data-i18n="deliver.133">Continuous observation</td><td data-i18n="deliver.134">5 minutes</td><td data-i18n="deliver.135">12 hours</td>
                 </tr>
                 <tr class="weapon-start">
-                  <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="deliver.136">155 mm M109A2 battery</th>
+                  <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="deliver.136">M109 155 mm battery</th>
                   <th scope="row" class="hat-crit" data-i18n="deliver.137"><span>Maximum location error</span></th><td class="data ord" data-i18n="deliver.138"><b class="order">3</b>200 m</td><td class="data ord" data-i18n="deliver.139"><b class="order">3</b>200 m</td><td class="data ord" data-i18n="deliver.140"><b class="order">2</b>200 m</td><td class="data ord" data-i18n="deliver.141"><b class="order">1</b>200 m</td>
                 </tr>
                 <tr>
                   <th scope="row" class="hat-crit" data-i18n="deliver.142">Minimum size</th><td data-i18n="deliver.143">One team with charges</td><td data-i18n="deliver.144">One launcher confirmed</td><td data-i18n="deliver.145">2 mortars</td><td data-i18n="deliver.146">Command vehicle or structure</td>
                 </tr>
                 <tr>
-                  <th scope="row" class="hat-crit" data-i18n="deliver.147">Timeliness</th><td data-i18n="deliver.148">Continuous observation</td><td data-i18n="deliver.149">15 minutes</td><td data-i18n="deliver.150">Continuous observation</td><td data-i18n="deliver.151">6 hours</td>
+                  <th scope="row" class="hat-crit" data-i18n="deliver.147">Timeliness</th><td data-i18n="deliver.148">Continuous observation</td><td data-i18n="deliver.149">Continuous observation</td><td data-i18n="deliver.150">5 minutes</td><td data-i18n="deliver.151">12 hours</td>
                 </tr>
                 <tr class="weapon-start">
                   <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="deliver.152">One-way attack UAS</th>
@@ -858,7 +858,7 @@
                   <th scope="row" class="hat-crit" data-i18n="deliver.158">Minimum size</th><td data-i18n="deliver.159">One team with charges</td><td data-i18n="deliver.160">One launcher confirmed</td><td data-i18n="deliver.161">1 mortar</td><td data-i18n="deliver.162">Command vehicle or structure</td>
                 </tr>
                 <tr>
-                  <th scope="row" class="hat-crit" data-i18n="deliver.163">Timeliness</th><td data-i18n="deliver.164">15 minutes</td><td data-i18n="deliver.165">1 hour</td><td data-i18n="deliver.166">15 minutes</td><td data-i18n="deliver.167">6 hours</td>
+                  <th scope="row" class="hat-crit" data-i18n="deliver.163">Timeliness</th><td data-i18n="deliver.164">15 minutes</td><td data-i18n="deliver.165">15 minutes</td><td data-i18n="deliver.166">5 minutes</td><td data-i18n="deliver.167">12 hours</td>
                 </tr>
                 <tr class="band-start">
                   <th scope="row" colspan="2" data-i18n="deliver.168">When</th>
@@ -931,12 +931,12 @@
                   </tr>
                   <tr class="band-start"><th scope="rowgroup" colspan="13" class="tsm-band" data-i18n="deliver.209">Attack assets</th></tr>
                   <tr>
-                    <th scope="row" class="tsm-asset" data-i18n="deliver.210">155 mm M109A2 battery</th>
+                    <th scope="row" class="tsm-asset" data-i18n="deliver.210">M109 155 mm battery</th>
                     <td colspan="2" class="blk empty"></td>
                     <td colspan="10" class="blk t-cp" data-i18n="deliver.211">Mortars / command post</td>
                   </tr>
                   <tr>
-                    <th scope="row" class="tsm-asset" data-i18n="deliver.212">105 mm M101 howitzer battery</th>
+                    <th scope="row" class="tsm-asset" data-i18n="deliver.212">M101 105 mm howitzer battery</th>
                     <td colspan="2" class="blk t-eng" data-i18n="deliver.213">Engineer team</td>
                     <td colspan="1" class="blk empty"></td>
                     <td colspan="5" class="blk t-atgm" data-i18n="deliver.214">ATGM</td>
@@ -997,6 +997,21 @@ D3A.initTargetEvents({
   exerciseId: 'deliver-1', workbench: WB,
 });
 
+/* Firing schedule behind the status pies under each clock time.
+   Times are minutes from T=0. A tube goes off line the moment it fires:
+   M101 needs 30 minutes to displace and re-lay, the M109 needs 20.
+     M101  T-3:25 engineering vehicles · T-0:55 ATGM · T-0:20 ATGM again · T+0:45 mortars
+     M109  T+0:35 ammunition supply point
+     OWA   launches two at T-1:15, then the unit malfunctions at T-1:04 and
+           never launches again in this operation. */
+D3A.initAssetStatus({
+  assets: [
+    { labelKey: 'ui.assetm101', label: 'M101', recover: 30, fires: [-205, -55, -20, 45] },
+    { labelKey: 'ui.assetm109', label: 'M109', recover: 20, fires: [35] },
+    { labelKey: 'ui.assetowa',  label: 'OWA UAS', stock: 10,
+      sorties: [{ at: -75, n: 2 }], downFrom: -64 }
+  ]
+});
 </script>
 
 
