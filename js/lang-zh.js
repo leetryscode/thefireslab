@@ -1616,7 +1616,7 @@ window.D3A_LANG_ZH = {
     zh: "課題 1.9 — 設定時限條件"
   },
   "decide-tss.108": {
-    en: "<span class=\"target-name\">Engineering vehicles — M101 105&nbsp;mm howitzer battery</span><br><span class=\"target-desc\">“The vehicles are stopped, on and running. They could move at any moment.”</span>",
+    en: "<span class=\"target-name\">Engineer obstacle team — M101 105&nbsp;mm howitzer battery</span><br><span class=\"target-desc\">This High Payoff Target may be mobile vehicles and heavy equipment or a small team of dismounts placing charges. Either way, they are likely to be mobile when we find them.</span>",
     zh: ""
   },
   "decide-tss.109": {
@@ -1772,8 +1772,8 @@ window.D3A_LANG_ZH = {
     zh: "<b class=\"order\">1</b>100 公尺"
   },
   "decide-tss.167": {
-    en: "<b class=\"order\">3</b>100 m",
-    zh: "<b class=\"order\">3</b>100 公尺"
+    en: "<b class=\"order\">2</b>100 m",
+    zh: "<b class=\"order\">2</b>100 公尺"
   },
   "decide-tss.168": {
     en: "Minimum size",
@@ -1900,8 +1900,8 @@ window.D3A_LANG_ZH = {
     zh: "<b class=\"order\">3</b>1,000 公尺"
   },
   "decide-tss.199": {
-    en: "<b class=\"order\">2</b>1,000 m",
-    zh: "<b class=\"order\">2</b>1,000 公尺"
+    en: "<b class=\"order\">3</b>1,000 m",
+    zh: "<b class=\"order\">3</b>1,000 公尺"
   },
   "decide-tss.200": {
     en: "Minimum size",
@@ -1987,20 +1987,8 @@ window.D3A_LANG_ZH = {
     en: "<b class=\"order\">1</b> <span>The yellow number on each location error cell is the <strong>attack order</strong> you set in 1B. Read it <em>down</em> a column: against that one target, 1 is the primary means, 2 the alternate, 3 the tertiary. The same weapon can be the alternate for more than one target.</span>",
     zh: "<b class=\"order\">1</b> <span>每個位置誤差欄位上的黃色數字，就是你在 1B 設定的<strong>攻擊順序</strong>。請<em>由上而下</em>讀一整欄：對該目標而言，1 是主要手段，2 是備用手段，3 是第三順位。同一種武器可以同時是多個目標的備用手段。</span>"
   },
-  "decide-tss.128": {
-    en: "HPTL-AGM-TSS of HAT Practice",
-    zh: ""
-  },
-  "decide-tss.129": {
-    en: "Use the HAT to determine the following, as if you were approving or sending fire missions in current operations.",
-    zh: ""
-  },
   "decide-tss.130": {
     en: "Task 1.10 — Approve the fire mission",
-    zh: ""
-  },
-  "decide-tss.131": {
-    en: "Three reports have arrived. Check each one against the worksheet above and decide what to engage it with. A weapon is only an option if the report clears <em>every</em> standard in that weapon's block. Check each row as you go.",
     zh: ""
   },
   "decide-tss.132": {
@@ -2093,6 +2081,38 @@ window.D3A_LANG_ZH = {
   },
   "decide-tss.236": {
     en: "Timeliness passes: the ATGM section demands continuous observation from a gun, and the small UAS is watching it as the report arrives. Now walk the attack order down that column. The drone is the primary means, and we have none left. The M101 105&nbsp;mm howitzer battery is next, but it accepts only 100&nbsp;m and this report is 200&nbsp;m, so it is out on location error. The M109 155&nbsp;mm battery accepts 200&nbsp;m, which this report just meets. <strong>That is what the order is for:</strong> walk down it until you reach a weapon that is both available and inside its own standards.",
+    zh: ""
+  },
+  "decide-tss.131": {
+    en: "<span class=\"target-name\">4. Battalion command post</span><br><span class=\"target-desc\">Long-range ISR sighted a mobile command trailer under tow, moving slowly across a field. The ISR has since returned to base to recharge. The location is 5 minutes old, and the command post was moving when it was seen. By now the location will likely be inaccurate by several hundred metres because the target is moving.</span>",
+    zh: ""
+  },
+  "decide-tss.242": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-tss.243": {
+    en: "Do not engage",
+    zh: ""
+  },
+  "decide-tss.246": {
+    en: "M101 105&nbsp;mm howitzer battery",
+    zh: "105&nbsp;公釐 M101 榴彈砲連"
+  },
+  "decide-tss.247": {
+    en: "M109 155&nbsp;mm battery",
+    zh: "155&nbsp;公釐 M109 砲兵連"
+  },
+  "decide-tss.248": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "decide-tss.249": {
+    en: "Check answer",
+    zh: "檢查答案"
+  },
+  "decide-tss.250": {
+    en: "The target is a single vehicle and, more importantly, it is moving. Timeliness passes — the command post is allowed 12 hours and this report is only 5 minutes old — but the location does not. Several hundred metres is outside the 100&nbsp;m the M101 accepts and outside the 200&nbsp;m the M109 accepts, so both batteries are out on location error. It is well inside the 1,000&nbsp;m the drone accepts, because the drone does not need an exact grid: it flies to the area, searches, and the operator puts it onto what he can see. That is why you walk past the two batteries above it on the attack order.",
     zh: ""
   },
   "decide-tss.155": {
@@ -2434,8 +2454,8 @@ window.D3A_LANG_ZH = {
     zh: "指揮官不同意：他擔心如果我們太早打擊ATGM分隊，在我們肅清橋樑對岸之前，敵軍會再派來一個分隊。"
   },
   "decide-agm.108": {
-    en: "<span class=\"target-name\">3. 120&nbsp;mm mortar platoon</span><br><span class=\"target-desc\">Only findable while firing, and firing on our troops at the crossing. We must engage while we still have the tubes in sight.</span>",
-    zh: "<span class=\"target-name\">3. 120&nbsp;公釐迫擊砲排</span><br><span class=\"target-desc\">只有在射擊時才找得到，而且正在射擊我們在渡河點的部隊。我們必須趁還看得見砲管時接戰。</span>"
+    en: "<span class=\"target-name\">3. 120&nbsp;mm mortar platoon</span><br><span class=\"target-desc\">Indirect fire poses an imminent threat to friendly forces consolidated at the chokepoint.</span>",
+    zh: ""
   },
   "decide-agm.109": {
     en: "— choose —",
@@ -2650,7 +2670,7 @@ window.D3A_LANG_ZH = {
     zh: ""
   },
   "decide-agm.070": {
-    en: "<span class=\"target-name\">4. Battalion command post</span><br><span class=\"target-desc\">Assessed roughly 4&nbsp;km behind the river, though not yet located. Neutralize is enough to keep the defense from coordinating while we cross, and the commander's written requirement is only to “disrupt” his command and control. The commander has decided otherwise: if we are going to strike a command post, he wants it gone for good, not one staff officer missing and one radio replaced. He accepts what that costs in ammunition.</span>",
+    en: "<span class=\"target-name\">4. Battalion command post</span><br><span class=\"target-desc\">The commander has decided that if he is going to target a command post, he wants to permanently damage the enemy's leadership and communications. While we only need to “disrupt” their communications for the present mission, the commander will spend extra ammunition for the opportunity of long term damage to the enemy system.</span>",
     zh: ""
   },
   "decide-agm.075": {
@@ -2682,12 +2702,12 @@ window.D3A_LANG_ZH = {
     zh: "偏好接戰方式"
   },
   "decide-agm.130": {
-    en: "The last column of the matrix says <em>what we will attack the target with</em>. It is not one answer. It is a short list in the order we prefer it. The first choice is what we use when nothing prevents it. The second and third are there because the first will sometimes be firing another mission, out of range, or unable to fire where the target has appeared. The cell works down the list without going back to the commander.",
-    zh: "矩陣的最後一欄說明<em>我們要用什麼打擊目標</em>。它不是單一答案，而是一份依偏好排序的簡短清單。第一順位是在沒有任何阻礙時所使用的手段。第二與第三順位存在，是因為第一順位有時正在執行另一項射擊任務、超出射程，或無法對目標出現的位置射擊。目標小組依序往下選用，不必再回到指揮官。"
+    en: "Attack guidance is the commander's preference of which weapon to engage a specific enemy target class. It considers the best weapon-to-target match but also the scarcity of resources. As a general rule, to conserve resources, a target will be assigned the cheapest or most abundant ammunition that meets the minimum damage criteria. Higher payoff targets may be assigned larger than required weapon systems to increase the chance of mission success. The current operations fires personnel will send the fire mission to the first available weapon system on the commander's preference list.",
+    zh: ""
   },
   "decide-agm.132": {
-    en: "What we have to attack with",
-    zh: "我們可用的打擊手段"
+    en: "Friendly Fires Assets",
+    zh: ""
   },
   "decide-agm.023": {
     en: "OWA-UAS",
@@ -2702,8 +2722,8 @@ window.D3A_LANG_ZH = {
     zh: "155 公釐 M109 砲連"
   },
   "decide-agm.071": {
-    en: "<strong>Reach</strong>",
-    zh: "<strong>射程</strong>"
+    en: "<strong>Range</strong>",
+    zh: ""
   },
   "decide-agm.098": {
     en: "About 3 km",
@@ -2718,8 +2738,8 @@ window.D3A_LANG_ZH = {
     zh: "所有目標"
   },
   "decide-agm.131": {
-    en: "<strong>Effect radius</strong>",
-    zh: "<strong>效果半徑</strong>"
+    en: "<strong>Blast Radius</strong>",
+    zh: ""
   },
   "decide-agm.133": {
     en: "5 m",
@@ -2749,25 +2769,9 @@ window.D3A_LANG_ZH = {
     en: "Heavy",
     zh: "嚴重"
   },
-  "decide-agm.140": {
-    en: "<strong>Inside the RFA</strong>",
-    zh: "<strong>在RFA內</strong>"
-  },
-  "decide-agm.141": {
-    en: "May fire",
-    zh: "可射擊"
-  },
-  "decide-agm.142": {
-    en: "May not fire",
-    zh: "不可射擊"
-  },
-  "decide-agm.143": {
-    en: "May not fire",
-    zh: "不可射擊"
-  },
   "decide-agm.144": {
-    en: "<strong>We hold</strong>",
-    zh: "<strong>我方持有</strong>"
+    en: "<strong>Ammunition Count</strong>",
+    zh: ""
   },
   "decide-agm.145": {
     en: "10, single use",
@@ -2782,24 +2786,20 @@ window.D3A_LANG_ZH = {
     zh: "120 發"
   },
   "decide-agm.148": {
-    en: "<strong>After it fires</strong>",
-    zh: "<strong>射擊後</strong>"
-  },
-  "decide-agm.149": {
-    en: "Gone",
-    zh: "消耗殆盡"
+    en: "<strong>Relocation time</strong>",
+    zh: ""
   },
   "decide-agm.150": {
-    en: "20 min to displace",
-    zh: "20 分鐘轉移陣地"
+    en: "30 min to displace",
+    zh: ""
   },
   "decide-agm.151": {
     en: "20 min to displace",
     zh: "20 分鐘轉移陣地"
   },
   "decide-agm.152": {
-    en: "<strong>The munition</strong>",
-    zh: "<strong>彈藥</strong>"
+    en: "<strong>Munition</strong>",
+    zh: ""
   },
   "decide-agm.153": {
     en: "Precision. One target.",
@@ -2810,44 +2810,68 @@ window.D3A_LANG_ZH = {
     zh: "較便宜，易於移動"
   },
   "decide-agm.155": {
-    en: "The expensive round",
-    zh: "昂貴的彈藥"
+    en: "Heavy, costly",
+    zh: ""
   },
   "decide-agm.160": {
     en: "These figures are set for this scenario. They are not published doctrine.",
     zh: "這些數據是為本想定設定的。它們並非公布的準則。"
   },
-  "decide-agm.156": {
-    en: "There is no formula that produces the order for every target. It comes from what fires have to achieve against that particular target, and from what we can afford to spend doing it. The commander's fires guidance is therefore written for each high-payoff target, and it is given with the target below.",
-    zh: "沒有一套公式能為每個目標產生這個順序。它取決於火力對該特定目標必須達成什麼，以及我們能為此付出多少代價。因此指揮官的火力指導是為每一個高效益目標分別擬定，並隨下方的目標一併提供。"
-  },
-  "decide-agm.219": {
-    en: "<strong>Attack guidance is not an exact science.</strong> The approved matrix may reflect the opinions of the commander. Two competent staff officers will order the same three assets differently for the same target and both will be able to defend it. The order also turns on something this page has not given you yet — <strong>where the target is</strong>, and how accurately and how recently we have located it. That is the work of the <strong>target selection standards</strong>, on the next page. Target 4 below is the clearest case: read the commander's reasoning, then ask whether you would have written the same order.",
+  "decide-agm.169": {
+    en: "Task 1.6 — Choose preferred method of engagement",
     zh: ""
   },
-  "decide-agm.169": {
-    en: "Task 1.6 — Choose the method",
-    zh: "課題 1.6 — 選擇方式"
-  },
-  "decide-agm.218": {
-    en: "Read the commander’s fires guidance above each target, then select the <strong>primary</strong> and <strong>alternate</strong> means of engagement. Whatever asset is left over is the tertiary means, so you do not have to record it. The engineer team is worked for you as an example. Check each target as you finish it, and the commander’s reasoning will appear beneath it.",
-    zh: "閱讀每個目標上方的指揮官火力指導，然後選擇<strong>主要</strong>與<strong>備用</strong>接戰手段。剩下的兵力即為第三順位手段，因此不必記錄。工兵小組已為你做好示範。每完成一個目標就進行檢查，指揮官的理由會出現在其下方。"
-  },
-  "decide-agm.158": {
-    en: "<strong>Fires guidance.</strong> “Destruction of this target is vital to mission success. Do not risk missing. The target is likely on the road, and I would prefer less cratering for future friendly operations.”",
-    zh: "<strong>火力指導。</strong>「摧毀此目標對任務成功至關重要。不要冒著失手的風險。該目標很可能在道路上，為了友軍後續行動，我希望彈坑越少越好。」"
-  },
   "decide-agm.159": {
-    en: "<span class=\"target-name\">Worked example — 1. Engineer obstacle team — Neutralize</span><br><span class=\"target-desc\">A small team, unprotected, likely carrying explosives or mines.</span>",
-    zh: "<span class=\"target-name\">示範例 — 1. 工兵障礙小組 — 癱瘓</span><br><span class=\"target-desc\">一支小型小組，無防護，可能攜帶炸藥或地雷。</span>"
+    en: "<span class=\"target-name\">1. Engineer obstacle team — Neutralize</span><br><span class=\"target-desc\"><strong>Fires guidance.</strong> “Destruction of this target is vital to mission success. Do not risk missing. The target is likely on the road, and I would prefer less cratering for future friendly operations.”</span>",
+    zh: ""
   },
-  "decide-agm.161": {
-    en: "<span class=\"pick-label\">Primary</span><span class=\"pick-answer\">OWA-UAS</span>",
-    zh: "<span class=\"pick-label\">主要</span><span class=\"pick-answer\">OWA-UAS</span>"
+  "decide-agm.069": {
+    en: "Primary",
+    zh: "主要"
   },
-  "decide-agm.162": {
-    en: "<span class=\"pick-label\">Alternate</span><span class=\"pick-answer\">M101 105 mm howitzer battery</span>",
-    zh: "<span class=\\\"pick-label\\\">備用</span><span class=\\\"pick-answer\\\">105 公釐 M101 榴彈砲連</span>"
+  "decide-agm.072": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-agm.079": {
+    en: "OWA-UAS",
+    zh: "OWA-UAS"
+  },
+  "decide-agm.082": {
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "decide-agm.085": {
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
+  },
+  "decide-agm.088": {
+    en: "Alternate",
+    zh: "備用"
+  },
+  "decide-agm.091": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-agm.140": {
+    en: "OWA-UAS",
+    zh: "OWA-UAS"
+  },
+  "decide-agm.141": {
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "decide-agm.142": {
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
+  },
+  "decide-agm.143": {
+    en: "<span class=\"pick-label\">Tertiary</span><span class=\"pick-answer\">M109 155 mm battery</span>",
+    zh: ""
+  },
+  "decide-agm.149": {
+    en: "Check answer",
+    zh: "檢查答案"
   },
   "decide-agm.163": {
     en: "<strong>Primary, OWA-UAS.</strong> I do not want to risk missing, since they are vital to friendly mission success. Likely a small team carrying explosives or mines.",
@@ -2857,13 +2881,9 @@ window.D3A_LANG_ZH = {
     en: "<strong>Alternate, M101 105 mm howitzer battery.</strong> If I have to use indirect fire, I might as well use the cheapest and most abundant round, given the small and unprotected nature of the target.",
     zh: "<strong>備用，105 公釐 M101 榴彈砲連。</strong>如果必須使用間接火力，考量到目標小而無防護，不如使用最便宜、數量最多的彈藥。"
   },
-  "decide-agm.165": {
-    en: "<strong>Fires guidance.</strong> “We are targeting a small team with a missile. They may still be able to employ it under fire, especially if they are in a protected position.”",
-    zh: "<strong>火力指導。</strong>「我們要打擊的是一支持有飛彈的小型小組。他們在遭受火力時仍可能將其發射，尤其是在有防護的陣地內。」"
-  },
   "decide-agm.166": {
-    en: "<span class=\"target-name\">2. ATGM section — Suppress</span><br><span class=\"target-desc\">A launcher crew in a prepared position.</span>",
-    zh: "<span class=\"target-name\">2. ATGM分隊 — 制壓</span><br><span class=\"target-desc\">位於構築陣地內的發射組員。</span>"
+    en: "<span class=\"target-name\">2. ATGM section — Suppress</span><br><span class=\"target-desc\"><strong>Fires guidance.</strong> “We are targeting a small team with a missile. They may still be able to employ it under fire, especially if they are in a protected position.”</span>",
+    zh: ""
   },
   "decide-agm.167": {
     en: "Primary",
@@ -2905,6 +2925,10 @@ window.D3A_LANG_ZH = {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
+  "decide-agm.156": {
+    en: "<span class=\"pick-label\">Tertiary</span><span class=\"pick-answer\">M109 155 mm battery</span>",
+    zh: ""
+  },
   "decide-agm.157": {
     en: "Check answer",
     zh: "檢查答案"
@@ -2917,13 +2941,9 @@ window.D3A_LANG_ZH = {
     en: "<strong>Alternate, M101 105 mm howitzer battery.</strong> No reason not to use the cheaper and more abundant round, all things being equal.",
     zh: "<strong>備用，105 公釐 M101 榴彈砲連。</strong>在其他條件相同的情況下，沒有理由不使用較便宜、數量較多的彈藥。"
   },
-  "decide-agm.180": {
-    en: "<strong>Fires guidance.</strong> “This is an area target.”",
-    zh: "<strong>火力指導。</strong>「這是一個面目標。」"
-  },
   "decide-agm.181": {
-    en: "<span class=\"target-name\">3. 120&nbsp;mm mortar platoon — Neutralize</span><br><span class=\"target-desc\">Three tubes spread across a firing position.</span>",
-    zh: "<span class=\"target-name\">3. 120&nbsp;公釐迫擊砲排 — 癱瘓</span><br><span class=\"target-desc\">三門迫擊砲分散配置於一處射擊陣地。</span>"
+    en: "<span class=\"target-name\">3. 120&nbsp;mm mortar platoon — Neutralize</span><br><span class=\"target-desc\"><strong>Fires guidance.</strong> “This is an area target.”</span>",
+    zh: ""
   },
   "decide-agm.182": {
     en: "Primary",
@@ -2965,6 +2985,10 @@ window.D3A_LANG_ZH = {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
+  "decide-agm.161": {
+    en: "<span class=\"pick-label\">Tertiary</span><span class=\"pick-answer\">OWA-UAS</span>",
+    zh: ""
+  },
   "decide-agm.196": {
     en: "Check answer",
     zh: "檢查答案"
@@ -2977,12 +3001,8 @@ window.D3A_LANG_ZH = {
     en: "<strong>Alternate, M109 155 mm battery.</strong> Also an area fire weapon against an area target.",
     zh: "<strong>備用：155 公釐 M109 砲連。</strong>同樣是以面積射擊武器對付面積目標。"
   },
-  "decide-agm.197": {
-    en: "<strong>Fires guidance.</strong> “The enemy command post may be a single soft tent, or several tents and vehicles. I wish to minimize the risk of missing on the first salvo. If we do not meet the criteria on that first salvo, the enemy is likely to displace rapidly and we may lose the opportunity to attrite key communications equipment and radios.”",
-    zh: "<strong>火力指導。</strong>「敵軍指揮所可能只是一頂軟殼帳篷，也可能是數頂帳篷與車輛。我希望把第一次齊射未命中的風險降到最低。若第一次齊射未達成條件，敵軍很可能迅速轉移，我們就可能失去消耗其關鍵通信裝備與無線電的機會。」"
-  },
   "decide-agm.198": {
-    en: "<span class=\"target-name\">4. Battalion command post — Destroy</span><br><span class=\"target-desc\">Not located yet, and it relocates every 24 hours. Because it is unlocated we do not yet know what we are striking: it may be a large static compound of tents and vehicles, or it may be a single mobile command vehicle. Order your two choices so that the first covers the compound and the second covers the vehicle.</span>",
+    en: "<span class=\"target-name\">4. Battalion command post — Destroy</span><br><span class=\"target-desc\"><strong>Fires guidance.</strong> “The enemy command post may be a single soft tent, or several tents and vehicles. I wish to minimize the risk of missing on the first salvo. If we do not meet the criteria on that first salvo, the enemy is likely to displace rapidly and we may lose the opportunity to attrite key communications equipment and radios.”</span>",
     zh: ""
   },
   "decide-agm.199": {
@@ -3025,6 +3045,10 @@ window.D3A_LANG_ZH = {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
+  "decide-agm.162": {
+    en: "<span class=\"pick-label\">Tertiary</span><span class=\"pick-answer\">OWA-UAS</span>",
+    zh: ""
+  },
   "decide-agm.217": {
     en: "Check answer",
     zh: "檢查答案"
@@ -3034,7 +3058,7 @@ window.D3A_LANG_ZH = {
     zh: ""
   },
   "decide-agm.216": {
-    en: "<strong>Alternate, OWA-UAS.</strong> If instead it proves to be a <strong>single mobile command vehicle</strong>, that is a point target, and the drone buys precision and a guaranteed hit on it.",
+    en: "<strong>Tertiary, OWA-UAS.</strong> If instead it proves to be a <strong>single mobile command vehicle</strong>, that is a point target, and the drone buys precision and a guaranteed hit on it.",
     zh: ""
   },
   "decide-agm.257": {
@@ -3162,12 +3186,12 @@ window.D3A_LANG_ZH = {
     zh: "155 公釐"
   },
   "decide-agm.250": {
-    en: "OWA-UAS",
-    zh: "OWA-UAS"
-  },
-  "decide-agm.251": {
     en: "105 mm",
     zh: "105 公釐"
+  },
+  "decide-agm.251": {
+    en: "OWA-UAS",
+    zh: "OWA-UAS"
   },
   "decide-agm.252": {
     en: "105 mm is the M101 105 mm howitzer battery. 155 mm is the M109 155 mm battery. OWA-UAS is the one-way attack UAS.",
@@ -3259,17 +3283,9 @@ window.D3A_LANG_ZH = {
     en: "When the commander approves the HAT he makes his decision on every target in it, in advance. A report arrives. The <strong>fire support coordination cell (FSCC)</strong> checks it against the target selection standards, finds the target on the high-payoff target list, and orders the attack the attack guidance matrix directs. <strong>The FSCC does not go back to the commander for permission. He gave it when he approved the HAT.</strong>",
     zh: "指揮官核定 HAT 時，就等於事先對其中每一個目標作出決心。一份回報傳來。<strong>火力協調組（FSCC）</strong>依目標選擇條件檢核這份回報，在高效益目標清單上找出該目標，並依攻擊矩陣的規定下令攻擊。<strong>FSCC不必再回頭向指揮官請求許可。他在核定 HAT 時就已經給了。</strong>"
   },
-  "decide-sync.019": {
-    en: "That is what the HAT is for. It lets the FSCC employ ordnance quickly and still stay inside the commander's guidance, at the moment when nobody has time to find him and ask.",
-    zh: "這就是 HAT 的用途。它讓FSCC能迅速運用彈藥，同時仍不逾越指揮官的指導，而那正是沒有人有時間去找他請示的時刻。"
-  },
-  "decide-sync.022": {
-    en: "A target that does not fit the HAT is a different case. A target that is not on the list, a report that fails a standard, or an attack the guidance does not permit all go back to the commander. Those are the decisions he kept for himself.",
-    zh: "不符合 HAT 的目標是另一回事。不在清單上的目標、未達條件的回報，或指導所不允許的攻擊，都要回到指揮官。那些是他保留給自己的決心。"
-  },
   "decide-sync.023": {
-    en: "The HAT is written before we know where the enemy will be. It tells us <strong>what</strong> to attack, <strong>how good</strong> a report must be, and <strong>what</strong> attacks it. It does not tell us <strong>where to look</strong>. That is the work left on this page.",
-    zh: "HAT 是在我們還不知道敵軍會在哪裡之前就寫好的。它告訴我們攻擊<strong>什麼</strong>、回報必須<strong>多好</strong>、以及<strong>用什麼</strong>攻擊。它沒有告訴我們<strong>到哪裡去找</strong>。那是本頁要完成的工作。"
+    en: "The HAT is produced to allow us to be reactive. We made as many targeting decisions ahead of time in order to speed up decisions and approvals in the moment. Next we will use the generic guidance from the approved HAT to generate a specific plan for the battle ahead.",
+    zh: ""
   },
   "decide-sync.024": {
     en: "Concept from MCTP 3-31B, Appendix A. The synchronization products on this page are a teaching construct built for Operation RIVER GATE. They are not a doctrinal template.",
@@ -3280,8 +3296,8 @@ window.D3A_LANG_ZH = {
     zh: "情報更新"
   },
   "decide-sync.026": {
-    en: "The S-2 has been working while you built the HAT. He cannot tell you where the enemy is. He can tell you where the enemy has to go, and which pieces of ground are worth watching to find out.",
-    zh: "在你建立 HAT 的同時，S-2 一直在作業。他無法告訴你敵軍在哪裡。他能告訴你敵軍必須去哪裡，以及哪幾塊地形值得監視以查明。"
+    en: "The S-2 has been working while you built the HAT. He cannot tell you where the enemy is, but he can assess the terrain and tell you where the enemy is likely to be.",
+    zh: ""
   },
   "decide-sync.027": {
     en: "Term",
@@ -4336,10 +4352,6 @@ window.D3A_LANG_ZH = {
   "detect.028": {
     en: "The time after which the answer no longer helps, because the decision it feeds has already been made.",
     zh: "過了這個時間，答案就不再有幫助，因為它所支持的決心已經作成。"
-  },
-  "detect.029": {
-    en: "You have already set one clock. In 1C, <strong>timeliness</strong> asked how long a location stays good enough to shoot at. <strong>LTIOV</strong> asks a different question: how late an answer can arrive and still let the commander choose. The same report can pass one and fail the other.",
-    zh: "你已經訂過一個時鐘。在 1C，<strong>時限</strong>問的是一個位置能維持多久，仍然好到可以射擊。<strong>LTIOV</strong>問的是另一個問題：答案最晚多久送到，指揮官仍然來得及作選擇。同一份回報可能通過其中一項，卻不通過另一項。"
   },
   "detect.030": {
     en: "Areas of interest — Operation RIVER GATE",
@@ -6850,8 +6862,8 @@ window.D3A_LANG_ZH = {
     zh: "<b class=\"order\">1</b>100 公尺"
   },
   "deliver.125": {
-    en: "<b class=\"order\">3</b>100 m",
-    zh: "<b class=\"order\">3</b>100 公尺"
+    en: "<b class=\"order\">2</b>100 m",
+    zh: "<b class=\"order\">2</b>100 公尺"
   },
   "deliver.126": {
     en: "Minimum size",
@@ -6978,8 +6990,8 @@ window.D3A_LANG_ZH = {
     zh: "<b class=\"order\">3</b>1,000 公尺"
   },
   "deliver.157": {
-    en: "<b class=\"order\">2</b>1,000 m",
-    zh: "<b class=\"order\">2</b>1,000 公尺"
+    en: "<b class=\"order\">3</b>1,000 m",
+    zh: "<b class=\"order\">3</b>1,000 公尺"
   },
   "deliver.158": {
     en: "Minimum size",
@@ -8436,7 +8448,7 @@ window.D3A_LANG_ZH = {
 
   /* ---------- decide-6.html ---------- */
   "decide-6.ok": {
-    en: "Timeliness does not follow importance. It follows how long the target's situation stays true. The engineering vehicles are allowed nothing at all — they are running, and the moment we look away they may be somewhere else. The ATGM team is allowed nothing either, for the same reason by a different route: a dismounted team carries what it needs and can be gone on foot between one look and the next. The mortars give us a five minute window because that is how long they take to leave. Only the command post stays put long enough to put a number on it, and there a quarter of its relocation time is a risk the commander will accept.",
+    en: "Target selection standards are set in planning, from the enemy's assessed capabilities and tactics.",
     zh: ""
   },
   "decide-6.bad": {

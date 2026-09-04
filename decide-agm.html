@@ -134,7 +134,7 @@
             <p class="row-note bad" data-i18n="decide-agm.032">Commander disagrees: he worries that if we strike the ATGM section early, we risk the enemy sending another one before we clear the far side of the bridge.</p>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-agm.108"><span class="target-name">3. 120&nbsp;mm mortar platoon</span><br><span class="target-desc">Only findable while firing, and firing on our troops at the crossing. We must engage while we still have the tubes in sight.</span></div>
+            <div data-i18n="decide-agm.108"><span class="target-name">3. 120&nbsp;mm mortar platoon</span><br><span class="target-desc">Indirect fire poses an imminent threat to friendly forces consolidated at the chokepoint.</span></div>
             <select data-answer="I">
               <option value="" data-i18n="decide-agm.109">— choose —</option>
               <option value="I" data-i18n="decide-agm.110">Immediate</option>
@@ -235,7 +235,7 @@
             <p class="row-note always" data-i18n="decide-agm.051">The commander only requires that this enemy capability be removed for the duration of the mission, about a day. That is a temporary effect, so neutralize is enough; destroy would spend more ammunition than the mission needs.</p>
           </div>
           <div class="match-row">
-            <div data-i18n="decide-agm.070"><span class="target-name">4. Battalion command post</span><br><span class="target-desc">Assessed roughly 4&nbsp;km behind the river, though not yet located. Neutralize is enough to keep the defense from coordinating while we cross, and the commander's written requirement is only to “disrupt” his command and control. The commander has decided otherwise: if we are going to strike a command post, he wants it gone for good, not one staff officer missing and one radio replaced. He accepts what that costs in ammunition.</span></div>
+            <div data-i18n="decide-agm.070"><span class="target-name">4. Battalion command post</span><br><span class="target-desc">The commander has decided that if he is going to target a command post, he wants to permanently damage the enemy's leadership and communications. While we only need to “disrupt” their communications for the present mission, the commander will spend extra ammunition for the opportunity of long term damage to the enemy system.</span></div>
             <div>
               <select data-answer="destroy">
                 <option value="" data-i18n="decide-agm.075">— choose —</option>
@@ -256,46 +256,54 @@
   <!-- decide-10: preferred method of engagement -->
   <div class="panel">
     <h2 data-i18n="decide-agm.129">Preferred method of engagement</h2>
-    <p data-i18n="decide-agm.130">The last column of the matrix says <em>what we will attack the target with</em>. It is not one answer. It is a short list in the order we prefer it. The first choice is what we use when nothing prevents it. The second and third are there because the first will sometimes be firing another mission, out of range, or unable to fire where the target has appeared. The cell works down the list without going back to the commander.</p>
+    <p data-i18n="decide-agm.130">Attack guidance is the commander's preference of which weapon to engage a specific enemy target class. It considers the best weapon-to-target match but also the scarcity of resources. As a general rule, to conserve resources, a target will be assigned the cheapest or most abundant ammunition that meets the minimum damage criteria. Higher payoff targets may be assigned larger than required weapon systems to increase the chance of mission success. The current operations fires personnel will send the fire mission to the first available weapon system on the commander's preference list.</p>
 
-    <h3 data-i18n="decide-agm.132">What we have to attack with</h3>
+    <h3 data-i18n="decide-agm.132">Friendly Fires Assets</h3>
     <table class="doc">
       <tbody><tr><th></th><th data-i18n="decide-agm.023">OWA-UAS</th><th data-i18n="decide-agm.059">M101 105 mm howitzer battery</th><th data-i18n="decide-agm.064">M109 155 mm battery</th></tr>
-      <tr><td data-i18n="decide-agm.071"><strong>Reach</strong></td><td data-i18n="decide-agm.098">About 3 km</td><td data-i18n="decide-agm.099">Every target</td><td data-i18n="decide-agm.101">Every target</td></tr>
-      <tr><td data-i18n="decide-agm.131"><strong>Effect radius</strong></td><td class="data" data-i18n="decide-agm.133">5 m</td><td class="data" data-i18n="decide-agm.134">30 m</td><td class="data" data-i18n="decide-agm.135">50 m</td></tr>
+      <tr><td data-i18n="decide-agm.071"><strong>Range</strong></td><td data-i18n="decide-agm.098">About 3 km</td><td data-i18n="decide-agm.099">Every target</td><td data-i18n="decide-agm.101">Every target</td></tr>
+      <tr><td data-i18n="decide-agm.131"><strong>Blast Radius</strong></td><td class="data" data-i18n="decide-agm.133">5 m</td><td class="data" data-i18n="decide-agm.134">30 m</td><td class="data" data-i18n="decide-agm.135">50 m</td></tr>
       <tr><td data-i18n="decide-agm.136"><strong>Cratering</strong></td><td data-i18n="decide-agm.137">None</td><td data-i18n="decide-agm.138">Yes</td><td data-i18n="decide-agm.139">Heavy</td></tr>
-      <tr><td data-i18n="decide-agm.140"><strong>Inside the RFA</strong></td><td data-i18n="decide-agm.141">May fire</td><td data-i18n="decide-agm.142">May not fire</td><td data-i18n="decide-agm.143">May not fire</td></tr>
-      <tr><td data-i18n="decide-agm.144"><strong>We hold</strong></td><td data-i18n="decide-agm.145">10, single use</td><td class="data" data-i18n="decide-agm.146">300 rounds</td><td class="data" data-i18n="decide-agm.147">120 rounds</td></tr>
-      <tr><td data-i18n="decide-agm.148"><strong>After it fires</strong></td><td data-i18n="decide-agm.149">Gone</td><td data-i18n="decide-agm.150">20 min to displace</td><td data-i18n="decide-agm.151">20 min to displace</td></tr>
-      <tr><td data-i18n="decide-agm.152"><strong>The munition</strong></td><td data-i18n="decide-agm.153">Precision. One target.</td><td data-i18n="decide-agm.154">Cheaper, easy to move</td><td data-i18n="decide-agm.155">The expensive round</td></tr>
+      <tr><td data-i18n="decide-agm.144"><strong>Ammunition Count</strong></td><td data-i18n="decide-agm.145">10, single use</td><td class="data" data-i18n="decide-agm.146">300 rounds</td><td class="data" data-i18n="decide-agm.147">120 rounds</td></tr>
+      <tr><td data-i18n="decide-agm.148"><strong>Relocation time</strong></td><td>—</td><td data-i18n="decide-agm.150">30 min to displace</td><td data-i18n="decide-agm.151">20 min to displace</td></tr>
+      <tr><td data-i18n="decide-agm.152"><strong>Munition</strong></td><td data-i18n="decide-agm.153">Precision. One target.</td><td data-i18n="decide-agm.154">Cheaper, easy to move</td><td data-i18n="decide-agm.155">Heavy, costly</td></tr>
     </tbody></table>
     <p class="src" data-i18n="decide-agm.160">These figures are set for this scenario. They are not published doctrine.</p>
 
-    <p data-i18n="decide-agm.156">There is no formula that produces the order for every target. It comes from what fires have to achieve against that particular target, and from what we can afford to spend doing it. The commander's fires guidance is therefore written for each high-payoff target, and it is given with the target below.</p>
-
-    <div class="doctrine" data-i18n="decide-agm.219"><strong>Attack guidance is not an exact science.</strong> The approved matrix may reflect the opinions of the commander. Two competent staff officers will order the same three assets differently for the same target and both will be able to defend it. The order also turns on something this page has not given you yet — <strong>where the target is</strong>, and how accurately and how recently we have located it. That is the work of the <strong>target selection standards</strong>, on the next page. Target 4 below is the clearest case: read the commander's reasoning, then ask whether you would have written the same order.</div>
-
     <div class="exercise">
       <div class="exercise-head">
-        <h3 data-i18n="decide-agm.169">Task 1.6 — Choose the method</h3>
+        <h3 data-i18n="decide-agm.169">Task 1.6 — Choose preferred method of engagement</h3>
         <span class="status" data-status="decide-10">NOT DONE</span>
       </div>
       <div class="exercise-body">
-        <p data-i18n="decide-agm.218">Read the commander’s fires guidance above each target, then select the <strong>primary</strong> and <strong>alternate</strong> means of engagement. Whatever asset is left over is the tertiary means, so you do not have to record it. The engineer team is worked for you as an example. Check each target as you finish it, and the commander’s reasoning will appear beneath it.</p>
         <div id="d10-match">
-          <div class="match-row worked">
-            <p class="fires-guidance" data-i18n="decide-agm.158"><strong>Fires guidance.</strong> “Destruction of this target is vital to mission success. Do not risk missing. The target is likely on the road, and I would prefer less cratering for future friendly operations.”</p>
-            <div data-i18n="decide-agm.159"><span class="target-name">Worked example — 1. Engineer obstacle team — Neutralize</span><br><span class="target-desc">A small team, unprotected, likely carrying explosives or mines.</span></div>
+          <div class="match-row">
+            <div data-i18n="decide-agm.159"><span class="target-name">1. Engineer obstacle team — Neutralize</span><br><span class="target-desc"><strong>Fires guidance.</strong> “Destruction of this target is vital to mission success. Do not risk missing. The target is likely on the road, and I would prefer less cratering for future friendly operations.”</span></div>
             <div class="method-picks">
-              <div class="pick" data-i18n="decide-agm.161"><span class="pick-label">Primary</span><span class="pick-answer">OWA-UAS</span></div>
-              <div class="pick" data-i18n="decide-agm.162"><span class="pick-label">Alternate</span><span class="pick-answer">M101 105 mm howitzer battery</span></div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.069">Primary</span>
+                <select data-answer="owa">
+                  <option value="" data-i18n="decide-agm.072">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.079">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.082">M101 105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.085">M109 155 mm battery</option>
+                </select>
+              </div>
+              <div class="pick"><span class="pick-label" data-i18n="decide-agm.088">Alternate</span>
+                <select data-answer="105">
+                  <option value="" data-i18n="decide-agm.091">— choose —</option>
+                  <option value="owa" data-i18n="decide-agm.140">OWA-UAS</option>
+                  <option value="105" data-i18n="decide-agm.141">M101 105 mm howitzer battery</option>
+                  <option value="155" data-i18n="decide-agm.142">M109 155 mm battery</option>
+                </select>
+              </div>
+              <div class="pick is-tertiary" data-i18n="decide-agm.143"><span class="pick-label">Tertiary</span><span class="pick-answer">M109 155 mm battery</span></div>
+              <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.149">Check answer</button></div>
             </div>
-            <p class="row-note always show" data-i18n="decide-agm.163"><strong>Primary, OWA-UAS.</strong> I do not want to risk missing, since they are vital to friendly mission success. Likely a small team carrying explosives or mines.</p>
-            <p class="row-note always show" data-i18n="decide-agm.164"><strong>Alternate, M101 105 mm howitzer battery.</strong> If I have to use indirect fire, I might as well use the cheapest and most abundant round, given the small and unprotected nature of the target.</p>
+            <p class="row-note always" data-i18n="decide-agm.163"><strong>Primary, OWA-UAS.</strong> I do not want to risk missing, since they are vital to friendly mission success. Likely a small team carrying explosives or mines.</p>
+            <p class="row-note always" data-i18n="decide-agm.164"><strong>Alternate, M101 105 mm howitzer battery.</strong> If I have to use indirect fire, I might as well use the cheapest and most abundant round, given the small and unprotected nature of the target.</p>
           </div>
           <div class="match-row">
-            <p class="fires-guidance" data-i18n="decide-agm.165"><strong>Fires guidance.</strong> “We are targeting a small team with a missile. They may still be able to employ it under fire, especially if they are in a protected position.”</p>
-            <div data-i18n="decide-agm.166"><span class="target-name">2. ATGM section — Suppress</span><br><span class="target-desc">A launcher crew in a prepared position.</span></div>
+            <div data-i18n="decide-agm.166"><span class="target-name">2. ATGM section — Suppress</span><br><span class="target-desc"><strong>Fires guidance.</strong> “We are targeting a small team with a missile. They may still be able to employ it under fire, especially if they are in a protected position.”</span></div>
             <div class="method-picks">
               <div class="pick"><span class="pick-label" data-i18n="decide-agm.167">Primary</span>
                 <select data-answer="owa">
@@ -313,14 +321,14 @@
                   <option value="155" data-i18n="decide-agm.177">M109 155 mm battery</option>
                 </select>
               </div>
+              <div class="pick is-tertiary" data-i18n="decide-agm.156"><span class="pick-label">Tertiary</span><span class="pick-answer">M109 155 mm battery</span></div>
               <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.157">Check answer</button></div>
             </div>
             <p class="row-note always" data-i18n="decide-agm.178"><strong>Primary, OWA-UAS.</strong> We are targeting a small team with a missile. They may still be able to employ it under fire, especially in a protected position.</p>
             <p class="row-note always" data-i18n="decide-agm.179"><strong>Alternate, M101 105 mm howitzer battery.</strong> No reason not to use the cheaper and more abundant round, all things being equal.</p>
           </div>
           <div class="match-row">
-            <p class="fires-guidance" data-i18n="decide-agm.180"><strong>Fires guidance.</strong> “This is an area target.”</p>
-            <div data-i18n="decide-agm.181"><span class="target-name">3. 120&nbsp;mm mortar platoon — Neutralize</span><br><span class="target-desc">Three tubes spread across a firing position.</span></div>
+            <div data-i18n="decide-agm.181"><span class="target-name">3. 120&nbsp;mm mortar platoon — Neutralize</span><br><span class="target-desc"><strong>Fires guidance.</strong> “This is an area target.”</span></div>
             <div class="method-picks">
               <div class="pick"><span class="pick-label" data-i18n="decide-agm.182">Primary</span>
                 <select data-answer="105">
@@ -338,14 +346,14 @@
                   <option value="155" data-i18n="decide-agm.193">M109 155 mm battery</option>
                 </select>
               </div>
+              <div class="pick is-tertiary" data-i18n="decide-agm.161"><span class="pick-label">Tertiary</span><span class="pick-answer">OWA-UAS</span></div>
               <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.196">Check answer</button></div>
             </div>
             <p class="row-note always" data-i18n="decide-agm.194"><strong>Primary, M101 105 mm howitzer battery.</strong> An area fire weapon against an area target. No reason not to use the cheaper munition.</p>
             <p class="row-note always" data-i18n="decide-agm.195"><strong>Alternate, M109 155 mm battery.</strong> Also an area fire weapon against an area target.</p>
           </div>
           <div class="match-row">
-            <p class="fires-guidance" data-i18n="decide-agm.197"><strong>Fires guidance.</strong> “The enemy command post may be a single soft tent, or several tents and vehicles. I wish to minimize the risk of missing on the first salvo. If we do not meet the criteria on that first salvo, the enemy is likely to displace rapidly and we may lose the opportunity to attrite key communications equipment and radios.”</p>
-            <div data-i18n="decide-agm.198"><span class="target-name">4. Battalion command post — Destroy</span><br><span class="target-desc">Not located yet, and it relocates every 24 hours. Because it is unlocated we do not yet know what we are striking: it may be a large static compound of tents and vehicles, or it may be a single mobile command vehicle. Order your two choices so that the first covers the compound and the second covers the vehicle.</span></div>
+            <div data-i18n="decide-agm.198"><span class="target-name">4. Battalion command post — Destroy</span><br><span class="target-desc"><strong>Fires guidance.</strong> “The enemy command post may be a single soft tent, or several tents and vehicles. I wish to minimize the risk of missing on the first salvo. If we do not meet the criteria on that first salvo, the enemy is likely to displace rapidly and we may lose the opportunity to attrite key communications equipment and radios.”</span></div>
             <div class="method-picks">
               <div class="pick"><span class="pick-label" data-i18n="decide-agm.199">Primary</span>
                 <select data-answer="155">
@@ -356,17 +364,18 @@
                 </select>
               </div>
               <div class="pick"><span class="pick-label" data-i18n="decide-agm.204">Alternate</span>
-                <select data-answer="owa">
+                <select data-answer="105">
                   <option value="" data-i18n="decide-agm.211">— choose —</option>
                   <option value="owa" data-i18n="decide-agm.212">OWA-UAS</option>
                   <option value="105" data-i18n="decide-agm.213">M101 105 mm howitzer battery</option>
                   <option value="155" data-i18n="decide-agm.214">M109 155 mm battery</option>
                 </select>
               </div>
+              <div class="pick is-tertiary" data-i18n="decide-agm.162"><span class="pick-label">Tertiary</span><span class="pick-answer">OWA-UAS</span></div>
               <div class="pick-check"><button class="btn row-check" data-i18n="decide-agm.217">Check answer</button></div>
             </div>
             <p class="row-note always" data-i18n="decide-agm.215"><strong>Primary, M109 155 mm battery.</strong> If the command post is a <strong>large static compound</strong> — several tents and vehicles spread over some ground — it is an area target, and the 155 covers the most ground on the first salvo. I wish to minimize the risk of missing, because if we do not meet the criteria on that first salvo the enemy displaces and we lose the opportunity.</p>
-            <p class="row-note always" data-i18n="decide-agm.216"><strong>Alternate, OWA-UAS.</strong> If instead it proves to be a <strong>single mobile command vehicle</strong>, that is a point target, and the drone buys precision and a guaranteed hit on it.</p>
+            <p class="row-note always" data-i18n="decide-agm.216"><strong>Tertiary, OWA-UAS.</strong> If instead it proves to be a <strong>single mobile command vehicle</strong>, that is a point target, and the drone buys precision and a guaranteed hit on it.</p>
             <p class="row-note always" data-i18n="decide-agm.257">This is the order that will be argued about, and it is the one to argue about. Reverse it — drone first, then 155 — and you have a defensible matrix for a different assumption about what the command post turns out to be. What settles it is where the target is and how well we have located it, which is the next page.</p>
           </div>
         </div>
@@ -399,7 +408,7 @@
       <tr>
         <td data-i18n="decide-agm.246"><strong>4. Battalion command post</strong></td>
         <td data-i18n="decide-agm.247">As acquired</td><td data-i18n="decide-agm.248">Destroy</td>
-        <td data-i18n="decide-agm.249">155 mm</td><td data-i18n="decide-agm.250">OWA-UAS</td><td data-i18n="decide-agm.251">105 mm</td>
+        <td data-i18n="decide-agm.249">155 mm</td><td data-i18n="decide-agm.250">105 mm</td><td data-i18n="decide-agm.251">OWA-UAS</td>
       </tr>
     </tbody></table>
     <p class="src" data-i18n="decide-agm.252">105 mm is the M101 105 mm howitzer battery. 155 mm is the M109 155 mm battery. OWA-UAS is the one-way attack UAS.</p>

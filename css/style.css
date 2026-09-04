@@ -737,26 +737,12 @@ table.doc td ul.opts li:last-child { margin-bottom: 0; }
 .match-row select.correct, .agm-grid select.correct, table.cpm select.correct { border-color: var(--ok); background: var(--ok-bg); }
 .match-row select.incorrect, .agm-grid select.incorrect, table.cpm select.incorrect { border-color: var(--bad); background: var(--bad-bg); }
 
-/* Commander's fires guidance for a single target. Sits above the target inside
-   a match row (grid-column spans it) and also stands alone in the worked
-   example. Brass, like the commander's callout, because that is whose voice it
-   is. .todo marks placeholder text that has not been written yet. */
-.fires-guidance {
-  grid-column: 1 / -1;
-  margin: 0 0 6px;
-  padding: 10px 14px;
-  background: var(--warn-bg);
-  border-left: 3px solid var(--gold-fill);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  font-size: .93rem;
-  line-height: 1.55;
-}
-.fires-guidance .todo { color: var(--bad); font-style: italic; }
-
-/* The worked example row inside the method exercise. It carries no select, so
-   initSelectMatch skips it: the answers are shown as static text and the note
-   under them is always visible rather than revealed on check. */
-.match-row.worked { background: var(--phase-tint); border-radius: var(--radius-sm); padding: 12px 14px; }
+/* A ranked choice the student does not make. Now used only by the tertiary
+   means, which is whatever asset the row's primary and alternate leave over
+   and is revealed on a correct answer. The dashed border says "filled in for
+   you" rather than "type here".
+   (.match-row.worked and .worked-note lived here until 2026-09-04, when the
+   worked example became a real question. Both were left unused and removed.) */
 .pick-answer {
   display: block;
   font-weight: 600;
@@ -765,20 +751,27 @@ table.doc td ul.opts li:last-child { margin-bottom: 0; }
   border-radius: var(--radius-sm);
   background: #fff;
 }
-.worked-note {
-  grid-column: 1 / -1;
-  margin: 8px 0 0;
-  padding: 9px 12px;
-  border-left: 3px solid var(--phase);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: #fff;
-  font-size: .9rem;
-  line-height: 1.5;
-}
+/* The ranked choices inside one match row (the preferred-method exercise).
+   One column, so primary, alternate and tertiary read down the page as the
+   ranked list they are. Capped in width: a full-panel select looks like a
+   form field, not a ranked choice. */
+.method-picks { display: grid; grid-template-columns: minmax(0, 24rem); gap: 8px 12px; align-items: start; }
+/* The tertiary is not chosen, it is whatever is left over, so it stays hidden
+   until initSelectMatch marks the row right. */
+.method-picks .pick.is-tertiary { display: none; }
+.method-picks .pick.is-tertiary.show { display: grid; }
 
-/* Two ranked choices inside one match row (the preferred-method exercise).
-   Stacked, each with its own small label above the select. */
-.method-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; align-items: start; }
+/* Task 1.6 runs tighter than the other match exercises. Three stacked picks
+   plus a check button made every row 217px tall, and with align-items:center
+   the target and its fires guidance floated in the middle of that. Scoped to
+   #d10-match: six other exercises share .match-row and must not move. */
+#d10-match .match-row { align-items: start; gap: 10px; padding: 10px 0; }
+#d10-match .method-picks { gap: 5px 12px; }
+#d10-match .method-picks .pick { gap: 1px; }
+#d10-match .method-picks select,
+#d10-match .method-picks .pick-answer { padding: 6px 10px; }
+#d10-match .btn.row-check { padding: 5px 14px; }
+#d10-match .row-note { margin-top: 3px; padding: 7px 11px; }
 .method-picks .pick { display: grid; gap: 3px; align-content: start; }
 /* the row's own Check answer button sits under both selects */
 .method-picks .pick-check { grid-column: 1 / -1; }
@@ -1028,7 +1021,6 @@ dl.glossary dd { margin: 2px 0 0 0; color: var(--muted); font-size: .98rem; }
 @media (max-width: 640px) {
   :root { font-size: 16px; }
   .match-row { grid-template-columns: 1fr; gap: 8px; }
-  .method-picks { grid-template-columns: 1fr; }
   .panel { padding: 20px; }
   main { padding: 20px 14px 64px; }
   .header-inner { padding: 10px 16px 0; }

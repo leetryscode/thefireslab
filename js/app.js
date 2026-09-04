@@ -412,6 +412,9 @@ const D3A = (() => {
       const sels = [...row.querySelectorAll('select[data-answer]')];
       if (!sels.length) return true;
       row.querySelectorAll('.row-note').forEach(n => n.classList.remove('show'));
+      /* The tertiary means is not chosen, it is what is left over, so it is
+         revealed once the row's own picks are right rather than selected. */
+      row.querySelectorAll('.pick.is-tertiary').forEach(n => n.classList.remove('show'));
       if (sels.some(sel => !sel.value)) {
         sels.forEach(sel => sel.classList.remove('correct', 'incorrect'));
         return false;
@@ -430,6 +433,7 @@ const D3A = (() => {
       const notes = [...row.querySelectorAll('.row-note')];
       notes.filter(n => n.classList.contains('always')).forEach(n => n.classList.add('show'));
       if (ok) {
+        row.querySelectorAll('.pick.is-tertiary').forEach(n => n.classList.add('show'));
         const noteOk = notes.find(n => n.classList.contains('ok'));
         if (noteOk) noteOk.classList.add('show');
       } else {
