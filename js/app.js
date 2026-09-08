@@ -401,11 +401,41 @@ const D3A = (() => {
      exercise. Alternatively any .match-row may carry its own button.row-check,
      which marks that row only, for immediate feedback while the student works
      down the page. Both may be present; either one completes the exercise once
-     every select in the container is correct. */
+     every select in the container is correct.
+
+     A select may carry data-answer-group. Selects sharing a group name within
+     one row are graded as a SET: any ordering of that group's answers passes.
+     Task 1.11 uses it for the two sensors, which are two ways of watching one
+     piece of ground rather than a ranked pair. Anything without the attribute
+     is graded in place, which is what the ranked attack assets need. */
   function initSelectMatch(cfg) {
     const container = document.getElementById(cfg.containerId);
     if (!container) return;
     const allSelects = () => [...container.querySelectorAll('select[data-answer]')];
+
+    /* Grade one row's selects. Returns a Map of select -> boolean. Grouped
+       selects consume from a shared pool of that group's answers, so a student
+       who has the right pair in the other order is marked right on both. */
+    function grade(sels) {
+      const out = new Map();
+      const groups = new Map();
+      sels.forEach(sel => {
+        const key = sel.dataset.answerGroup || null;
+        if (key === null) { out.set(sel, sel.value === sel.dataset.answer); return; }
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(sel);
+      });
+      groups.forEach(group => {
+        const pool = group.map(s => s.dataset.answer);
+        const used = pool.map(() => false);
+        group.forEach(sel => {
+          const i = pool.findIndex((a, n) => !used[n] && a === sel.value);
+          if (i >= 0) used[i] = true;
+          out.set(sel, i >= 0);
+        });
+      });
+      return out;
+    }
 
     /* Mark one row and reveal its notes. Returns false if the row is blank. */
     function markRow(row) {
@@ -420,8 +450,9 @@ const D3A = (() => {
         return false;
       }
       let ok = true; const wrong = [];
+      const marks = grade(sels);
       sels.forEach(sel => {
-        const right = sel.value === sel.dataset.answer;
+        const right = marks.get(sel);
         sel.classList.remove('correct', 'incorrect');
         sel.classList.add(right ? 'correct' : 'incorrect');
         if (!right) { ok = false; wrong.push(sel.value); }
@@ -447,20 +478,26 @@ const D3A = (() => {
       return true;
     }
 
+    const rowOf = sel => sel.closest('.match-row') || sel.closest('tr');
+    const allRows = () => [...new Set(allSelects().map(rowOf).filter(Boolean))];
+
     /* The exercise is finished when every select in it is right, however the
-       student got there — one row at a time or all at once. */
+       student got there — one row at a time or all at once. Grading runs a row
+       at a time so a group name means the same thing here as it does in
+       markRow: within its own row, not across the exercise. */
     function settle() {
       const sels = allSelects();
-      const done = sels.length && sels.every(s => s.value && s.value === s.dataset.answer);
+      let done = sels.length > 0 && sels.every(s => s.value);
+      if (done) done = sels.every(sel => {
+        const row = rowOf(sel);
+        return grade(row ? [...row.querySelectorAll('select[data-answer]')] : [sel]).get(sel);
+      });
       if (done) {
         showFeedback(cfg.feedbackId, true, cfg.explainOk, cfg.explainBad, cfg.exerciseId);
         complete(cfg.exerciseId);
       }
       return done;
     }
-
-    const rowOf = sel => sel.closest('.match-row') || sel.closest('tr');
-    const allRows = () => [...new Set(allSelects().map(rowOf).filter(Boolean))];
 
     const btn = document.getElementById(cfg.checkBtnId);
     if (btn) btn.addEventListener('click', () => {

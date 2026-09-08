@@ -3275,14 +3275,6 @@ window.D3A_LANG_ZH = {
     en: "Decide: Target Synchronization Matrix",
     zh: "擬定：目標同步矩陣"
   },
-  "decide-sync.018": {
-    en: "What an approved HAT gives you",
-    zh: "核定的 HAT 給你什麼"
-  },
-  "decide-sync.017": {
-    en: "When the commander approves the HAT he makes his decision on every target in it, in advance. A report arrives. The <strong>fire support coordination cell (FSCC)</strong> checks it against the target selection standards, finds the target on the high-payoff target list, and orders the attack the attack guidance matrix directs. <strong>The FSCC does not go back to the commander for permission. He gave it when he approved the HAT.</strong>",
-    zh: "指揮官核定 HAT 時，就等於事先對其中每一個目標作出決心。一份回報傳來。<strong>火力協調組（FSCC）</strong>依目標選擇條件檢核這份回報，在高效益目標清單上找出該目標，並依攻擊矩陣的規定下令攻擊。<strong>FSCC不必再回頭向指揮官請求許可。他在核定 HAT 時就已經給了。</strong>"
-  },
   "decide-sync.023": {
     en: "The HAT is produced to allow us to be reactive. We made as many targeting decisions ahead of time in order to speed up decisions and approvals in the moment. Next we will use the generic guidance from the approved HAT to generate a specific plan for the battle ahead.",
     zh: ""
@@ -3308,132 +3300,36 @@ window.D3A_LANG_ZH = {
     zh: "這是什麼"
   },
   "decide-sync.029": {
-    en: "What we do there",
-    zh: "我們在那裡做什麼"
+    en: "Use",
+    zh: ""
   },
   "decide-sync.030": {
-    en: "<strong>Named area of interest (NAI)</strong>",
-    zh: "<strong>指定偵查區（NAI）</strong>"
+    en: "<strong>Named Area of Interest (NAI)</strong>",
+    zh: ""
   },
   "decide-sync.031": {
-    en: "A piece of ground where we expect to see something that answers a question we have about the enemy.",
-    zh: "一塊地形，我們預期在該處看到足以回答我們對敵軍某項疑問的事物。"
+    en: "area selected for monitoring enemy activity to collect critical information.",
+    zh: ""
   },
   "decide-sync.032": {
-    en: "We <em>watch</em> it. An NAI confirms or denies what we think he is doing.",
-    zh: "我們<em>監視</em>它。NAI用來確認或否定我們對他作為的判斷。"
+    en: "assigned to intelligence and reconnaissance assets to confirm or deny enemy courses of action (COAs)",
+    zh: ""
   },
   "decide-sync.033": {
-    en: "<strong>Target area of interest (TAI)</strong>",
-    zh: "<strong>目標偵查區（TAI）</strong>"
+    en: "<strong>Target Area of Interest (TAI)</strong>",
+    zh: ""
   },
   "decide-sync.034": {
-    en: "A piece of ground the enemy must occupy, or must pass through, for his own plan to work.",
-    zh: "一塊地形，敵軍為使自己的計畫奏效，必須佔領或必須通過。"
+    en: "Area friendly units can attack high-payoff targets (HPTs) using direct or indirect fires.",
+    zh: ""
   },
   "decide-sync.035": {
-    en: "We <em>attack</em> him there. A TAI is chosen because it is where his plan is most vulnerable.",
-    zh: "我們在該處<em>攻擊</em>他。選定TAI，是因為那裡是他的計畫最脆弱之處。"
+    en: "Primarily focused on engagement and fires execution",
+    zh: ""
   },
   "decide-sync.036": {
     en: "These definitions are simplified for this course. Flagged for review by a subject matter expert.",
     zh: "這些定義為本課程作了簡化。已標註，待領域專家審查。"
-  },
-  "decide-sync.037": {
-    en: "S-2 assessment — Operation RIVER GATE",
-    zh: "S-2 評估 — Operation RIVER GATE"
-  },
-  "decide-sync.038": {
-    en: "<strong>TAI 1.</strong> The ATGM section cannot cover the crossing from anywhere else. To engage our vehicles on the bridge it must emplace inside TAI 1.",
-    zh: ""
-  },
-  "decide-sync.039": {
-    en: "<strong>NAI 2.</strong> A crossroads. Anything the enemy moves forward toward the bridge passes through it, engineer equipment included.",
-    zh: "<strong>NAI 2。</strong>一處十字路口。敵軍向橋樑前推的一切，包括工兵裝備，都要通過該處。"
-  },
-  "decide-sync.040": {
-    en: "<strong>NAI 1.</strong> The best firing position on this ground for the 120 mm mortar platoon.",
-    zh: "<strong>NAI 1。</strong>本地形上 120 公釐迫擊砲排的最佳射擊陣地。"
-  },
-  "decide-sync.041": {
-    en: "<strong>NAI 3.</strong> A second position the mortar platoon could use. It is not as good as NAI 1.",
-    zh: "<strong>NAI 3。</strong>迫擊砲排可用的第二處陣地。條件不如NAI 1。"
-  },
-  "decide-sync.042": {
-    en: "Areas of interest — Operation RIVER GATE",
-    zh: "偵查區 — Operation RIVER GATE"
-  },
-  "decide-sync.043": {
-    en: "Area",
-    zh: "區域"
-  },
-  "decide-sync.044": {
-    en: "What we are looking for",
-    zh: "我們在找什麼"
-  },
-  "decide-sync.045": {
-    en: "Why there",
-    zh: "為何在該處"
-  },
-  "decide-sync.046": {
-    en: "ATGM section",
-    zh: "ATGM 分隊"
-  },
-  "decide-sync.047": {
-    en: "The only ground from which he can engage vehicles on the bridge. We intend to attack him here.",
-    zh: ""
-  },
-  "decide-sync.048": {
-    en: "120 mm mortar platoon",
-    zh: "120 公釐迫擊砲排"
-  },
-  "decide-sync.049": {
-    en: "The best mortar firing position on this ground.",
-    zh: "本地形上最佳的迫擊砲射擊陣地。"
-  },
-  "decide-sync.050": {
-    en: "Engineer obstacle team",
-    zh: "工兵障礙小組"
-  },
-  "decide-sync.051": {
-    en: "A crossroads on the route forward. Engineer equipment moving to the bridge is seen here first.",
-    zh: "前推路線上的一處十字路口。向橋樑移動的工兵裝備會先在此被看到。"
-  },
-  "decide-sync.052": {
-    en: "120 mm mortar platoon",
-    zh: "120 公釐迫擊砲排"
-  },
-  "decide-sync.053": {
-    en: "A second, less suitable mortar position. Watched after NAI 1.",
-    zh: "第二處較不適合的迫擊砲陣地。在NAI 1 之後監視。"
-  },
-  "decide-sync.054": {
-    en: "Restricted fire area, Kordan Bridge",
-    zh: "火力限制區，Kordan Bridge"
-  },
-  "decide-sync.055": {
-    en: "Cratering munitions are not permitted inside it. The one-way attack UAS is the only asset that may fire here.",
-    zh: "成坑彈藥不得在其內使用。攻擊型無人機是唯一可以在此射擊的兵力。"
-  },
-  "decide-sync.020": {
-    en: "Range of the small UAS",
-    zh: "小型UAS的航程"
-  },
-  "decide-sync.021": {
-    en: "The sUAS cannot see past this line. TAI 1 is inside it. All three named areas of interest are outside it, so only the long-range ISR UAS can watch them.",
-    zh: "sUAS看不到這條線以外。TAI 1 在線內。三個指定偵查區都在線外，因此只有長程情監偵無人機能監視它們。"
-  },
-  "decide-sync.056": {
-    en: "Range of the one-way attack UAS",
-    zh: "攻擊型無人機的航程"
-  },
-  "decide-sync.057": {
-    en: "The drone cannot strike past this line. TAI 1 and NAI 2 are well inside it. NAI 1 and NAI 3 straddle it, so only part of each can be reached.",
-    zh: "無人機無法打擊這條線以外。TAI 1 與NAI 2 都在線內很深處。NAI 1 與NAI 3 跨在線上，因此各只有一部分打得到。"
-  },
-  "decide-sync.058": {
-    en: "Notice what is <em>not</em> on this map. There is no area of interest for the battalion command post, because the S-2 cannot say where it is. We will find it, if we find it, while we are looking for something else.",
-    zh: "注意這張圖上<em>沒有</em>什麼。圖上沒有針對營指揮所的偵查區，因為 S-2 說不出它在哪裡。我們若能找到它，也會是在尋找別的東西時找到的。"
   },
   "decide-sync.059": {
     en: "The target package",
@@ -3452,16 +3348,16 @@ window.D3A_LANG_ZH = {
     zh: "計畫資料 — ISR 與蒐集管理"
   },
   "decide-sync.248": {
-    en: "<strong>Long-range ISR UAS.</strong> We hold two aircraft. Each flies for two hours, and the battery needs two hours to charge once it lands. One aircraft can therefore be in the air at any time, and the two hand over between them. Nothing else we own can watch a named area of interest.",
-    zh: "<strong>長程情監偵無人機。</strong>我們有兩架飛機。每架可飛行兩小時，落地後電池需要兩小時充電。因此任何時候都能維持一架在空中，兩架之間互相接替。我們手上沒有其他兵力能監視指定偵查區。"
+    en: "<strong>Long-range ISR UAS.</strong> We hold two aircraft. Each flies for two hours, and the battery needs two hours to charge once it lands. One aircraft can therefore be in the air at any time. Nothing else we own can watch a named area of interest.",
+    zh: ""
   },
   "decide-sync.249": {
     en: "<strong>Scout team.</strong> Very hard to detect, and it can stay where it is. It can only see the ground in front of it: the bridge, and part of TAI 1.",
     zh: "<strong>偵察小組。</strong>極難被偵知，而且可以留在原地不動。它只能看到正前方的地面：橋樑，以及TAI 1 的一部分。"
   },
   "decide-sync.250": {
-    en: "<strong>The scout team's sUAS.</strong> The team holds several airframes and can charge them. Each one flies for about thirty minutes. That is not continuous coverage. By launching the next drone as the last one comes back, the team can keep one area under watch for as long as it judges necessary.",
-    zh: "<strong>偵察小組的sUAS。</strong>該小組持有數架機體，並可為其充電。每架約可飛行三十分鐘。這不是連續涵蓋。在前一架返航時起飛下一架，小組就能依其判斷所需的時間，持續監視一個區域。"
+    en: "<strong>The scout team's sUAS.</strong> The team holds several airframes and can charge them. Each one flies for about thirty minutes. By launching the next drone as the last one comes back, the team can keep one area under watch for as long as it judges necessary.",
+    zh: ""
   },
   "decide-sync.062": {
     en: "Sensors you hold",
@@ -3483,441 +3379,581 @@ window.D3A_LANG_ZH = {
     en: "Electronic signals indication is not offered here: it reports an area rather than a point, and it never sees the target itself, so its report fails both target location error and minimum size. It cues another sensor. It does not carry a package on its own.",
     zh: ""
   },
-  "decide-sync.067": {
-    en: "Task 1.11 — Build the four target packages",
-    zh: "課題 1.11 — 建立四個目標包裹"
+  "decide-sync.017": {
+    en: "Task 1.11 — Build the target packages",
+    zh: ""
   },
-  "decide-sync.068": {
-    en: "Work one target at a time and check it before moving on. For the sensors, find that target's area of interest on the map above and ask what can see that far. For the attack assets, start from the attack guidance matrix you built in 1B, then ask whether anything about that piece of ground changes the answer. Two targets have no second sensor available, and working out why is part of the exercise.",
-    zh: "一次處理一個目標，確認無誤後再進行下一個。感測器方面，在上方地圖找出該目標的興趣區域，並自問哪些裝備看得到那麼遠。攻擊兵力方面，先從你在 1B 建立的攻擊矩陣開始，再自問那塊地形是否會改變答案。有兩個目標沒有第二個感測器可用，想出原因也是本練習的一部分。"
+  "decide-sync.018": {
+    en: "One row per place a target may be found: the same target in two places is two packages. Find that place on the map above and ask what can see that far — the two sensors are accepted in either order. Then start from the attack guidance matrix you built in 1B and ask whether that ground changes the answer; the attack assets are ranked, so their order counts.",
+    zh: ""
   },
-  "decide-sync.069": {
-    en: "<span class=\"target-name\">1. Engineer obstacle team</span><br><span class=\"target-desc\">High-payoff target 1. Effect required: neutralize. Attacked immediately.</span>",
-    zh: "<span class=\"target-name\">1. 工兵障礙小組</span><br><span class=\"target-desc\">高效益目標 1。所需效果：癱瘓。立即打擊。</span>"
+  "decide-sync.020": {
+    en: "Target",
+    zh: "目標"
   },
-  "decide-sync.070": {
+  "decide-sync.021": {
+    en: "Suspected location",
+    zh: ""
+  },
+  "decide-sync.042": {
+    en: "Sensors",
+    zh: ""
+  },
+  "decide-sync.043": {
+    en: "Shooters",
+    zh: ""
+  },
+  "decide-sync.044": {
+    en: "<span class=\"target-name\">Engineer obstacle team</span><br><span class=\"target-desc\">High-payoff target 1. Effect required: neutralize. Attacked immediately.</span>",
+    zh: ""
+  },
+  "decide-sync.045": {
+    en: "Kordan Bridge — inside the restricted fire area",
+    zh: ""
+  },
+  "decide-sync.046": {
     en: "Sensor, primary",
     zh: "感測器，主要"
+  },
+  "decide-sync.047": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.048": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "decide-sync.049": {
+    en: "sUAS",
+    zh: "sUAS"
+  },
+  "decide-sync.050": {
+    en: "Long-range ISR UAS",
+    zh: "長程情監偵無人機"
+  },
+  "decide-sync.051": {
+    en: "Sensor, alternate",
+    zh: "感測器，備用"
+  },
+  "decide-sync.052": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.053": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "decide-sync.054": {
+    en: "sUAS",
+    zh: "sUAS"
+  },
+  "decide-sync.055": {
+    en: "Long-range ISR UAS",
+    zh: "長程情監偵無人機"
+  },
+  "decide-sync.056": {
+    en: "No second sensor available",
+    zh: "無第二個感測器可用"
+  },
+  "decide-sync.057": {
+    en: "Attack, primary",
+    zh: "攻擊，主要"
+  },
+  "decide-sync.058": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.067": {
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "decide-sync.068": {
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
+  },
+  "decide-sync.069": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "decide-sync.070": {
+    en: "Attack, alternate",
+    zh: "攻擊，備用"
   },
   "decide-sync.071": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
   "decide-sync.072": {
-    en: "Scout team",
-    zh: "偵察小組"
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
   },
   "decide-sync.073": {
-    en: "sUAS",
-    zh: "sUAS"
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
   },
   "decide-sync.074": {
-    en: "Long-range ISR UAS",
-    zh: "長程情監偵無人機"
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
   },
   "decide-sync.075": {
-    en: "No second sensor available",
-    zh: "無第二個感測器可用"
+    en: "No alternate available",
+    zh: ""
   },
   "decide-sync.076": {
-    en: "Sensor, alternate",
-    zh: "感測器，備用"
-  },
-  "decide-sync.077": {
-    en: "— choose —",
-    zh: "— 請選擇 —"
-  },
-  "decide-sync.078": {
-    en: "Scout team",
-    zh: "偵察小組"
-  },
-  "decide-sync.079": {
-    en: "sUAS",
-    zh: "sUAS"
-  },
-  "decide-sync.080": {
-    en: "Long-range ISR UAS",
-    zh: "長程情監偵無人機"
-  },
-  "decide-sync.081": {
-    en: "No second sensor available",
-    zh: "無第二個感測器可用"
-  },
-  "decide-sync.082": {
-    en: "Attack, primary",
-    zh: "攻擊，主要"
-  },
-  "decide-sync.083": {
-    en: "— choose —",
-    zh: "— 請選擇 —"
-  },
-  "decide-sync.084": {
-    en: "M101 105 mm howitzer battery",
-    zh: "105 公釐 M101 榴彈砲連"
-  },
-  "decide-sync.085": {
-    en: "M109 155 mm battery",
-    zh: "155 公釐 M109 砲連"
-  },
-  "decide-sync.086": {
-    en: "One-way attack UAS",
-    zh: "攻擊型無人機"
-  },
-  "decide-sync.087": {
-    en: "Attack, alternate",
-    zh: "攻擊，備用"
-  },
-  "decide-sync.088": {
-    en: "— choose —",
-    zh: "— 請選擇 —"
-  },
-  "decide-sync.089": {
-    en: "M101 105 mm howitzer battery",
-    zh: "105 公釐 M101 榴彈砲連"
-  },
-  "decide-sync.090": {
-    en: "M109 155 mm battery",
-    zh: "155 公釐 M109 砲連"
-  },
-  "decide-sync.091": {
-    en: "One-way attack UAS",
-    zh: "攻擊型無人機"
-  },
-  "decide-sync.092": {
     en: "Check answer",
     zh: "檢查答案"
   },
-  "decide-sync.093": {
-    en: "<strong>Sensors.</strong> The S-2 expects the engineers to come forward through NAI 2, which lies outside the range of the small UAS, so the long-range ISR UAS takes the area. The scout team is at the bridge, which is where they are going, so it is a second pair of eyes on the same target in a different place.",
-    zh: "<strong>感測器。</strong>S-2 判斷工兵會經由NAI 2 向前推進，該處位於小型 UAS 的航程之外，因此由長程情監偵無人機負責該區。偵察小組位於橋樑，也就是工兵要去的地方，因此它是在不同位置對同一目標的第二雙眼睛。"
+  "decide-sync.077": {
+    en: "<strong>Sensors.</strong> The bridge is the one piece of ground the scout team can see with its own eyes, and it is inside the range of the small UAS. Either sensor can lead.",
+    zh: ""
   },
-  "decide-sync.094": {
-    en: "<strong>Attack.</strong> This is the one row where the package does not follow the attack guidance matrix, which ranks the one-way attack UAS first. The next task asks why.",
-    zh: "<strong>攻擊。</strong>這是目標包裹唯一未依循攻擊矩陣的一列；該矩陣將攻擊型無人機列為第一順位。下一個課題會問原因。"
+  "decide-sync.078": {
+    en: "<strong>Attack.</strong> Inside the restricted fire area the drone is the only asset permitted to fire. There is no second asset to name.",
+    zh: ""
   },
-  "decide-sync.095": {
-    en: "<span class=\"target-name\">2. ATGM section</span><br><span class=\"target-desc\">High-payoff target 2. Effect required: suppress. Attacked as a planned target.</span>",
-    zh: "<span class=\"target-name\">2. ATGM 分隊</span><br><span class=\"target-desc\">高效益目標 2。所需效果：制壓。以計畫目標實施打擊。</span>"
+  "decide-sync.079": {
+    en: "<span class=\"target-name\">Engineer obstacle team</span><br><span class=\"target-desc\">The same target, one bound short of the bridge.</span>",
+    zh: ""
   },
-  "decide-sync.096": {
+  "decide-sync.080": {
+    en: "NAI 2 — a crossroads outside the restricted fire area",
+    zh: ""
+  },
+  "decide-sync.081": {
     en: "Sensor, primary",
     zh: "感測器，主要"
   },
-  "decide-sync.097": {
+  "decide-sync.082": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.098": {
+  "decide-sync.083": {
     en: "Scout team",
     zh: "偵察小組"
   },
-  "decide-sync.099": {
+  "decide-sync.084": {
     en: "sUAS",
     zh: "sUAS"
   },
-  "decide-sync.100": {
+  "decide-sync.085": {
     en: "Long-range ISR UAS",
     zh: "長程情監偵無人機"
   },
-  "decide-sync.101": {
-    en: "No second sensor available",
-    zh: "無第二個感測器可用"
-  },
-  "decide-sync.102": {
+  "decide-sync.086": {
     en: "Sensor, alternate",
     zh: "感測器，備用"
   },
-  "decide-sync.103": {
+  "decide-sync.087": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.104": {
+  "decide-sync.088": {
     en: "Scout team",
     zh: "偵察小組"
   },
-  "decide-sync.105": {
+  "decide-sync.089": {
     en: "sUAS",
     zh: "sUAS"
   },
-  "decide-sync.106": {
+  "decide-sync.090": {
     en: "Long-range ISR UAS",
     zh: "長程情監偵無人機"
   },
-  "decide-sync.107": {
+  "decide-sync.091": {
     en: "No second sensor available",
     zh: "無第二個感測器可用"
   },
-  "decide-sync.108": {
+  "decide-sync.092": {
     en: "Attack, primary",
     zh: "攻擊，主要"
+  },
+  "decide-sync.093": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.094": {
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "decide-sync.095": {
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
+  },
+  "decide-sync.096": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "decide-sync.097": {
+    en: "Attack, alternate",
+    zh: "攻擊，備用"
+  },
+  "decide-sync.098": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.099": {
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "decide-sync.100": {
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
+  },
+  "decide-sync.101": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "decide-sync.102": {
+    en: "No alternate available",
+    zh: ""
+  },
+  "decide-sync.103": {
+    en: "Check answer",
+    zh: "檢查答案"
+  },
+  "decide-sync.104": {
+    en: "<strong>Sensors.</strong> NAI 2 lies outside the range of the small UAS, and the scout team cannot see it from the bridge. Only the long-range ISR UAS reaches it.",
+    zh: ""
+  },
+  "decide-sync.105": {
+    en: "<strong>Attack.</strong> This is the one package where the drone does not lead against a target the attack guidance matrix ranks it first for. The next task asks why.",
+    zh: ""
+  },
+  "decide-sync.106": {
+    en: "<span class=\"target-name\">ATGM section</span><br><span class=\"target-desc\">High-payoff target 2. Effect required: suppress. Attacked as a planned target.</span>",
+    zh: ""
+  },
+  "decide-sync.107": {
+    en: "TAI 1",
+    zh: "TAI 1"
+  },
+  "decide-sync.108": {
+    en: "Sensor, primary",
+    zh: "感測器，主要"
   },
   "decide-sync.109": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
   "decide-sync.110": {
-    en: "M101 105 mm howitzer battery",
-    zh: "105 公釐 M101 榴彈砲連"
+    en: "Scout team",
+    zh: "偵察小組"
   },
   "decide-sync.111": {
-    en: "M109 155 mm battery",
-    zh: "155 公釐 M109 砲連"
+    en: "sUAS",
+    zh: "sUAS"
   },
   "decide-sync.112": {
-    en: "One-way attack UAS",
-    zh: "攻擊型無人機"
+    en: "Long-range ISR UAS",
+    zh: "長程情監偵無人機"
   },
   "decide-sync.113": {
-    en: "Attack, alternate",
-    zh: "攻擊，備用"
+    en: "Sensor, alternate",
+    zh: "感測器，備用"
   },
   "decide-sync.114": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
   "decide-sync.115": {
+    en: "Scout team",
+    zh: "偵察小組"
+  },
+  "decide-sync.116": {
+    en: "sUAS",
+    zh: "sUAS"
+  },
+  "decide-sync.117": {
+    en: "Long-range ISR UAS",
+    zh: "長程情監偵無人機"
+  },
+  "decide-sync.118": {
+    en: "No second sensor available",
+    zh: "無第二個感測器可用"
+  },
+  "decide-sync.119": {
+    en: "Attack, primary",
+    zh: "攻擊，主要"
+  },
+  "decide-sync.120": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.121": {
     en: "M101 105 mm howitzer battery",
     zh: "105 公釐 M101 榴彈砲連"
   },
-  "decide-sync.116": {
+  "decide-sync.122": {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
-  "decide-sync.117": {
+  "decide-sync.123": {
     en: "One-way attack UAS",
     zh: "攻擊型無人機"
   },
-  "decide-sync.118": {
+  "decide-sync.124": {
+    en: "Attack, alternate",
+    zh: "攻擊，備用"
+  },
+  "decide-sync.125": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "decide-sync.126": {
+    en: "M101 105 mm howitzer battery",
+    zh: "105 公釐 M101 榴彈砲連"
+  },
+  "decide-sync.127": {
+    en: "M109 155 mm battery",
+    zh: "155 公釐 M109 砲連"
+  },
+  "decide-sync.128": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "decide-sync.129": {
+    en: "No alternate available",
+    zh: ""
+  },
+  "decide-sync.130": {
     en: "Check answer",
     zh: "檢查答案"
   },
-  "decide-sync.119": {
-    en: "<strong>Sensors.</strong> TAI 1 is the only area of interest inside the range of the small UAS, so the sUAS can work it, rotating one airframe in as the last comes back to charge. The scout team flies those drones, and from where it lies it can also see part of TAI 1 with its own eyes. That is what remains when no drone is up.",
-    zh: "<strong>感測器。</strong>TAI 1 是唯一位於小型 UAS 航程之內的興趣區域，因此可由sUAS負責，在前一架返航充電時輪替下一架接手。偵察小組就是這些無人機的操作者，而且從它所在的位置也能以肉眼看到TAI 1 的一部分。當沒有無人機升空時，這就是剩下的手段。"
+  "decide-sync.131": {
+    en: "<strong>Sensors.</strong> TAI 1 is the only area of interest inside the range of the small UAS. The scout team flies those drones, and from where it lies it can also see part of TAI 1 with its own eyes.",
+    zh: ""
   },
-  "decide-sync.120": {
+  "decide-sync.132": {
     en: "<strong>Attack.</strong> Straight from the attack guidance matrix. The drone is primary because a launcher must be hit rather than bracketed, and the 105 mm battery follows it.",
     zh: "<strong>攻擊。</strong>直接沿用攻擊矩陣。無人機列為主要，因為發射器必須直接命中，而不是以夾叉射擊涵蓋；105 公釐砲連居次。"
   },
-  "decide-sync.121": {
-    en: "<span class=\"target-name\">3. 120 mm mortar platoon</span><br><span class=\"target-desc\">High-payoff target 3. Effect required: neutralize. Attacked immediately.</span>",
-    zh: "<span class=\"target-name\">3. 120 公釐迫擊砲排</span><br><span class=\"target-desc\">高效益目標 3。所需效果：癱瘓。立即打擊。</span>"
+  "decide-sync.133": {
+    en: "<span class=\"target-name\">120&nbsp;mm mortar platoon</span><br><span class=\"target-desc\">High-payoff target 3. Effect required: neutralize. Attacked immediately.</span>",
+    zh: ""
   },
-  "decide-sync.122": {
+  "decide-sync.134": {
+    en: "NAI 1 and NAI 3",
+    zh: ""
+  },
+  "decide-sync.135": {
     en: "Sensor, primary",
     zh: "感測器，主要"
   },
-  "decide-sync.123": {
+  "decide-sync.136": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.124": {
+  "decide-sync.137": {
     en: "Scout team",
     zh: "偵察小組"
   },
-  "decide-sync.125": {
+  "decide-sync.138": {
     en: "sUAS",
     zh: "sUAS"
   },
-  "decide-sync.126": {
+  "decide-sync.139": {
     en: "Long-range ISR UAS",
     zh: "長程情監偵無人機"
   },
-  "decide-sync.127": {
-    en: "No second sensor available",
-    zh: "無第二個感測器可用"
-  },
-  "decide-sync.128": {
+  "decide-sync.140": {
     en: "Sensor, alternate",
     zh: "感測器，備用"
   },
-  "decide-sync.129": {
+  "decide-sync.141": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.130": {
+  "decide-sync.142": {
     en: "Scout team",
     zh: "偵察小組"
   },
-  "decide-sync.131": {
+  "decide-sync.143": {
     en: "sUAS",
     zh: "sUAS"
   },
-  "decide-sync.132": {
+  "decide-sync.144": {
     en: "Long-range ISR UAS",
     zh: "長程情監偵無人機"
   },
-  "decide-sync.133": {
+  "decide-sync.145": {
     en: "No second sensor available",
     zh: "無第二個感測器可用"
   },
-  "decide-sync.134": {
+  "decide-sync.146": {
     en: "Attack, primary",
     zh: "攻擊，主要"
   },
-  "decide-sync.135": {
+  "decide-sync.147": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.136": {
+  "decide-sync.148": {
     en: "M101 105 mm howitzer battery",
     zh: "105 公釐 M101 榴彈砲連"
   },
-  "decide-sync.137": {
+  "decide-sync.149": {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
-  "decide-sync.138": {
+  "decide-sync.150": {
     en: "One-way attack UAS",
     zh: "攻擊型無人機"
   },
-  "decide-sync.139": {
+  "decide-sync.151": {
     en: "Attack, alternate",
     zh: "攻擊，備用"
   },
-  "decide-sync.140": {
+  "decide-sync.152": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.141": {
+  "decide-sync.153": {
     en: "M101 105 mm howitzer battery",
     zh: "105 公釐 M101 榴彈砲連"
   },
-  "decide-sync.142": {
+  "decide-sync.154": {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
-  "decide-sync.143": {
+  "decide-sync.155": {
     en: "One-way attack UAS",
     zh: "攻擊型無人機"
   },
-  "decide-sync.144": {
+  "decide-sync.156": {
+    en: "No alternate available",
+    zh: ""
+  },
+  "decide-sync.157": {
     en: "Check answer",
     zh: "檢查答案"
   },
-  "decide-sync.145": {
-    en: "<strong>Sensors.</strong> NAI 1 and NAI 3 are both well outside the range of the small UAS, and the scout team cannot walk that far behind the enemy. Only the long-range ISR UAS reaches them, so there is no second <em>kind</em> of sensor to assign. We hold two long-range ISR airframes, and the matrix below uses both.",
-    zh: "<strong>感測器。</strong>NAI 1 與NAI 3 都遠在小型 UAS 的航程之外，偵察小組也無法步行深入敵後那麼遠。只有長程情監偵無人機搆得到它們，因此沒有第二<em>種</em>感測器可以指派。我們有兩架長程 ISR 機體，下方的矩陣兩架都用上了。"
+  "decide-sync.158": {
+    en: "<strong>Sensors.</strong> Both areas are well outside the range of the small UAS, and the scout team cannot walk that far behind the enemy. Only the long-range ISR UAS reaches them, so there is no second <em>kind</em> of sensor to assign. We hold two airframes, and the matrix below uses both.",
+    zh: ""
   },
-  "decide-sync.146": {
+  "decide-sync.159": {
     en: "<strong>Attack.</strong> Straight from the attack guidance matrix. An area weapon against an area target, and we hold more 105 mm rounds than 155 mm.",
     zh: "<strong>攻擊。</strong>直接沿用攻擊矩陣。以面積武器對付面積目標，而且我們的 105 公釐彈藥比 155 公釐多。"
   },
-  "decide-sync.147": {
-    en: "<span class=\"target-name\">4. Battalion command post</span><br><span class=\"target-desc\">High-payoff target 4. Effect required: destroy. Attacked as acquired.</span>",
-    zh: "<span class=\"target-name\">4. 營指揮所</span><br><span class=\"target-desc\">高效益目標 4。所需效果：破壞。發現即打。</span>"
+  "decide-sync.160": {
+    en: "<span class=\"target-name\">Battalion command post</span><br><span class=\"target-desc\">High-payoff target 4. Effect required: destroy. Attacked as acquired.</span>",
+    zh: ""
   },
-  "decide-sync.148": {
+  "decide-sync.161": {
+    en: "NAI 3",
+    zh: ""
+  },
+  "decide-sync.162": {
     en: "Sensor, primary",
     zh: "感測器，主要"
   },
-  "decide-sync.149": {
+  "decide-sync.163": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.150": {
+  "decide-sync.164": {
     en: "Scout team",
     zh: "偵察小組"
   },
-  "decide-sync.151": {
+  "decide-sync.165": {
     en: "sUAS",
     zh: "sUAS"
   },
-  "decide-sync.152": {
+  "decide-sync.166": {
     en: "Long-range ISR UAS",
     zh: "長程情監偵無人機"
   },
-  "decide-sync.153": {
-    en: "No second sensor available",
-    zh: "無第二個感測器可用"
-  },
-  "decide-sync.154": {
+  "decide-sync.167": {
     en: "Sensor, alternate",
     zh: "感測器，備用"
   },
-  "decide-sync.155": {
+  "decide-sync.168": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.156": {
+  "decide-sync.169": {
     en: "Scout team",
     zh: "偵察小組"
   },
-  "decide-sync.157": {
+  "decide-sync.170": {
     en: "sUAS",
     zh: "sUAS"
   },
-  "decide-sync.158": {
+  "decide-sync.171": {
     en: "Long-range ISR UAS",
     zh: "長程情監偵無人機"
   },
-  "decide-sync.159": {
+  "decide-sync.172": {
     en: "No second sensor available",
     zh: "無第二個感測器可用"
   },
-  "decide-sync.160": {
+  "decide-sync.173": {
     en: "Attack, primary",
     zh: "攻擊，主要"
   },
-  "decide-sync.161": {
+  "decide-sync.265": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.162": {
+  "decide-sync.266": {
     en: "M101 105 mm howitzer battery",
     zh: "105 公釐 M101 榴彈砲連"
   },
-  "decide-sync.163": {
+  "decide-sync.267": {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
-  "decide-sync.164": {
+  "decide-sync.268": {
     en: "One-way attack UAS",
     zh: "攻擊型無人機"
   },
-  "decide-sync.165": {
+  "decide-sync.269": {
     en: "Attack, alternate",
     zh: "攻擊，備用"
   },
-  "decide-sync.166": {
+  "decide-sync.270": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
-  "decide-sync.167": {
+  "decide-sync.271": {
     en: "M101 105 mm howitzer battery",
     zh: "105 公釐 M101 榴彈砲連"
   },
-  "decide-sync.168": {
+  "decide-sync.272": {
     en: "M109 155 mm battery",
     zh: "155 公釐 M109 砲連"
   },
-  "decide-sync.169": {
+  "decide-sync.273": {
     en: "One-way attack UAS",
     zh: "攻擊型無人機"
   },
-  "decide-sync.170": {
+  "decide-sync.274": {
+    en: "No alternate available",
+    zh: ""
+  },
+  "decide-sync.275": {
     en: "Check answer",
     zh: "檢查答案"
   },
-  "decide-sync.171": {
-    en: "<strong>Sensors.</strong> There is no area of interest for the command post, so nothing is watching for it. Only the long-range ISR UAS works at that depth, and it is already committed to the mortar areas. The command post is found while the ISR is looking for mortars, which is exactly what the matrix below shows.",
-    zh: "<strong>感測器。</strong>指揮所沒有對應的興趣區域，因此沒有任何裝備在搜尋它。只有長程情監偵無人機能在那個縱深作業，而它已經投入迫擊砲的各個區域。指揮所是在 ISR 搜尋迫擊砲的過程中被發現的，這正是下方矩陣所呈現的情形。"
+  "decide-sync.276": {
+    en: "<strong>Sensors.</strong> The command post shares NAI 3 with the mortars, and nothing is watching for it on its own account. It is found while the long-range ISR UAS is there for the mortars, which is what the matrix below shows.",
+    zh: ""
   },
-  "decide-sync.172": {
+  "decide-sync.277": {
     en: "<strong>Attack.</strong> Straight from the attack guidance matrix. The commander requires the command post destroyed, destroy needs weight, and the 155 mm battery leads.",
     zh: "<strong>攻擊。</strong>直接沿用攻擊矩陣。指揮官要求摧毀指揮所，破壞需要足夠的火力份量，因此由 155 公釐砲連領銜。"
   },
-  "decide-sync.173": {
-    en: "Check All Four",
-    zh: "檢查全部四項"
+  "decide-sync.278": {
+    en: "Check all five",
+    zh: ""
   },
   "decide-sync.174": {
     en: "When the package and the matrix disagree",
     zh: "當目標包裹與矩陣不一致時"
   },
   "decide-sync.175": {
-    en: "Three of your four packages copy the attack guidance matrix exactly. One does not. Against the engineer obstacle team the matrix ranks the one-way attack UAS first, and your package ranks the M101 105 mm howitzer battery first.",
-    zh: "你的四個目標包裹中有三個完全照抄攻擊矩陣，有一個不是。對工兵障礙小組，矩陣將攻擊型無人機列為第一順位，而你的目標包裹將 105 公釐 M101 榴彈砲連列為第一順位。"
+    en: "Three of your five packages copy the attack guidance matrix exactly. The two engineer packages do not, and they do not agree with each other. At NAI 2 the matrix ranks the one-way attack UAS first and your package ranks the M101 105 mm howitzer battery first.",
+    zh: ""
   },
   "decide-sync.176": {
     en: "That is not an error in either product. They answer different questions.",
@@ -3932,16 +3968,16 @@ window.D3A_LANG_ZH = {
     zh: "課題 1.12 — 目標包裹為何改變了順序"
   },
   "decide-sync.179": {
-    en: "<span class=\"target-name\">Why does the package put the M101 105 mm howitzer battery first against the engineers?</span><br><span class=\"target-desc\">The attack guidance matrix ranks the one-way attack UAS first against this target.</span>",
-    zh: "<span class=\\\"target-name\\\">對工兵而言，目標包裹為何將 105 公釐 M101 榴彈砲連列為第一順位？</span><br><span class=\\\"target-desc\\\">攻擊矩陣對這個目標將攻擊型無人機列為第一順位。</span>"
+    en: "<span class=\"target-name\">Why does the NAI 2 package plan for the M101 105 mm howitzer battery instead of the drone?</span><br><span class=\"target-desc\">The attack guidance matrix ranks the one-way attack UAS first against this target.</span>",
+    zh: ""
   },
   "decide-sync.180": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
   "decide-sync.181": {
-    en: "Because the S-2 now expects to see them at NAI 2, short of the bridge and in the open, where a battery can reach them and the drone's precision buys nothing",
-    zh: "因為 S-2 現在判斷會在NAI 2 看到他們，位置在橋樑之前的開闊地，砲連打得到，而無人機的精度在此毫無助益"
+    en: "Because at NAI 2 they are in the open where both batteries can reach them, and the drone is a single-use asset we hold ten of",
+    zh: ""
   },
   "decide-sync.182": {
     en: "Because the attack guidance matrix was written badly, and the package corrects it",
@@ -3952,12 +3988,12 @@ window.D3A_LANG_ZH = {
     zh: "因為 105 公釐砲彈造成的附帶損害比無人機少"
   },
   "decide-sync.184": {
-    en: "Because all ten drones must be saved for the command post",
-    zh: "因為十架無人機都必須保留給指揮所"
+    en: "Because the target package replaces the attack guidance matrix once intelligence has come in",
+    zh: ""
   },
   "decide-sync.185": {
-    en: "Correct. The matrix assumed we would find the engineers where they do their work, on the bridge. The intelligence update says we will see them before that, moving up through a crossroads. Against a work party in the open, fire landing near them is enough, and we hold 300 rounds of 105 mm against 10 drones.",
-    zh: "正確。矩陣假設我們會在工兵作業的地點，也就是橋樑上發現他們。情報更新指出，我們會在那之前就看到他們，正經由一處十字路口向前推進。對付開闊地上的作業分隊，砲彈落在他們附近就已足夠，而我們有 300 發 105 公釐彈藥，無人機只有 10 架。"
+    en: "Correct. Intelligence says we will see the engineers before the bridge, at a crossroads in the open, where both batteries can range them and fire landing near them is enough. The drone is single-use and we hold ten; the M101 has 300 rounds. Where the guns will do the job, the plan spends rounds and keeps airframes.",
+    zh: ""
   },
   "decide-sync.186": {
     en: "No. Nothing in the matrix is wrong. It ranks weapons against a target type without knowing where that target will be found, and that is the only job it has. The package knows something the matrix could not.",
@@ -3968,52 +4004,56 @@ window.D3A_LANG_ZH = {
     zh: "不對。無人機攜帶的彈頭較小，也不會造成彈坑，這正是它成為火力限制區內唯一獲准使用兵力的原因。附帶損害是支持使用無人機的理由，而不是反對的理由。"
   },
   "decide-sync.188": {
-    en: "No. The command post is the deepest target on the list and the drone is its alternate, not its primary. Saving all ten for one target would leave three packages with no alternate at all.",
-    zh: "不對。指揮所是清單上最縱深的目標，而無人機是它的備用手段，不是主要手段。把十架全部留給一個目標，會讓另外三個打擊組合完全沒有備用手段。"
+    en: "No. Neither product replaces the other. The matrix is what you go back to when the package cannot be executed, which is the next question.",
+    zh: ""
   },
   "decide-sync.189": {
-    en: "<span class=\"target-name\">Then why is the one-way attack UAS still in the package at all?</span><br><span class=\"target-desc\">It moved down to the alternate. It was not removed.</span>",
-    zh: "<span class=\"target-name\">那麼攻擊型無人機為什麼還留在打擊組合裡？</span><br><span class=\"target-desc\">它降為備用手段，並沒有被移除。</span>"
+    en: "<span class=\"target-name\">The engineers are moving when we find them, and neither battery can fix them. What do you do?</span><br><span class=\"target-desc\">The NAI 2 package names the M101 first and the M109 second.</span>",
+    zh: ""
   },
   "decide-sync.190": {
     en: "— choose —",
     zh: "— 請選擇 —"
   },
   "decide-sync.191": {
-    en: "Because if the engineers get past NAI 2 and reach the bridge they are inside the restricted fire area, where the drone is the only asset permitted to fire",
+    en: "Go back to the attack guidance matrix, which ranks the one-way attack UAS first against this target",
     zh: ""
   },
   "decide-sync.192": {
-    en: "Because the 105 mm battery must displace for 20 minutes after every fire mission",
-    zh: "因為 105 公釐砲兵連在每次射擊任務後必須轉移陣地 20 分鐘"
+    en: "Wait for them to halt, then engage them at the halt",
+    zh: ""
   },
   "decide-sync.193": {
-    en: "Because the drone is more accurate, and more accuracy is always better",
-    zh: "因為無人機的精度較高，而精度愈高總是愈好"
+    en: "Leave them. The package named two assets and neither can do it",
+    zh: ""
   },
   "decide-sync.194": {
-    en: "Because the drone is the cheapest asset we hold",
-    zh: "因為無人機是我們持有最便宜的兵力"
+    en: "Build a new target package before engaging",
+    zh: ""
   },
   "decide-sync.195": {
-    en: "Correct, and this is what an alternate is for. The package is built on what we <em>expect</em>. The alternate is what we do when the expectation is wrong. The engineers reaching the bridge is the case this plan has to survive, and inside that circle every gun we own is forbidden.",
-    zh: "正確，這正是備用手段的用途。打擊組合是依據我們所<em>預期</em>的情況建立的。備用手段則是預期落空時的作法。工兵抵達橋樑是這份計畫必須撐得住的狀況，而在那個圓圈之內，我們所有的火砲都禁止射擊。"
+    en: "Correct. The package is built for the expected case and is fast because of it. When the expectation does not hold — they are moving, or they have reached the bridge where no gun may fire — you fall back to guidance that was written without assuming where they would be.",
+    zh: ""
   },
   "decide-sync.196": {
-    en: "That is true of the battery, and it matters, but it is true against every target. It does not explain why <em>this</em> alternate is the drone rather than the 155 mm battery.",
-    zh: "這一點對該砲兵連而言屬實，也確實重要，但它對每一個目標都同樣成立。這無法解釋為什麼<em>這個</em>備用手段是無人機，而不是 155 公釐砲兵連。"
+    en: "They are moving toward the bridge. Waiting for the halt means engaging them on it, inside the restricted fire area, where no gun may fire at all.",
+    zh: ""
   },
   "decide-sync.197": {
-    en: "No. If more accuracy were always better the matrix would rank the drone first against everything, and it does not. Against an area target we would be spending a single-use aircraft to do what a shell does.",
-    zh: "不對。如果精度愈高總是愈好，矩陣就會讓無人機對每一種目標都排在第一，但事實並非如此。對面狀目標而言，我們等於是耗用一架一次性的飛行器，去做一發砲彈就能做到的事。"
+    en: "No. The package is a plan, not a limit on what you may use. Naming the guns first did not remove the drone from the inventory.",
+    zh: ""
   },
   "decide-sync.198": {
-    en: "No. We hold 300 rounds of 105 mm and 10 drones, and each drone is used once. It is the most expensive shot in the inventory.",
-    zh: "不對。我們持有 300 發 105 公釐砲彈與 10 架無人機，而每架無人機只能使用一次。它是庫存中最昂貴的一擊。"
+    en: "No time. A package is built in planning; this decision is made in minutes with the target under observation. The matrix is the product already written for it.",
+    zh: ""
   },
   "decide-sync.199": {
     en: "Check Answers",
     zh: "檢查答案"
+  },
+  "decide-sync.279": {
+    en: "This is one cell’s answer. Another fire support coordination cell could rank these assets differently and defend it from the same ground and the same inventory.",
+    zh: ""
   },
   "decide-sync.200": {
     en: "The target synchronization matrix makes the expected case fast. The HAT is what saves you when the expected case is wrong.",
@@ -4238,6 +4278,54 @@ window.D3A_LANG_ZH = {
   "decide-sync.254": {
     en: "Phase 2: Detect →",
     zh: "第 2 階段：監測 →"
+  },
+  "decide-sync.019": {
+    en: "TAI 1",
+    zh: "TAI 1"
+  },
+  "decide-sync.022": {
+    en: "<strong>TAI 1.</strong> The ATGM section cannot cover the crossing from anywhere else. To engage our vehicles on the bridge it must emplace inside TAI 1.",
+    zh: ""
+  },
+  "decide-sync.037": {
+    en: "Close",
+    zh: "關閉"
+  },
+  "decide-sync.038": {
+    en: "NAI 1",
+    zh: ""
+  },
+  "decide-sync.039": {
+    en: "<strong>NAI 1.</strong> The best firing position on this ground for the 120 mm mortar platoon.",
+    zh: "<strong>NAI 1。</strong>本地形上 120 公釐迫擊砲排的最佳射擊陣地。"
+  },
+  "decide-sync.040": {
+    en: "Close",
+    zh: "關閉"
+  },
+  "decide-sync.041": {
+    en: "NAI 2",
+    zh: "NAI 2"
+  },
+  "decide-sync.260": {
+    en: "<strong>NAI 2.</strong> A crossroads. Anything the enemy moves forward toward the bridge passes through it, engineer equipment included.",
+    zh: "<strong>NAI 2。</strong>一處十字路口。敵軍向橋樑前推的一切，包括工兵裝備，都要通過該處。"
+  },
+  "decide-sync.261": {
+    en: "Close",
+    zh: "關閉"
+  },
+  "decide-sync.262": {
+    en: "NAI 3",
+    zh: ""
+  },
+  "decide-sync.263": {
+    en: "<strong>NAI 3.</strong> A second position the mortar platoon could use. It is not as good as NAI 1.",
+    zh: "<strong>NAI 3。</strong>迫擊砲排可用的第二處陣地。條件不如NAI 1。"
+  },
+  "decide-sync.264": {
+    en: "Close",
+    zh: "關閉"
   },
 
   /* ---------- detect.html ---------- */
@@ -5462,28 +5550,8 @@ window.D3A_LANG_ZH = {
     zh: "第 3 階段：執行"
   },
   "deliver.013": {
-    en: "The Deliver function's main objective is to attack targets in accordance with the attack guidance provided.",
-    zh: "執行功能的主要目的，是依據所提供的攻擊指導打擊目標。"
-  },
-  "deliver.014": {
-    en: "The tactical solution (the selection of a weapon system, or a combination of weapon systems) leads to a technical solution for the selected weapon. The technical solution includes the following:",
-    zh: "戰術方案（選擇一種武器系統，或數種武器系統的組合）導出所選武器的技術方案。技術方案包含下列項目："
-  },
-  "deliver.015": {
-    en: "Specific attack unit",
-    zh: "指定的攻擊單位"
-  },
-  "deliver.016": {
-    en: "Type of ordnance",
-    zh: "彈藥種類"
-  },
-  "deliver.228": {
-    en: "Time of attack",
-    zh: "攻擊時間"
-  },
-  "deliver.229": {
-    en: "Coordinating instructions",
-    zh: "協調事項"
+    en: "When the commander approves the HAT he makes his decision on every target in it, in advance. A report arrives. The <strong>fire support coordination cell (FSCC)</strong> checks it against the target selection standards, finds the target on the high-payoff target list, and orders the attack the attack guidance matrix directs. <strong>The FSCC does not go back to the commander for permission. He gave it when he approved the HAT.</strong>",
+    zh: "指揮官核定 HAT 時，就等於事先對其中每一個目標作出決心。一份回報傳來。<strong>火力協調組（FSCC）</strong>依目標選擇條件檢核這份回報，在高效益目標清單上找出該目標，並依攻擊矩陣的規定下令攻擊。<strong>FSCC不必再回頭向指揮官請求許可。他在核定 HAT 時就已經給了。</strong>"
   },
   "deliver.230": {
     en: "Current Operations",
@@ -8498,12 +8566,12 @@ window.D3A_LANG_ZH = {
 
   /* ---------- decide-11.html ---------- */
   "decide-11.ok": {
-    en: "Three of the four packages are the attack guidance matrix copied straight across. Only the engineer team changed, and it changed because intelligence told us something the matrix could not know. Notice also how much of the sensor work the map did for you: every named area of interest lies outside the range of the small UAS, which left the long-range ISR UAS as the only candidate for three of the four targets.",
-    zh: "四組配套中有三組，是攻擊矩陣直接照抄過來的。只有工兵小組那一組改變了，而它之所以改變，是因為情報告訴了我們矩陣不可能知道的事。也請注意地圖替你完成了多少偵蒐上的工作：每一個指定偵查區都落在小型UAS的航程之外，這使得長程情監偵無人機成為四個目標中有三個目標的唯一選擇。"
+    en: "Three of the five packages are the attack guidance matrix copied straight across. Both engineer packages are not, and they do not match each other: the same target on two pieces of ground does not get the same answer. Notice also how much of the sensor work the map did for you — every named area of interest lies outside the range of the small UAS, which left the long-range ISR UAS as the only candidate for three of the five rows.",
+    zh: ""
   },
   "decide-11.bad": {
-    en: "For the sensors, find that target’s area of interest on the map above and ask what can see that far. For the attack assets, start from the attack guidance matrix you built in 1B, then ask whether anything about that piece of ground changes the answer.",
-    zh: "偵蒐器材方面，在上方地圖上找出該目標的關注區，並自問有什麼能看到那麼遠。打擊兵力方面，先從你在 1B 建立的攻擊矩陣出發，再問那塊地形有沒有任何條件會改變答案。"
+    en: "For the sensors, find that row’s ground on the map above and ask what can see that far. For the attack assets, start from the attack guidance matrix you built in 1B, then ask whether that piece of ground changes the order.",
+    zh: ""
   },
 
   /* ---------- decide-12.html ---------- */
@@ -8512,8 +8580,8 @@ window.D3A_LANG_ZH = {
     zh: "這就是這兩項產品之間的關係。攻擊矩陣是通用的，所以即使對地形判斷錯誤，它仍然站得住。配套是特定的，所以當地形與我們預期相符時，它很快。兩者你都要建立，也都要保留。"
   },
   "decide-12.bad": {
-    en: "Ask what changed between the two products. Nothing about the weapons changed. What changed is that we now know where we expect to see this target, and one piece of ground on this map forbids most of what we own.",
-    zh: "自問這兩項產品之間改變了什麼。武器方面沒有任何改變。改變的是：我們現在知道預期會在哪裡看到這個目標，而這張地圖上有一塊地形，排除了我們手上大部分的兵力。"
+    en: "Ask what changed between the two products. Nothing about the weapons changed. What changed is that we now know where we expect to see this target — and the second question asks what you do when that expectation does not hold.",
+    zh: ""
   },
 
   /* ---------- detect-1.html ---------- */
