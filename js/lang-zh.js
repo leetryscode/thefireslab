@@ -30,8 +30,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "index.025": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "index.003": {
     en: "Choose your track",
@@ -132,8 +132,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "battle.044": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "battle.003": {
     en: "Home",
@@ -310,8 +310,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "campaign.019": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "campaign.003": {
     en: "Coming soon",
@@ -388,8 +388,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "scenario.139": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "scenario.003": {
     en: "Home",
@@ -826,8 +826,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "decide.055": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "decide.003": {
     en: "Home",
@@ -1188,8 +1188,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "decide-tss.233": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "decide-tss.003": {
     en: "Home",
@@ -2214,8 +2214,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "decide-agm.254": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "decide-agm.003": {
     en: "Home",
@@ -3220,8 +3220,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "decide-sync.003": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "decide-sync.004": {
     en: "Home",
@@ -4338,8 +4338,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "detect.003": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "detect.004": {
     en: "Home",
@@ -4940,8 +4940,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "detect-f2t2ea.003": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "detect-f2t2ea.004": {
     en: "Home",
@@ -5510,8 +5510,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "deliver.003": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "deliver.004": {
     en: "Home",
@@ -7408,8 +7408,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "assess.003": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "assess.004": {
     en: "Home",
@@ -7954,8 +7954,8 @@ window.D3A_LANG_ZH = {
     zh: "透過實務應用精通目標選定"
   },
   "glossary.079": {
-    en: "Decide · Detect · Deliver · Assess",
-    zh: "擬定 · 監測 · 執行 · 評估"
+    en: "Commander's Objectives → Fires → Mission Success",
+    zh: "指揮官目標 → 火力 → 任務成功"
   },
   "glossary.003": {
     en: "Home",
