@@ -775,9 +775,9 @@ const D3A = (() => {
         /* A report can put a target on the board that was not on the HPTL.
            The row is hidden in the markup and revealed with its step, so a
            student is not told in advance that another one is coming. */
-        if (i <= done && li.dataset.revealRow) {
+        if (li.dataset.revealRow) {
           const row = document.querySelector('.wb-row[data-target="' + li.dataset.revealRow + '"]');
-          if (row) row.classList.remove('is-new');
+          if (row) row.classList.toggle('is-new', i > done);
         }
         /* The mirror of revealRow. A target whose cycle is finished comes off
            the board so the pinned bar does not grow without limit as new
@@ -803,6 +803,93 @@ const D3A = (() => {
           ? t('ui.laddone', 'All {total} situations answered.', { total: total })
           : t('ui.ladstep', 'Situation {n} of {total}', { n: done + 1, total: total });
       }
+      placeUndo(done);
+    }
+
+    /* ---- Undo last step (Lee, 2026-09-11) ----------------------------
+       One button, on the most recently answered step only. Each press backs
+       the run up by one step without touching any other page's progress.
+       It is built here rather than written into the markup so the 43 steps
+       need no extra HTML, and its label comes from ui.undostep, so the
+       paragraph that holds it is never tagged. It sits at the foot of the
+       step's body, not in .tev-act, because a pressed acknowledgement step
+       hides its whole .tev-act.
+
+       The board is NOT snapshotted per step. It is rebuilt by replaying the
+       run from the start: every target step leaves its target where the
+       student put it (the stored pick), and data-set moves the box for them.
+       That gives the same board a student had before the undone step, and it
+       works for a run saved before this button existed. The one thing it
+       drops is an ungraded move made between steps, which is what we want. */
+    function placeUndo(done) {
+      box.querySelectorAll('.tev-undo').forEach(n => n.remove());
+      if (!done) return;
+      const li = steps()[done - 1];
+      const body = li && (li.querySelector('.ev-body') || li);
+      if (!body) return;
+      const p = document.createElement('p');
+      p.className = 'tev-undo';
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn secondary row-undo';
+      b.textContent = t('ui.undostep', 'Undo this step');
+      p.appendChild(b);
+      body.appendChild(p);
+    }
+
+    function boardAfter(n) {
+      const chosen = picks();
+      const pos = {};
+      document.querySelectorAll('.wb-row[data-target]').forEach(r => { pos[r.dataset.target] = 'hptl'; });
+      steps().slice(0, n).forEach((li, i) => {
+        if (li.dataset.target && li.dataset.action !== 'confirm' && !li.querySelector('select[data-answer]')) {
+          pos[li.dataset.target] = chosen[i] || (li.dataset.answer || 'hptl').split('|')[0];
+        }
+        if (li.dataset.set) {
+          li.dataset.set.split(/\s+/).forEach(pair => {
+            const bits = pair.split(':');
+            if (bits.length === 2 && bits[0] && bits[1]) pos[bits[0]] = bits[1];
+          });
+        }
+      });
+      return pos;
+    }
+
+    /* Wipe what a step shows once it has been attempted: verdict, notes,
+       colours, the chosen option. draw() only ever adds these, so going
+       backwards has to take them off by hand. */
+    function clearStep(li) {
+      li.classList.remove('solved', 'right', 'wrong');
+      li.querySelectorAll('.row-note').forEach(n => n.classList.remove('show'));
+      const v = li.querySelector('.tev-verdict'); if (v) v.textContent = '';
+      say(li, '');
+      const sel = li.querySelector('select[data-answer]');
+      if (sel) { sel.value = ''; sel.disabled = false; sel.classList.remove('correct', 'incorrect'); }
+    }
+
+    function undo() {
+      const done = solvedCount();
+      if (!done) return;
+      const n = done - 1;
+      const s = load();
+      s[KEY_AT] = n;
+      const p = s[KEY_PICK] || {};
+      Object.keys(p).forEach(k => { if (Number(k) >= n) delete p[k]; });
+      s[KEY_PICK] = p;
+      const wasComplete = !!s[cfg.exerciseId];
+      delete s[cfg.exerciseId];
+      save(s);
+      if (wb) {
+        const pos = boardAfter(n);
+        Object.keys(pos).forEach(name => wb.set(name, pos[name]));
+      }
+      steps().forEach((li, i) => { if (i >= n) clearStep(li); });
+      const fb = cfg.feedbackId && document.getElementById(cfg.feedbackId);
+      if (fb) fb.classList.remove('show');
+      draw();
+      if (wasComplete) refreshUI();
+      const back = steps()[n];
+      if (back && back.scrollIntoView) back.scrollIntoView({ block: 'nearest' });
     }
 
     /* Lee's explanations are written to be shown whether the student got it
@@ -901,6 +988,7 @@ const D3A = (() => {
     }
 
     box.addEventListener('click', e => {
+      if (e.target.closest && e.target.closest('button.row-undo')) { undo(); return; }
       const btn = e.target.closest && e.target.closest('button.row-check');
       if (!btn) return;
       const li = btn.closest('.tev');

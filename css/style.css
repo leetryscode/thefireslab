@@ -2005,6 +2005,9 @@ li.tev:not(.ev) + li.tev:not(.ev) { border-top: 1px solid var(--border-soft); pa
 
 p.tev-act { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; flex-wrap: wrap; }
 p.tev-act select { min-width: 15em; }
+/* "Undo this step", placed by app.js on the most recently answered step. */
+p.tev-undo { margin: 10px 0 0; }
+.btn.secondary.row-undo { padding: 4px 14px; font-size: .85rem; font-weight: 600; border-width: 1px; }
 
 li.tev .ev-q { margin: 10px 0 0; }
 li.tev .row-note { margin-top: 12px; }

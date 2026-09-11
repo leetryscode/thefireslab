@@ -8435,6 +8435,10 @@ window.D3A_LANG_ZH = {
     en: "Move the target on the board first.",
     zh: "請先在看板上移動目標。"
   },
+  "ui.undostep": {
+    en: "Undo this step",
+    zh: "復原此步驟"
+  },
   "ui.assetavail": {
     en: "Available",
     zh: ""
