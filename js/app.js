@@ -105,13 +105,14 @@ const D3A = (() => {
               'decide-4', 'decide-5', 'decide-6', 'decide-13',
               'decide-8', 'decide-9', 'decide-10',
               'decide-11', 'decide-12'],
-    /* Detect came back on 2026-08-24 with Task 2.1, the collection plan.
-       Deliver and Assess are still "Coming soon" placeholders while their
-       content is written. An empty list keeps a tab dark (phaseDone requires
-       length > 0) and keeps the course progress bar counting only what a
-       student can actually do. Move the ids back out of PARKED as each
-       exercise is built. */
-    detect:  ['detect-1', 'detect-3'],
+    /* Detect is one page again from 2026-09-14: the collection plan page and
+       its Task 2.1 (detect-1) were cut, so detect-1 is a free id for the
+       contact-feed exercise when it is built. Assess is still a "Coming soon"
+       placeholder while its content is written. An empty list keeps a tab dark
+       (phaseDone requires length > 0) and keeps the course progress bar
+       counting only what a student can actually do. Move the ids back out of
+       PARKED as each exercise is built. */
+    detect:  ['detect-3'],
     deliver: ['deliver-1'],
     assess:  []
   };
@@ -132,11 +133,9 @@ const D3A = (() => {
     'decide.html':     ['decide-1', 'decide-2', 'decide-3'],
     'decide-tss.html': ['decide-4', 'decide-5', 'decide-6', 'decide-13'],
     'decide-agm.html': ['decide-8', 'decide-9', 'decide-10'],
-    'decide-sync.html': ['decide-11', 'decide-12'],
-    /* Detect's second-level nav, added 2026-08-27. 2B (F2T2EA) carries
-       Task 2.2, whose id is detect-3. */
-    'detect.html':          ['detect-1'],
-    'detect-f2t2ea.html':   ['detect-3']
+    'decide-sync.html': ['decide-11', 'decide-12']
+    /* Detect had a second-level nav from 2026-08-27 to 2026-09-14. With the
+       collection plan page cut it is a single page again and needs no entry. */
   };
 
   function phaseDone(phase) {
