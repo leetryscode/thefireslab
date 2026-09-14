@@ -4433,10 +4433,6 @@ window.D3A_LANG_ZH = {
     en: "no step",
     zh: "無步驟"
   },
-  "detect-f2t2ea.020": {
-    en: "The six steps",
-    zh: "六個步驟"
-  },
   "detect-f2t2ea.021": {
     en: "Term",
     zh: "名詞"
@@ -4537,6 +4533,10 @@ window.D3A_LANG_ZH = {
     en: "Check",
     zh: "檢查"
   },
+  "detect-f2t2ea.016": {
+    en: "We know something is out there. We do not know what it is, and the location is not good enough to shoot.",
+    zh: ""
+  },
   "detect-f2t2ea.054": {
     en: "Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates.",
     zh: "小型無人機接近至足以確認該車輛為敵軍戰車，並產生可供接戰的座標。"
@@ -4572,6 +4572,10 @@ window.D3A_LANG_ZH = {
   "detect-f2t2ea.069": {
     en: "Check",
     zh: "檢查"
+  },
+  "detect-f2t2ea.020": {
+    en: "Identity is confirmed and the location is now precise enough to engage. That is Fix — we have the grid, but we are not yet holding continuous custody.",
+    zh: ""
   },
   "detect-f2t2ea.070": {
     en: "sUAS battery dies before a decision on how to engage the tank is made. Last seen moving toward friendly position.",
@@ -4649,6 +4653,10 @@ window.D3A_LANG_ZH = {
     en: "Check",
     zh: "檢查"
   },
+  "detect-f2t2ea.059": {
+    en: "Eyes-on re-establishes what it is and where it is. Holding it over time has not started yet, so this is Fix and not Track.",
+    zh: ""
+  },
   "detect-f2t2ea.089": {
     en: "Order sent to anti-tank one-way-attack UAS unit to engage the tank under observation by the scout team.",
     zh: "命令下達給反裝甲單向攻擊無人機單位，接戰該輛由偵察小組持續觀測的戰車。"
@@ -4685,6 +4693,10 @@ window.D3A_LANG_ZH = {
     en: "Check",
     zh: "檢查"
   },
+  "detect-f2t2ea.144": {
+    en: "The fire order has been sent to the unit that will execute it. Engage begins when the order goes out, not when the munition arrives.",
+    zh: ""
+  },
   "detect-f2t2ea.098": {
     en: "Scout team observes attack drone strike near the tank. From the explosion they observe the tank quickly driving away, presumably intact.",
     zh: "偵察小組觀察到攻擊無人機在戰車附近命中。他們看到戰車自爆炸中迅速駛離，推測並未受損。"
@@ -4720,6 +4732,10 @@ window.D3A_LANG_ZH = {
   "detect-f2t2ea.106": {
     en: "Check",
     zh: "檢查"
+  },
+  "detect-f2t2ea.145": {
+    en: "We are judging the effect of a strike that has already happened. The tank drove away, so the assessment is that it survived and the cycle is not finished.",
+    zh: ""
   },
   "detect-f2t2ea.107": {
     en: "Long range ISR is tasked with and re-acquires a slightly damaged tank.",
@@ -4797,6 +4813,10 @@ window.D3A_LANG_ZH = {
     en: "Check",
     zh: "檢查"
   },
+  "detect-f2t2ea.146": {
+    en: "Authority is being sought and a weapon is being paired to the target. Nothing has been ordered to fire yet.",
+    zh: ""
+  },
   "detect-f2t2ea.126": {
     en: "Commander approves the re-tasking. Mission is sent to the pilots flying.",
     zh: "指揮官核准改派。任務下達給正在空中的飛行員。"
@@ -4833,6 +4853,10 @@ window.D3A_LANG_ZH = {
     en: "Check",
     zh: "檢查"
   },
+  "detect-f2t2ea.147": {
+    en: "Authority is granted and the mission is with the aircrew. The order to strike has been issued.",
+    zh: ""
+  },
   "detect-f2t2ea.135": {
     en: "Pilots record video of the tank being destroyed by a Hellfire missile.",
     zh: "飛行員錄下戰車遭地獄火飛彈摧毀的影像。"
@@ -4868,6 +4892,10 @@ window.D3A_LANG_ZH = {
   "detect-f2t2ea.143": {
     en: "Check",
     zh: "檢查"
+  },
+  "detect-f2t2ea.148": {
+    en: "The strike is complete and we are recording what it achieved. This time the assessment ends the cycle: no re-attack is required.",
+    zh: ""
   },
   "detect-f2t2ea.055": {
     en: "The steps overlap",
