@@ -305,6 +305,121 @@
   </div>
 
   <div class="panel">
+    <h2 data-i18n="detect-f2t2ea.149">Searching with one aircraft</h2>
+    <p data-i18n="detect-f2t2ea.150">The long-range ISR UAS is the only thing we hold that can see a named area of interest, and only one of the two airframes can be airborne at a time. Every minute it spends watching one target is a minute it is not searching for another.</p>
+
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="detect-f2t2ea.151">Task 2.3 — What do you tell the FSCC?</h3>
+        <span class="status" data-status="detect-2">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <p data-i18n="detect-f2t2ea.152">Two contacts made on the way to somewhere else. Step through the transit. At each contact, recommend what the aircraft does next, then say where that target sits in F2T2EA.</p>
+
+        <div class="ecoa isr-reel" id="isr-reel">
+          <div class="ecoa-stage">
+
+            <div class="ecoa-scene is-on" data-scene="1">
+              <img class="ecoa-base" src="img/isr-map-1.jpg" width="920" height="597" alt="The Kordan bridge sector. NAI 1 is a yellow box in the west, NAI 2 a yellow box in the east, NAI 3 a yellow box in the south, and TAI 1 a red box in the north east beside the restricted fire area at the bridge. The long-range ISR UAS is drawn in the north east with its sensor turned onto TAI 1.">
+            </div>
+
+            <div class="ecoa-scene" data-scene="2">
+              <img class="ecoa-base" src="img/isr-atgm.jpg" width="778" height="558" alt="Long-range ISR sensor video of a sandbagged fighting position on a low rise. Two soldiers crew a missile launcher on a tripod, with a control unit beside them.">
+            </div>
+
+            <div class="ecoa-scene" data-scene="3">
+              <img class="ecoa-base" src="img/isr-map-2.jpg" width="920" height="597" alt="The same sector. The long-range ISR UAS has moved south-west of TAI 1 and its sensor is turned ahead of it, onto the ground between TAI 1 and NAI 2.">
+            </div>
+
+            <div class="ecoa-scene" data-scene="4">
+              <img class="ecoa-base" src="img/isr-infantry.jpg" width="772" height="484" alt="Long-range ISR sensor video of a trench line with several covered fighting positions. Machine guns are visible in two of them and soldiers are in the trench.">
+            </div>
+
+          </div>
+
+          <div class="ecoa-bar">
+            <button type="button" class="ecoa-arrow" data-step="-1" aria-label="Previous">←</button>
+            <div class="ecoa-dots">
+              <button type="button" class="ecoa-dot is-on" data-go="1" aria-label="Transit to NAI 1"></button>
+              <button type="button" class="ecoa-dot" data-go="2" aria-label="Contact 1"></button>
+              <button type="button" class="ecoa-dot" data-go="3" aria-label="Transit to NAI 2"></button>
+              <button type="button" class="ecoa-dot" data-go="4" aria-label="Contact 2"></button>
+            </div>
+            <button type="button" class="ecoa-arrow" data-step="1" aria-label="Next">→</button>
+          </div>
+
+          <div id="d23-cards">
+
+            <div class="ecoa-note is-on" data-note="1">
+              <h4 data-i18n="detect-f2t2ea.153">On the way to NAI 1</h4>
+              <p data-i18n="detect-f2t2ea.154">The long-range ISR UAS is transiting to NAI 1. Its sensor is turned onto TAI 1 as it passes.</p>
+            </div>
+
+            <div class="ecoa-note" data-note="2">
+              <h4 data-i18n="detect-f2t2ea.155">ATGM team, TAI 1</h4>
+          <div class="report-card" id="d23-c1" data-answer="continue" data-why="The ATGM team was expected here and its position is now known. Holding the aircraft over it buys nothing: the strike is not until T-1:00, and while it watches, NAI 1 goes unsearched." data-hint="We are not striking this target for another hour. What is the aircraft not doing while it watches?" data-i18n-why="detect-f2t2ea.d23-c1.why" data-i18n-hint="detect-f2t2ea.d23-c1.hint">
+            <h4 data-i18n="detect-f2t2ea.156">What action do you recommend to the FSCC?</h4>
+            <p data-i18n="detect-f2t2ea.157">Long-range ISR, on its way to NAI 1, discovers an anti-tank guided missile (ATGM) team in TAI 1, as expected.</p>
+            <div class="decision-btns">
+              <button data-value="hold" data-i18n="detect-f2t2ea.158">Maintain view of the target — we will strike this first at T-1:00 as the commander dictates.</button>
+              <button data-value="continue" data-i18n="detect-f2t2ea.159">Note the exact position and continue to NAI 1.</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
+          <div class="report-card" id="d23-c2" data-answer="fix" data-why="The team is positively identified and we hold a grid good enough to shoot. Nothing is watching it once the aircraft moves on, so this is Fix and not Track." data-hint="We know what it is and where it is. Which of the two steps also requires that something keeps watching?" data-i18n-why="detect-f2t2ea.d23-c2.why" data-i18n-hint="detect-f2t2ea.d23-c2.hint">
+            <h4 data-i18n="detect-f2t2ea.160">What step in F2T2EA are we in?</h4>
+            <p data-i18n="detect-f2t2ea.161">The aircraft notes the position and flies on to NAI 1.</p>
+            <div class="decision-btns">
+              <button data-value="find" data-i18n="detect-f2t2ea.162">1 Find</button>
+              <button data-value="fix" data-i18n="detect-f2t2ea.163">2 Fix</button>
+              <button data-value="track" data-i18n="detect-f2t2ea.164">3 Track</button>
+              <button data-value="target" data-i18n="detect-f2t2ea.165">4 Target</button>
+              <button data-value="engage" data-i18n="detect-f2t2ea.166">5 Engage</button>
+              <button data-value="assess" data-i18n="detect-f2t2ea.167">6 Assess</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
+            </div>
+
+            <div class="ecoa-note" data-note="3">
+              <h4 data-i18n="detect-f2t2ea.168">On the way to NAI 2</h4>
+              <p data-i18n="detect-f2t2ea.169">The aircraft has left TAI 1 and is working south-west towards NAI 2, searching the ground ahead of it.</p>
+            </div>
+
+            <div class="ecoa-note" data-note="4">
+              <h4 data-i18n="detect-f2t2ea.170">Infantry in fighting positions</h4>
+          <div class="report-card" id="d23-c3" data-answer="continue" data-why="Infantry in fighting positions are not on the high-payoff target list. Watching them for battle damage assessment assumes we are going to strike them, and we are not — the aircraft is looking for the engineers." data-hint="Check the high-payoff target list. Is this something we intend to engage at all?" data-i18n-why="detect-f2t2ea.d23-c3.why" data-i18n-hint="detect-f2t2ea.d23-c3.hint">
+            <h4 data-i18n="detect-f2t2ea.171">What do we recommend the FSCC do?</h4>
+            <p data-i18n="detect-f2t2ea.172">On its way to NAI 2, the long-range ISR discovers infantry in fighting positions.</p>
+            <div class="decision-btns">
+              <button data-value="hold" data-i18n="detect-f2t2ea.173">Remain looking at the position until we can fire at them, in order to get battle damage assessment.</button>
+              <button data-value="continue" data-i18n="detect-f2t2ea.174">Continue to NAI 2 and look for the high-payoff targets.</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
+          <div class="report-card" id="d23-c4" data-answer="fix" data-why="The drone has the identification and the position, and then looks away. A precise location with nothing watching it is Fix." data-hint="Nothing is observing this position once the drone moves on. Which step is that?" data-i18n-why="detect-f2t2ea.d23-c4.why" data-i18n-hint="detect-f2t2ea.d23-c4.hint">
+            <h4 data-i18n="detect-f2t2ea.175">What step in F2T2EA is this target, if the ISR drone looks away and keeps searching?</h4>
+            <div class="decision-btns">
+              <button data-value="find" data-i18n="detect-f2t2ea.176">1 Find</button>
+              <button data-value="fix" data-i18n="detect-f2t2ea.177">2 Fix</button>
+              <button data-value="track" data-i18n="detect-f2t2ea.178">3 Track</button>
+              <button data-value="target" data-i18n="detect-f2t2ea.179">4 Target</button>
+              <button data-value="engage" data-i18n="detect-f2t2ea.180">5 Engage</button>
+              <button data-value="assess" data-i18n="detect-f2t2ea.181">6 Assess</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="feedback ok" id="detect-2-alldone" style="margin-top:14px;" data-i18n="detect-f2t2ea.182"><strong>Both contacts handled.</strong> A detection is not a target. The aircraft is searching for the targets the commander already decided matter, and anything it stops to watch is bought with the search it is no longer doing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="page-nav">
       <a class="btn secondary" href="decide-sync.html" data-i18n="detect-f2t2ea.060">← Target Synchronization Matrix</a>
       <a class="btn" href="deliver.html" data-i18n="detect-f2t2ea.061">Phase 3: Deliver →</a>
@@ -316,7 +431,11 @@
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script>
-D3A.registerPage('detect', ['detect-3']);
+D3A.registerPage('detect', ['detect-2', 'detect-3']);
+
+D3A.initSceneReel('isr-reel');
+
+D3A.initDecisionCards({ containerId: 'd23-cards', exerciseId: 'detect-2' });
 
 D3A.initStepLadder({
   containerId: 'd2-ladder', feedbackId: 'd2-feedback', counterId: 'd2-count',

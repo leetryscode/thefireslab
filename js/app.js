@@ -112,17 +112,18 @@ const D3A = (() => {
        (phaseDone requires length > 0) and keeps the course progress bar
        counting only what a student can actually do. Move the ids back out of
        PARKED as each exercise is built. */
-    detect:  ['detect-3'],
+    detect:  ['detect-2', 'detect-3'],
     deliver: ['deliver-1'],
     assess:  []
   };
 
-  /* The exercise ids still to come. detect-2 is the acquisition drill, which
-     is not written yet. Task 2.2 on the F2T2EA page is detect-3, not detect-2,
-     because detect-2 was already reserved. Displayed task numbers and internal
-     ids do not line up anywhere in this course; do not try to make them. */
+  /* The exercise ids still to come. detect-2, the acquisition drill that had
+     been reserved since the start, was built on 2026-09-14 as Task 2.3 and is
+     now live. Task 2.2 on the same page is detect-3. Displayed task numbers and
+     internal ids do not line up anywhere in this course; do not try to make
+     them. */
   const PARKED = {
-    detect:  ['detect-2'],
+    detect:  [],
     deliver: ['deliver-2'],
     assess:  ['assess-1', 'assess-2', 'assess-3']
   };
@@ -999,6 +1000,40 @@ const D3A = (() => {
     draw();
   }
 
+  /* A scene reel: one picture at a time, arrows and dots beneath it, and a
+     note that changes with the picture. Built for the EMLCOA on
+     scenario.html; Task 2.3 on the Detect page reuses it, and there the
+     notes carry the decision cards, so a click inside a note must fall
+     through — only .ecoa-arrow and .ecoa-dot are acted on. No strings are
+     written from JavaScript, so nothing here needs I18N. */
+  function initSceneReel(id) {
+    const reel = document.getElementById(id);
+    if (!reel) return;
+    const scenes = reel.querySelectorAll('.ecoa-scene');
+    const notes  = reel.querySelectorAll('.ecoa-note');
+    const dots   = reel.querySelectorAll('.ecoa-dot');
+    if (!scenes.length) return;
+    let at = 0;
+    function show(i) {
+      at = (i + scenes.length) % scenes.length;
+      for (let k = 0; k < scenes.length; k++) {
+        scenes[k].classList.toggle('is-on', k === at);
+        if (notes[k]) notes[k].classList.toggle('is-on', k === at);
+        if (dots[k]) {
+          dots[k].classList.toggle('is-on', k === at);
+          dots[k].setAttribute('aria-current', k === at ? 'true' : 'false');
+        }
+      }
+    }
+    reel.addEventListener('click', e => {
+      const step = e.target.closest && e.target.closest('.ecoa-arrow');
+      if (step) { show(at + parseInt(step.getAttribute('data-step'), 10)); return; }
+      const go = e.target.closest && e.target.closest('.ecoa-dot');
+      if (go) show(parseInt(go.getAttribute('data-go'), 10) - 1);
+    });
+    show(0);
+  }
+
   /* Decision-card drills (detect validation, assess BDA).
      Each .report-card has data-answer; its buttons have data-value.
      cfg = { containerId, exerciseId, onAllCorrect } */
@@ -1139,6 +1174,7 @@ const D3A = (() => {
   initModals();
 
   return { registerPage, complete, isComplete, resetAll, refreshUI, PHASES, PARKED,
+           initSceneReel,
            initTimeline,
            initMultiSelect, initSingleSelect, initSortList, initSelectMatch, initDecisionCards,
            initStepLadder, initWorkbench, initTargetEvents, initAssetStatus,

@@ -2448,3 +2448,18 @@ li.ev > .ev-body      { grid-column: 2; grid-row: 1 / span 2; }
   li.ev > .ev-body { grid-column: auto; grid-row: auto; }
   .asset-status { flex-direction: row; flex-wrap: wrap; gap: .25rem 1.1rem; margin: .1rem 0 .2rem; }
 }
+
+/* ---------------------------------------------------------------
+   Detect: the Task 2.3 scene reel.
+
+   Same reel as the EMLCOA on scenario.html, but these are photographs and
+   a map rather than a diagram, so it is allowed more width. The scenes are
+   four different shapes — two map crops and two sensor stills — and the
+   reel swaps them by display, so without one fixed box the page would jump
+   by a hundred pixels every time the student pressed the arrow.
+   --------------------------------------------------------------- */
+.isr-reel .ecoa-stage { max-width: 860px; }
+.isr-reel .ecoa-base {
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+}

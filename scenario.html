@@ -229,33 +229,7 @@
 <script src="js/app.js"></script>
 <script>
 D3A.registerPage('scenario', ['scenario-1']);
-(function () {
-  /* EMLCOA scene reel. Four scenes from Lee's animation deck; the sequence
-     inside a scene loops, the arrows and dots move between scenes. No strings
-     are written from JavaScript, so nothing here needs I18N. */
-  var reel = document.getElementById('emlcoa');
-  if (!reel) return;
-  var scenes = reel.querySelectorAll('.ecoa-scene');
-  var notes  = reel.querySelectorAll('.ecoa-note');
-  var dots   = reel.querySelectorAll('.ecoa-dot');
-  var at = 0;
-  function show(i) {
-    at = (i + scenes.length) % scenes.length;
-    for (var k = 0; k < scenes.length; k++) {
-      scenes[k].classList.toggle('is-on', k === at);
-      notes[k].classList.toggle('is-on', k === at);
-      dots[k].classList.toggle('is-on', k === at);
-      dots[k].setAttribute('aria-current', k === at ? 'true' : 'false');
-    }
-  }
-  reel.addEventListener('click', function (e) {
-    var step = e.target.closest('.ecoa-arrow');
-    if (step) { show(at + parseInt(step.getAttribute('data-step'), 10)); return; }
-    var go = e.target.closest('.ecoa-dot');
-    if (go) show(parseInt(go.getAttribute('data-go'), 10) - 1);
-  });
-  show(0);
-})();
+D3A.initSceneReel('emlcoa');
 D3A.initSingleSelect({
   containerId: 'sc1-choices', checkBtnId: 'sc1-check', feedbackId: 'sc1-feedback',
   exerciseId: 'scenario-1', correct: 'seize',

@@ -4913,6 +4913,142 @@ window.D3A_LANG_ZH = {
     en: "Two things follow from that, and both of them are already in your plan. The first is that <strong>Track does not stop when the order to fire is given.</strong> The sensor that held custody of the target is the sensor that will tell you whether the strike worked, so it is still committed long after Engage. The second is that <strong>Assess can send a target back to Target rather than out of the cycle.</strong> A target that was struck but is still working has not left the cycle. It returns to be paired with a weapon a second time.",
     zh: "由此可以得出兩點，而這兩點在您的計畫中都已經存在。第一，<strong>下達射擊命令後追蹤並不會停止。</strong>掌握該目標的感測器，就是將要告訴您攻擊是否奏效的感測器，因此在接戰之後它仍然被佔用。第二，<strong>評估可能把目標送回目標處理步驟，而不是送出循環之外。</strong>遭到攻擊但仍能運作的目標並未離開循環，它會回到步驟中，第二次與武器配對。"
   },
+  "detect-f2t2ea.149": {
+    en: "Searching with one aircraft",
+    zh: ""
+  },
+  "detect-f2t2ea.150": {
+    en: "The long-range ISR UAS is the only thing we hold that can see a named area of interest, and only one of the two airframes can be airborne at a time. Every minute it spends watching one target is a minute it is not searching for another.",
+    zh: ""
+  },
+  "detect-f2t2ea.151": {
+    en: "Task 2.3 — What do you tell the FSCC?",
+    zh: ""
+  },
+  "detect-f2t2ea.152": {
+    en: "Two contacts made on the way to somewhere else. Step through the transit. At each contact, recommend what the aircraft does next, then say where that target sits in F2T2EA.",
+    zh: ""
+  },
+  "detect-f2t2ea.153": {
+    en: "On the way to NAI 1",
+    zh: ""
+  },
+  "detect-f2t2ea.154": {
+    en: "The long-range ISR UAS is transiting to NAI 1. Its sensor is turned onto TAI 1 as it passes.",
+    zh: ""
+  },
+  "detect-f2t2ea.155": {
+    en: "ATGM team, TAI 1",
+    zh: ""
+  },
+  "detect-f2t2ea.156": {
+    en: "What action do you recommend to the FSCC?",
+    zh: ""
+  },
+  "detect-f2t2ea.157": {
+    en: "Long-range ISR, on its way to NAI 1, discovers an anti-tank guided missile (ATGM) team in TAI 1, as expected.",
+    zh: ""
+  },
+  "detect-f2t2ea.158": {
+    en: "Maintain view of the target — we will strike this first at T-1:00 as the commander dictates.",
+    zh: ""
+  },
+  "detect-f2t2ea.159": {
+    en: "Note the exact position and continue to NAI 1.",
+    zh: ""
+  },
+  "detect-f2t2ea.160": {
+    en: "What step in F2T2EA are we in?",
+    zh: ""
+  },
+  "detect-f2t2ea.161": {
+    en: "The aircraft notes the position and flies on to NAI 1.",
+    zh: ""
+  },
+  "detect-f2t2ea.162": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.163": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.164": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.165": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.166": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.167": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.168": {
+    en: "On the way to NAI 2",
+    zh: ""
+  },
+  "detect-f2t2ea.169": {
+    en: "The aircraft has left TAI 1 and is working south-west towards NAI 2, searching the ground ahead of it.",
+    zh: ""
+  },
+  "detect-f2t2ea.170": {
+    en: "Infantry in fighting positions",
+    zh: ""
+  },
+  "detect-f2t2ea.171": {
+    en: "What do we recommend the FSCC do?",
+    zh: ""
+  },
+  "detect-f2t2ea.172": {
+    en: "On its way to NAI 2, the long-range ISR discovers infantry in fighting positions.",
+    zh: ""
+  },
+  "detect-f2t2ea.173": {
+    en: "Remain looking at the position until we can fire at them, in order to get battle damage assessment.",
+    zh: ""
+  },
+  "detect-f2t2ea.174": {
+    en: "Continue to NAI 2 and look for the high-payoff targets.",
+    zh: ""
+  },
+  "detect-f2t2ea.175": {
+    en: "What step in F2T2EA is this target, if the ISR drone looks away and keeps searching?",
+    zh: ""
+  },
+  "detect-f2t2ea.176": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.177": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.178": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.179": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.180": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.181": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.182": {
+    en: "<strong>Both contacts handled.</strong> A detection is not a target. The aircraft is searching for the targets the commander already decided matter, and anything it stops to watch is bought with the search it is no longer doing.",
+    zh: ""
+  },
   "detect-f2t2ea.060": {
     en: "← Target Synchronization Matrix",
     zh: "← 目標同步矩陣"
@@ -4920,6 +5056,38 @@ window.D3A_LANG_ZH = {
   "detect-f2t2ea.061": {
     en: "Phase 3: Deliver →",
     zh: "第 3 階段：執行 →"
+  },
+  "detect-f2t2ea.d23-c1.why": {
+    en: "The ATGM team was expected here and its position is now known. Holding the aircraft over it buys nothing: the strike is not until T-1:00, and while it watches, NAI 1 goes unsearched.",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c1.hint": {
+    en: "We are not striking this target for another hour. What is the aircraft not doing while it watches?",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c2.why": {
+    en: "The team is positively identified and we hold a grid good enough to shoot. Nothing is watching it once the aircraft moves on, so this is Fix and not Track.",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c2.hint": {
+    en: "We know what it is and where it is. Which of the two steps also requires that something keeps watching?",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c3.why": {
+    en: "Infantry in fighting positions are not on the high-payoff target list. Watching them for battle damage assessment assumes we are going to strike them, and we are not — the aircraft is looking for the engineers.",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c3.hint": {
+    en: "Check the high-payoff target list. Is this something we intend to engage at all?",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c4.why": {
+    en: "The drone has the identification and the position, and then looks away. A precise location with nothing watching it is Fix.",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c4.hint": {
+    en: "Nothing is observing this position once the drone moves on. Which step is that?",
+    zh: ""
   },
 
   /* ---------- deliver.html ---------- */
