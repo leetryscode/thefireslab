@@ -4925,10 +4925,6 @@ window.D3A_LANG_ZH = {
     en: "Task 2.3 — What do you tell the FSCC?",
     zh: ""
   },
-  "detect-f2t2ea.152": {
-    en: "Two contacts made on the way to somewhere else. Step through the transit. At each contact, recommend what the aircraft does next, then say where that target sits in F2T2EA.",
-    zh: ""
-  },
   "detect-f2t2ea.153": {
     en: "On the way to NAI 1",
     zh: ""
@@ -5045,8 +5041,68 @@ window.D3A_LANG_ZH = {
     en: "6 Assess",
     zh: "6 評估"
   },
+  "detect-f2t2ea.152": {
+    en: "Into NAI 2",
+    zh: ""
+  },
+  "detect-f2t2ea.183": {
+    en: "The aircraft reaches NAI 2 and turns its sensor onto the crossroads.",
+    zh: ""
+  },
+  "detect-f2t2ea.184": {
+    en: "Engineering vehicles, NAI 2",
+    zh: ""
+  },
+  "detect-f2t2ea.185": {
+    en: "Recommend an action to the FSCC",
+    zh: ""
+  },
+  "detect-f2t2ea.186": {
+    en: "Inside NAI 2 the long-range ISR discovers engineering vehicles.",
+    zh: ""
+  },
+  "detect-f2t2ea.187": {
+    en: "Continue watching those vehicles.",
+    zh: ""
+  },
+  "detect-f2t2ea.188": {
+    en: "Continue to search for other high-payoff targets.",
+    zh: ""
+  },
+  "detect-f2t2ea.189": {
+    en: "What step in F2T2EA are we in?",
+    zh: ""
+  },
+  "detect-f2t2ea.190": {
+    en: "The aircraft holds the vehicles on camera while the FSCC works the mission.",
+    zh: ""
+  },
+  "detect-f2t2ea.191": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.192": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.193": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.194": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.195": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.196": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
   "detect-f2t2ea.182": {
-    en: "<strong>Both contacts handled.</strong> A detection is not a target. The aircraft is searching for the targets the commander already decided matter, and anything it stops to watch is bought with the search it is no longer doing.",
+    en: "<strong>All three contacts handled.</strong> A detection is not a target — but the target you were sent for is. The aircraft passed two things worth reporting and stopped for the one the commander built the plan around.",
     zh: ""
   },
   "detect-f2t2ea.060": {
@@ -5087,6 +5143,22 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.d23-c4.hint": {
     en: "Nothing is observing this position once the drone moves on. Which step is that?",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c5.why": {
+    en: "These are what the aircraft was sent to find. The commander's first priority is the bridge, and the engineers are the only thing that can take it away from us — so this is where the sensor stops.",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c5.hint": {
+    en: "Check the high-payoff target list and the commander's guidance. Is this the thing we have been searching for?",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c6.why": {
+    en: "Identified, located, and now held on camera. That is Track — and it is the only reason we can shoot a target whose timeliness standard is continuous observation.",
+    zh: ""
+  },
+  "detect-f2t2ea.d23-c6.hint": {
+    en: "Something is watching this one, which was not true of the first two. Which step needs that?",
     zh: ""
   },
 

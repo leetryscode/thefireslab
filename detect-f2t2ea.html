@@ -314,7 +314,6 @@
         <span class="status" data-status="detect-2">NOT DONE</span>
       </div>
       <div class="exercise-body">
-        <p data-i18n="detect-f2t2ea.152">Two contacts made on the way to somewhere else. Step through the transit. At each contact, recommend what the aircraft does next, then say where that target sits in F2T2EA.</p>
 
         <div class="ecoa isr-reel" id="isr-reel">
           <div class="ecoa-stage">
@@ -335,6 +334,14 @@
               <img class="ecoa-base" src="img/isr-infantry.jpg" width="772" height="484" alt="Long-range ISR sensor video of a trench line with several covered fighting positions. Machine guns are visible in two of them and soldiers are in the trench.">
             </div>
 
+            <div class="ecoa-scene" data-scene="5">
+              <img class="ecoa-base" src="img/isr-map-3.jpg" width="920" height="597" alt="The same sector. The long-range ISR UAS has reached NAI 2 in the east and its sensor is turned onto the ground inside the box.">
+            </div>
+
+            <div class="ecoa-scene" data-scene="6">
+              <img class="ecoa-base" src="img/isr-engineers.jpg" width="811" height="630" alt="Long-range ISR sensor video of three armoured engineering vehicles halted in line on a road beside a treeline, with a building beyond.">
+            </div>
+
           </div>
 
           <div class="ecoa-bar">
@@ -344,6 +351,8 @@
               <button type="button" class="ecoa-dot" data-go="2" aria-label="Contact 1"></button>
               <button type="button" class="ecoa-dot" data-go="3" aria-label="Transit to NAI 2"></button>
               <button type="button" class="ecoa-dot" data-go="4" aria-label="Contact 2"></button>
+              <button type="button" class="ecoa-dot" data-go="5" aria-label="Into NAI 2"></button>
+              <button type="button" class="ecoa-dot" data-go="6" aria-label="Contact 3"></button>
             </div>
             <button type="button" class="ecoa-arrow" data-step="1" aria-label="Next">→</button>
           </div>
@@ -411,10 +420,42 @@
           </div>
             </div>
 
+
+            <div class="ecoa-note" data-note="5">
+              <h4 data-i18n="detect-f2t2ea.152">Into NAI 2</h4>
+              <p data-i18n="detect-f2t2ea.183">The aircraft reaches NAI 2 and turns its sensor onto the crossroads.</p>
+            </div>
+
+            <div class="ecoa-note" data-note="6">
+              <h4 data-i18n="detect-f2t2ea.184">Engineering vehicles, NAI 2</h4>
+          <div class="report-card" id="d23-c5" data-answer="hold" data-why="These are what the aircraft was sent to find. The commander's first priority is the bridge, and the engineers are the only thing that can take it away from us — so this is where the sensor stops." data-hint="Check the high-payoff target list and the commander's guidance. Is this the thing we have been searching for?" data-i18n-why="detect-f2t2ea.d23-c5.why" data-i18n-hint="detect-f2t2ea.d23-c5.hint">
+            <h4 data-i18n="detect-f2t2ea.185">Recommend an action to the FSCC</h4>
+            <p data-i18n="detect-f2t2ea.186">Inside NAI 2 the long-range ISR discovers engineering vehicles.</p>
+            <div class="decision-btns">
+              <button data-value="hold" data-i18n="detect-f2t2ea.187">Continue watching those vehicles.</button>
+              <button data-value="continue" data-i18n="detect-f2t2ea.188">Continue to search for other high-payoff targets.</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
+
+          <div class="report-card" id="d23-c6" data-answer="track" data-why="Identified, located, and now held on camera. That is Track — and it is the only reason we can shoot a target whose timeliness standard is continuous observation." data-hint="Something is watching this one, which was not true of the first two. Which step needs that?" data-i18n-why="detect-f2t2ea.d23-c6.why" data-i18n-hint="detect-f2t2ea.d23-c6.hint">
+            <h4 data-i18n="detect-f2t2ea.189">What step in F2T2EA are we in?</h4>
+            <p data-i18n="detect-f2t2ea.190">The aircraft holds the vehicles on camera while the FSCC works the mission.</p>
+            <div class="decision-btns">
+              <button data-value="find" data-i18n="detect-f2t2ea.191">1 Find</button>
+              <button data-value="fix" data-i18n="detect-f2t2ea.192">2 Fix</button>
+              <button data-value="track" data-i18n="detect-f2t2ea.193">3 Track</button>
+              <button data-value="target" data-i18n="detect-f2t2ea.194">4 Target</button>
+              <button data-value="engage" data-i18n="detect-f2t2ea.195">5 Engage</button>
+              <button data-value="assess" data-i18n="detect-f2t2ea.196">6 Assess</button>
+            </div>
+            <div class="drill-feedback"></div>
+          </div>
+            </div>
           </div>
         </div>
 
-        <div class="feedback ok" id="detect-2-alldone" style="margin-top:14px;" data-i18n="detect-f2t2ea.182"><strong>Both contacts handled.</strong> A detection is not a target. The aircraft is searching for the targets the commander already decided matter, and anything it stops to watch is bought with the search it is no longer doing.</div>
+        <div class="feedback ok" id="detect-2-alldone" style="margin-top:14px;" data-i18n="detect-f2t2ea.182"><strong>All three contacts handled.</strong> A detection is not a target — but the target you were sent for is. The aircraft passed two things worth reporting and stopped for the one the commander built the plan around.</div>
       </div>
     </div>
   </div>
