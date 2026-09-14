@@ -4375,7 +4375,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.014": {
     en: "Detect: Find, Fix, Track",
-    zh: ""
+    zh: "監測：發現、定位、追蹤"
   },
   "detect-f2t2ea.015": {
     en: "The six steps one target passes through once the operation is running.",
@@ -4383,11 +4383,11 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.011": {
     en: "In the “decide” phase we determine what targets are highest priority to engage. In the “detect” phase we are responsible for finding the targets we have decided are most important. In the “deliver” phase we engage those targets. Frequently, the Detect and Deliver phases happen concurrently, as we continue to detect targets while simultaneously delivering upon others. Only in the beginning of conflict may we have the opportunity to detect all targets before delivery upon those targets has begun.",
-    zh: ""
+    zh: "在「擬定」階段，我們決定哪些目標的接戰優先順序最高。在「監測」階段，我們負責找出已決定為最重要的那些目標。在「執行」階段，我們接戰這些目標。監測與執行兩個階段經常同時進行：我們一面持續監測目標，一面對其他目標實施打擊。只有在衝突之初，我們才可能在開始打擊之前就把所有目標都監測完畢。"
   },
   "detect-f2t2ea.012": {
     en: "All target types are engaged using the mnemonic F2T2EA, used to understand the status of a given target within current operations.",
-    zh: ""
+    zh: "所有類型的目標都以 F2T2EA 這個口訣實施接戰；此口訣用於掌握某一目標在當前作戰中的狀態。"
   },
   "detect-f2t2ea.019": {
     en: "Decide",
@@ -4535,11 +4535,11 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.016": {
     en: "We know something is out there. We do not know what it is, and the location is not good enough to shoot.",
-    zh: ""
+    zh: "我們知道那裡有東西，但不知道它是什麼，位置的精度也還不足以射擊。"
   },
   "detect-f2t2ea.054": {
     en: "Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates. Its battery then dies before any decision on how to engage is made.",
-    zh: ""
+    zh: "小型無人機接近到足以正面辨識該車輛為敵軍戰車，並產生可供射擊的座標。隨後，在尚未決定如何接戰之前，它的電池就耗盡了。"
   },
   "detect-f2t2ea.062": {
     en: "— choose —",
@@ -4575,7 +4575,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.020": {
     en: "We have a precise location, but nothing is watching the tank. A grid without continuous observation is Fix, not Track.",
-    zh: ""
+    zh: "我們掌握了精確位置，但已無任何裝備在觀測這輛戰車。只有座標而沒有持續觀測，屬於定位，不是追蹤。"
   },
   "detect-f2t2ea.080": {
     en: "Forward Scout Team reports they have “eyes-on” a tank near last known position.",
@@ -4615,11 +4615,11 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.059": {
     en: "Eyes-on is continuous custody. We were already fixed; holding it over time is Track.",
-    zh: ""
+    zh: "目視掌握就是持續的接觸保持。我們原本就已完成定位；能夠隨時間持續掌握它，就是追蹤。"
   },
   "detect-f2t2ea.070": {
     en: "The FSCC gains approval to strike the tank and begins discussing options.",
-    zh: ""
+    zh: "火力協調組（FSCC）取得打擊該戰車的核准，並開始討論可用的打擊方案。"
   },
   "detect-f2t2ea.071": {
     en: "— choose —",
@@ -4655,7 +4655,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.079": {
     en: "Authority to strike is granted and the weapon is being chosen. Nothing has been ordered to fire yet.",
-    zh: ""
+    zh: "打擊權限已經核准，武器正在選定當中。此時尚未下達任何射擊命令。"
   },
   "detect-f2t2ea.089": {
     en: "Order sent to anti-tank one-way-attack UAS unit to engage the tank under observation by the scout team.",
@@ -4695,7 +4695,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.144": {
     en: "The fire order has been sent to the unit that will execute it. Engage begins when the order goes out, not when the munition arrives.",
-    zh: ""
+    zh: "射擊命令已經下達給執行的單位。接戰是從命令發出的那一刻開始，而不是從彈藥命中開始。"
   },
   "detect-f2t2ea.098": {
     en: "Scout team observes attack drone strike near the tank. From the explosion they observe the tank quickly driving away, presumably intact.",
@@ -4735,7 +4735,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.145": {
     en: "We are judging the effect of a strike that has already happened. The tank drove away, so the assessment is that it survived and the cycle is not finished.",
-    zh: ""
+    zh: "我們正在判斷一次已經實施的打擊所造成的效果。戰車駛離現場，因此評估結果是它仍然存活，這個循環尚未結束。"
   },
   "detect-f2t2ea.107": {
     en: "Long range ISR is tasked with and re-acquires a slightly damaged tank.",
@@ -4815,7 +4815,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.146": {
     en: "The first strike failed, so the tank comes back to be paired with a second weapon. Assess returns a surviving target to Target, not out of the cycle.",
-    zh: ""
+    zh: "第一次打擊失敗，因此這輛戰車回到流程中，重新配對第二項武器。評估會把仍然存活的目標送回目標處理，而不是送出循環。"
   },
   "detect-f2t2ea.126": {
     en: "Commander approves the re-tasking. Mission is sent to the pilots flying.",
@@ -4855,7 +4855,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.147": {
     en: "Authority is granted and the mission is with the aircrew. The order to strike has been issued.",
-    zh: ""
+    zh: "權限已經核准，任務已經交給飛行組員。打擊命令業已下達。"
   },
   "detect-f2t2ea.135": {
     en: "Pilots record video of the tank being destroyed by a Hellfire missile.",
@@ -4895,7 +4895,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.148": {
     en: "The strike is complete and we are recording what it achieved. This time the assessment ends the cycle: no re-attack is required.",
-    zh: ""
+    zh: "打擊已經完成，我們正在記錄它達成的效果。這一次評估結束了整個循環：不需要再次攻擊。"
   },
   "detect-f2t2ea.055": {
     en: "The steps overlap",
@@ -4915,51 +4915,51 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.149": {
     en: "Searching with one aircraft",
-    zh: ""
+    zh: "只用一架飛機搜索"
   },
   "detect-f2t2ea.150": {
     en: "The long-range ISR UAS is the only thing we hold that can see a named area of interest, and only one of the two airframes can be airborne at a time. Every minute it spends watching one target is a minute it is not searching for another.",
-    zh: ""
+    zh: "長程情監偵無人機是我們手上唯一能夠觀察命名關注區的裝備，而且兩架機體同一時間只能有一架升空。它用來監看某一個目標的每一分鐘，就是沒有在搜索另一個目標的一分鐘。"
   },
   "detect-f2t2ea.151": {
     en: "Task 2.3 — What do you tell the FSCC?",
-    zh: ""
+    zh: "課題 2.3 — 你要向火力協調組建議什麼？"
   },
   "detect-f2t2ea.153": {
     en: "On the way to NAI 1",
-    zh: ""
+    zh: "前往 NAI 1 的途中"
   },
   "detect-f2t2ea.154": {
     en: "The long-range ISR UAS is transiting to NAI 1. Its sensor is turned onto TAI 1 as it passes.",
-    zh: ""
+    zh: "長程情監偵無人機正在飛往 NAI 1。通過時，它的感測器轉向 TAI 1。"
   },
   "detect-f2t2ea.155": {
     en: "ATGM team, TAI 1",
-    zh: ""
+    zh: "ATGM 小組，TAI 1"
   },
   "detect-f2t2ea.156": {
     en: "What action do you recommend to the FSCC?",
-    zh: ""
+    zh: "你要向火力協調組建議採取什麼行動？"
   },
   "detect-f2t2ea.157": {
     en: "Long-range ISR, on its way to NAI 1, discovers an anti-tank guided missile (ATGM) team in TAI 1, as expected.",
-    zh: ""
+    zh: "長程情監偵無人機在飛往 NAI 1 的途中，於 TAI 1 發現一組反戰車飛彈（ATGM）小組，與預期相符。"
   },
   "detect-f2t2ea.158": {
     en: "Maintain view of the target — we will strike this first at T-1:00 as the commander dictates.",
-    zh: ""
+    zh: "持續監看該目標——依指揮官的指示，我們會在 T-1:00 先打擊它。"
   },
   "detect-f2t2ea.159": {
     en: "Note the exact position and continue to NAI 1.",
-    zh: ""
+    zh: "記錄確實位置，繼續前往 NAI 1。"
   },
   "detect-f2t2ea.160": {
     en: "What step in F2T2EA are we in?",
-    zh: ""
+    zh: "我們目前處於 F2T2EA 的哪一個步驟？"
   },
   "detect-f2t2ea.161": {
     en: "The aircraft notes the position and flies on to NAI 1.",
-    zh: ""
+    zh: "該機記錄位置後，繼續飛往 NAI 1。"
   },
   "detect-f2t2ea.162": {
     en: "1 Find",
@@ -4987,35 +4987,35 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.168": {
     en: "On the way to NAI 2",
-    zh: ""
+    zh: "前往 NAI 2 的途中"
   },
   "detect-f2t2ea.169": {
     en: "The aircraft has left TAI 1 and is working south-west towards NAI 2, searching the ground ahead of it.",
-    zh: ""
+    zh: "該機已離開 TAI 1，正朝西南方向 NAI 2 前進，並搜索前方的地面。"
   },
   "detect-f2t2ea.170": {
     en: "Infantry in fighting positions",
-    zh: ""
+    zh: "位於戰鬥陣地的步兵"
   },
   "detect-f2t2ea.171": {
     en: "What do we recommend the FSCC do?",
-    zh: ""
+    zh: "我們要建議火力協調組怎麼做？"
   },
   "detect-f2t2ea.172": {
     en: "On its way to NAI 2, the long-range ISR discovers infantry in fighting positions.",
-    zh: ""
+    zh: "長程情監偵無人機在飛往 NAI 2 的途中，發現位於戰鬥陣地的步兵。"
   },
   "detect-f2t2ea.173": {
     en: "Remain looking at the position until we can fire at them, in order to get battle damage assessment.",
-    zh: ""
+    zh: "持續監看該陣地，直到我們能夠對其射擊，以便實施戰果評估。"
   },
   "detect-f2t2ea.174": {
     en: "Continue to NAI 2 and look for the high-payoff targets.",
-    zh: ""
+    zh: "繼續前往 NAI 2，尋找高效益目標。"
   },
   "detect-f2t2ea.175": {
     en: "What step in F2T2EA is this target, if the ISR drone looks away and keeps searching?",
-    zh: ""
+    zh: "如果情監偵無人機轉開視線、繼續搜索，這個目標處於 F2T2EA 的哪一個步驟？"
   },
   "detect-f2t2ea.176": {
     en: "1 Find",
@@ -5043,39 +5043,39 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.152": {
     en: "Into NAI 2",
-    zh: ""
+    zh: "進入 NAI 2"
   },
   "detect-f2t2ea.183": {
     en: "The aircraft reaches NAI 2 and turns its sensor onto the crossroads.",
-    zh: ""
+    zh: "該機抵達 NAI 2，並將感測器轉向路口。"
   },
   "detect-f2t2ea.184": {
     en: "Engineering vehicles, NAI 2",
-    zh: ""
+    zh: "工兵車輛，NAI 2"
   },
   "detect-f2t2ea.185": {
     en: "Recommend an action to the FSCC",
-    zh: ""
+    zh: "向火力協調組建議一項行動"
   },
   "detect-f2t2ea.186": {
     en: "Inside NAI 2 the long-range ISR discovers engineering vehicles.",
-    zh: ""
+    zh: "長程情監偵無人機在 NAI 2 內發現工兵車輛。"
   },
   "detect-f2t2ea.187": {
     en: "Continue watching those vehicles.",
-    zh: ""
+    zh: "持續監看這些車輛。"
   },
   "detect-f2t2ea.188": {
     en: "Continue to search for other high-payoff targets.",
-    zh: ""
+    zh: "繼續搜索其他高效益目標。"
   },
   "detect-f2t2ea.189": {
     en: "What step in F2T2EA are we in?",
-    zh: ""
+    zh: "我們目前處於 F2T2EA 的哪一個步驟？"
   },
   "detect-f2t2ea.190": {
     en: "The aircraft holds the vehicles on camera while the FSCC works the mission.",
-    zh: ""
+    zh: "在火力協調組處理這項任務的同時，該機以感測器持續掌握這些車輛。"
   },
   "detect-f2t2ea.191": {
     en: "1 Find",
@@ -5103,7 +5103,7 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.182": {
     en: "<strong>All three contacts handled.</strong> A detection is not a target — but the target you were sent for is. The aircraft passed two things worth reporting and stopped for the one the commander built the plan around.",
-    zh: ""
+    zh: "<strong>三次接觸都已處理完畢。</strong>發現並不等於目標——但你被派出去尋找的那一個就是。該機略過了兩件值得回報的事物，只為指揮官整個計畫所圍繞的那一個停了下來。"
   },
   "detect-f2t2ea.060": {
     en: "← Target Synchronization Matrix",
@@ -5115,51 +5115,51 @@ window.D3A_LANG_ZH = {
   },
   "detect-f2t2ea.d23-c1.why": {
     en: "The ATGM team was expected here and its position is now known. Holding the aircraft over it buys nothing: the strike is not until T-1:00, and while it watches, NAI 1 goes unsearched.",
-    zh: ""
+    zh: "我們原本就預期 ATGM 小組會在這裡，而它的位置現在已經掌握。把飛機留在上空並不會換來任何好處：打擊要到 T-1:00 才會實施，而在它監看的這段時間裡，NAI 1 就沒有人搜索。"
   },
   "detect-f2t2ea.d23-c1.hint": {
     en: "We are not striking this target for another hour. What is the aircraft not doing while it watches?",
-    zh: ""
+    zh: "這個目標還要再過一小時才會被打擊。當這架飛機在監看時，它沒有在做什麼？"
   },
   "detect-f2t2ea.d23-c2.why": {
     en: "The team is positively identified and we hold a grid good enough to shoot. Nothing is watching it once the aircraft moves on, so this is Fix and not Track.",
-    zh: ""
+    zh: "該小組已經正面辨識，我們也掌握了足以射擊的座標。但飛機一旦離開，就沒有任何裝備在觀測它，所以這是定位，不是追蹤。"
   },
   "detect-f2t2ea.d23-c2.hint": {
     en: "We know what it is and where it is. Which of the two steps also requires that something keeps watching?",
-    zh: ""
+    zh: "我們知道它是什麼，也知道它在哪裡。這兩個步驟當中，哪一個還要求必須有裝備持續觀測？"
   },
   "detect-f2t2ea.d23-c3.why": {
     en: "Infantry in fighting positions are not on the high-payoff target list. Watching them for battle damage assessment assumes we are going to strike them, and we are not — the aircraft is looking for the engineers.",
-    zh: ""
+    zh: "位於戰鬥陣地的步兵並不在高效益目標清單上。為了取得戰果評估而監看他們，前提是我們打算打擊他們，但我們並不打算——這架飛機要找的是工兵。"
   },
   "detect-f2t2ea.d23-c3.hint": {
     en: "Check the high-payoff target list. Is this something we intend to engage at all?",
-    zh: ""
+    zh: "對照高效益目標清單。這是我們原本就打算接戰的目標嗎？"
   },
   "detect-f2t2ea.d23-c4.why": {
     en: "The drone has the identification and the position, and then looks away. A precise location with nothing watching it is Fix.",
-    zh: ""
+    zh: "無人機取得了辨識與位置，然後就轉開視線。有精確位置卻沒有任何裝備在觀測，就是定位。"
   },
   "detect-f2t2ea.d23-c4.hint": {
     en: "Nothing is observing this position once the drone moves on. Which step is that?",
-    zh: ""
+    zh: "無人機離開之後，就沒有任何裝備在觀測這個陣地。這屬於哪一個步驟？"
   },
   "detect-f2t2ea.d23-c5.why": {
     en: "These are what the aircraft was sent to find. The commander's first priority is the bridge, and the engineers are the only thing that can take it away from us — so this is where the sensor stops.",
-    zh: ""
+    zh: "這正是這架飛機被派出去尋找的東西。指揮官的第一優先是橋樑，而工兵是唯一能把橋樑從我們手中奪走的力量——所以感測器就停在這裡。"
   },
   "detect-f2t2ea.d23-c5.hint": {
     en: "Check the high-payoff target list and the commander's guidance. Is this the thing we have been searching for?",
-    zh: ""
+    zh: "對照高效益目標清單與指揮官指導。這是不是我們一直在尋找的那個目標？"
   },
   "detect-f2t2ea.d23-c6.why": {
     en: "Identified, located, and now held on camera. That is Track — and it is the only reason we can shoot a target whose timeliness standard is continuous observation.",
-    zh: ""
+    zh: "已經辨識、已經定位，而且現在以感測器持續掌握。這就是追蹤——也正是我們能夠射擊一個時效條件為「持續觀測」的目標的唯一原因。"
   },
   "detect-f2t2ea.d23-c6.hint": {
     en: "Something is watching this one, which was not true of the first two. Which step needs that?",
-    zh: ""
+    zh: "這一次有裝備在持續觀測，而前兩次並沒有。哪一個步驟需要這件事？"
   },
 
   /* ---------- deliver.html ---------- */
