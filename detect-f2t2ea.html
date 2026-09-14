@@ -147,7 +147,7 @@
           <p class="row-note ok" data-i18n="detect-f2t2ea.016">We know something is out there. We do not know what it is, and the location is not good enough to shoot.</p>
         </li>
         <li class="lad-step">
-          <p class="lad-sit" data-i18n="detect-f2t2ea.054">Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates.</p>
+          <p class="lad-sit" data-i18n="detect-f2t2ea.054">Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates. Its battery then dies before any decision on how to engage is made.</p>
           <div class="lad-pick">
             <select data-answer="fix">
               <option value="" data-i18n="detect-f2t2ea.062">— choose —</option>
@@ -160,28 +160,12 @@
             </select>
             <button class="btn row-check" data-i18n="detect-f2t2ea.069">Check</button>
           </div>
-          <p class="row-note ok" data-i18n="detect-f2t2ea.020">Identity is confirmed and the location is now precise enough to engage. That is Fix — we have the grid, but we are not yet holding continuous custody.</p>
-        </li>
-        <li class="lad-step">
-          <p class="lad-sit" data-i18n="detect-f2t2ea.070">sUAS battery dies before a decision on how to engage the tank is made. Last seen moving toward friendly position.</p>
-          <div class="lad-pick">
-            <select data-answer="find">
-              <option value="" data-i18n="detect-f2t2ea.071">— choose —</option>
-              <option value="find" data-i18n="detect-f2t2ea.072">1 Find</option>
-              <option value="fix" data-i18n="detect-f2t2ea.073">2 Fix</option>
-              <option value="track" data-i18n="detect-f2t2ea.074">3 Track</option>
-              <option value="target" data-i18n="detect-f2t2ea.075">4 Target</option>
-              <option value="engage" data-i18n="detect-f2t2ea.076">5 Engage</option>
-              <option value="assess" data-i18n="detect-f2t2ea.077">6 Assess</option>
-            </select>
-            <button class="btn row-check" data-i18n="detect-f2t2ea.078">Check</button>
-          </div>
-          <p class="row-note ok" data-i18n="detect-f2t2ea.079">Custody is lost, so the tank is no longer fixed and no longer tracked. Its location is approximate again, and the cycle drops back to Find.</p>
+          <p class="row-note ok" data-i18n="detect-f2t2ea.020">We have a precise location, but nothing is watching the tank. A grid without continuous observation is Fix, not Track.</p>
         </li>
         <li class="lad-step">
           <p class="lad-sit" data-i18n="detect-f2t2ea.080">Forward Scout Team reports they have “eyes-on” a tank near last known position.</p>
           <div class="lad-pick">
-            <select data-answer="fix">
+            <select data-answer="track">
               <option value="" data-i18n="detect-f2t2ea.081">— choose —</option>
               <option value="find" data-i18n="detect-f2t2ea.082">1 Find</option>
               <option value="fix" data-i18n="detect-f2t2ea.083">2 Fix</option>
@@ -192,7 +176,23 @@
             </select>
             <button class="btn row-check" data-i18n="detect-f2t2ea.088">Check</button>
           </div>
-          <p class="row-note ok" data-i18n="detect-f2t2ea.059">Eyes-on re-establishes what it is and where it is. Holding it over time has not started yet, so this is Fix and not Track.</p>
+          <p class="row-note ok" data-i18n="detect-f2t2ea.059">Eyes-on is continuous custody. We were already fixed; holding it over time is Track.</p>
+        </li>
+        <li class="lad-step">
+          <p class="lad-sit" data-i18n="detect-f2t2ea.070">The FSCC gains approval to strike the tank and begins discussing options.</p>
+          <div class="lad-pick">
+            <select data-answer="target">
+              <option value="" data-i18n="detect-f2t2ea.071">— choose —</option>
+              <option value="find" data-i18n="detect-f2t2ea.072">1 Find</option>
+              <option value="fix" data-i18n="detect-f2t2ea.073">2 Fix</option>
+              <option value="track" data-i18n="detect-f2t2ea.074">3 Track</option>
+              <option value="target" data-i18n="detect-f2t2ea.075">4 Target</option>
+              <option value="engage" data-i18n="detect-f2t2ea.076">5 Engage</option>
+              <option value="assess" data-i18n="detect-f2t2ea.077">6 Assess</option>
+            </select>
+            <button class="btn row-check" data-i18n="detect-f2t2ea.078">Check</button>
+          </div>
+          <p class="row-note ok" data-i18n="detect-f2t2ea.079">Authority to strike is granted and the weapon is being chosen. Nothing has been ordered to fire yet.</p>
         </li>
         <li class="lad-step">
           <p class="lad-sit" data-i18n="detect-f2t2ea.089">Order sent to anti-tank one-way-attack UAS unit to engage the tank under observation by the scout team.</p>
@@ -256,7 +256,7 @@
             </select>
             <button class="btn row-check" data-i18n="detect-f2t2ea.125">Check</button>
           </div>
-          <p class="row-note ok" data-i18n="detect-f2t2ea.146">Authority is being sought and a weapon is being paired to the target. Nothing has been ordered to fire yet.</p>
+          <p class="row-note ok" data-i18n="detect-f2t2ea.146">The first strike failed, so the tank comes back to be paired with a second weapon. Assess returns a surviving target to Target, not out of the cycle.</p>
         </li>
         <li class="lad-step">
           <p class="lad-sit" data-i18n="detect-f2t2ea.126">Commander approves the re-tasking. Mission is sent to the pilots flying.</p>

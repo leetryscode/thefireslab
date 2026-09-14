@@ -4538,8 +4538,8 @@ window.D3A_LANG_ZH = {
     zh: ""
   },
   "detect-f2t2ea.054": {
-    en: "Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates.",
-    zh: "小型無人機接近至足以確認該車輛為敵軍戰車，並產生可供接戰的座標。"
+    en: "Small UAS gets close enough to positively identify the vehicle as an enemy tank and generates targetable coordinates. Its battery then dies before any decision on how to engage is made.",
+    zh: ""
   },
   "detect-f2t2ea.062": {
     en: "— choose —",
@@ -4574,48 +4574,8 @@ window.D3A_LANG_ZH = {
     zh: "檢查"
   },
   "detect-f2t2ea.020": {
-    en: "Identity is confirmed and the location is now precise enough to engage. That is Fix — we have the grid, but we are not yet holding continuous custody.",
+    en: "We have a precise location, but nothing is watching the tank. A grid without continuous observation is Fix, not Track.",
     zh: ""
-  },
-  "detect-f2t2ea.070": {
-    en: "sUAS battery dies before a decision on how to engage the tank is made. Last seen moving toward friendly position.",
-    zh: "在決定如何接戰該戰車之前，小型無人機的電池耗盡。最後一次目擊時，戰車正朝我方陣地移動。"
-  },
-  "detect-f2t2ea.071": {
-    en: "— choose —",
-    zh: "— 請選擇 —"
-  },
-  "detect-f2t2ea.072": {
-    en: "1 Find",
-    zh: "1 發現"
-  },
-  "detect-f2t2ea.073": {
-    en: "2 Fix",
-    zh: "2 定位"
-  },
-  "detect-f2t2ea.074": {
-    en: "3 Track",
-    zh: "3 追蹤"
-  },
-  "detect-f2t2ea.075": {
-    en: "4 Target",
-    zh: "4 目標處理"
-  },
-  "detect-f2t2ea.076": {
-    en: "5 Engage",
-    zh: "5 接戰"
-  },
-  "detect-f2t2ea.077": {
-    en: "6 Assess",
-    zh: "6 評估"
-  },
-  "detect-f2t2ea.078": {
-    en: "Check",
-    zh: "檢查"
-  },
-  "detect-f2t2ea.079": {
-    en: "Custody is lost, so the tank is no longer fixed and no longer tracked. Its location is approximate again, and the cycle drops back to Find.",
-    zh: "掌握中斷，戰車既未定位也未受追蹤。它的位置再度成為概略位置，循環退回發現步驟。"
   },
   "detect-f2t2ea.080": {
     en: "Forward Scout Team reports they have “eyes-on” a tank near last known position.",
@@ -4654,7 +4614,47 @@ window.D3A_LANG_ZH = {
     zh: "檢查"
   },
   "detect-f2t2ea.059": {
-    en: "Eyes-on re-establishes what it is and where it is. Holding it over time has not started yet, so this is Fix and not Track.",
+    en: "Eyes-on is continuous custody. We were already fixed; holding it over time is Track.",
+    zh: ""
+  },
+  "detect-f2t2ea.070": {
+    en: "The FSCC gains approval to strike the tank and begins discussing options.",
+    zh: ""
+  },
+  "detect-f2t2ea.071": {
+    en: "— choose —",
+    zh: "— 請選擇 —"
+  },
+  "detect-f2t2ea.072": {
+    en: "1 Find",
+    zh: "1 發現"
+  },
+  "detect-f2t2ea.073": {
+    en: "2 Fix",
+    zh: "2 定位"
+  },
+  "detect-f2t2ea.074": {
+    en: "3 Track",
+    zh: "3 追蹤"
+  },
+  "detect-f2t2ea.075": {
+    en: "4 Target",
+    zh: "4 目標處理"
+  },
+  "detect-f2t2ea.076": {
+    en: "5 Engage",
+    zh: "5 接戰"
+  },
+  "detect-f2t2ea.077": {
+    en: "6 Assess",
+    zh: "6 評估"
+  },
+  "detect-f2t2ea.078": {
+    en: "Check",
+    zh: "檢查"
+  },
+  "detect-f2t2ea.079": {
+    en: "Authority to strike is granted and the weapon is being chosen. Nothing has been ordered to fire yet.",
     zh: ""
   },
   "detect-f2t2ea.089": {
@@ -4814,7 +4814,7 @@ window.D3A_LANG_ZH = {
     zh: "檢查"
   },
   "detect-f2t2ea.146": {
-    en: "Authority is being sought and a weapon is being paired to the target. Nothing has been ordered to fire yet.",
+    en: "The first strike failed, so the tank comes back to be paired with a second weapon. Assess returns a surviving target to Target, not out of the cycle.",
     zh: ""
   },
   "detect-f2t2ea.126": {
