@@ -7106,56 +7106,12 @@ window.D3A_LANG_ZH = {
     zh: "第 4 階段：評估"
   },
   "assess.011": {
-    en: "The assess function has been present at every step of this operation.",
-    zh: "評估功能在這場作戰的每一個步驟中都一直存在。"
+    en: "Assessment runs through all four functions of D3A, not just the last one.",
+    zh: ""
   },
   "assess.013": {
-    en: "If combat assessment reveals that the commander's guidance has not been met, the detect and deliver functions of the targeting process must continue to focus on the targets involved. This feedback may result in changes to the original decisions made during the decide function.",
-    zh: "如果戰鬥評估顯示指揮官指導尚未達成，目標選定程序中的監測與執行功能就必須繼續盯住相關目標。這項回饋可能導致擬定功能中原先所做決定的改變。"
-  },
-  "assess.014": {
-    en: "In current operations we have completed the <strong>Assess</strong> step for several active targets, but in our timeline we have not completed BDA on two active targets. This is one example of the Assess step.",
-    zh: "在當前作戰中，我們已對數個現行目標完成<strong>評估</strong>步驟，但在我們的時程中，尚有兩個現行目標的 BDA 未完成。這是評估步驟的一個例子。"
-  },
-  "assess.015": {
-    en: "HPTL",
-    zh: "HPTL"
-  },
-  "assess.018": {
-    en: "<span class=\"wb-n\">1</span>Find",
-    zh: "<span class=\"wb-n\">1</span>發現"
-  },
-  "assess.019": {
-    en: "<span class=\"wb-n\">2</span>Fix",
-    zh: "<span class=\"wb-n\">2</span>定位"
-  },
-  "assess.020": {
-    en: "<span class=\"wb-n\">3</span>Track",
-    zh: "<span class=\"wb-n\">3</span>追蹤"
-  },
-  "assess.021": {
-    en: "<span class=\"wb-n\">4</span>Target",
-    zh: "<span class=\"wb-n\">4</span>目標處理"
-  },
-  "assess.022": {
-    en: "<span class=\"wb-n\">5</span>Engage",
-    zh: "<span class=\"wb-n\">5</span>接戰"
-  },
-  "assess.023": {
-    en: "<span class=\"wb-n\">6</span>Assess",
-    zh: "<span class=\"wb-n\">6</span>評估"
-  },
-  "assess.024": {
-    en: "Mortars",
-    zh: "迫擊砲"
-  },
-  "assess.025": {
-    en: "Command post",
-    zh: "指揮所"
-  },
-  "assess.026": {
-    en: "Ammo supply point",
-    zh: "彈藥補給點"
+    en: "We do not build one plan and hold it. New guidance, a new detection, a result we did not expect — each one can change what we do next. When assessment shows the commander's guidance has not been met, decisions made in Decide are reopened.",
+    zh: ""
   },
   "assess.027": {
     en: "Operations process",
@@ -7178,8 +7134,8 @@ window.D3A_LANG_ZH = {
     zh: "擬定"
   },
   "assess.032": {
-    en: "In Decide, we adjust the plan when information changes, based on continuous assessment.",
-    zh: "在擬定階段，當情報改變時，我們依據持續評估調整計畫。"
+    en: "In Decide, we adjust the plan when information changes, based on continuous <strong>assessment</strong>.",
+    zh: ""
   },
   "assess.033": {
     en: "Preparation",
@@ -7190,8 +7146,8 @@ window.D3A_LANG_ZH = {
     zh: "監測"
   },
   "assess.035": {
-    en: "In Detect, we adjust when we assess new information as it is detected.",
-    zh: "在監測階段，我們在評估新偵獲的情報後進行調整。"
+    en: "In Detect, we adjust when we <strong>assess</strong> new information as it is detected.",
+    zh: ""
   },
   "assess.036": {
     en: "Execution",
@@ -7210,36 +7166,24 @@ window.D3A_LANG_ZH = {
     zh: "評估"
   },
   "assess.040": {
-    en: "<strong>And at the end of the mission, we assess our overall targeting strategy's measure of performance and measure of effectiveness.</strong>",
-    zh: "<strong>而在任務結束時，我們評估整體目標選定策略的積效評估與效益評估。</strong>"
+    en: "And at the end of the mission, we <strong>assess</strong> our overall targeting strategy's measure of performance and measure of effectiveness.",
+    zh: ""
   },
   "assess.041": {
     en: "Combat assessment",
     zh: "戰鬥評估"
   },
-  "assess.042": {
-    en: "Combat assessment is the determination of the effectiveness of force employment during military operations.",
-    zh: "戰鬥評估是在軍事行動中判定兵力運用成效的作為。"
-  },
-  "assess.043": {
-    en: "FM 3-60, Chapter 2.",
-    zh: "FM 3-60，第 2 章。"
-  },
   "assess.044": {
-    en: "Combat assessment is what the Assess function does after an engagement. It has three parts, and each one asks a different question.",
-    zh: "戰鬥評估是評估功能在接戰之後所做的事。它有三個部分，每一個部分問的問題都不一樣。"
+    en: "After each engagement, we conduct a combat assessment. A combat assessment is specific to an engagement.",
+    zh: ""
   },
   "assess.045": {
-    en: "Part",
-    zh: "部分"
+    en: "3 parts of combat assessment",
+    zh: ""
   },
   "assess.046": {
     en: "The question it answers",
     zh: "它所回答的問題"
-  },
-  "assess.047": {
-    en: "Who answers it",
-    zh: "由誰回答"
   },
   "assess.048": {
     en: "<strong>Battle damage assessment (BDA)</strong>",
@@ -7249,10 +7193,6 @@ window.D3A_LANG_ZH = {
     en: "What did the attack do to the target?",
     zh: "這次攻擊對目標造成了什麼？"
   },
-  "assess.050": {
-    en: "The S-2, with the FSCC",
-    zh: "S-2，與 FSCC 共同進行"
-  },
   "assess.051": {
     en: "<strong>Munitions effectiveness assessment</strong>",
     zh: "<strong>彈藥效能評估</strong>"
@@ -7260,10 +7200,6 @@ window.D3A_LANG_ZH = {
   "assess.052": {
     en: "Was our weapon, our munition and our method the right choice?",
     zh: "我方的武器、彈藥與方法是否選擇正確？"
-  },
-  "assess.053": {
-    en: "The FSCC",
-    zh: "FSCC"
   },
   "assess.054": {
     en: "<strong>Re-attack recommendation</strong>",
@@ -7273,45 +7209,17 @@ window.D3A_LANG_ZH = {
     en: "Do we strike it again, strike something else, or change the plan?",
     zh: "我們要再打一次、改打別的目標，還是修改計畫？"
   },
-  "assess.056": {
-    en: "The S-2 and the FSCC, to the commander",
-    zh: "S-2 與 FSCC，向指揮官提出"
-  },
-  "assess.057": {
-    en: "BDA and munitions effectiveness assessment run at the same time and feed each other. Together they tell the commander what his fires have done to the enemy's ability to fight. The re-attack recommendation is what he does about it.",
-    zh: "戰果評估與彈藥效能評估同時進行，並互相提供資訊。兩者合起來告訴指揮官，他的火力對敵軍的作戰能力造成了什麼影響。再次打擊建議則是他要據此採取的作為。"
-  },
-  "assess.058": {
-    en: "Assessment is not free. The assets that assess a strike are the same assets that find the next target, so every assessment costs collection. At T+0:50 the FSCC held one long-range ISR UAS and had three jobs for it: assess the mortars, assess the ammunition supply point, or find the command post. It chose the mortars, and the supply point reached T+1:00 sitting in Assess with nobody watching it.",
-    zh: "評估不是免費的。用來評估一次打擊的兵力，就是用來尋找下一個目標的兵力，所以每一次評估都要付出情報蒐集的代價。在 T+0:50，FSCC 手上只有一架長程情監偵無人機，卻有三件工作要它做：評估迫擊砲、評估彈藥補給點，或是尋找指揮所。它選擇了迫擊砲，於是補給點到了 T+1:00 仍停在評估欄，沒有人在監視它。"
-  },
   "assess.059": {
     en: "Battle damage assessment",
     zh: "戰果評估"
   },
-  "assess.060": {
-    en: "BDA in the targeting process pertains to the results of attacks on targets designated by the commander.",
-    zh: "目標選定程序中的戰果評估，針對的是對指揮官所指定目標實施攻擊後的結果。"
-  },
-  "assess.061": {
-    en: "FM 3-60, Chapter 2.",
-    zh: "FM 3-60，第 2 章。"
-  },
-  "assess.062": {
-    en: "One strike produces three assessments. They ask different questions, they need different sensors, and they arrive on different timelines.",
-    zh: "一次打擊會產生三種評估。它們問的問題不同，需要的偵蒐裝備不同，得出結果的時間也不同。"
+  "assess.014": {
+    en: "BDA in the targeting process pertains to the results of attacks on targets designated by the commander. Producing BDA is primarily an intelligence responsibility, but requires coordination with operational elements to be effective.",
+    zh: ""
   },
   "assess.063": {
-    en: "Assessment",
-    zh: "評估項目"
-  },
-  "assess.064": {
-    en: "The question",
-    zh: "問題"
-  },
-  "assess.065": {
-    en: "The first strike on the ATGM section",
-    zh: "對 ATGM 分隊的第一次打擊"
+    en: "Three elements of BDA",
+    zh: ""
   },
   "assess.066": {
     en: "<strong>Physical damage</strong>",
@@ -7321,10 +7229,6 @@ window.D3A_LANG_ZH = {
     en: "How much of the target was physically damaged?",
     zh: "目標在物理上被毀損了多少？"
   },
-  "assess.068": {
-    en: "At T-0:30 the sUAS finds one man killed and the position abandoned.",
-    zh: "在 T-0:30，sUAS 發現一人陣亡，陣地已被放棄。"
-  },
   "assess.069": {
     en: "<strong>Functional damage</strong>",
     zh: "<strong>功能損害</strong>"
@@ -7333,10 +7237,6 @@ window.D3A_LANG_ZH = {
     en: "Can the target still do its job, and for how long?",
     zh: "目標是否還能執行它的任務？還能維持多久？"
   },
-  "assess.071": {
-    en: "At T-0:22 the rest of the section has moved several hundred metres and is still in range of the bridge. It can still do its job.",
-    zh: "在 T-0:22，該分隊其餘人員已轉移數百公尺，但仍在可對橋樑射擊的範圍內。它仍然能執行它的任務。"
-  },
   "assess.072": {
     en: "<strong>Target system</strong>",
     zh: "<strong>目標系統</strong>"
@@ -7344,10 +7244,6 @@ window.D3A_LANG_ZH = {
   "assess.073": {
     en: "What has the attack done to the enemy capability this target belongs to?",
     zh: "這次攻擊對該目標所屬的敵軍能力造成了什麼？"
-  },
-  "assess.074": {
-    en: "While that section can still fire on the crossing, the enemy can still stop a vehicle on the bridge. Nothing the commander asked for has been achieved.",
-    zh: ""
   },
   "assess.075": {
     en: "The last one is the reason we assess at all. A target matters because of what it lets the enemy do, so the useful question is always which capability he has lost. The ATGM section was priority 1 because the commander's guidance said it was the only thing in his order of battle that could stop a vehicle on the bridge. Taking it off the board at T-0:15 took that capability away from him.",
@@ -7364,10 +7260,6 @@ window.D3A_LANG_ZH = {
   "assess.078": {
     en: "An assessment can also reopen decisions made in Phase 1. The high-payoff target list, the target selection standards, the attack guidance matrix and the collection plan are all open to revision on the strength of a BDA. At T-0:30 the assessment moved the ATGM section from Assess back to Find, and the detect and deliver cycle ran again on the same target.",
     zh: "評估也可能重新掀開第 1 階段所做的決定。高效益目標清單、目標選擇條件、攻擊矩陣與情報蒐集計畫，都可能因為一份戰果評估而修改。在 T-0:30，評估把 ATGM 分隊從評估退回發現，監測與執行的循環又在同一個目標上跑了一次。"
-  },
-  "assess.079": {
-    en: "Look again at the tracker above. Two targets are sitting in Assess and neither assessment is finished. Which sensor would you task, and what would you ask it to look for?",
-    zh: "再看一次上面的追蹤表。有兩個目標停在評估欄，兩份評估都還沒完成。你會派哪一項偵蒐裝備？你會要它去看什麼？"
   },
   "assess.080": {
     en: "Munitions effectiveness assessment",
