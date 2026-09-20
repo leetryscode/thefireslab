@@ -24,9 +24,25 @@
    ground whatever the window is doing.
    ---------------------------------------------------------
 
+   ---------------------------------------------------------
+   TIME COMES FROM THE CLOCK, NOT THE WALL.
+
+   Every age and lifetime below is measured in SIM milliseconds, read from
+   SIM_CLOCK. Nothing here calls performance.now() for behaviour. That is what
+   makes a pause actually freeze the rounds in flight and a 3x run land them at
+   the same sim instant a 1x run does.
+
+   While the clock is playing it drives the draw through SIM_CLOCK.onFrame, so
+   this file does not run a second animation loop of its own. While it is
+   paused the picture is frozen, so a single redraw is all a resize or a
+   transport change needs. With no SIM_CLOCK present at all — a bare page, a
+   test — it falls back to the wall clock and self-drives, exactly as before.
+   ---------------------------------------------------------
+
    API:
      SIM_RENDER.attach(frameEl, imgEl)   once, at startup
-     SIM_RENDER.fireMission(e, n, elev)  drop a sheaf of bursts on a grid
+     SIM_RENDER.fireMission(e, n, elev, rounds)  drop one volley on a grid
+     SIM_RENDER.setEntitySource(fn)      fn() -> contacts to draw this frame
      SIM_RENDER.clear()                  remove everything in flight
      SIM_RENDER.toFrame(clientX, clientY)  screen point -> frame px (dev tool)
    ========================================================= */
@@ -39,7 +55,7 @@ const SIM_RENDER = (() => {
      yet the right orientation — a real sheaf lies along the gun-target line,
      and there are no firing unit positions in the sim yet. Revisit when there
      are. */
-  const ROUNDS = 6;
+  const ROUNDS = 6;              /* default when the caller names no gun count */
   const SPREAD_RANGE_M = 20;     /* half-axis, north-south for now */
   const SPREAD_DEFL_M  = 8;      /* half-axis, east-west for now */
   const BURST_R_M = 14;          /* visual radius of one burst on the ground */
@@ -50,6 +66,16 @@ const SIM_RENDER = (() => {
   let box = null;                /* {left, top, width, height, scale} in CSS px */
   let bursts = [];
   let raf = 0;
+  let unhook = [];               /* clock subscriptions, released by detach() */
+
+  /* ---------- the only clock this file reads ----------
+     SIM_CLOCK.renderMs() is interpolated sim time: step-aligned time plus the
+     un-stepped remainder, so a 10 Hz logical step does not make a burst flash
+     at 10 fps. It is for drawing and nothing else — no decision is ever made
+     from it. Falls back to the wall clock when there is no SIM_CLOCK, which is
+     what lets the overlay be tested and demoed on its own. */
+  const hasClock = () => typeof SIM_CLOCK !== 'undefined';
+  const simNow   = () => (hasClock() ? SIM_CLOCK.renderMs() : performance.now());
 
   /* ---------- where the picture actually is ----------
      The `object-fit: contain` computation, done by hand because we need the
@@ -164,6 +190,109 @@ const SIM_RENDER = (() => {
     return Math.max(0.05, p.range / f);
   }
 
+  /* ---------- contacts ----------
+     Lee's concept, 2026-09-19: a small to-scale dark rectangle with a tactical
+     symbol on a leader hovering above it.
+
+     THE RECTANGLE IS FOUR PROJECTED GROUND CORNERS, never an axis-aligned rect.
+     An oblique view compresses range about three times harder than deflection,
+     so a ground rectangle is a trapezoid on screen whose shape changes with
+     both position and heading. Projecting the corners costs nothing and gives
+     the foreshortening and the heading for free.
+
+     The footprint is honestly to scale, which means it is tiny at range — a
+     35 m craft is about 2 px deep at 4.6 km. That is the point: you should not
+     be able to identify a vehicle at that range. The floating symbol is what
+     carries the identification, so it is sized in SCREEN pixels and stays
+     legible wherever the contact is. */
+  const SYMBOL_LEAD_PX = 40;     /* frame px from the footprint up to the symbol */
+  const SYMBOL_HALF_W  = 24;
+  const SYMBOL_HALF_H  = 15;
+  const HOSTILE        = '#b3261e';
+  const HULL           = '#22201c';
+
+  let entitySource = null;
+
+  function groundQuad(e, n, elev, headingDeg, lengthM, widthM) {
+    const b = headingDeg * Math.PI / 180;
+    const fE = Math.sin(b), fN = Math.cos(b);        /* forward, bearing from north */
+    const rE = Math.cos(b), rN = -Math.sin(b);       /* right of forward */
+    const hl = lengthM / 2, hw = widthM / 2;
+    const pts = [];
+    for (const [sl, sw] of [[1, -1], [1, 1], [-1, 1], [-1, -1]]) {
+      const p = SIM_PROJ.worldToScreen(e + fE * hl * sl + rE * hw * sw,
+                                       n + fN * hl * sl + rN * hw * sw, elev);
+      if (!p || !p.inFront || !isFinite(p.x) || !isFinite(p.y)) return null;
+      pts.push(p);
+    }
+    return pts;
+  }
+
+  function drawEntity(v) {
+    const centre = SIM_PROJ.worldToScreen(v.e, v.n, v.elev);
+    if (!centre || !centre.inFront || !centre.inFrame) return;
+
+    const quad = groundQuad(v.e, v.n, v.elev, v.heading, v.lengthM, v.widthM);
+    if (!quad) return;
+
+    /* Filled and stroked both: at long range the quad is sub-pixel and a fill
+       alone can disappear into nothing, which would read as "no contact"
+       rather than "a contact too far away to make out". */
+    cx2d.globalAlpha = v.state === 'destroyed' ? 0.35 : 1;
+    cx2d.fillStyle = HULL;
+    tracePolygon(quad);
+    cx2d.fill();
+    cx2d.strokeStyle = HULL;
+    cx2d.lineWidth = 1;
+    cx2d.stroke();
+
+    /* The leader rises from the top of the footprint, so the symbol never sits
+       on top of the thing it is labelling. */
+    const top = Math.min(...quad.map(p => p.y));
+    const sx = centre.x, sy = top - SYMBOL_LEAD_PX;
+
+    cx2d.strokeStyle = HOSTILE;
+    cx2d.lineWidth = 1.5;
+    cx2d.beginPath();
+    cx2d.moveTo(sx, top);
+    cx2d.lineTo(sx, sy + SYMBOL_HALF_H);
+    cx2d.stroke();
+
+    /* A diamond is the hostile ground frame. Deliberately not a full 2525
+       symbol set — the class abbreviation inside it carries the identification
+       until there is a reason for more. */
+    cx2d.beginPath();
+    cx2d.moveTo(sx, sy - SYMBOL_HALF_H);
+    cx2d.lineTo(sx + SYMBOL_HALF_W, sy);
+    cx2d.lineTo(sx, sy + SYMBOL_HALF_H);
+    cx2d.lineTo(sx - SYMBOL_HALF_W, sy);
+    cx2d.closePath();
+    cx2d.fillStyle = 'rgba(255, 246, 244, .92)';
+    cx2d.fill();
+    cx2d.stroke();
+
+    /* A high-payoff target gets a second ring. Nothing reads it yet — there is
+       no HPTL — but the flag is already on the entity and drawing it is one
+       line, so the day the list exists the feed already agrees with it. */
+    if (v.hpt) {
+      cx2d.lineWidth = 1;
+      cx2d.beginPath();
+      cx2d.moveTo(sx, sy - SYMBOL_HALF_H - 4);
+      cx2d.lineTo(sx + SYMBOL_HALF_W + 5, sy);
+      cx2d.lineTo(sx, sy + SYMBOL_HALF_H + 4);
+      cx2d.lineTo(sx - SYMBOL_HALF_W - 5, sy);
+      cx2d.closePath();
+      cx2d.stroke();
+    }
+
+    cx2d.fillStyle = HOSTILE;
+    cx2d.font = '600 15px "IBM Plex Mono", ui-monospace, monospace';
+    cx2d.textAlign = 'center';
+    cx2d.textBaseline = 'middle';
+    cx2d.fillText(v.label, sx, sy + 0.5);
+    cx2d.globalAlpha = 1;
+  }
+
   /* ---------- loop ---------- */
   function frame() {
     raf = 0;
@@ -174,7 +303,15 @@ const SIM_RENDER = (() => {
     cx2d.clearRect(0, 0, cv.width, cv.height);
     cx2d.restore();
 
-    const now = performance.now();
+    /* Contacts under the bursts: a round landing on a vehicle should obscure
+       it, not the other way round. */
+    if (entitySource) {
+      let vs = null;
+      try { vs = entitySource(); } catch (err) { console.error('[sim-render] entity source threw', err); }
+      if (vs) for (const v of vs) drawEntity(v);
+    }
+
+    const now = simNow();
     let live = 0;
     for (const b of bursts) {
       const age = now - b.t0;
@@ -184,7 +321,11 @@ const SIM_RENDER = (() => {
       live++;
     }
     bursts = bursts.filter(b => now - b.t0 <= BURST_MS);
-    if (live) raf = requestAnimationFrame(frame);
+
+    /* Self-drive only when nothing else is driving. With a clock playing, the
+       next frame arrives through SIM_CLOCK.onFrame; with a clock paused the
+       picture cannot change, so one draw is the whole job. */
+    if (live && !hasClock()) raf = requestAnimationFrame(frame);
   }
 
   function kick() { if (!raf) raf = requestAnimationFrame(frame); }
@@ -201,14 +342,34 @@ const SIM_RENDER = (() => {
     if (imgEl.complete) redraw(); else imgEl.addEventListener('load', redraw);
     window.addEventListener('resize', redraw);
     if (window.ResizeObserver) new ResizeObserver(redraw).observe(frameEl);
+
+    if (hasClock()) {
+      /* While playing, the clock is the only thing that asks for a frame. */
+      unhook.push(SIM_CLOCK.onFrame(() => { raf = 0; frame(); }));
+      /* Pause, play, rate and stop each need one repaint. Stop is a scenario
+         reset — sim time goes back to zero, so every burst in flight now has a
+         t0 in the future and would hang on screen. Drop them. */
+      unhook.push(SIM_CLOCK.onChange(s => { if (s.reason === 'stop') bursts = []; kick(); }));
+    }
     return true;
+  }
+
+  function detach() {
+    unhook.forEach(fn => fn());
+    unhook = [];
   }
 
   /** Drop a sheaf on a grid. elev is metres above sea level at the impact
       point — the sim has no terrain lookup, so the caller owns it. */
-  function fireMission(e, n, elev) {
-    const t = performance.now();
-    for (let i = 0; i < ROUNDS; i++) {
+  /** One volley. `rounds` is the gun count for this type of mission — six for
+      fire for effect, one for suppression — and the spread is still the file's
+      own placeholder pattern, NOT the unit's dispersion diameter. Lee has
+      dispersion on standby until rounds are spread over that area against a
+      burst radius and compared to an enemy position. */
+  function fireMission(e, n, elev, rounds) {
+    const shots = Math.max(1, Math.round(Number(rounds) || ROUNDS));
+    const t = simNow();
+    for (let i = 0; i < shots; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = Math.sqrt(Math.random());
       bursts.push({
@@ -219,10 +380,15 @@ const SIM_RENDER = (() => {
       });
     }
     kick();
-    return ROUNDS;
+    return shots;
   }
 
   function clear() { bursts = []; kick(); }
+
+  /** Hand the overlay a function returning the contacts to draw this frame.
+      A pull, not a push: the renderer asks at draw time, so it can never show a
+      position that disagrees with the one the tick just computed. */
+  function setEntitySource(fn) { entitySource = (typeof fn === 'function') ? fn : null; kick(); }
 
   /** Screen point -> frame pixels. Dev tool only: nothing the student does
       needs this, because a call for fire names a grid, it does not click one. */
@@ -234,7 +400,8 @@ const SIM_RENDER = (() => {
     return { x, y };
   }
 
-  return { attach, fireMission, clear, toFrame, containBox, get box() { return box; } };
+  return { attach, detach, fireMission, setEntitySource, clear, toFrame, containBox,
+           groundQuad, get box() { return box; } };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SIM_RENDER;

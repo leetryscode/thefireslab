@@ -9,10 +9,11 @@
 
   Build reference: CLC-RG-7F61363DDFE5
 
-  FIRE MISSION SIM — LAYOUT TEMPLATE ONLY.
-  Every region below is sized and labelled, and nothing in it works. The only
-  script is the dock expand/collapse, which exists so each panel's expanded
-  footprint over the feed can be judged.
+  FIRE MISSION SIM.
+  Live: the timeline clock, one scripted contact moving along a route, the call
+  for fire, and missions in flight with a time of flight and a method of
+  control. Not live: adjudication — rounds land, and a contact under them is
+  unharmed. The asset dials and the MAP / HPTL / TLS rail are still drawn-only.
 
   The timeline is a strip across the very top. Under it the feed fills the full
   window width, which is what sets how large the ground is drawn. The panels
@@ -35,21 +36,28 @@
 <body class="sim">
 
 <!-- TIMELINE. Play/pause/stop and a speed multiplier drive the scenario
-       clock; the track shows where the run has got to. Inert for now. -->
+       clock; the track shows where the run has got to. Live — js/sim-clock.js.
+
+       The multiplier changes how many 100 ms logical steps run per frame, never
+       the step size, so a run at 3x comes out identical to the same run at 1x.
+       That is the whole reason the clock exists in its own file. -->
 <div class="sim-timeline">
     <span class="region-label">Timeline</span>
     <div class="tl-transport">
-      <button class="tl-btn" type="button" disabled title="Play">▶</button>
-      <button class="tl-btn" type="button" disabled title="Pause">❚❚</button>
-      <button class="tl-btn" type="button" disabled title="Stop">■</button>
+      <button id="tl-play"  class="tl-btn" type="button" title="Play"  aria-pressed="false">▶</button>
+      <button id="tl-pause" class="tl-btn" type="button" title="Pause" aria-pressed="false">❚❚</button>
+      <button id="tl-stop"  class="tl-btn" type="button" title="Stop">■</button>
     </div>
     <div class="tl-speeds">
-      <button class="tl-btn" type="button" disabled aria-pressed="true">1×</button>
-      <button class="tl-btn" type="button" disabled aria-pressed="false">2×</button>
-      <button class="tl-btn" type="button" disabled aria-pressed="false">3×</button>
+      <button class="tl-btn" type="button" data-rate="1" aria-pressed="true">1×</button>
+      <button class="tl-btn" type="button" data-rate="2" aria-pressed="false">2×</button>
+      <button class="tl-btn" type="button" data-rate="3" aria-pressed="false">3×</button>
     </div>
-    <div class="tl-track"><div class="tl-fill"></div><div class="tl-head"></div></div>
-    <span class="tl-clock">T+00:14</span>
+    <div class="tl-track" role="progressbar" aria-label="Scenario progress"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div id="tl-fill" class="tl-fill"></div><div id="tl-head" class="tl-head"></div>
+    </div>
+    <span id="tl-clock" class="tl-clock">T+00:00</span>
     <a class="sim-exit" href="index.html">Exit</a>
   </div>
 
@@ -69,65 +77,50 @@
   </div>
 </div>
 
-<!-- DOCK. Sits under the feed and opens downward. Panels start open because
-     there is room for them now; collapsing one does not resize the feed. -->
+<!-- DOCK. Collapsed it is a row of title strips in the dead space under the
+     feed; opened, a panel grows UPWARD over the picture. The feed never moves.
+
+     THE CHAT IS FAR LEFT AND ON PURPOSE. Lee's read of the workflow: the
+     student will be opening it, typing a call for fire and closing it again,
+     fast and often, while watching a contact move. So it sits where the eye
+     starts, it opens to the full height under the timeline, and the fire
+     mission block is pinned to the BOTTOM of that panel — which means the Send
+     button is in the same place on screen whether the log holds three
+     transmissions or thirty. Muscle memory survives a busy net. -->
 <div class="sim-dock">
 
-    <!-- Same dial component as the Deliver timeline: green available, red
-         wedge is the recovery still to run. Hardcoded here. -->
-    <section class="dock-panel" id="dock-assets">
-      <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-assets">
-        <span class="region-label">Asset status board</span>
-        <span class="dock-hint">3 assets</span>
-        <span class="chev" aria-hidden="true"></span>
-      </button>
-      <div class="dock-body" id="body-assets">
-        <div class="asset-status">
-          <div class="as-item" style="--as-deg: 0deg">
-            <span class="as-pie"></span>
-            <span class="as-text"><span class="as-label">M101</span><span class="as-note">Ready</span></span>
-          </div>
-          <div class="as-item is-down" style="--as-deg: 252deg">
-            <span class="as-pie"></span>
-            <span class="as-text"><span class="as-label">M109</span><span class="as-note">Back in 14 min</span></span>
-          </div>
-          <div class="as-item" style="--as-deg: 0deg">
-            <span class="as-pie"></span>
-            <span class="as-text"><span class="as-label">OWA UAS</span><span class="as-note">8 of 10 remaining</span></span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- The student never types: every line of the call for fire is chosen
-         from a dropdown. The fields below are placeholders. -->
+    <!-- The student never types, except the grid and a time on target: every
+         other line of the call for fire is chosen from a dropdown. -->
     <section class="dock-panel is-wide" id="dock-chat">
       <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-chat">
         <span class="region-label">Fires coordination chat</span>
-        <span class="dock-hint">FSCC · last 00:02 ago</span>
+        <span id="chat-hint" class="dock-hint"></span>
         <span class="chev" aria-hidden="true"></span>
       </button>
       <div class="dock-body" id="body-chat">
-        <div class="chat-log">
-          <p class="chat-line"><span class="who">FSCC</span> Net check, all stations. Radio check, over.</p>
-          <p class="chat-line is-self"><span class="who">YOU</span> Roger, loud and clear.</p>
-          <p class="chat-line"><span class="who">FSCC</span> Be advised, M109 is off line for recovery.</p>
+        <div id="chat-log" class="chat-log">
+          <!-- The student IS Dragonfire FSCC. The firing units answer to them,
+               so every transmission on this net opens [recipient] this is
+               [speaker]. -->
+          <p class="chat-line is-self"><span class="who">Dragonfire FSCC</span> All stations, this is Dragonfire FSCC, radio check, over.</p>
+          <p class="chat-line"><span class="who">Steel Rain</span> Dragonfire FSCC, this is Steel Rain, roger, loud and clear, over.</p>
+          <p class="chat-line"><span class="who">Anvil</span> Dragonfire FSCC, this is Anvil, all firing units are up and laid, over.</p>
         </div>
         <!-- CALL FOR FIRE — five lines, spoken order, no field labels.
-             Only line 2 is live: the grid, and Send. Every select is a
-             placeholder and does nothing yet.
+             Every line is live. Nothing is graded: the target description and
+             the method of engagement are recorded on the mission and compared
+             against nothing, because there is no adjudication yet.
 
              The grid is easting first, then northing — right and up. Four
              digits each is 10 m precision inside 20Q KF. -->
         <div class="cff-builder">
+          <!-- Unit and type of mission. Both live, both built in script from
+               SIM_MISSIONS so the vocabulary has one home. The type decides
+               how many guns fire and how many volleys arrive. -->
           <div class="cff-line">
-            <select disabled><option>M101</option><option>M109</option><option>OWA UAS</option></select>
+            <select id="cff-unit" aria-label="Unit called"></select>
             <span class="cff-fixed">this is Dragonfire FSCC</span>
-            <select disabled>
-              <option>Fire for effect</option>
-              <option>Immediate suppression</option>
-              <option>Adjust fire</option>
-            </select>
+            <select id="cff-type" aria-label="Type of mission"></select>
           </div>
 
           <div class="cff-line">
@@ -140,33 +133,64 @@
             <select disabled><option>Preplanned target</option><option>AB1001</option><option>AB1002</option></select>
           </div>
 
+          <!-- TARGET DESCRIPTION — what the student says is there. Both lists
+               are built from SIM_SCENARIO, which is the same vocabulary the
+               engine uses for what the contact actually IS. One list, per Lee.
+
+               Recorded on the mission and graded by nothing: the gap between
+               what was claimed and what is really there is where adjudication
+               will live. -->
           <div class="cff-line">
-            <input class="cff-num" type="text" value="4" disabled aria-label="Number">
-            <select disabled>
-              <option>Armored vehicles</option>
-              <option>Self-propelled artillery</option>
-              <option>Infantry</option>
-              <option>Engineering vehicles</option>
-              <option>Armor</option>
-            </select>
-            <select disabled>
-              <option>In the open</option>
-              <option>In the water</option>
-              <option>In urban landscape</option>
-              <option>In the woods</option>
-            </select>
+            <input id="cff-count" class="cff-num" type="text" inputmode="numeric" maxlength="2"
+                   value="1" aria-label="Number of targets">
+            <select id="cff-target" aria-label="Target type"></select>
+            <select id="cff-env" aria-label="Environment"></select>
           </div>
 
           <div class="cff-line">
-            <select disabled><option>High explosive</option><option>Drones</option></select>
+            <select id="cff-shell" aria-label="Method of engagement"></select>
           </div>
 
+          <!-- METHOD OF CONTROL — live. The three differ only in WHEN the guns
+               fire; the time of flight is the same once they do. Choosing
+               between them against a moving contact is the teaching point.
+
+               The time-on-target field appears only for TOT, and takes a
+               scenario clock time, because that is how a TOT is given and
+               because it makes the student read the timeline. -->
           <div class="cff-line">
-            <select disabled><option>At my command</option><option>When ready</option><option>Time on target</option></select>
+            <select id="cff-control">
+              <option>At my command</option><option>When ready</option><option>Time on target</option>
+            </select>
+            <span id="cff-tot-wrap" class="cff-tot-wrap" hidden>
+              <span class="cff-fixed">T+</span>
+              <input id="cff-tot" class="cff-tot" type="text" inputmode="numeric" maxlength="5"
+                     placeholder="MM:SS" aria-label="Time on target, minutes and seconds" autocomplete="off">
+            </span>
             <button id="cff-send" class="cff-send" type="button">Send</button>
             <span id="cff-status" class="cff-status" role="status"></span>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ASSET STATUS BOARD — six separately taskable firing units, callsign
+         over type, built from SIM_MISSIONS.UNITS so the board and the call for
+         fire can never disagree about who exists.
+
+         Same dial component as the Deliver timeline. THE DIALS RUN ON NOTHING:
+         there is no availability model yet, no rate of fire, no recovery and no
+         ammunition count, so every unit reads ready. The earlier hardcoded
+         "back in 14 min" and "8 of 10 remaining" were invented and have gone.
+         When availability is built, drive it from the clock's event queue. -->
+    <section class="dock-panel" id="dock-assets">
+      <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-assets">
+        <span class="region-label">Asset status board</span>
+        <span id="asset-hint" class="dock-hint"></span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="dock-body" id="body-assets">
+        <div id="asset-status" class="asset-status"></div>
       </div>
     </section>
 
@@ -175,30 +199,62 @@
     <section class="dock-panel" id="dock-missions">
       <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-missions">
         <span class="region-label">Active missions</span>
-        <span class="dock-hint">2 active</span>
+        <span id="mission-hint" class="dock-hint">None</span>
         <span class="chev" aria-hidden="true"></span>
       </button>
       <div class="dock-body" id="body-missions">
-        <ul class="mission-list">
-          <li><span class="mn">AB1001</span> <span>Trucks in the open</span> <span class="st is-firing">Firing</span></li>
-          <li><span class="mn">AB1002</span> <span>Boats, beach exit</span> <span class="st is-queued">Queued</span></li>
-        </ul>
+        <ul id="mission-list" class="mission-list"></ul>
       </div>
     </section>
 
-    <!-- Each opens a full-screen modal over the sim. -->
+    <!-- MAP is live and opens the overlay below. HPTL is still inert. The
+         target list worksheet was removed on 2026-09-19 — Lee decided he does
+         not need it. -->
     <div class="dock-rail">
-      <button class="rail-btn" type="button" disabled title="Engagement area">MAP</button>
+      <button id="rail-map" class="rail-btn" type="button" title="Engagement area map (M)"
+              aria-expanded="false" aria-controls="sim-map">MAP</button>
       <button class="rail-btn" type="button" disabled title="High-payoff target list">HPTL</button>
-      <button class="rail-btn" type="button" disabled title="Target list worksheet">TLS</button>
     </div>
 
+</div>
+
+<!-- ENGAGEMENT AREA MAP.
+     An overhead of the same ground, gridded and labelled, for correlating what
+     is on the feed against a grid. Lee's read of the workflow is rapid
+     toggling — look at the map, find the feature, go back to the feed — so it
+     opens and closes on one key (M or Escape), the clock keeps running
+     underneath, and the timeline stays visible so the student never loses T+
+     while they are reading terrain.
+
+     It sits OVER the feed and BESIDE the chat, bounded by the timeline above
+     and the dock rail below, so the clock, the net and the MAP button all stay
+     visible while it is up. Not a modal: the student reads the map and sends a
+     mission without closing it. The MAP button is the only control — it opens
+     and closes, and lights while the map is up — so nothing is drawn on top of
+     the picture.
+
+     The image is not lazy-loaded and is never removed from the DOM: toggling
+     must be instant, and a map that re-decodes on every open would break the
+     very workflow it exists for.
+
+     The imagery credit is a licensing requirement, the same as on the feed.
+     Do not delete or shorten it. -->
+<div class="sim-map" id="sim-map" role="region" aria-label="Engagement area map" hidden>
+  <div class="map-inner">
+    <img class="map-img" src="img/sim-map.jpg"
+         alt="Gridded overhead map of the engagement area, 20Q KF, with obstacle belts and target areas of interest marked.">
+    <p class="sim-attribution map-credit">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
+  </div>
 </div>
 
 <p class="sim-too-narrow">The Fire Mission Sim needs a wider screen. Open it on a laptop or a tablet in landscape.</p>
 
 <script src="js/sim-camera.js"></script>
 <script src="js/sim-projection.js"></script>
+<script src="js/sim-clock.js"></script>
+<script src="js/sim-scenario.js"></script>
+<script src="js/sim-entities.js"></script>
+<script src="js/sim-missions.js"></script>
 <script src="js/sim-render.js"></script>
 <script>
 /* Opens and closes the docked panels. Panels are independent — any number can
@@ -211,15 +267,174 @@ document.querySelectorAll('.dock-head').forEach(head => {
   });
 });
 
-/* ---------- the first thing that draws ----------
-   A call for fire puts rounds on a grid. That is the whole of this build: it
-   proves the canvas is registered to the picture, which is the one thing the
-   50-marker calibration could not tell us. */
+/* ---------- how far up the dock may grow ----------
+   The chat opens to the full height under the timeline, and the timeline's
+   height depends on its own content, so CSS cannot know where that is. Measure
+   it and hand the number to the stylesheet. Re-measured on resize because the
+   timeline wraps on a narrow window. */
+(() => {
+  const tl   = document.querySelector('.sim-timeline');
+  const chat = document.getElementById('dock-chat');
+  const rail = document.querySelector('.dock-rail');
+  if (!tl) return;
+  const GAP = 8;
+  const css = document.documentElement.style;
+
+  /* Three measurements, all of rendered heights CSS cannot know:
+       --dock-top     where the timeline ends, so the dock and the map agree
+       --map-left     the chat's right edge, so the map sits beside it
+       --map-bottom   the rail's top, so the MAP button stays reachable */
+  const set = () => {
+    css.setProperty('--dock-top', (tl.getBoundingClientRect().bottom + GAP) + 'px');
+    if (chat) css.setProperty('--map-left', (chat.getBoundingClientRect().right + GAP) + 'px');
+    if (rail) {
+      const top = rail.getBoundingClientRect().top;
+      css.setProperty('--map-bottom', Math.max(GAP, window.innerHeight - top + GAP) + 'px');
+    }
+  };
+  set();
+  window.addEventListener('resize', set);
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(set);
+    [tl, chat, rail].forEach(el => el && ro.observe(el));
+  }
+  /* A panel opening or closing moves the rail and can move the chat's edge, so
+     re-measure after any dock toggle. */
+  document.querySelectorAll('.dock-head').forEach(h => h.addEventListener('click', set));
+  window.SIM_LAYOUT = { measure: set };
+})();
+
+/* ---------- the engagement area map ----------
+   A toggle and nothing else. It deliberately does NOT pause the clock: the
+   student is correlating terrain while a contact keeps moving, and a map that
+   froze the problem would teach the wrong habit. */
+(() => {
+  const map = document.getElementById('sim-map');
+  const btn = document.getElementById('rail-map');
+  if (!map || !btn) return;
+
+  /* NO CLOSE BUTTON ON THE MAP. The MAP button opens and closes it, so a second
+     control would be a second thing to aim at for the same job — and it was
+     sitting on the picture, over the north arrow. The button lights while the
+     map is up (aria-expanded), which is what tells the student the state.
+     Escape and M close it too; focus never leaves the rail. */
+  const isOpen = () => !map.hidden;
+  function setOpen(open) {
+    map.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    /* Re-measure on the way up: the chat may have been opened or closed since
+       the last measurement, and the map is positioned against its edge. */
+    if (open && window.SIM_LAYOUT) window.SIM_LAYOUT.measure();
+  }
+
+  btn.addEventListener('click', () => setOpen(!isOpen()));
+
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && isOpen()) { ev.preventDefault(); setOpen(false); return; }
+    if (ev.key !== 'm' && ev.key !== 'M') return;
+    const el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) return;
+    ev.preventDefault();
+    setOpen(!isOpen());
+  });
+})();
+
+/* ---------- the scenario ----------
+   Loads the contacts, hands the clock the scenario length, and subscribes the
+   entity tick. This block is the only thing that knows a scenario exists: the
+   clock does not, and the renderer only asks for a list of contacts to draw. */
+(() => {
+  if (typeof SIM_CLOCK === 'undefined' || typeof SIM_ENTITIES === 'undefined') return;
+
+  const scn = SIM_SCENARIO.SAMPLE;
+  SIM_ENTITIES.load(scn);
+  SIM_CLOCK.setDuration(scn.durationSec);
+
+  /* Once per logical step. Entities integrate distance from dt and nothing
+     else — no wall clock, no frame delta — which is what makes a run at 3x come
+     out identical to the same run at 1x. */
+  SIM_CLOCK.onTick((t, dt) => SIM_ENTITIES.tick(t, dt));
+
+  /* Stop is a scenario reset, so the contacts go back to their start points. */
+  SIM_CLOCK.onChange(s => { if (s.reason === 'stop') SIM_ENTITIES.reset(); });
+})();
+
+/* ---------- the timeline ----------
+   Transport, speed and the readouts. This block owns no time of its own: it
+   pushes buttons into SIM_CLOCK and paints whatever SIM_CLOCK reports back
+   through onChange and onTick. Nothing here measures anything. */
+(() => {
+  if (typeof SIM_CLOCK === 'undefined') return;
+
+  const play  = document.getElementById('tl-play');
+  const pause = document.getElementById('tl-pause');
+  const stop  = document.getElementById('tl-stop');
+  const clock = document.getElementById('tl-clock');
+  const fill  = document.getElementById('tl-fill');
+  const head  = document.getElementById('tl-head');
+  const track = document.querySelector('.tl-track');
+  const speeds = [...document.querySelectorAll('.tl-speeds .tl-btn[data-rate]')];
+
+  play  && play.addEventListener('click',  () => SIM_CLOCK.play());
+  pause && pause.addEventListener('click', () => SIM_CLOCK.pause());
+  stop  && stop.addEventListener('click',  () => SIM_CLOCK.stop());
+  speeds.forEach(b => b.addEventListener('click', () => SIM_CLOCK.setRate(b.dataset.rate)));
+
+  /* Space toggles play/pause, the way every transport does — but not while the
+     student is in the grid fields, where a space is a keystroke. */
+  document.addEventListener('keydown', ev => {
+    if (ev.code !== 'Space' || ev.repeat) return;
+    const el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' ||
+               el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON')) return;
+    ev.preventDefault();
+    SIM_CLOCK.toggle();
+  });
+
+  function paint() {
+    const pct = SIM_CLOCK.progress() * 100;
+    if (clock) clock.textContent = SIM_CLOCK.format(SIM_CLOCK.time());
+    if (fill)  fill.style.width = pct + '%';
+    if (head)  head.style.left  = pct + '%';
+    if (track) track.setAttribute('aria-valuenow', String(Math.round(pct)));
+    const on = SIM_CLOCK.isRunning();
+    if (play)  play.setAttribute('aria-pressed', String(on));
+    if (pause) pause.setAttribute('aria-pressed', String(!on));
+    const r = SIM_CLOCK.rate();
+    speeds.forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.rate) === r)));
+  }
+
+  /* Once per logical step, not once per animation frame: the readout is
+     seconds, and repainting it at 60 Hz would be sixty times the work for the
+     same six characters. */
+  SIM_CLOCK.onTick(paint);
+  SIM_CLOCK.onChange(paint);
+  paint();
+})();
+
+/* ---------- the call for fire ----------
+   Send hands a grid and a method of control to SIM_MISSIONS, which schedules
+   the firing and the splash on the clock's event queue. The rounds land when
+   the time of flight says they land, NOT when the button was pressed — which
+   is the entire reason this layer exists, because a call for fire names a
+   grid and the contact keeps moving. */
+/* The overlay is wired on its own, and deliberately not together with the call
+   for fire below: if the canvas ever fails to attach, the student should still
+   be able to send a mission and read the radio traffic. A dead picture is bad;
+   a dead picture that also swallows the controls is worse. */
 (() => {
   const frame = document.querySelector('.sim-frame');
   const img   = document.querySelector('.sim-feed');
   if (!frame || !img || typeof SIM_RENDER === 'undefined') return;
   SIM_RENDER.attach(frame, img);
+
+  /* A pull, not a push: the overlay asks for the contacts at draw time, so it
+     can never show a position that disagrees with the one the tick computed. */
+  if (typeof SIM_ENTITIES !== 'undefined') SIM_RENDER.setEntitySource(() => SIM_ENTITIES.list());
+})();
+
+(() => {
+  if (typeof SIM_MISSIONS === 'undefined' || typeof SIM_CLOCK === 'undefined') return;
 
   /* No terrain lookup exists, so an impact elevation has to be assumed. Zero
      is right for the whole 0-8 m coastal plain, which is where the engagement
@@ -227,10 +442,170 @@ document.querySelectorAll('.dock-head').forEach(head => {
      metre of height — deliberately so, until waypoints carry their own. */
   const ASSUMED_ELEV_M = 0;
 
-  const east   = document.getElementById('cff-east');
-  const north  = document.getElementById('cff-north');
-  const send   = document.getElementById('cff-send');
-  const status = document.getElementById('cff-status');
+  /* ---------- the vocabularies ----------
+     Every list the student picks from is built here from the module that owns
+     it, never repeated in the markup: the units from SIM_MISSIONS, the target
+     classes and environments from SIM_SCENARIO. Lee expects to keep refining
+     the class list, and one home for it is what makes that a one-line change
+     rather than a hunt. */
+  const fill = (el, items, value, text) => {
+    if (!el) return;
+    el.textContent = '';
+    for (const it of items) {
+      const o = document.createElement('option');
+      o.value = value(it); o.textContent = text(it);
+      el.appendChild(o);
+    }
+  };
+
+  const unitSel = document.getElementById('cff-unit');
+  const typeSel = document.getElementById('cff-type');
+  fill(unitSel, SIM_MISSIONS.UNITS, u => u.callsign, u => u.callsign);
+  fill(typeSel, Object.keys(SIM_MISSIONS.MISSION_TYPES), k => k, k => k);
+  fill(document.getElementById('cff-shell'), SIM_MISSIONS.MUNITIONS, m => m.value, m => m.value);
+  if (typeSel) typeSel.value = SIM_MISSIONS.DEFAULT_TYPE;
+
+  if (typeof SIM_SCENARIO !== 'undefined') {
+    fill(document.getElementById('cff-target'), Object.keys(SIM_SCENARIO.CLASSES),
+         k => k, k => SIM_SCENARIO.CLASS_LABELS[k] || k);
+    fill(document.getElementById('cff-env'), SIM_SCENARIO.ENVIRONMENTS, v => v, v => v);
+  }
+
+  /* ---------- the asset status board ----------
+     Callsign over type, one tile per taskable unit. Every dial reads ready
+     because nothing yet makes a unit unavailable — no rate of fire, no
+     recovery, no ammunition. Saying so honestly beats inventing a recovery
+     timer or a round count that nothing computes. */
+  (() => {
+    const board = document.getElementById('asset-status');
+    const hint  = document.getElementById('asset-hint');
+    if (!board) return;
+    board.textContent = '';
+    for (const u of SIM_MISSIONS.UNITS) {
+      const item = document.createElement('div');
+      item.className = 'as-item';
+      item.style.setProperty('--as-deg', '0deg');
+      item.innerHTML = '<span class="as-pie"></span><span class="as-text">' +
+                       '<span class="as-label"></span><span class="as-note"></span></span>';
+      item.querySelector('.as-label').textContent = u.callsign;
+      item.querySelector('.as-note').textContent = u.system;
+      board.appendChild(item);
+    }
+    if (hint) hint.textContent = `${SIM_MISSIONS.UNITS.length} units`;
+  })();
+
+  /* The panel hint said "last 00:02 ago", which nothing computed. The student's
+     own callsign is both true and more use — it is who they are on this net. */
+  const chatHint = document.getElementById('chat-hint');
+  if (chatHint) chatHint.textContent = SIM_MISSIONS.OBSERVER;
+
+  const east    = document.getElementById('cff-east');
+  const north   = document.getElementById('cff-north');
+  const send    = document.getElementById('cff-send');
+  const status  = document.getElementById('cff-status');
+  const ctrlSel = document.getElementById('cff-control');
+  const countIn = document.getElementById('cff-count');
+  const targSel = document.getElementById('cff-target');
+  const envSel  = document.getElementById('cff-env');
+  const shellSel = document.getElementById('cff-shell');
+  const totWrap = document.getElementById('cff-tot-wrap');
+  const totIn   = document.getElementById('cff-tot');
+  const chatLog = document.getElementById('chat-log');
+  const misList = document.getElementById('mission-list');
+  const misHint = document.getElementById('mission-hint');
+
+  /* The time-on-target field is only meaningful for one method of control, so
+     it only exists for it. */
+  const syncTot = () => { if (totWrap) totWrap.hidden = ctrlSel.value !== 'Time on target'; };
+  if (ctrlSel) { ctrlSel.addEventListener('change', syncTot); syncTot(); }
+
+  /* MM:SS, M:SS, or bare digits (MSS / MMSS) — a clock time read off the
+     timeline, not a countdown, because that is how a time on target is given
+     and it makes the student look at the clock. */
+  function parseTot(raw) {
+    const t = String(raw || '').trim();
+    if (!t) return null;
+    let m, sec;
+    const colon = t.match(/^(\d{1,2}):([0-5]\d)$/);
+    if (colon) { m = +colon[1]; sec = +colon[2]; }
+    else {
+      const d = t.replace(/\D/g, '');
+      if (d.length < 3 || d.length > 4) return null;
+      m = +d.slice(0, d.length - 2); sec = +d.slice(-2);
+      if (sec > 59) return null;
+    }
+    return m * 60 + sec;
+  }
+
+  /* ---------- the chat and the mission board ----------
+     Both are read-only views of SIM_MISSIONS. Neither decides anything. */
+  function chatLine(who, text) {
+    if (!chatLog) return;
+    const p = document.createElement('p');
+    /* Outgoing is whatever the student's own callsign is, not a literal "YOU":
+       the label on the card has to be the callsign that appears in the
+       transmission, or the two disagree. */
+    p.className = 'chat-line' + (who === SIM_MISSIONS.OBSERVER ? ' is-self' : '');
+    const w = document.createElement('span');
+    w.className = 'who'; w.textContent = who;
+    p.appendChild(w);
+    p.appendChild(document.createTextNode(' ' + text));
+    chatLog.appendChild(p);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  const STATE_TEXT = {
+    awaiting:  m => ['Ready — at your command', 'is-queued'],
+    queued:    m => [m.totSec !== null ? `TOT ${SIM_CLOCK.format(m.totSec)}`
+                                       : `Firing ${SIM_CLOCK.format(m.fireAt)}`, 'is-queued'],
+    inFlight:  m => [`In flight — splash ${SIM_CLOCK.format(m.splashAt)}`, 'is-firing'],
+    /* A mission is no longer one arrival, so the board says which volley is
+       down: a three-volley fire for effect runs for forty seconds and a
+       suppression mission for two minutes. */
+    impacting: m => [`Impacting — volley ${m.volleysLanded} of ${m.volleys}`, 'is-firing'],
+    complete:  m => ['Complete', '']
+  };
+
+  function paintMissions(ms) {
+    if (!misList) return;
+    misList.textContent = '';
+    for (const m of ms.slice().reverse()) {
+      const [text, cls] = (STATE_TEXT[m.state] || (() => [m.state, '']))(m);
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="mn"></span> <span></span> <span class="st"></span>`;
+      li.children[0].textContent = m.id;
+      li.children[1].textContent = `${m.unit} (${m.system}) · ${m.rounds} rds · ${m.grid}`;
+      li.children[2].textContent = text;
+      if (cls) li.children[2].classList.add(cls);
+
+      /* "FIRE." The guns are laid and waiting; the time of flight starts the
+         moment this is pressed, which is the whole point of at-my-command. */
+      if (m.state === 'awaiting') {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'mission-fire'; b.textContent = 'FIRE';
+        b.addEventListener('click', () => {
+          chatLine(SIM_MISSIONS.OBSERVER,
+            `${m.unit}, this is ${SIM_MISSIONS.OBSERVER}, ${m.id}, fire, over.`);
+          SIM_MISSIONS.fireNow(m.id);
+        });
+        li.appendChild(b);
+      }
+      misList.appendChild(li);
+    }
+    const active = ms.filter(m => m.state !== 'complete').length;
+    if (misHint) misHint.textContent = active ? `${active} active` : 'None';
+  }
+
+  SIM_MISSIONS.init({
+    clock: SIM_CLOCK,
+    onChat: chatLine,
+    onChange: paintMissions
+  });
+  /* Stop is a scenario reset, so the board and the target numbers go with it. */
+  SIM_CLOCK.onChange(st => { if (st.reason === 'stop') SIM_MISSIONS.reset(); });
+  /* The board carries a countdown, so it repaints on the step like the clock. */
+  SIM_CLOCK.onTick(() => paintMissions(SIM_MISSIONS.list()));
+  paintMissions([]);
 
   const digits = el => el.value.replace(/\D/g, '');
   [east, north].forEach(el => el.addEventListener('input', () => {
@@ -267,16 +642,52 @@ document.querySelectorAll('.dock-head').forEach(head => {
     if (!p || !p.inFront || !p.inFrame)
       return fail(`${SIM_PROJ.utmToMgrs(utm.e, utm.n, 5)} is outside the feed.`);
 
-    const rounds = SIM_RENDER.fireMission(utm.e, utm.n, ASSUMED_ELEV_M);
+    /* Everything above this line validates a grid. Everything below hands the
+       mission to the clock. Nothing fires here. */
+    const control = ctrlSel ? ctrlSel.value : 'When ready';
+    let totSec = null;
+    if (control === 'Time on target') {
+      totSec = parseTot(totIn && totIn.value);
+      if (totSec === null) return fail('Time on target needs a clock time, as MM:SS.');
+    }
+
+    const unit  = unitSel ? unitSel.value : SIM_MISSIONS.UNITS[0].callsign;
+    const type  = typeSel ? typeSel.value : SIM_MISSIONS.DEFAULT_TYPE;
+    const count = countIn ? (countIn.value.replace(/\D/g, '') || '1') : '1';
+    const targ  = targSel ? targSel.value : '';
+    const env   = envSel ? envSel.value : '';
+    const shell = shellSel ? shellSel.value : 'High explosive';
+    const targLabel = (typeof SIM_SCENARIO !== 'undefined' && SIM_SCENARIO.CLASS_LABELS[targ]) || targ;
+
+    /* The student's own transmission goes in the log first, so the message to
+       observer is a reply to something rather than an announcement out of
+       nowhere. Five lines in spoken order, run together as one transmission —
+       which is how it would actually be sent — and opening [recipient] this is
+       [speaker] like every other message on this net. */
+    chatLine(SIM_MISSIONS.OBSERVER,
+      `${unit}, this is ${SIM_MISSIONS.OBSERVER}, ${type.toLowerCase()}. ` +
+      `Grid ${grid}. ${count} ${targLabel} ${env}. ` +
+      `${SIM_MISSIONS.spokenShell(shell)}. ` +
+      `${control}${totSec !== null ? ' ' + SIM_CLOCK.format(totSec) : ''}, over.`);
+
+    const res = SIM_MISSIONS.send({
+      unit, type, control, totSec, grid, shell,
+      count, targetType: targ, environment: env,
+      e: utm.e, n: utm.n, elev: ASSUMED_ELEV_M
+    });
+
+    if (!res.ok) return fail(res.error);
     status.classList.remove('is-bad');
-    status.textContent = `${rounds} rounds — ${grid}`;
+    status.textContent = `${res.mission.id} — ${grid}`;
   });
 
   /* ---------- dev readout, hidden ----------
      sim.html?dev=1 only. Nothing the student does needs a pixel-to-grid
      conversion: a call for fire names a grid, it never clicks one. This exists
      to debug the registration and to fill the grid fields quickly. */
-  if (new URLSearchParams(location.search).get('dev') === '1') {
+  const frame = document.querySelector('.sim-frame');
+  if (frame && typeof SIM_RENDER !== 'undefined' &&
+      new URLSearchParams(location.search).get('dev') === '1') {
     const tag = document.createElement('div');
     tag.className = 'sim-devgrid';
     frame.appendChild(tag);

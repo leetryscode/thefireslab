@@ -21,7 +21,9 @@
    That is deliberate: a constant feed size keeps the screen-to-grid mapping
    constant. See js/sim-camera.js.
 
-   Nothing here is functional.
+   Layout and appearance only — behaviour lives in js/sim-*.js. The two places
+   this file is driven from script are the timeline track (inline width / left)
+   and the time-on-target field's hidden attribute.
    ========================================================= */
 
 body.sim {
@@ -135,6 +137,11 @@ body.sim {
   color: var(--ink);
   cursor: default;
 }
+.tl-btn:not([disabled]) { cursor: pointer; }
+.tl-btn:not([disabled]):hover { background: var(--border-soft); }
+/* The transport pair reads as a state, not just two buttons: whichever of
+   play / pause describes what the sim is doing now sits lit. */
+.tl-transport .tl-btn[aria-pressed="true"] { background: var(--gold-fill); color: var(--gold-on-fill); }
 .tl-speeds { display: flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
 .tl-speeds .tl-btn { border: 0; border-radius: 0; border-left: 1px solid var(--border); }
 .tl-speeds .tl-btn:first-child { border-left: 0; }
@@ -145,10 +152,140 @@ body.sim {
   background: var(--border-soft);
   position: relative;
 }
-.tl-fill { position: absolute; inset: 0 auto 0 0; width: 18%; border-radius: 5px; background: var(--gold-fill); }
-.tl-head { position: absolute; top: 50%; left: 18%; width: 3px; height: 20px; transform: translate(-50%, -50%); background: var(--accent-dark); }
+/* Both are driven from js/sim-clock.js through inline width / left. They start
+   at zero so the track does not flash a false position before the first paint. */
+.tl-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 5px; background: var(--gold-fill); }
+.tl-head { position: absolute; top: 50%; left: 0%; width: 3px; height: 20px; transform: translate(-50%, -50%); background: var(--accent-dark); }
 .tl-clock { font-family: var(--font-mono); font-size: .9rem; flex: none; }
 .sim-exit { flex: none; font-size: .8rem; color: var(--accent); }
+
+/* ---------- call for fire: the time-on-target field ----------
+   Only shown for TOT. A clock time read off the timeline, not a countdown. */
+.cff-tot-wrap { display: inline-flex; align-items: center; gap: .3rem; }
+.cff-tot {
+  font-family: var(--font-mono);
+  width: 5.2em;
+  text-align: center;
+}
+
+/* The command for an at-my-command mission. Deliberately the loudest control
+   in the dock: it is the one thing that is time-critical to press. */
+.mission-fire {
+  font-family: var(--font-head);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  margin-left: .5rem;
+  padding: .2rem .55rem;
+  border: 1px solid var(--accent-dark);
+  border-radius: var(--radius-sm);
+  background: var(--accent-dark);
+  color: #fff;
+  cursor: pointer;
+}
+.mission-fire:hover { filter: brightness(1.12); }
+
+.mission-list:empty::after {
+  content: 'No missions sent.';
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+/* ---------- the engagement area map ----------
+   It sits OVER the feed and BESIDE the chat, not across the whole window: the
+   student reads the map and the net together, then closes it. So its box is
+   bounded on three sides by things that must stay visible —
+
+     top     the timeline, so T+ is never lost mid-correlation
+     left    the chat panel, so the two sit side by side
+     bottom  the dock rail, so the MAP button that opened it stays reachable
+
+   --map-left and --map-bottom are measured in sim.html, because both depend on
+   rendered heights CSS cannot know. The fallbacks degrade to a sane full-width
+   box if that script never runs.
+
+   THE BOX IS THE IMAGE'S OWN SHAPE. An earlier version nested percentage
+   max-heights inside an auto-height wrapper, which does not constrain, so the
+   picture overflowed and the bottom of the map was cut off. Giving the wrapper
+   the image's aspect-ratio and a definite height removes the broken link
+   entirely: the box can only ever be map-shaped. */
+.sim-map {
+  position: fixed;
+  left: var(--map-left, 8px);
+  right: 8px;
+  top: var(--dock-top, 45vh);
+  bottom: var(--map-bottom, 8px);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  /* No backdrop: the chat beside it stays fully usable, and dimming it would
+     defeat the point. The empty margin around the map passes clicks through to
+     the feed underneath. */
+  pointer-events: none;
+}
+.sim-map[hidden] { display: none; }
+
+.map-inner {
+  position: relative;
+  /* Kept in step with img/sim-map.jpg — the suite parses the JPEG header and
+     fails if the two disagree. */
+  aspect-ratio: var(--map-aspect, 1800 / 1710);
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  pointer-events: auto;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 10px 34px rgba(8, 14, 6, .55);
+}
+.map-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+/* The MAP rail button lights while the map is up. With no close button on the
+   picture, this is the only thing telling the student the map is open — and it
+   is the control they will press to close it. */
+.rail-btn[aria-expanded="true"] {
+  background: var(--gold-fill);
+  color: var(--gold-on-fill);
+  border-color: var(--gold-fill);
+}
+
+/* THE CREDIT GOES TOP-RIGHT, over open water.
+
+   It is a licensing requirement and has to be legible whenever the map is on
+   screen, which leaves only one place it can go: the grid labels run down the
+   LEFT edge and along the BOTTOM, and the map is read by those labels. Sitting
+   at the bottom — where it started — it covered the eastings and the scale bar,
+   which is precisely the information the map exists to give.
+
+   Top-right is the only large area carrying neither labels nor obstacle
+   belts. It starts below the north arrow (which ends 11.4% down) and is
+   right-aligned so it grows leftwards over the sea rather than down over
+   TAI 1. */
+.map-credit {
+  /* BOTTOM-RIGHT, over open water. The credit has to be legible whenever the
+     map is on screen, and the map is read by its grid labels: northings down
+     the left edge, eastings along the bottom. Bottom-LEFT, where it started,
+     covered the eastings and the scale bar — the very information the map
+     exists to give.
+
+     5% up from the bottom clears the easting chips (they occupy the bottom
+     1.7%-3.8%); 34% wide over the right-hand ocean keeps it off the TAI 2
+     corner above and the scale bar away to the left. Checked by compositing the
+     text onto the map at these figures, not estimated. */
+  top: auto;
+  bottom: 5%;
+  left: auto;
+  right: 1.5%;
+  max-width: 34%;
+  text-align: right;
+  font-size: .6rem;
+}
 
 /* ---------- dock ----------
    Pinned to the bottom of the window. Collapsed it is a row of title strips in
@@ -157,21 +294,51 @@ body.sim {
 .sim-dock {
   position: fixed;
   left: 8px; right: 8px; bottom: 8px;
-  z-index: 3;
+  /* The dock reaches all the way up to just under the timeline, so an open
+     panel has that whole height to grow into. --dock-top is measured from the
+     timeline in sim.html, because the timeline's height depends on its own
+     content and CSS cannot know it. The fallback keeps the layout sane if that
+     script never runs. */
+  top: var(--dock-top, 45vh);
+  /* ABOVE the map. The asset board and the mission list are glanced at, not
+     worked in, so they open OVER the map for as long as they are needed and
+     then get out of the way — the map never shrinks to make room for them. */
+  z-index: 5;
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  /* The dock now covers the picture, so it must not swallow clicks over the
+     empty space above the panels — the dev readout listens on the frame. */
+  pointer-events: none;
 }
+.dock-panel,
+.dock-rail { pointer-events: auto; }
 
 .dock-panel {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.dock-panel.is-wide { flex-grow: 1.6; }
-.dock-panel.is-wide.is-open { flex-grow: 2.4; }
+
+/* ---------- how the bottom row divides ----------
+   The chat is HALF THE SCREEN and the map fills the other half flush to the
+   edge. Those two are the work.
+
+   The asset board and the mission list are references the student glances at,
+   so they are title strips sized to their own labels, pushed right with the
+   rail. They are not competing for width with the two things actually being
+   used, and opening one costs the map nothing because the dock sits ABOVE the
+   map in z-order — it opens over it and then gets out of the way.
+
+   The chat's width is fixed open or closed because the map is positioned
+   against its right edge: a chat that resized on opening would drag the map
+   sideways every time the student toggled either one. */
+#dock-chat { flex: 0 0 calc(50% - 4px); }
+#dock-assets { margin-left: auto; }
+#dock-assets.is-open   { flex-basis: min(540px, 34vw); }
+#dock-missions.is-open { flex-basis: min(460px, 30vw); }
 .dock-panel { box-shadow: 0 6px 18px rgba(18, 27, 15, .3); }
 
 .dock-head {
@@ -206,28 +373,113 @@ body.sim {
 }
 .dock-panel.is-open .chev { border-bottom: 0; border-top: 6px solid var(--muted); }
 
-.dock-body { display: none; padding: 0 .6rem .5rem; max-height: 52vh; overflow: auto; }
-.dock-panel.is-open .dock-body { display: block; }
+.dock-body { display: none; padding: 0 .6rem .5rem; min-height: 0; }
+.dock-panel.is-open .dock-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* THE CHAT TAKES THE FULL HEIGHT WHEN OPEN, and nothing else does — the other
+   panels are short and would just leave a tall empty box. The point is a fixed
+   layout under speed: the log scrolls in the space above and the fire mission
+   block stays pinned at the bottom, so Send is in the same place on screen
+   whether the log holds three transmissions or thirty. */
+#dock-chat.is-open { height: 100%; }
+#dock-chat.is-open .dock-body { flex: 1 1 auto; overflow: hidden; }
+#dock-chat.is-open .chat-log { flex: 1 1 auto; min-height: 0; overflow: auto; }
+#dock-chat.is-open .cff-builder { flex: none; }
+
+/* Everything else is capped so a long list cannot push a panel off the top. */
+#dock-assets.is-open .dock-body,
+#dock-missions.is-open .dock-body { max-height: 100%; overflow: auto; }
 
 /* asset status board — same dial component as the Deliver timeline */
 .dock-body .asset-status { margin: .1rem 0 0; gap: .55rem; }
 
-/* fires coordination chat */
-.chat-log { font-size: .82rem; }
-.chat-line { margin: 0 0 .3rem; }
-.chat-line .who { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
-.chat-line.is-self .who { color: var(--accent); }
+/* ---------- fires coordination chat ----------
+   Every transmission is its own container. Under load the student is reading
+   this at a glance while a contact moves and a clock runs, so the traffic has
+   to separate into discrete messages rather than running together as a
+   paragraph — and it has to be obvious at a glance which ones are theirs.
 
-/* Call for fire — five lines in spoken order, no field labels: the line reads
-   as the transmission it is. Only the grid and Send do anything; every select
-   is a placeholder. */
-.cff-builder {
-  border-top: 1px solid var(--border-soft);
-  margin-top: .35rem;
-  padding-top: .4rem;
+   Two shades, one job each:
+     incoming (FSCC)   the panel's own surface, a muted left rule
+     outgoing (YOU)    a tinted card with an accent rule
+   Neither is loud: this sits under a live picture and must not compete with
+   it. */
+.chat-log {
+  font-size: .82rem;
   display: flex;
   flex-direction: column;
   gap: .3rem;
+}
+.chat-line {
+  margin: 0;
+  padding: .3rem .5rem .32rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 88%, var(--ink) 12%);
+  line-height: 1.35;
+}
+.chat-line.is-self {
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--panel) 82%, var(--accent) 18%);
+}
+/* The callsign leads the card rather than sitting inline, so the eye can run
+   down the left edge and pick out who said what without reading. */
+.chat-line .who {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .1rem;
+}
+.chat-line.is-self .who { color: var(--accent); }
+
+/* Older browsers without color-mix still need the two shades to differ, so the
+   distinction falls back to the border rule and a flat tint. */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .chat-line { background: var(--panel); }
+  .chat-line.is-self { background: var(--border-soft); }
+}
+
+/* ---------- the fire mission ----------
+   Everything above is a transcript the student reads. THIS is the only part
+   they act on, so it is lifted off the log as its own block rather than
+   continuing the flow of it: a heavier surface, a full border, and a label.
+   Under time pressure the student should never have to work out where the
+   controls start. */
+.cff-builder {
+  margin-top: .5rem;
+  padding: .45rem .55rem .5rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  /* THE SAME GREEN AS THE STUDENT'S OWN TRANSMISSIONS. Their outgoing bubbles
+     and the block they compose in are one surface: everything on this side of
+     the net is theirs. Kept identical to .chat-line.is-self on purpose — if one
+     changes, change both. */
+  background: color-mix(in srgb, var(--panel) 82%, var(--accent) 18%);
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .cff-builder { background: var(--border-soft); }
+}
+.cff-builder::before {
+  content: 'Fire mission';
+  color: var(--accent);
+  font-family: var(--font-head);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
 }
 .cff-line {
   display: flex;
