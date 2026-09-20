@@ -207,13 +207,13 @@
       </div>
     </section>
 
-    <!-- MAP is live and opens the overlay below. HPTL is still inert. The
-         target list worksheet was removed on 2026-09-19 — Lee decided he does
-         not need it. -->
+    <!-- MAP is live and opens the overlay below. The target list worksheet and
+         the HPTL button were both removed on 2026-09-19: TLS because Lee does
+         not need it, HPTL because it was inert and was costing width in a row
+         that must not move. It comes back when there is a list behind it. -->
     <div class="dock-rail">
       <button id="rail-map" class="rail-btn" type="button" title="Engagement area map (M)"
               aria-expanded="false" aria-controls="sim-map">MAP</button>
-      <button class="rail-btn" type="button" disabled title="High-payoff target list">HPTL</button>
     </div>
 
 </div>
@@ -472,27 +472,46 @@ document.querySelectorAll('.dock-head').forEach(head => {
   }
 
   /* ---------- the asset status board ----------
-     Callsign over type, one tile per taskable unit. Every dial reads ready
-     because nothing yet makes a unit unavailable — no rate of fire, no
-     recovery, no ammunition. Saying so honestly beats inventing a recovery
-     timer or a round count that nothing computes. */
-  (() => {
-    const board = document.getElementById('asset-status');
-    const hint  = document.getElementById('asset-hint');
+     Callsign over type, one tile per taskable unit, and now actually driven:
+     a battery that has taken a mission is off the air and the dial runs its
+     recovery down. This is the board the student reads before choosing who to
+     task, so it has to be the same truth that Send enforces — both come from
+     SIM_MISSIONS.unitStatus(), never from a copy kept here. */
+  const board     = document.getElementById('asset-status');
+  const assetHint = document.getElementById('asset-hint');
+
+  function paintAssets() {
     if (!board) return;
-    board.textContent = '';
-    for (const u of SIM_MISSIONS.UNITS) {
-      const item = document.createElement('div');
-      item.className = 'as-item';
-      item.style.setProperty('--as-deg', '0deg');
-      item.innerHTML = '<span class="as-pie"></span><span class="as-text">' +
-                       '<span class="as-label"></span><span class="as-note"></span></span>';
-      item.querySelector('.as-label').textContent = u.callsign;
-      item.querySelector('.as-note').textContent = u.system;
-      board.appendChild(item);
+    const rows = SIM_MISSIONS.unitStatus();
+    if (board.children.length !== rows.length) {
+      board.textContent = '';
+      for (const r of rows) {
+        const item = document.createElement('div');
+        item.className = 'as-item';
+        item.innerHTML = '<span class="as-pie"></span><span class="as-text">' +
+                         '<span class="as-label"></span><span class="as-note"></span></span>';
+        item.querySelector('.as-label').textContent = r.callsign;
+        board.appendChild(item);
+      }
     }
-    if (hint) hint.textContent = `${SIM_MISSIONS.UNITS.length} units`;
-  })();
+    let ready = 0;
+    rows.forEach((r, i) => {
+      const item = board.children[i];
+      item.classList.toggle('is-down', !r.ready);
+      /* The red wedge is the recovery still to run, so it shrinks as the
+         battery comes back. A held mission with no end time yet gets a full
+         dial: something is outstanding, duration unknown. */
+      const frac = r.remainingSec != null ? Math.min(1, r.remainingSec / r.recoverySec)
+                                          : (r.ready ? 0 : 1);
+      item.style.setProperty('--as-deg', (frac * 360).toFixed(1) + 'deg');
+      item.querySelector('.as-note').textContent =
+        r.ready               ? r.system
+        : r.remainingSec != null ? `${r.system} · back ${SIM_CLOCK.format(r.backAt)}`
+        : `${r.system} · holding ${r.holding}`;
+      if (r.ready) ready++;
+    });
+    if (assetHint) assetHint.textContent = `${ready} of ${rows.length} ready`;
+  }
 
   /* The panel hint said "last 00:02 ago", which nothing computed. The student's
      own callsign is both true and more use — it is who they are on this net. */
@@ -550,11 +569,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
     w.className = 'who'; w.textContent = who;
     p.appendChild(w);
     p.appendChild(document.createTextNode(' ' + text));
-    chatLog.appendChild(p);
+    /* Above the typing bubbles and the pending command: a transmission that has
+       arrived is neither still being composed nor still waiting to be sent. */
+    chatLog.insertBefore(p, chatLog.querySelector('.chat-typing, .chat-prompt'));
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
   const STATE_TEXT = {
+    sending:   m => ['Sent — awaiting acknowledgement', 'is-queued'],
     awaiting:  m => ['Ready — at your command', 'is-queued'],
     queued:    m => [m.totSec !== null ? `TOT ${SIM_CLOCK.format(m.totSec)}`
                                        : `Firing ${SIM_CLOCK.format(m.fireAt)}`, 'is-queued'],
@@ -596,16 +618,87 @@ document.querySelectorAll('.dock-head').forEach(head => {
     if (misHint) misHint.textContent = active ? `${active} active` : 'None';
   }
 
+  /* ---------- the command waiting to be given ----------
+     An at-my-command mission is laid and waiting, and the student has to be
+     able to SEE that without opening the mission board. So the next
+     transmission is written out for them in the log, ready to send, with FIRE
+     as the button in the middle of it.
+
+     It is a draft, not traffic: dashed, and it never enters the transcript
+     until the button is pressed. Pressing it says the line for real and gives
+     the command. */
+  function paintPrompts(ms) {
+    if (!chatLog) return;
+    chatLog.querySelectorAll('.chat-prompt').forEach(el => el.remove());
+    for (const m of ms) {
+      if (m.state !== 'awaiting') continue;
+      const p = document.createElement('p');
+      p.className = 'chat-line is-self chat-prompt';
+      const w = document.createElement('span');
+      w.className = 'who'; w.textContent = SIM_MISSIONS.OBSERVER;
+      p.appendChild(w);
+      p.appendChild(document.createTextNode(
+        `${m.unit}, this is ${SIM_MISSIONS.OBSERVER}, ${m.id}, `));
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'cmd-fire'; b.textContent = 'FIRE';
+      b.setAttribute('aria-label', `Fire ${m.id}, ${m.unit}`);
+      b.addEventListener('click', () => {
+        chatLine(SIM_MISSIONS.OBSERVER,
+          `${m.unit}, this is ${SIM_MISSIONS.OBSERVER}, ${m.id}, fire, over.`);
+        SIM_MISSIONS.fireNow(m.id);
+      });
+      p.appendChild(b);
+      p.appendChild(document.createTextNode(', over.'));
+      chatLog.appendChild(p);
+    }
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  /* ---------- "<callsign> is typing" ----------
+     One bubble per unit currently composing, pinned to the bottom of the log
+     under the last transmission. Rebuilt from the list SIM_MISSIONS hands over
+     rather than tracked here, so the indicator cannot drift out of step with
+     what is actually pending. */
+  function paintTyping(units) {
+    if (!chatLog) return;
+    chatLog.querySelectorAll('.chat-typing').forEach(el => el.remove());
+    for (const who of units) {
+      const p = document.createElement('p');
+      p.className = 'chat-line chat-typing';
+      p.setAttribute('aria-live', 'polite');
+      const w = document.createElement('span');
+      w.className = 'who'; w.textContent = who;
+      p.appendChild(w);
+      p.appendChild(document.createTextNode('is typing'));
+      const d = document.createElement('span');
+      d.className = 'typing-dots';
+      d.innerHTML = '<i></i><i></i><i></i>';
+      p.appendChild(d);
+      chatLog.insertBefore(p, chatLog.querySelector('.chat-prompt'));
+    }
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
   SIM_MISSIONS.init({
     clock: SIM_CLOCK,
     onChat: chatLine,
-    onChange: paintMissions
+    onChange: ms => { paintMissions(ms); paintAssets(); paintPrompts(ms); },
+    onTyping: paintTyping
   });
+
+  /* The dots are decoration and animate on wall time, but a paused sim is not
+     waiting for anything — the reply is on the clock's queue and frozen with
+     it. So the animation freezes too, rather than implying progress that is not
+     happening. */
+  SIM_CLOCK.onChange(st => document.body.classList.toggle('is-paused', !st.running));
   /* Stop is a scenario reset, so the board and the target numbers go with it. */
   SIM_CLOCK.onChange(st => { if (st.reason === 'stop') SIM_MISSIONS.reset(); });
-  /* The board carries a countdown, so it repaints on the step like the clock. */
-  SIM_CLOCK.onTick(() => paintMissions(SIM_MISSIONS.list()));
+  /* Both boards carry a countdown, so they repaint on the step like the clock. */
+  SIM_CLOCK.onTick(() => { paintMissions(SIM_MISSIONS.list()); paintAssets(); });
+  SIM_CLOCK.onChange(paintAssets);
   paintMissions([]);
+  paintAssets();
+  paintPrompts([]);
 
   const digits = el => el.value.replace(/\D/g, '');
   [east, north].forEach(el => el.addEventListener('input', () => {
@@ -676,7 +769,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
       e: utm.e, n: utm.n, elev: ASSUMED_ELEV_M
     });
 
-    if (!res.ok) return fail(res.error);
+    /* A battery that is down is refused before anything is said on the net, so
+       the student's own transmission should not be left in the log implying it
+       went out. Pull it back off. */
+    if (!res.ok) {
+      if (res.status) { const last = chatLog && chatLog.querySelector('.chat-line.is-self:last-of-type');
+                        if (last) last.remove(); }
+      return fail(res.error);
+    }
     status.classList.remove('is-bad');
     status.textContent = `${res.mission.id} — ${grid}`;
   });

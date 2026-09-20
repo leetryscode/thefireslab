@@ -38,11 +38,12 @@
    ---------------------------------------------------------
 
    API:
-     SIM_MISSIONS.init({ clock, onChat, onChange })
+     SIM_MISSIONS.init({ clock, onChat, onChange, onTyping, seed })
      SIM_MISSIONS.send({ unit, type, control, totSec, count, targetType,
                          environment, shell, e, n, elev, grid }) -> {ok, mission|error}
      SIM_MISSIONS.fireNow(id)       give the command for an at-my-command mission
      SIM_MISSIONS.list() / get(id) / reset()
+     SIM_MISSIONS.unitStatus() / status(callsign)   who can be tasked, and when
    ========================================================= */
 
 const SIM_MISSIONS = (() => {
@@ -143,12 +144,47 @@ const SIM_MISSIONS = (() => {
   /* Five seconds before impact, which is when SPLASH is called. */
   const SPLASH_WARN_SEC = 5;
 
+  /* ---------- how long the firing unit takes to answer ----------
+     About five seconds, drawn 4-6 from the seeded generator so it is not
+     metronomic. Somebody at the other end is reading the call for fire back and
+     working it up; the student should feel that beat rather than have the
+     acknowledgement appear under their own transmission.
+
+     IN SIM SECONDS, on the clock's event queue, like everything else: pause the
+     sim and the reply waits too.
+
+     IT GATES THE MISSION, not just the chat line. Nothing is fired until the
+     unit has acknowledged, because SHOT arriving before the message to observer
+     would read as the guns answering a call nobody confirmed. */
+  const REPLY_BAND = [4, 6];
+
+  /* ---------- a battery goes off the air once it has fired ----------
+     Fifteen minutes from the moment the mission is SENT, Lee's figure. It
+     stands in for displacing after a mission: shoot and move.
+
+     A UNIT IS ALSO BUSY WHILE IT HOLDS AN UNFINISHED MISSION, which is the part
+     that actually closes the hole. The interface has no way to cancel a
+     mission, so a second one to the same guns would sit in a queue nobody can
+     see or unwind. Two rules, one consequence: a unit takes exactly one mission
+     at a time.
+
+     That is what settles the far-future time on target. A TOT thirty minutes
+     out leaves the unit holding an unfinished mission for thirty minutes, so it
+     is unavailable for all of them — it does not come back at fifteen and
+     accept a second call that would fire while the first is still pending. */
+  const RECOVERY_SEC = 15 * 60;
+
   const FIRST_TARGET_NUM = 1001;
 
-  let clock = null, onChat = null, onChange = null;
+  let clock = null, onChat = null, onChange = null, onTyping = null;
   let missions = [];
   let nextNum = FIRST_TARGET_NUM;
   let rng = null;
+  /* Counted, not a flag: two missions to the same unit in quick succession must
+     not have the first reply clear the indicator while the second is pending. */
+  let typing = new Map();
+  /* callsign -> the sim second it is back on the air */
+  let busyUntil = new Map();
 
   /* mulberry32 — small, fast, and good enough for picking a number out of a
      15-second band. Chosen over Math.random purely because it can be reseeded. */
@@ -170,10 +206,35 @@ const SIM_MISSIONS = (() => {
     return lo + Math.floor(rng() * (hi - lo + 1));
   }
 
+  function drawReply() {
+    const [lo, hi] = REPLY_BAND;
+    return lo + Math.floor(rng() * (hi - lo + 1));
+  }
+
+  function emitTyping() {
+    if (!onTyping) return;
+    try { onTyping([...typing.keys()]); } catch (e) { console.error(e); }
+  }
+
+  /* The unit is composing. `text` is said when it finishes; whatever else has
+     to happen on acknowledgement happens in `then`. */
+  function replyAfter(who, at, text, then) {
+    typing.set(who, (typing.get(who) || 0) + 1);
+    emitTyping();
+    clock.at(at, () => {
+      const n = (typing.get(who) || 1) - 1;
+      if (n > 0) typing.set(who, n); else typing.delete(who);
+      emitTyping();
+      say(who, text);
+      if (then) then();
+    });
+  }
+
   function init(opts) {
     clock = (opts && opts.clock) || (typeof SIM_CLOCK !== 'undefined' ? SIM_CLOCK : null);
     onChat = opts && opts.onChat;
     onChange = opts && opts.onChange;
+    onTyping = opts && opts.onTyping;
     reset(opts && opts.seed);
     return true;
   }
@@ -182,9 +243,43 @@ const SIM_MISSIONS = (() => {
     missions = [];
     nextNum = FIRST_TARGET_NUM;
     rng = seeded(typeof seed === 'number' ? seed : 0x5EED17);
+    /* Stop empties the clock's queue, so a reply in flight never lands. The
+       indicator has to go with it or a unit types forever. */
+    typing = new Map();
+    busyUntil = new Map();
+    emitTyping();
     changed();
     return true;
   }
+
+  /* ---------- who can be tasked ----------
+     Resolved on read from the mission list and the recovery clock, never stored
+     as a flag. A flag would have to be cleared in every path that finishes,
+     cancels or resets a mission, and the one that got missed would leave a
+     battery permanently off the air. */
+  const pending = callsign =>
+    missions.find(m => m.unit === callsign && m.state !== 'complete') || null;
+
+  function status(callsign) {
+    const now = clock ? clock.time() : 0;
+    const recover = busyUntil.get(callsign) || 0;
+    const held = pending(callsign);
+    /* A held mission that has not been fired yet has no end time — an
+       at-my-command mission waits as long as the student leaves it. */
+    const end = held ? (held.lastVolleyAt != null ? Math.max(recover, held.lastVolleyAt) : null)
+                     : (recover > now ? recover : null);
+    return {
+      callsign,
+      system: (UNIT[callsign] && UNIT[callsign].system) || '',
+      ready: !held && now >= recover,
+      holding: held ? held.id : null,
+      backAt: end,
+      remainingSec: end != null ? Math.max(0, end - now) : null,
+      recoverySec: RECOVERY_SEC
+    };
+  }
+
+  function unitStatus() { return UNITS.map(u => status(u.callsign)); }
 
   /* ---------- a volley lands ----------
      Rounds land HERE, not when Send was pressed. Everything the mission layer
@@ -230,13 +325,21 @@ const SIM_MISSIONS = (() => {
   }
 
   /* ---------- send ----------
-     The three methods of control differ only in WHEN the guns fire; the time of
-     flight is the same once they do. That is the whole lesson, and it is why
-     they share a path.
+     Two beats, not one.
 
-       when ready       fire now, land now + tof
+     FIRST the unit acknowledges. The student's transmission goes up, the unit
+     shows as composing for a few seconds, then the message to observer lands.
+     Nothing has been fired at this point.
+
+     THEN the mission runs, and the three methods of control differ only in WHEN
+     the guns fire — which is why they share one path into fireAt():
+
+       when ready       fire on acknowledgement, land + tof
        at my command    hold until fireNow(), then land command + tof
        time on target   fire at tot - tof, land at tot
+
+     Splitting it this way is what keeps SHOT from arriving before the
+     acknowledgement it answers.
    */
   function send(spec) {
     if (!clock) return { ok: false, error: 'No clock.' };
@@ -246,6 +349,21 @@ const SIM_MISSIONS = (() => {
     const type    = MISSION_TYPES[spec.type] ? spec.type : DEFAULT_TYPE;
     const pattern = MISSION_TYPES[type];
     const now     = clock.time();
+
+    /* ONE MISSION PER BATTERY, and the check comes first — before a target
+       number is drawn, before anything is said on the net.
+
+       Refused IMMEDIATELY, with no acknowledgement delay and no radio traffic:
+       these are the student's own guns and their own asset board already shows
+       the battery is down. Making them wait five seconds for a unit to tell
+       them something they can see on their own screen would be theatre. */
+    const st = status(unit);
+    if (!st.ready) {
+      const when = st.backAt != null
+        ? `back on the air ${SIM_CLOCK.format(st.backAt)}`
+        : `still holding ${st.holding}`;
+      return { ok: false, error: `${unit} is unavailable — ${when}.`, status: st };
+    }
 
     const m = {
       id: 'AB' + (nextNum++),
@@ -269,41 +387,50 @@ const SIM_MISSIONS = (() => {
       e: spec.e, n: spec.n, elev: spec.elev || 0,
       grid: spec.grid || '',
       tofSec: drawTof(unit),
+      replySec: drawReply(),
       totSec: null,
       sentAt: now,
-      state: 'ready'
+      state: 'sending'
     };
+    m.replyAt = now + m.replySec;
 
     if (control === 'Time on target') {
       const tot = Number(spec.totSec);
       if (!isFinite(tot)) { nextNum--; return { ok: false, error: 'Time on target needs a time.' }; }
       m.totSec = tot;
-      /* A TOT closer than the time of flight cannot be met. Refusing it is the
-         teaching point, not an inconvenience: it is why the observer has to know
-         roughly how long the rounds take before naming a time. */
-      if (tot < now + m.tofSec) {
-        say(m.unit, SAY.lateTot(m, now));
+      /* A TOT that cannot be met is refused — and the earliest that CAN be met
+         now includes the acknowledgement, because the guns are not laid until
+         the unit has answered. Refusing it is the teaching point, not an
+         inconvenience: it is why the observer has to know roughly how long the
+         rounds take before naming a time. */
+      if (tot < m.replyAt + m.tofSec) {
         nextNum--;
-        return { ok: false, error: `Unable: earliest TOT is ${SIM_CLOCK.format(now + m.tofSec)}.`, mission: m };
+        replyAfter(unit, m.replyAt, SAY.lateTot(m, m.replyAt));
+        return { ok: false, error: `Unable: earliest TOT is ${SIM_CLOCK.format(m.replyAt + m.tofSec)}.`,
+                 mission: m };
       }
-      missions.push(m);
-      say(m.unit, SAY.mtoTot(m));
-      fireAt(m, tot - m.tofSec);
+      accept(m);
+      replyAfter(unit, m.replyAt, SAY.mtoTot(m), () => fireAt(m, tot - m.tofSec));
       return { ok: true, mission: m };
     }
 
     if (control === 'At my command') {
-      missions.push(m);
-      m.state = 'awaiting';
-      say(m.unit, SAY.mtoHold(m));
-      changed();
+      accept(m);
+      replyAfter(unit, m.replyAt, SAY.mtoHold(m), () => { m.state = 'awaiting'; changed(); });
       return { ok: true, mission: m };
     }
 
-    missions.push(m);
-    say(m.unit, SAY.mto(m));
-    fireAt(m, now);
+    accept(m);
+    replyAfter(unit, m.replyAt, SAY.mto(m), () => fireAt(m, m.replyAt));
     return { ok: true, mission: m };
+  }
+
+  /* The battery goes off the air from the moment the mission is SENT, not from
+     when it fires — shoot and move starts when the call is taken. */
+  function accept(m) {
+    missions.push(m);
+    busyUntil.set(m.unit, m.sentAt + RECOVERY_SEC);
+    changed();
   }
 
   /* "FIRE." The guns were laid and waiting; the time of flight starts now. */
@@ -323,7 +450,8 @@ const SIM_MISSIONS = (() => {
       dispersionM: m.dispersionM,
       count: m.count, targetType: m.targetType, environment: m.environment,
       grid: m.grid, state: m.state, tofSec: m.tofSec, totSec: m.totSec,
-      sentAt: m.sentAt, fireAt: m.fireAt, splashAt: m.splashAt,
+      sentAt: m.sentAt, replySec: m.replySec, replyAt: m.replyAt,
+      fireAt: m.fireAt, splashAt: m.splashAt,
       lastVolleyAt: m.lastVolleyAt, splashedAt: m.splashedAt, completedAt: m.completedAt
     };
   }
@@ -334,7 +462,9 @@ const SIM_MISSIONS = (() => {
 
   return { init, reset, send, fireNow, list, get, active,
            SAY, OBSERVER, MUNITIONS, spokenShell, UNITS, UNIT,
-           MISSION_TYPES, DEFAULT_TYPE, SPLASH_WARN_SEC };
+           MISSION_TYPES, DEFAULT_TYPE, SPLASH_WARN_SEC, REPLY_BAND, RECOVERY_SEC,
+           status, unitStatus,
+           typing: () => [...typing.keys()] };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SIM_MISSIONS;

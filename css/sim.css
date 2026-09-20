@@ -334,11 +334,50 @@ body.sim {
 
    The chat's width is fixed open or closed because the map is positioned
    against its right edge: a chat that resized on opening would drag the map
-   sideways every time the student toggled either one. */
-#dock-chat { flex: 0 0 calc(50% - 4px); }
-#dock-assets { margin-left: auto; }
-#dock-assets.is-open   { flex-basis: min(540px, 34vw); }
-#dock-missions.is-open { flex-basis: min(460px, 30vw); }
+   sideways every time the student toggled either one.
+
+   The chat is the ONLY thing in the row allowed to give way, and only when the
+   window is too narrow to seat everything else — shrink, never grow, with a
+   floor. That is what guarantees the rail stays on the page. */
+#dock-chat { flex: 0 1 calc(50% - 4px); min-width: 240px; }
+
+/* WIDTHS THAT DO NOT CHANGE WHEN A PANEL IS TOGGLED. These used to widen on
+   opening, which shoved the rail along the row — far enough, with both of them
+   open, to push the MAP button off the edge of the window. Nothing in the
+   bottom row may move when a panel is toggled: the map is positioned against
+   measurements taken from this row, and a control that relocates when you use
+   it is worse than one that is simply small.
+
+   They are clamped to the viewport rather than pinned to one number, because
+   pinning them was the SECOND way the MAP button went off the edge: 344 + 328
+   was measured against a 1920 px viewport, and at 150% display scaling the
+   same monitor reports about 1272 CSS px. 20vw / 17vw sit at the old figures
+   on a wide window and stand down on a narrow one. A clamp depends on the
+   window, not on the panel's state, so the row still never moves on a toggle.
+
+   The maximum is set by the TITLE STRIP, which is the widest thing either
+   panel has to show. The open content is laid out to fit inside it rather than
+   the other way round. */
+#dock-assets   { margin-left: auto; flex: 0 0 clamp(230px, 20vw, 344px); }
+#dock-missions { flex: 0 0 clamp(200px, 17vw, 300px); }
+
+/* The dials stack — six units down the panel rather than across it, which is
+   what lets the panel stay narrow. */
+.dock-body .asset-status { flex-direction: column; align-items: stretch; }
+.dock-body .as-item { width: 100%; }
+.dock-body .as-note { white-space: normal; }
+
+/* A mission row wraps inside the fixed width instead of stretching it: target
+   number and status on the first line, the detail beneath. */
+.mission-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 .4rem;
+  align-items: baseline;
+}
+.mission-list li > :nth-child(2) { grid-column: 1 / -1; font-size: .78rem; opacity: .8; }
+.mission-list li > .st { grid-column: 2; grid-row: 1; justify-self: end; }
+.mission-list li > .mission-fire { grid-column: 1 / -1; justify-self: start; margin: .2rem 0 0; }
 .dock-panel { box-shadow: 0 6px 18px rgba(18, 27, 15, .3); }
 
 .dock-head {
@@ -440,6 +479,78 @@ body.sim {
   margin-bottom: .1rem;
 }
 .chat-line.is-self .who { color: var(--accent); }
+
+/* ---------- the command waiting to be given ----------
+   An at-my-command mission is laid and waiting, and the only thing between it
+   and the guns is the student pressing one button. That button has to be
+   findable without opening another panel, so the transmission is written out in
+   the log with FIRE in the middle of it.
+
+   Dashed like the typing bubble, because neither has been said yet — but in the
+   student's own green, because this one is theirs to send. */
+.chat-line.chat-prompt {
+  border-style: dashed;
+  border-left-color: var(--bad);
+}
+
+.cmd-fire {
+  font-family: var(--font-head);
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  margin: 0 .15rem;
+  padding: .1rem .6rem;
+  border: 1px solid var(--bad);
+  border-radius: var(--radius-sm);
+  background: var(--bad);
+  color: #fff;
+  cursor: pointer;
+  /* The one red thing on the screen. Everything else in the dock is green, gold
+     or grey, so this reads at a glance from across the feed. */
+  animation: cmd-pulse 1.8s infinite ease-in-out;
+}
+.cmd-fire:hover { filter: brightness(1.12); }
+.cmd-fire:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@keyframes cmd-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(163, 53, 42, .6); }
+  55%      { box-shadow: 0 0 0 5px rgba(163, 53, 42, 0); }
+}
+/* A paused sim is not waiting on the student for anything. */
+body.is-paused .cmd-fire { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .cmd-fire { animation: none; } }
+
+/* ---------- "<callsign> is typing" ----------
+   The beat between the student's transmission and the acknowledgement. Quieter
+   than a real transmission — it is not one yet — so it is unshaded and italic
+   with a dashed rule, and it can never be mistaken for traffic that arrived. */
+.chat-line.chat-typing {
+  background: none;
+  border-style: dashed;
+  border-left-color: var(--border);
+  color: var(--muted);
+  font-style: italic;
+}
+.typing-dots { display: inline-block; margin-left: .25rem; }
+.typing-dots i {
+  display: inline-block;
+  width: 3px; height: 3px;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: typing-dot 1.2s infinite ease-in-out;
+}
+.typing-dots i:nth-child(2) { animation-delay: .15s; }
+.typing-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: .25; }
+  30%           { opacity: 1; }
+}
+/* A paused sim is not waiting for anything: the reply sits on the clock's
+   queue, frozen. The dots stop with it rather than implying progress. */
+body.is-paused .typing-dots i { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .typing-dots i { animation: none; opacity: .6; }
+}
 
 /* Older browsers without color-mix still need the two shades to differ, so the
    distinction falls back to the border rule and a flat tint. */
