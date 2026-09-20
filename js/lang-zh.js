@@ -78,48 +78,36 @@ window.D3A_LANG_ZH = {
     zh: "即將推出"
   },
   "index.014": {
-    en: "Campaign",
-    zh: "戰役"
+    en: "Fire Mission Sim",
+    zh: ""
   },
   "index.015": {
-    en: "Complete deliberate targeting cycles",
-    zh: "完整的預劃目標選定循環"
+    en: "Run the engagement against a live clock",
+    zh: ""
   },
   "index.016": {
-    en: "Evolving scenario",
-    zh: "演變中的想定"
+    en: "A drone feed over the engagement area, on one scenario clock",
+    zh: ""
   },
   "index.017": {
-    en: "Changing HPTL by phase",
-    zh: "依階段變化的HPTL"
+    en: "Find, fix and track a moving enemy contact",
+    zh: ""
   },
   "index.018": {
-    en: "Advanced TSS",
-    zh: "進階TSS"
+    en: "Engagement area with TRPs and preplanned targets",
+    zh: ""
   },
   "index.019": {
-    en: "PIR and SIRs",
-    zh: "PIR 與 SIRs"
+    en: "Build and send the call for fire",
+    zh: ""
   },
   "index.020": {
-    en: "NAIs and TAIs",
-    zh: "NAI與TAI"
+    en: "Assign artillery or one-way attack UAS",
+    zh: ""
   },
   "index.021": {
-    en: "AGM limited by ordnance",
-    zh: "受彈藥限制的AGM"
-  },
-  "index.022": {
-    en: "Intelligence coordination synchronization matrix",
-    zh: "情報協調同步矩陣"
-  },
-  "index.023": {
-    en: "Fires coordination synchronization matrix",
-    zh: "火力協調同步矩陣"
-  },
-  "index.024": {
-    en: "Intelligence updates",
-    zh: "情報更新"
+    en: "Graded on accuracy, timeliness and asset choice",
+    zh: ""
   },
 
   /* ---------- battle.html ---------- */

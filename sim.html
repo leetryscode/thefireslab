@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<!DOCTYPE html><!--
+  The Fires Lab — a D3A targeting workbook
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+
+  Original work, including the Operation RIVER GATE scenario, its enemy order of
+  battle, the exercise engine, and every figure and worked answer in it.
+  Not for copying, redistribution or derivative use without written permission.
+
+  Build reference: CLC-RG-7F61363DDFE5
+
+  FIRE MISSION SIM — LAYOUT TEMPLATE ONLY.
+  Every region below is sized and labelled, and nothing in it works. The only
+  script is the dock expand/collapse, which exists so each panel's expanded
+  footprint over the feed can be judged.
+
+  The timeline is a strip across the very top. Under it the feed fills the full
+  window width, which is what sets how large the ground is drawn. The panels
+  dock at the bottom of the window, collapsed to title strips, and expand
+  upward over the feed when opened.
+
+  Deliberately decoupled from the D3A course engine: no D3A.registerPage, not
+  in PHASES or SUBPAGES in js/app.js, not in PAGES in tools/tag-i18n.js, and
+  no data-i18n keys. Sim styling lives in css/sim.css, not css/style.css.
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fires Lab — Fire Mission Sim</title>
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<meta name="generator" content="The Fires Lab CLC-RG-7F61363DDFE5">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/sim.css">
+</head>
+<body class="sim">
+
+<!-- TIMELINE. Play/pause/stop and a speed multiplier drive the scenario
+       clock; the track shows where the run has got to. Inert for now. -->
+<div class="sim-timeline">
+    <span class="region-label">Timeline</span>
+    <div class="tl-transport">
+      <button class="tl-btn" type="button" disabled title="Play">▶</button>
+      <button class="tl-btn" type="button" disabled title="Pause">❚❚</button>
+      <button class="tl-btn" type="button" disabled title="Stop">■</button>
+    </div>
+    <div class="tl-speeds">
+      <button class="tl-btn" type="button" disabled aria-pressed="true">1×</button>
+      <button class="tl-btn" type="button" disabled aria-pressed="false">2×</button>
+      <button class="tl-btn" type="button" disabled aria-pressed="false">3×</button>
+    </div>
+    <div class="tl-track"><div class="tl-fill"></div><div class="tl-head"></div></div>
+    <span class="tl-clock">T+00:14</span>
+    <a class="sim-exit" href="index.html">Exit</a>
+  </div>
+
+<!-- DRONE FEED. A static oblique image standing in for a live feed, drawn
+     with object-fit: contain and never cropped: the grid-to-screen projection
+     is calibrated against this exact frame.
+
+     The imagery credit is a licensing requirement, not a caption. It must be
+     legible whenever the frame is on screen, so it is anchored inside
+     .sim-frame and sits top-left — the dock expands upward over the bottom of
+     the picture. Do not delete or shorten it; test-runtime.js section 28
+     checks that every named data source is still there. -->
+<div class="sim-stage">
+  <div class="sim-frame">
+    <img class="sim-feed" src="img/sim-pov.jpg" alt="Oblique aerial view of the coastline from the drone's point of view.">
+    <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
+  </div>
+</div>
+
+<!-- DOCK. Sits under the feed and opens downward. Panels start open because
+     there is room for them now; collapsing one does not resize the feed. -->
+<div class="sim-dock">
+
+    <!-- Same dial component as the Deliver timeline: green available, red
+         wedge is the recovery still to run. Hardcoded here. -->
+    <section class="dock-panel" id="dock-assets">
+      <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-assets">
+        <span class="region-label">Asset status board</span>
+        <span class="dock-hint">3 assets</span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="dock-body" id="body-assets">
+        <div class="asset-status">
+          <div class="as-item" style="--as-deg: 0deg">
+            <span class="as-pie"></span>
+            <span class="as-text"><span class="as-label">M101</span><span class="as-note">Ready</span></span>
+          </div>
+          <div class="as-item is-down" style="--as-deg: 252deg">
+            <span class="as-pie"></span>
+            <span class="as-text"><span class="as-label">M109</span><span class="as-note">Back in 14 min</span></span>
+          </div>
+          <div class="as-item" style="--as-deg: 0deg">
+            <span class="as-pie"></span>
+            <span class="as-text"><span class="as-label">OWA UAS</span><span class="as-note">8 of 10 remaining</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The student never types: every line of the call for fire is chosen
+         from a dropdown. The fields below are placeholders. -->
+    <section class="dock-panel is-wide" id="dock-chat">
+      <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-chat">
+        <span class="region-label">Fires coordination chat</span>
+        <span class="dock-hint">FSCC · last 00:02 ago</span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="dock-body" id="body-chat">
+        <div class="chat-log">
+          <p class="chat-line"><span class="who">FSCC</span> Net check, all stations. Radio check, over.</p>
+          <p class="chat-line is-self"><span class="who">YOU</span> Roger, loud and clear.</p>
+          <p class="chat-line"><span class="who">FSCC</span> Be advised, M109 is off line for recovery.</p>
+        </div>
+        <!-- CALL FOR FIRE — five lines, spoken order, no field labels.
+             Only line 2 is live: the grid, and Send. Every select is a
+             placeholder and does nothing yet.
+
+             The grid is easting first, then northing — right and up. Four
+             digits each is 10 m precision inside 20Q KF. -->
+        <div class="cff-builder">
+          <div class="cff-line">
+            <select disabled><option>M101</option><option>M109</option><option>OWA UAS</option></select>
+            <span class="cff-fixed">this is Dragonfire FSCC</span>
+            <select disabled>
+              <option>Fire for effect</option>
+              <option>Immediate suppression</option>
+              <option>Adjust fire</option>
+            </select>
+          </div>
+
+          <div class="cff-line">
+            <span class="cff-sq">20Q KF</span>
+            <input id="cff-east"  class="cff-grid" type="text" inputmode="numeric" maxlength="4"
+                   placeholder="EEEE" aria-label="Easting, four digits" autocomplete="off">
+            <input id="cff-north" class="cff-grid" type="text" inputmode="numeric" maxlength="4"
+                   placeholder="NNNN" aria-label="Northing, four digits" autocomplete="off">
+            <span class="cff-or">or</span>
+            <select disabled><option>Preplanned target</option><option>AB1001</option><option>AB1002</option></select>
+          </div>
+
+          <div class="cff-line">
+            <input class="cff-num" type="text" value="4" disabled aria-label="Number">
+            <select disabled>
+              <option>Armored vehicles</option>
+              <option>Self-propelled artillery</option>
+              <option>Infantry</option>
+              <option>Engineering vehicles</option>
+              <option>Armor</option>
+            </select>
+            <select disabled>
+              <option>In the open</option>
+              <option>In the water</option>
+              <option>In urban landscape</option>
+              <option>In the woods</option>
+            </select>
+          </div>
+
+          <div class="cff-line">
+            <select disabled><option>High explosive</option><option>Drones</option></select>
+          </div>
+
+          <div class="cff-line">
+            <select disabled><option>At my command</option><option>When ready</option><option>Time on target</option></select>
+            <button id="cff-send" class="cff-send" type="button">Send</button>
+            <span id="cff-status" class="cff-status" role="status"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Populated when the student sends a mission; rows advance with the
+         timeline. -->
+    <section class="dock-panel" id="dock-missions">
+      <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-missions">
+        <span class="region-label">Active missions</span>
+        <span class="dock-hint">2 active</span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="dock-body" id="body-missions">
+        <ul class="mission-list">
+          <li><span class="mn">AB1001</span> <span>Trucks in the open</span> <span class="st is-firing">Firing</span></li>
+          <li><span class="mn">AB1002</span> <span>Boats, beach exit</span> <span class="st is-queued">Queued</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Each opens a full-screen modal over the sim. -->
+    <div class="dock-rail">
+      <button class="rail-btn" type="button" disabled title="Engagement area">MAP</button>
+      <button class="rail-btn" type="button" disabled title="High-payoff target list">HPTL</button>
+      <button class="rail-btn" type="button" disabled title="Target list worksheet">TLS</button>
+    </div>
+
+</div>
+
+<p class="sim-too-narrow">The Fire Mission Sim needs a wider screen. Open it on a laptop or a tablet in landscape.</p>
+
+<script src="js/sim-camera.js"></script>
+<script src="js/sim-projection.js"></script>
+<script src="js/sim-render.js"></script>
+<script>
+/* Opens and closes the docked panels. Panels are independent — any number can
+   be open at once. */
+document.querySelectorAll('.dock-head').forEach(head => {
+  head.addEventListener('click', () => {
+    const panel = head.closest('.dock-panel');
+    const open = panel.classList.toggle('is-open');
+    head.setAttribute('aria-expanded', String(open));
+  });
+});
+
+/* ---------- the first thing that draws ----------
+   A call for fire puts rounds on a grid. That is the whole of this build: it
+   proves the canvas is registered to the picture, which is the one thing the
+   50-marker calibration could not tell us. */
+(() => {
+  const frame = document.querySelector('.sim-frame');
+  const img   = document.querySelector('.sim-feed');
+  if (!frame || !img || typeof SIM_RENDER === 'undefined') return;
+  SIM_RENDER.attach(frame, img);
+
+  /* No terrain lookup exists, so an impact elevation has to be assumed. Zero
+     is right for the whole 0-8 m coastal plain, which is where the engagement
+     happens. It is wrong up the hillside, by roughly 3 m of ground error per
+     metre of height — deliberately so, until waypoints carry their own. */
+  const ASSUMED_ELEV_M = 0;
+
+  const east   = document.getElementById('cff-east');
+  const north  = document.getElementById('cff-north');
+  const send   = document.getElementById('cff-send');
+  const status = document.getElementById('cff-status');
+
+  const digits = el => el.value.replace(/\D/g, '');
+  [east, north].forEach(el => el.addEventListener('input', () => {
+    const d = digits(el);
+    if (el.value !== d) el.value = d;
+    status.textContent = '';
+    status.classList.remove('is-bad');
+  }));
+
+  function fail(msg) {
+    status.textContent = msg;
+    status.classList.add('is-bad');
+  }
+
+  send.addEventListener('click', () => {
+    const e = digits(east), n = digits(north);
+
+    /* Accept 3, 4 or 5 digits — 100 m, 10 m, 1 m — because that is how a grid
+       is actually read, and because a fixed width invites the mistake of
+       copying from a UTM easting (204263) instead of the MGRS one (04262).
+       Both halves must be the same length or it is not a grid. */
+    if (e.length < 3 || e.length > 5 || n.length < 3 || n.length > 5)
+      return fail('Grid needs three, four or five digits each.');
+    if (e.length !== n.length)
+      return fail(`Uneven grid: ${e.length} digits then ${n.length}.`);
+
+    const grid = `20Q KF ${e} ${n}`;
+    const utm = SIM_PROJ.mgrsToUtm(grid);
+    if (!utm) return fail('That grid does not parse.');
+
+    /* Refuse a mission that would land off the feed rather than firing into
+       nothing — the student should see why. */
+    const p = SIM_PROJ.worldToScreen(utm.e, utm.n, ASSUMED_ELEV_M);
+    if (!p || !p.inFront || !p.inFrame)
+      return fail(`${SIM_PROJ.utmToMgrs(utm.e, utm.n, 5)} is outside the feed.`);
+
+    const rounds = SIM_RENDER.fireMission(utm.e, utm.n, ASSUMED_ELEV_M);
+    status.classList.remove('is-bad');
+    status.textContent = `${rounds} rounds — ${grid}`;
+  });
+
+  /* ---------- dev readout, hidden ----------
+     sim.html?dev=1 only. Nothing the student does needs a pixel-to-grid
+     conversion: a call for fire names a grid, it never clicks one. This exists
+     to debug the registration and to fill the grid fields quickly. */
+  if (new URLSearchParams(location.search).get('dev') === '1') {
+    const tag = document.createElement('div');
+    tag.className = 'sim-devgrid';
+    frame.appendChild(tag);
+    frame.addEventListener('mousemove', ev => {
+      const f = SIM_RENDER.toFrame(ev.clientX, ev.clientY);
+      if (!f) return;
+      const w = SIM_PROJ.screenToWorld(f.x, f.y, ASSUMED_ELEV_M);
+      tag.textContent = w
+        ? `${SIM_PROJ.utmToMgrs(w.e, w.n, 4)}   ${Math.round(w.range)} m   [${Math.round(f.x)}, ${Math.round(f.y)}]`
+        : 'above the horizon';
+    });
+    frame.addEventListener('click', ev => {
+      const f = SIM_RENDER.toFrame(ev.clientX, ev.clientY);
+      const w = f && SIM_PROJ.screenToWorld(f.x, f.y, ASSUMED_ELEV_M);
+      if (!w) return;
+      east.value  = SIM_PROJ.utmToMgrs(w.e, w.n, 4).split(' ')[2];
+      north.value = SIM_PROJ.utmToMgrs(w.e, w.n, 4).split(' ')[3];
+    });
+  }
+})();
+</script>
+</body></html>
