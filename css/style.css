@@ -2458,8 +2458,26 @@ li.ev > .ev-body      { grid-column: 2; grid-row: 1 / span 2; }
    reel swaps them by display, so without one fixed box the page would jump
    by a hundred pixels every time the student pressed the arrow.
    --------------------------------------------------------------- */
-.isr-reel .ecoa-stage { max-width: 860px; }
-.isr-reel .ecoa-base {
+.isr-reel .ecoa-stage,
+.bda-reel .ecoa-stage { max-width: 860px; }
+.isr-reel .ecoa-base,
+.bda-reel .ecoa-base {
   aspect-ratio: 3 / 2;
   object-fit: contain;
+}
+
+/* The BDA reel on assess.html is the same arrangement again: three sensor
+   stills of one command post, before the attack and after each engagement.
+   Its questions hang off scenes 2 and 3; scene 1 is the undamaged baseline
+   and carries none.
+
+   Five assessments is a long scroll, and a student who reaches the bottom of
+   one engagement has no way of knowing two more scenes are waiting above.
+   A second pair of arrows sits under the last card. It carries no dots: the
+   reel reads every .ecoa-dot inside itself and indexes them against the
+   scenes, so a second set would leave three dots that never light. */
+.bda-reel .ecoa-bar-foot {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }

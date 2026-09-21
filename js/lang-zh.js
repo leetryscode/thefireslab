@@ -7233,49 +7233,205 @@ window.D3A_LANG_ZH = {
     en: "What has the attack done to the enemy capability this target belongs to?",
     zh: "這次攻擊對該目標所屬的敵軍能力造成了什麼？"
   },
-  "assess.075": {
-    en: "The last one is the reason we assess at all. A target matters because of what it lets the enemy do, so the useful question is always which capability he has lost. The ATGM section was priority 1 because the commander's guidance said it was the only thing in his order of battle that could stop a vehicle on the bridge. Taking it off the board at T-0:15 took that capability away from him.",
+  "assess.015": {
+    en: "Task 4.1 — Assess the engagement",
     zh: ""
   },
-  "assess.076": {
-    en: "Every target on the list sits inside a system. The 120 mm mortar platoon is the enemy's indirect fire against the crossing. The ammunition supply point holds the rounds his mortars and his ATGM fire. The battalion command post directs all of it. Striking one changes what the others can do, and the target system assessment is where the staff says so.",
-    zh: "清單上的每一個目標都處在一個系統之中。120 公釐迫擊砲排是敵軍對渡河點的間接火力。彈藥補給點存放敵軍迫擊砲與 ATGM 所發射的彈藥。營指揮所指揮這一切。打擊其中一個，就會改變其他目標所能做的事，而目標系統評估就是幕僚把這一點講出來的地方。"
+  "assess.019": {
+    en: "Before the attack",
+    zh: ""
   },
-  "assess.077": {
-    en: "BDA does not always come from looking at the target. Whether the enemy moves, digs in, changes his communications or simply stops firing tells us as much as a picture of the ground. We never see the mortar tubes in this operation. What the long-range ISR is sent to confirm at T+0:50 is whether rounds have stopped landing on our soldiers.",
-    zh: "戰果評估不一定來自直接觀察目標。敵軍是否轉移、是否構工、是否改變通信，或者乾脆停止射擊，這些告訴我們的和一張現地照片一樣多。在這場作戰中，我們從來沒有看見迫擊砲管。在 T+0:50 派長程情監偵去確認的，是砲彈是否已經不再落在我方官兵身上。"
+  "assess.020": {
+    en: "The enemy battalion command post, prior to engagement. Three tents, two satellite dishes, a communications mast and a command vehicle.",
+    zh: ""
   },
-  "assess.078": {
-    en: "An assessment can also reopen decisions made in Phase 1. The high-payoff target list, the target selection standards, the attack guidance matrix and the collection plan are all open to revision on the strength of a BDA. At T-0:30 the assessment moved the ATGM section from Assess back to Find, and the detect and deliver cycle ran again on the same target.",
-    zh: "評估也可能重新掀開第 1 階段所做的決定。高效益目標清單、目標選擇條件、攻擊矩陣與情報蒐集計畫，都可能因為一份戰果評估而修改。在 T-0:30，評估把 ATGM 分隊從評估退回發現，監測與執行的循環又在同一個目標上跑了一次。"
+  "assess.021": {
+    en: "Following the first engagement",
+    zh: ""
   },
-  "assess.080": {
+  "assess.022": {
+    en: "Physical damage assessment",
+    zh: ""
+  },
+  "assess.023": {
+    en: "Estimate the quantitative extent of physical damage to the target. This assessment is based on observed or interpreted damage.",
+    zh: ""
+  },
+  "assess.024": {
+    en: "The enemy cannot conduct command and control.",
+    zh: ""
+  },
+  "assess.025": {
+    en: "The C2 facility cannot perform its role coordinating forces.",
+    zh: ""
+  },
+  "assess.026": {
+    en: "The C2 facility suffered major damage including damage to a tent and communications antennae.",
+    zh: ""
+  },
+  "assess.042": {
+    en: "Functional damage assessment",
+    zh: ""
+  },
+  "assess.043": {
+    en: "Estimate the effect of the attack on the target to perform its intended mission compared to the operational objective.",
+    zh: ""
+  },
+  "assess.047": {
+    en: "This C2 facility sustained damage but may still be capable of conducting command and control from the mobile vehicle.",
+    zh: ""
+  },
+  "assess.050": {
+    en: "This C2 facility suffered major damage to a tent and communications antennae but a command vehicle remains unharmed.",
+    zh: ""
+  },
+  "assess.053": {
+    en: "The enemy cannot conduct command and control.",
+    zh: ""
+  },
+  "assess.056": {
+    en: "Target system assessment",
+    zh: ""
+  },
+  "assess.057": {
+    en: "A broad assessment of the overall impact and effectiveness of all types of attack against an entire target system's capability.",
+    zh: ""
+  },
+  "assess.058": {
+    en: "The enemy can no longer conduct command and control.",
+    zh: ""
+  },
+  "assess.060": {
+    en: "This node in command and control was damaged, but the enemy may have an alternate. They will conduct command and control from another location.",
+    zh: ""
+  },
+  "assess.061": {
     en: "Munitions effectiveness assessment",
     zh: "彈藥效能評估"
   },
-  "assess.081": {
-    en: "BDA looks at the enemy. Munitions effectiveness assessment looks at us. It asks whether the weapon system, the munition, the method of attack and the delivery were the right ones, and it runs alongside the BDA rather than after it.",
-    zh: "戰果評估看的是敵軍，彈藥效能評估看的是我方。它問的是武器系統、彈藥、攻擊方法與投射方式是否正確，而且它與戰果評估同時進行，不是等戰果評估做完才開始。"
-  },
-  "assess.082": {
-    en: "The first strike on the ATGM section shows the difference. The BDA finding is that the section survived, moved, and could still engage the bridge. The munitions effectiveness question is a separate one. Was a 105 mm mission the right way to suppress a dug-in section, was the volume of fire enough to hold the effect for as long as we needed it, and should the second mission be fired differently? The product is a recommendation to change the method, the tactics, the weapon system, the munition, or how it is delivered.",
+  "assess.062": {
+    en: "Was the type of munition used against the target effective?",
     zh: ""
   },
-  "assess.083": {
-    en: "It also feeds ammunition planning. If an effect costs more rounds than the plan allowed, the required supply rate is wrong. In this operation ammunition is the constraint the commander named.",
-    zh: "它同時也提供彈藥計畫所需的資訊。如果達成一項效果所耗的砲彈超過計畫所容許的數量，需求補給率就訂錯了。在這場作戰中，彈藥正是指揮官親自指明的限制。"
+  "assess.064": {
+    en: "No, the command vehicle remains unharmed.",
+    zh: ""
   },
-  "assess.084": {
+  "assess.065": {
+    en: "Yes, this type of munition has the capability of meeting damage criteria.",
+    zh: ""
+  },
+  "assess.068": {
     en: "Re-attack recommendation",
     zh: "再次打擊建議"
   },
+  "assess.071": {
+    en: "Do you recommend re-attack?",
+    zh: ""
+  },
+  "assess.074": {
+    en: "No",
+    zh: ""
+  },
+  "assess.075": {
+    en: "Yes",
+    zh: "有"
+  },
+  "assess.076": {
+    en: "Following the second engagement",
+    zh: ""
+  },
+  "assess.077": {
+    en: "Physical damage assessment",
+    zh: ""
+  },
+  "assess.078": {
+    en: "Estimate the quantitative extent of physical damage to the target. This assessment is based on observed or interpreted damage.",
+    zh: ""
+  },
+  "assess.079": {
+    en: "The enemy cannot conduct command and control.",
+    zh: ""
+  },
+  "assess.080": {
+    en: "The C2 facility cannot perform its role coordinating forces.",
+    zh: ""
+  },
+  "assess.081": {
+    en: "The C2 facility suffered major damage, both the tent and command vehicle appear unusable.",
+    zh: ""
+  },
+  "assess.082": {
+    en: "Functional damage assessment",
+    zh: ""
+  },
+  "assess.083": {
+    en: "Estimate the effect of the attack on the target to perform its intended mission compared to the operational objective.",
+    zh: ""
+  },
+  "assess.084": {
+    en: "The enemy cannot conduct command and control.",
+    zh: ""
+  },
   "assess.085": {
-    en: "With both assessments in hand, the staff makes a recommendation to the commander. It addresses the target, its critical elements, the target system it belongs to, and the enemy combat strength that remains.",
-    zh: "兩份評估都到手之後，幕僚向指揮官提出建議。建議的內容涵蓋該目標、目標的要害、目標所屬的目標系統，以及敵軍所剩的戰鬥力。"
+    en: "This targeted C2 facility is not capable of conducting command and control.",
+    zh: ""
   },
   "assess.086": {
-    en: "Re-attack is only one of the answers available. The others are to strike something else, to change the guidance, or to accept the result and move on. At T-0:30 the answer was re-attack, and it cost a second full cycle on a target we had already engaged once. At T-0:15, after the second strike, the answer was that the target was finished and the row could come off the tracker.",
-    zh: "再次打擊只是其中一種答案。其他的答案是改打別的目標、修改指導，或是接受結果並繼續前進。在 T-0:30，答案是再次打擊，代價是在一個已經打過一次的目標上，再跑完一整輪循環。在 T-0:15，第二次打擊之後，答案是這個目標已經處理完畢，該列可以從追蹤表上移除。"
+    en: "This C2 facility is destroyed and the command vehicle is on its side.",
+    zh: ""
+  },
+  "assess.137": {
+    en: "Target system assessment",
+    zh: ""
+  },
+  "assess.138": {
+    en: "A broad assessment of the overall impact and effectiveness of all types of attack against an entire target system's capability.",
+    zh: ""
+  },
+  "assess.139": {
+    en: "The enemy can no longer conduct command and control.",
+    zh: ""
+  },
+  "assess.140": {
+    en: "This node in command and control was damaged, but the enemy may have an alternate. They will conduct command and control from another location.",
+    zh: ""
+  },
+  "assess.141": {
+    en: "Munitions effectiveness assessment",
+    zh: "彈藥效能評估"
+  },
+  "assess.142": {
+    en: "Was the type of munition used against the target effective?",
+    zh: ""
+  },
+  "assess.143": {
+    en: "No, the enemy can still conduct command and control from another location.",
+    zh: ""
+  },
+  "assess.144": {
+    en: "Yes, this type of munition has the capability of meeting damage criteria.",
+    zh: ""
+  },
+  "assess.145": {
+    en: "Re-attack recommendation",
+    zh: "再次打擊建議"
+  },
+  "assess.146": {
+    en: "Do you recommend re-attack?",
+    zh: ""
+  },
+  "assess.147": {
+    en: "No",
+    zh: ""
+  },
+  "assess.148": {
+    en: "Yes",
+    zh: "有"
+  },
+  "assess.149": {
+    en: "<strong>Both engagements assessed.</strong> The physical and functional damage changed between the two attacks. The target system assessment did not — the enemy still has somewhere else to command from, and that is the finding the commander acts on.",
+    zh: ""
   },
   "assess.087": {
     en: "Measure of performance and measure of effectiveness",
@@ -7346,8 +7502,8 @@ window.D3A_LANG_ZH = {
     zh: "兩者可能得出不同的結論，這正是我們兩種都要衡量的原因。在 T-0:55，任務在四分鐘內送到正確的砲連，砲彈也落在 ATGM 陣地上。每一項積效評估都達成了。效益評估卻沒有，因為在 T-0:30，該分隊仍然能對渡河點接戰。只計算任務次數，永遠看不出這一點。"
   },
   "assess.104": {
-    en: "Task 4.1 — Performance or effect",
-    zh: "課題 4.1 — 積效或效益"
+    en: "Task 4.2 — Performance or effect",
+    zh: ""
   },
   "assess.105": {
     en: "Each line below is a statement about Operation RIVER GATE. Decide whether it is a measure of performance or a measure of effectiveness.",
@@ -7484,6 +7640,86 @@ window.D3A_LANG_ZH = {
   "assess.017": {
     en: "Back to the Battle home →",
     zh: "返回作戰首頁 →"
+  },
+  "assess.a2-c1.why": {
+    en: "Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function.",
+    zh: ""
+  },
+  "assess.a2-c1.hint": {
+    en: "Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function.",
+    zh: ""
+  },
+  "assess.a2-c2.why": {
+    en: "The command vehicle is untouched, so the facility may still do its job from it. That is a judgement about capability, not a count of damage.",
+    zh: ""
+  },
+  "assess.a2-c2.hint": {
+    en: "One answer repeats the physical damage and one speaks for the whole enemy force. Functional damage sits between them: can this target still do its job?",
+    zh: ""
+  },
+  "assess.a2-c3.why": {
+    en: "One command post is one node in a system. Losing it is not the same as taking command and control away from the enemy.",
+    zh: ""
+  },
+  "assess.a2-c3.hint": {
+    en: "Ask what the enemy has left, not what this target has lost.",
+    zh: ""
+  },
+  "assess.a2-c4.why": {
+    en: "While the command vehicle remains unharmed, the munition is clearly capable of damaging the target, and that is the question munitions effectiveness assessment answers.",
+    zh: ""
+  },
+  "assess.a2-c4.hint": {
+    en: "While the command vehicle remains unharmed, the munition is clearly capable of damaging the target, and that is the question munitions effectiveness assessment answers.",
+    zh: ""
+  },
+  "assess.a2-c5.why": {
+    en: "Re-attack is recommended to destroy the command vehicle.",
+    zh: ""
+  },
+  "assess.a2-c5.hint": {
+    en: "Read your own functional damage assessment again. The facility may still be working from the vehicle.",
+    zh: ""
+  },
+  "assess.a2-c6.why": {
+    en: "Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function.",
+    zh: ""
+  },
+  "assess.a2-c6.hint": {
+    en: "Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function.",
+    zh: ""
+  },
+  "assess.a2-c7.why": {
+    en: "The target can no longer do its job. That is the functional judgement, and it is about this facility rather than about the enemy.",
+    zh: ""
+  },
+  "assess.a2-c7.hint": {
+    en: "One answer repeats the physical damage and one speaks for the whole enemy force. Functional damage is about this target only.",
+    zh: ""
+  },
+  "assess.a2-c8.why": {
+    en: "The target system assessment did not change when the physical and functional assessments did. Destroying a node is not the same as taking the capability away.",
+    zh: ""
+  },
+  "assess.a2-c8.hint": {
+    en: "The facility is finished. Is the enemy's command and control finished with it?",
+    zh: ""
+  },
+  "assess.a2-c9.why": {
+    en: "Munitions effectiveness asks about the munition we used against this target. What the enemy holds elsewhere is the target system assessment, which you have already made.",
+    zh: ""
+  },
+  "assess.a2-c9.hint": {
+    en: "This question is about the munition, not about what the enemy has left. You answered that one already.",
+    zh: ""
+  },
+  "assess.a2-c10.why": {
+    en: "Re-attack is not needed because this node was functionally destroyed, as assessed in our functional damage assessment.",
+    zh: ""
+  },
+  "assess.a2-c10.hint": {
+    en: "The re-attack recommendation follows the functional damage assessment. What did yours say?",
+    zh: ""
   },
 
   /* ---------- glossary.html ---------- */

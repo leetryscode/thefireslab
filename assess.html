@@ -144,31 +144,171 @@
       </table>
     </div>
 
-    <p data-i18n="assess.075">The last one is the reason we assess at all. A target matters because of what it lets the enemy do, so the useful question is always which capability he has lost. The ATGM section was priority 1 because the commander's guidance said it was the only thing in his order of battle that could stop a vehicle on the bridge. Taking it off the board at T-0:15 took that capability away from him.</p>
+    <div class="exercise">
+      <div class="exercise-head">
+        <h3 data-i18n="assess.015">Task 4.1 — Assess the engagement</h3>
+        <span class="status" data-status="assess-2">NOT DONE</span>
+      </div>
+      <div class="exercise-body">
+        <div class="ecoa bda-reel" id="bda-reel">
+          <div class="ecoa-stage">
 
-    <p data-i18n="assess.076">Every target on the list sits inside a system. The 120 mm mortar platoon is the enemy's indirect fire against the crossing. The ammunition supply point holds the rounds his mortars and his ATGM fire. The battalion command post directs all of it. Striking one changes what the others can do, and the target system assessment is where the staff says so.</p>
+            <div class="ecoa-scene is-on" data-scene="1">
+              <img class="ecoa-base" src="img/bda-cp-1.jpg" width="920" height="607" alt="Oblique sensor view of the enemy command post before the attack. Three connected tents stand in a clearing beside a track, with two satellite dishes and a communications mast alongside, and a camouflaged command vehicle parked on the track to the east.">
+            </div>
 
-    <p data-i18n="assess.077">BDA does not always come from looking at the target. Whether the enemy moves, digs in, changes his communications or simply stops firing tells us as much as a picture of the ground. We never see the mortar tubes in this operation. What the long-range ISR is sent to confirm at T+0:50 is whether rounds have stopped landing on our soldiers.</p>
+            <div class="ecoa-scene" data-scene="2">
+              <img class="ecoa-base" src="img/bda-cp-2.jpg" width="920" height="600" alt="The same command post after the first attack. The centre tent has collapsed into a crater, one satellite dish is down and debris is scattered across the site. Three further craters have burned the ground short of the target. The command vehicle is still upright on the track and appears undamaged.">
+            </div>
 
-    <p data-i18n="assess.078">An assessment can also reopen decisions made in Phase 1. The high-payoff target list, the target selection standards, the attack guidance matrix and the collection plan are all open to revision on the strength of a BDA. At T-0:30 the assessment moved the ATGM section from Assess back to Find, and the detect and deliver cycle ran again on the same target.</p>
+            <div class="ecoa-scene" data-scene="3">
+              <img class="ecoa-base" src="img/bda-cp-3.jpg" width="920" height="607" alt="The same command post after the second attack. Every tent is flattened, the command vehicle is lying on its side, and several craters around the site are burning.">
+            </div>
 
-  </div>
+          </div>
 
-  <!-- ============ munitions effectiveness and re-attack ============ -->
-  <div class="panel">
-    <h2 data-i18n="assess.080">Munitions effectiveness assessment</h2>
+          <div class="ecoa-bar">
+            <button type="button" class="ecoa-arrow" data-step="-1" aria-label="Previous">←</button>
+            <div class="ecoa-dots">
+              <button type="button" class="ecoa-dot is-on" data-go="1" aria-label="Before the attack"></button>
+              <button type="button" class="ecoa-dot" data-go="2" aria-label="First engagement"></button>
+              <button type="button" class="ecoa-dot" data-go="3" aria-label="Second engagement"></button>
+            </div>
+            <button type="button" class="ecoa-arrow" data-step="1" aria-label="Next">→</button>
+          </div>
 
-    <p data-i18n="assess.081">BDA looks at the enemy. Munitions effectiveness assessment looks at us. It asks whether the weapon system, the munition, the method of attack and the delivery were the right ones, and it runs alongside the BDA rather than after it.</p>
+          <div id="a2-cards">
 
-    <p data-i18n="assess.082">The first strike on the ATGM section shows the difference. The BDA finding is that the section survived, moved, and could still engage the bridge. The munitions effectiveness question is a separate one. Was a 105 mm mission the right way to suppress a dug-in section, was the volume of fire enough to hold the effect for as long as we needed it, and should the second mission be fired differently? The product is a recommendation to change the method, the tactics, the weapon system, the munition, or how it is delivered.</p>
+            <div class="ecoa-note is-on" data-note="1">
+              <h4 data-i18n="assess.019">Before the attack</h4>
+              <p data-i18n="assess.020">The enemy battalion command post, prior to engagement. Three tents, two satellite dishes, a communications mast and a command vehicle.</p>
+            </div>
 
-    <p data-i18n="assess.083">It also feeds ammunition planning. If an effect costs more rounds than the plan allowed, the required supply rate is wrong. In this operation ammunition is the constraint the commander named.</p>
+            <div class="ecoa-note" data-note="2">
+              <h4 data-i18n="assess.021">Following the first engagement</h4>
 
-    <h2 data-i18n="assess.084">Re-attack recommendation</h2>
+              <div class="report-card" id="a2-c1" data-answer="c" data-why="Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function." data-hint="Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function." data-i18n-why="assess.a2-c1.why" data-i18n-hint="assess.a2-c1.hint">
+                <h4 data-i18n="assess.022">Physical damage assessment</h4>
+                <p class="meta" data-i18n="assess.023">Estimate the quantitative extent of physical damage to the target. This assessment is based on observed or interpreted damage.</p>
+                <div class="decision-btns">
+                  <button data-value="a" data-i18n="assess.024">The enemy cannot conduct command and control.</button>
+                  <button data-value="b" data-i18n="assess.025">The C2 facility cannot perform its role coordinating forces.</button>
+                  <button data-value="c" data-i18n="assess.026">The C2 facility suffered major damage including damage to a tent and communications antennae.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
 
-    <p data-i18n="assess.085">With both assessments in hand, the staff makes a recommendation to the commander. It addresses the target, its critical elements, the target system it belongs to, and the enemy combat strength that remains.</p>
+              <div class="report-card" id="a2-c2" data-answer="a" data-why="The command vehicle is untouched, so the facility may still do its job from it. That is a judgement about capability, not a count of damage." data-hint="One answer repeats the physical damage and one speaks for the whole enemy force. Functional damage sits between them: can this target still do its job?" data-i18n-why="assess.a2-c2.why" data-i18n-hint="assess.a2-c2.hint">
+                <h4 data-i18n="assess.042">Functional damage assessment</h4>
+                <p class="meta" data-i18n="assess.043">Estimate the effect of the attack on the target to perform its intended mission compared to the operational objective.</p>
+                <div class="decision-btns">
+                  <button data-value="a" data-i18n="assess.047">This C2 facility sustained damage but may still be capable of conducting command and control from the mobile vehicle.</button>
+                  <button data-value="b" data-i18n="assess.050">This C2 facility suffered major damage to a tent and communications antennae but a command vehicle remains unharmed.</button>
+                  <button data-value="c" data-i18n="assess.053">The enemy cannot conduct command and control.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
 
-    <p data-i18n="assess.086">Re-attack is only one of the answers available. The others are to strike something else, to change the guidance, or to accept the result and move on. At T-0:30 the answer was re-attack, and it cost a second full cycle on a target we had already engaged once. At T-0:15, after the second strike, the answer was that the target was finished and the row could come off the tracker.</p>
+              <div class="report-card" id="a2-c3" data-answer="b" data-why="One command post is one node in a system. Losing it is not the same as taking command and control away from the enemy." data-hint="Ask what the enemy has left, not what this target has lost." data-i18n-why="assess.a2-c3.why" data-i18n-hint="assess.a2-c3.hint">
+                <h4 data-i18n="assess.056">Target system assessment</h4>
+                <p class="meta" data-i18n="assess.057">A broad assessment of the overall impact and effectiveness of all types of attack against an entire target system's capability.</p>
+                <div class="decision-btns">
+                  <button data-value="a" data-i18n="assess.058">The enemy can no longer conduct command and control.</button>
+                  <button data-value="b" data-i18n="assess.060">This node in command and control was damaged, but the enemy may have an alternate. They will conduct command and control from another location.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+              <div class="report-card" id="a2-c4" data-answer="yes" data-why="While the command vehicle remains unharmed, the munition is clearly capable of damaging the target, and that is the question munitions effectiveness assessment answers." data-hint="While the command vehicle remains unharmed, the munition is clearly capable of damaging the target, and that is the question munitions effectiveness assessment answers." data-i18n-why="assess.a2-c4.why" data-i18n-hint="assess.a2-c4.hint">
+                <h4 data-i18n="assess.061">Munitions effectiveness assessment</h4>
+                <p class="meta" data-i18n="assess.062">Was the type of munition used against the target effective?</p>
+                <div class="decision-btns">
+                  <button data-value="no" data-i18n="assess.064">No, the command vehicle remains unharmed.</button>
+                  <button data-value="yes" data-i18n="assess.065">Yes, this type of munition has the capability of meeting damage criteria.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+              <div class="report-card" id="a2-c5" data-answer="yes" data-why="Re-attack is recommended to destroy the command vehicle." data-hint="Read your own functional damage assessment again. The facility may still be working from the vehicle." data-i18n-why="assess.a2-c5.why" data-i18n-hint="assess.a2-c5.hint">
+                <h4 data-i18n="assess.068">Re-attack recommendation</h4>
+                <p class="meta" data-i18n="assess.071">Do you recommend re-attack?</p>
+                <div class="decision-btns">
+                  <button data-value="no" data-i18n="assess.074">No</button>
+                  <button data-value="yes" data-i18n="assess.075">Yes</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+            </div>
+
+            <div class="ecoa-note" data-note="3">
+              <h4 data-i18n="assess.076">Following the second engagement</h4>
+
+              <div class="report-card" id="a2-c6" data-answer="c" data-why="Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function." data-hint="Physical damage assessment only describes the physical changes to the target and does not draw conclusions about its ability to perform its function." data-i18n-why="assess.a2-c6.why" data-i18n-hint="assess.a2-c6.hint">
+                <h4 data-i18n="assess.077">Physical damage assessment</h4>
+                <p class="meta" data-i18n="assess.078">Estimate the quantitative extent of physical damage to the target. This assessment is based on observed or interpreted damage.</p>
+                <div class="decision-btns">
+                  <button data-value="a" data-i18n="assess.079">The enemy cannot conduct command and control.</button>
+                  <button data-value="b" data-i18n="assess.080">The C2 facility cannot perform its role coordinating forces.</button>
+                  <button data-value="c" data-i18n="assess.081">The C2 facility suffered major damage, both the tent and command vehicle appear unusable.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+              <div class="report-card" id="a2-c7" data-answer="b" data-why="The target can no longer do its job. That is the functional judgement, and it is about this facility rather than about the enemy." data-hint="One answer repeats the physical damage and one speaks for the whole enemy force. Functional damage is about this target only." data-i18n-why="assess.a2-c7.why" data-i18n-hint="assess.a2-c7.hint">
+                <h4 data-i18n="assess.082">Functional damage assessment</h4>
+                <p class="meta" data-i18n="assess.083">Estimate the effect of the attack on the target to perform its intended mission compared to the operational objective.</p>
+                <div class="decision-btns">
+                  <button data-value="a" data-i18n="assess.084">The enemy cannot conduct command and control.</button>
+                  <button data-value="b" data-i18n="assess.085">This targeted C2 facility is not capable of conducting command and control.</button>
+                  <button data-value="c" data-i18n="assess.086">This C2 facility is destroyed and the command vehicle is on its side.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+              <div class="report-card" id="a2-c8" data-answer="b" data-why="The target system assessment did not change when the physical and functional assessments did. Destroying a node is not the same as taking the capability away." data-hint="The facility is finished. Is the enemy's command and control finished with it?" data-i18n-why="assess.a2-c8.why" data-i18n-hint="assess.a2-c8.hint">
+                <h4 data-i18n="assess.137">Target system assessment</h4>
+                <p class="meta" data-i18n="assess.138">A broad assessment of the overall impact and effectiveness of all types of attack against an entire target system's capability.</p>
+                <div class="decision-btns">
+                  <button data-value="a" data-i18n="assess.139">The enemy can no longer conduct command and control.</button>
+                  <button data-value="b" data-i18n="assess.140">This node in command and control was damaged, but the enemy may have an alternate. They will conduct command and control from another location.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+              <div class="report-card" id="a2-c9" data-answer="yes" data-why="Munitions effectiveness asks about the munition we used against this target. What the enemy holds elsewhere is the target system assessment, which you have already made." data-hint="This question is about the munition, not about what the enemy has left. You answered that one already." data-i18n-why="assess.a2-c9.why" data-i18n-hint="assess.a2-c9.hint">
+                <h4 data-i18n="assess.141">Munitions effectiveness assessment</h4>
+                <p class="meta" data-i18n="assess.142">Was the type of munition used against the target effective?</p>
+                <div class="decision-btns">
+                  <button data-value="no" data-i18n="assess.143">No, the enemy can still conduct command and control from another location.</button>
+                  <button data-value="yes" data-i18n="assess.144">Yes, this type of munition has the capability of meeting damage criteria.</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+              <div class="report-card" id="a2-c10" data-answer="no" data-why="Re-attack is not needed because this node was functionally destroyed, as assessed in our functional damage assessment." data-hint="The re-attack recommendation follows the functional damage assessment. What did yours say?" data-i18n-why="assess.a2-c10.why" data-i18n-hint="assess.a2-c10.hint">
+                <h4 data-i18n="assess.145">Re-attack recommendation</h4>
+                <p class="meta" data-i18n="assess.146">Do you recommend re-attack?</p>
+                <div class="decision-btns">
+                  <button data-value="no" data-i18n="assess.147">No</button>
+                  <button data-value="yes" data-i18n="assess.148">Yes</button>
+                </div>
+                <div class="drill-feedback"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="ecoa-bar ecoa-bar-foot">
+            <button type="button" class="ecoa-arrow" data-step="-1" aria-label="Previous">←</button>
+            <button type="button" class="ecoa-arrow" data-step="1" aria-label="Next">→</button>
+          </div>
+        </div>
+
+        <div class="feedback ok" id="assess-2-alldone" style="margin-top:14px;" data-i18n="assess.149"><strong>Both engagements assessed.</strong> The physical and functional damage changed between the two attacks. The target system assessment did not — the enemy still has somewhere else to command from, and that is the finding the commander acts on.</div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============ MOP and MOE ============ -->
@@ -213,7 +353,7 @@
 
     <div class="exercise">
       <div class="exercise-head">
-        <h3 data-i18n="assess.104">Task 4.1 — Performance or effect</h3>
+        <h3 data-i18n="assess.104">Task 4.2 — Performance or effect</h3>
         <span class="status" data-status="assess-1">NOT DONE</span>
       </div>
       <div class="exercise-body">
@@ -294,7 +434,11 @@
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 <script>
-D3A.registerPage('assess', ['assess-1']);
+D3A.registerPage('assess', ['assess-2', 'assess-1']);
+
+D3A.initSceneReel('bda-reel');
+
+D3A.initDecisionCards({ containerId: 'a2-cards', exerciseId: 'assess-2' });
 
 D3A.initSelectMatch({
   containerId: 'a1-match', feedbackId: 'a1-feedback',

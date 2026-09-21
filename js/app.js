@@ -125,7 +125,7 @@ const D3A = (() => {
   const PARKED = {
     detect:  [],
     deliver: ['deliver-2'],
-    assess:  ['assess-1', 'assess-2', 'assess-3']
+    assess:  ['assess-3']
   };
 
   /* Decide's second-level nav. Keyed by filename so a sub-tab can show its
