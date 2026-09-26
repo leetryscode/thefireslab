@@ -50,12 +50,12 @@ const SIM_SCENARIO = (() => {
      THE DIMENSIONS AND SPEEDS ARE PLACEHOLDERS, not researched figures —
      plausible orders of magnitude so the footprints draw at a believable size.
      They set how big a thing looks and how long a run takes, so they want
-     replacing before any tuning. `amphibious-assault-craft` is the workhorse,
+     replacing before any tuning. `amphibious-assault-vehicle` is the workhorse,
      since most targets in the real scenario will be one; its 9.5 x 3.4 m is a
      rough stand-in for Lee's reference vehicle (a ZBD-05) and is NOT verified.
      He is supplying real numbers. */
   const CLASSES = {
-    'amphibious-assault-craft': { label: 'AAC', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false },
+    'amphibious-assault-vehicle': { label: 'AAV', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false },
     'engineering':              { label: 'ENG', lengthM:  7.5, widthM:  3.4, defaultKph: 25, hpt: true  },
     'landing-craft':            { label: 'LC',  lengthM: 35.0, widthM: 10.0, defaultKph: 20, hpt: false },
     'self-propelled-artillery': { label: 'SPA', lengthM: 10.0, widthM:  3.5, defaultKph: 35, hpt: false },
@@ -69,7 +69,7 @@ const SIM_SCENARIO = (() => {
   /* The label the student sees for a class in the call for fire. The engine key
      is kebab-case; the net is plain English. */
   const CLASS_LABELS = {
-    'amphibious-assault-craft': 'amphibious assault craft',
+    'amphibious-assault-vehicle': 'amphibious assault vehicle',
     'engineering':              'engineering',
     'landing-craft':            'landing craft',
     'self-propelled-artillery': 'self propelled artillery',
@@ -81,7 +81,7 @@ const SIM_SCENARIO = (() => {
      road. Throwaway data whose job is to make one symbol move; the shape of the
      object is the part meant to last.
 
-     The contact is an amphibious assault craft — Lee's reference is a ZBD-05,
+     The contact is an amphibious assault vehicle — Lee's reference is a ZBD-05,
      and most targets in the real scenario will be this. That is what makes one
      entity on one route from open water to the parking lot coherent: it swims
      ashore and keeps driving. A landing craft would have had to hand off at the
@@ -119,7 +119,7 @@ const SIM_SCENARIO = (() => {
       }
     },
     entities: [
-      { id: 'A01', type: 'amphibious-assault-craft', route: 'seaward-1', startSec: 0 }
+      { id: 'A01', type: 'amphibious-assault-vehicle', route: 'seaward-1', startSec: 0 }
     ]
   };
 

@@ -228,6 +228,38 @@ const SIM_RENDER = (() => {
     return pts;
   }
 
+  /* ---------- class glyphs ----------
+     Drawn from Lee's ops graphics as canvas paths rather than an image file:
+     they stay crisp at any size, tint with the hostile colour, and keep the
+     offline requirement (no new asset to ship). Coordinates are relative to the
+     symbol centre and sized to sit inside the 48 x 30 px hostile diamond.
+
+     Only the amphibious assault vehicle is drawn so far, because it is the only
+     class on the field. The rest fall back to their abbreviation until Lee
+     confirms each symbol. */
+  const GLYPHS = {
+    /* Armour ellipse, with the amphibious wave over it: two curves down the
+       flanks and a crest rising through the middle. */
+    'amphibious-assault-vehicle': (g, x, y) => {
+      g.strokeStyle = HOSTILE;
+      g.beginPath();
+      g.ellipse(x, y, 13, 7, 0, 0, Math.PI * 2);
+      g.stroke();
+
+      g.beginPath();
+      g.moveTo(x - 14.5, y - 8.5);
+      g.quadraticCurveTo(x - 17, y + 1, x - 10.5, y + 8.5);
+      g.moveTo(x + 14.5, y - 8.5);
+      g.quadraticCurveTo(x + 17, y + 1, x + 10.5, y + 8.5);
+      g.stroke();
+
+      g.beginPath();
+      g.moveTo(x - 8.5, y + 9);
+      g.quadraticCurveTo(x, y - 13.5, x + 8.5, y + 9);
+      g.stroke();
+    }
+  };
+
   function drawEntity(v) {
     const centre = SIM_PROJ.worldToScreen(v.e, v.n, v.elev);
     if (!centre || !centre.inFront || !centre.inFrame) return;
@@ -267,6 +299,9 @@ const SIM_RENDER = (() => {
     cx2d.lineTo(sx, sy + SYMBOL_HALF_H);
     cx2d.lineTo(sx - SYMBOL_HALF_W, sy);
     cx2d.closePath();
+    /* The plate stays. Transparent was tried on 2026-09-22 and Lee rejected it:
+       over this imagery a stroke-only frame is unreadable against sand and surf,
+       and the ground it revealed was worth less than the legibility it cost. */
     cx2d.fillStyle = 'rgba(255, 246, 244, .92)';
     cx2d.fill();
     cx2d.stroke();
@@ -285,11 +320,20 @@ const SIM_RENDER = (() => {
       cx2d.stroke();
     }
 
-    cx2d.fillStyle = HOSTILE;
-    cx2d.font = '600 15px "IBM Plex Mono", ui-monospace, monospace';
-    cx2d.textAlign = 'center';
-    cx2d.textBaseline = 'middle';
-    cx2d.fillText(v.label, sx, sy + 0.5);
+    /* The class glyph if there is one, otherwise the abbreviation. Falling back
+       to text rather than to nothing means a new class is legible the moment it
+       is added, before anyone has drawn its symbol. */
+    const glyph = GLYPHS[v.type];
+    if (glyph) {
+      cx2d.lineWidth = 1.4;
+      glyph(cx2d, sx, sy);
+    } else {
+      cx2d.fillStyle = HOSTILE;
+      cx2d.font = '600 15px "IBM Plex Mono", ui-monospace, monospace';
+      cx2d.textAlign = 'center';
+      cx2d.textBaseline = 'middle';
+      cx2d.fillText(v.label, sx, sy + 0.5);
+    }
     cx2d.globalAlpha = 1;
   }
 

@@ -253,6 +253,7 @@
 <script src="js/sim-projection.js"></script>
 <script src="js/sim-clock.js"></script>
 <script src="js/sim-scenario.js"></script>
+<script src="js/sim-ecoa.js"></script>
 <script src="js/sim-entities.js"></script>
 <script src="js/sim-missions.js"></script>
 <script src="js/sim-render.js"></script>
@@ -346,7 +347,11 @@ document.querySelectorAll('.dock-head').forEach(head => {
 (() => {
   if (typeof SIM_CLOCK === 'undefined' || typeof SIM_ENTITIES === 'undefined') return;
 
-  const scn = SIM_SCENARIO.SAMPLE;
+  /* Lee's traced enemy COA when it is present, otherwise the one-contact sample
+     track. SIM_ECOA is generated from his Google Earth KMZ by
+     simulation working folder/ecoa-to-scenario.py, so a new trace is a rerun of
+     that script rather than an edit here. */
+  const scn = (typeof SIM_ECOA !== 'undefined') ? SIM_ECOA : SIM_SCENARIO.SAMPLE;
   SIM_ENTITIES.load(scn);
   SIM_CLOCK.setDuration(scn.durationSec);
 
