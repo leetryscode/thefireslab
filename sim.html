@@ -65,21 +65,19 @@
      with object-fit: contain and never cropped: the grid-to-screen projection
      is calibrated against this exact frame.
 
-     The imagery credit is a licensing requirement, not a caption. It must be
-     legible whenever the frame is on screen, so it is anchored inside
-     .sim-frame and sits top-left — the dock expands upward over the bottom of
-     the picture. Do not delete or shorten it; test-runtime.js section 28
-     checks that every named data source is still there. -->
+     The imagery credit is a licensing requirement, not a caption. It sits
+     bottom-left (Lee, 2026-09-26), which frees the top-left corner for the
+     TV / IR switch. An open chat panel grows up over that corner and covers
+     it while open, along with the picture under it. Do not delete or shorten
+     it; test-runtime.js section 28 checks every named data source is there. -->
 <div class="sim-stage">
   <div class="sim-frame">
     <img class="sim-feed" src="img/sim-pov.jpg" alt="Oblique aerial view of the coastline from the drone's point of view.">
-    <!-- Top-left corner: the credit, and under it the sensor mode. Stacked in
-         one column so the readout can never ride up over the credit, however
-         the credit wraps on a narrow window. -->
+    <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
+    <!-- Top-left corner: the sensor mode switch. -->
     <div class="sim-corner">
-      <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
-      <button type="button" id="feed-mode" class="feed-mode" aria-pressed="false"
-              title="Sensor mode — click or press I">TV</button>
+      <button type="button" id="feed-mode" class="feed-mode" aria-pressed="false" data-mode="tv"
+              title="Sensor mode — click or press I"><span class="fm-opt" data-m="tv">TV</span><span class="fm-opt" data-m="ir">IR</span></button>
     </div>
   </div>
 </div>
@@ -450,7 +448,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
   const modeBtn = document.getElementById('feed-mode');
   const paintMode = m => {
     if (!modeBtn) return;
-    modeBtn.textContent = m === 'ir' ? 'IR' : 'TV';
+    /* Both labels are always shown; the lit one is the live mode. */
+    modeBtn.dataset.mode = m === 'ir' ? 'ir' : 'tv';
     modeBtn.setAttribute('aria-pressed', String(m === 'ir'));
     modeBtn.setAttribute('aria-label', `Sensor mode ${m === 'ir' ? 'IR' : 'TV'}. Press I to switch.`);
   };
@@ -817,12 +816,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
     }
     status.classList.remove('is-bad');
     status.textContent = `${res.mission.id} — ${grid}`;
+    /* The grid on the feed has been used: clear it back to hover. */
+    if (typeof SIM_RENDER !== 'undefined' && SIM_RENDER.clearMark) SIM_RENDER.clearMark();
   });
 
   /* ---------- dev readout, hidden ----------
-     sim.html?dev=1 only. Nothing the student does needs a pixel-to-grid
-     conversion: a call for fire names a grid, it never clicks one. This exists
-     to debug the registration and to fill the grid fields quickly. */
+     sim.html?dev=1 only: grid, range and frame pixel on hover, and a click
+     fills the grid fields. The student's own click-for-a-grid is the
+     designator in js/sim-render.js; this is for debugging the registration. */
   const frame = document.querySelector('.sim-frame');
   if (frame && typeof SIM_RENDER !== 'undefined' &&
       new URLSearchParams(location.search).get('dev') === '1') {

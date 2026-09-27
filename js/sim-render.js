@@ -45,6 +45,7 @@
      SIM_RENDER.setEntitySource(fn)      fn() -> contacts to draw this frame
      SIM_RENDER.clear()                  remove everything in flight
      SIM_RENDER.setMode('tv' | 'ir')     sensor mode; toggleMode() / mode()
+     SIM_RENDER.mark() / clearMark()     the clicked grid, and clearing it
      SIM_RENDER.toFrame(clientX, clientY)  screen point -> frame px (dev tool)
    ========================================================= */
 
@@ -68,7 +69,6 @@ const SIM_RENDER = (() => {
   let bursts = [];
   let raf = 0;
   let unhook = [];               /* clock subscriptions, released by detach() */
-  let creditBottomFr = 0;        /* where the imagery credit ends, in frame px */
 
   /* ---------- the only clock this file reads ----------
      SIM_CLOCK.renderMs() is interpolated sim time: step-aligned time plus the
@@ -115,14 +115,6 @@ const SIM_RENDER = (() => {
     cx2d.setTransform(dpr, 0, 0, dpr, 0, 0);           /* CSS px */
     cx2d.translate(box.left, box.top);
     cx2d.scale(box.scale, box.scale);                   /* now: frame px */
-    /* The HUD's heading tape sits under the imagery credit, whatever the credit
-       is doing at this window size. The credit is sized in CSS px and the HUD
-       in frame px, so measure the one and convert. */
-    const credit = frameEl.querySelector('.sim-attribution');
-    if (credit && box.scale > 0) {
-      const cr = credit.getBoundingClientRect();
-      creditBottomFr = (cr.bottom - fr.top - box.top) / box.scale;
-    }
     return true;
   }
 
@@ -521,7 +513,8 @@ const SIM_RENDER = (() => {
     elevTop: 120, elevH: 130, elevX: 60,
     bracketW: 300, bracketH: 250, bracketArm: 30,
     font: '500 15px "IBM Plex Mono", ui-monospace, monospace',
-    margin: 22
+    margin: 22,
+    top: 43              /* frame px, heading box and ACRFT block */
   };
   const wrap360 = d => ((d % 360) + 360) % 360;
   const signed = d => { const x = wrap360(d + 180) - 180; return x; };
@@ -578,7 +571,9 @@ const SIM_RENDER = (() => {
 
     /* -- heading tape: centred on the aircraft's heading, sensor caret below -- */
     const cx = v.boresight.x;
-    const boxTop = Math.max(HUD.margin, creditBottomFr + 8);
+    /* Fixed. It used to sit below the imagery credit; the credit moved to the
+       bottom (2026-09-26) and Lee kept the HUD where it was, which is this. */
+    const boxTop = HUD.top;
     const boxH = 20, tapeY = boxTop + boxH + 26;
     const x0 = cx - HUD.tapeHalfW, x1 = cx + HUD.tapeHalfW;
     g.beginPath();
@@ -657,6 +652,201 @@ const SIM_RENDER = (() => {
     g.restore();
   }
 
+  /* ---------- sway: the picture drifts like a stabilised ISR ball ----------
+     Lee, 2026-09-26: a small, slow sway, and the view pulled a little toward
+     the mouse, just enough for the illusion of a live feed.
+
+     THE CALIBRATION SURVIVES BECAUSE EVERYTHING ON THE GROUND MOVES AS ONE.
+     The picture is zoomed ZOOM about its centre so a drift never shows an
+     edge, and that same zoom-and-offset is applied, with the same numbers,
+     to the image (a CSS transform) and to the ground layer of the canvas
+     (footprints, smoke, symbols, bursts). A burst still lands on the pixel
+     the projection says, because the pixel moved with it. The HUD is drawn
+     after the ground layer is restored, so it stays fixed on the glass, the
+     way sensor symbology does.
+
+     The sway runs on SIM time, like everything else in this file: a pause
+     freezes it, and at 3x it drifts three times as fast. The mouse pull eases
+     toward its target a fixed fraction per drawn frame and asks for frames
+     until it settles, so it also works while paused.
+
+     Presentation only. Nothing here is read by the clock, the entities or the
+     missions, and the call for fire names a grid, not a pixel. */
+  const VIEW = {
+    zoom: 1.04,
+    /* frame px. The zoom leaves (zoom - 1) / 2 of the frame spare on each
+       side: 37 px across and 14 px up and down. Sway plus full pull stays
+       inside that, so no edge ever shows. */
+    swayX: 10, swayY: 4,
+    pullX: 22, pullY: 8,
+    ease: 0.08
+  };
+  let pull = { x: 0, y: 0 }, pullTarget = { x: 0, y: 0 };
+  let still = false;       /* prefers-reduced-motion: zoom kept, no movement */
+
+  /** The sway at a sim time, in frame px. Pure. Two slow sines per axis at
+      unrelated periods, so it never visibly repeats. */
+  function swayAt(tSec) {
+    const T = 2 * Math.PI;
+    return {
+      x: VIEW.swayX * (0.65 * Math.sin(T * tSec / 23) + 0.35 * Math.sin(T * tSec / 9.7 + 1.3)),
+      y: VIEW.swayY * (0.6 * Math.sin(T * tSec / 17 + 0.7) + 0.4 * Math.sin(T * tSec / 7.3 + 2.1))
+    };
+  }
+
+  /** frame px -> where it shows on the zoomed, shifted picture, and back. */
+  function frameSize() {
+    return (typeof SIM_CAMERA !== 'undefined') ? SIM_CAMERA.frame : { width: 1860, height: 707 };
+  }
+  function viewApply(p, v) {
+    const F = frameSize(), cx = F.width / 2, cy = F.height / 2;
+    return { x: cx + v.dx + v.zoom * (p.x - cx), y: cy + v.dy + v.zoom * (p.y - cy) };
+  }
+  function viewInvert(p, v) {
+    const F = frameSize(), cx = F.width / 2, cy = F.height / 2;
+    return { x: cx + (p.x - cx - v.dx) / v.zoom, y: cy + (p.y - cy - v.dy) / v.zoom };
+  }
+
+  let view = { zoom: VIEW.zoom, dx: 0, dy: 0 };
+  function updateView() {
+    const t = hasClock() ? SIM_CLOCK.renderMs() / 1000 : 0;
+    const s = still ? { x: 0, y: 0 } : swayAt(t);
+    pull.x += (pullTarget.x - pull.x) * VIEW.ease;
+    pull.y += (pullTarget.y - pull.y) * VIEW.ease;
+    if (Math.abs(pullTarget.x - pull.x) < 0.05 && Math.abs(pullTarget.y - pull.y) < 0.05) pull = { ...pullTarget };
+    view = { zoom: VIEW.zoom, dx: s.x + pull.x, dy: s.y + pull.y };
+    if (imgEl && box) {
+      imgEl.style.transformOrigin = '50% 50%';
+      imgEl.style.transform =
+        `translate(${(view.dx * box.scale).toFixed(3)}px, ${(view.dy * box.scale).toFixed(3)}px) scale(${view.zoom})`;
+    }
+    return pull.x !== pullTarget.x || pull.y !== pullTarget.y;   /* still easing */
+  }
+
+  /* Mouse toward an edge = the sensor looks that way, so the picture slides
+     the other way. Normalised to the frame, so it is the same on any window. */
+  function onPointer(ev) {
+    if (still || !frameEl || mark) return;      /* locked: the view holds */
+    const r = frameEl.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) return;
+    const nx = Math.max(-1, Math.min(1, ((ev.clientX - r.left) / r.width) * 2 - 1));
+    const ny = Math.max(-1, Math.min(1, ((ev.clientY - r.top) / r.height) * 2 - 1));
+    pullTarget = { x: -nx * VIEW.pullX, y: -ny * VIEW.pullY };
+    kick();
+  }
+  function onLeave() { if (!mark) pullTarget = { x: 0, y: 0 }; kick(); }
+
+  /* ---------- the designator: hover reticle, click for a grid ----------
+     Lee, 2026-09-26. Over the feed the mouse is a sideways cross (an X with
+     an open centre). Click, and it locks: the X stays on that piece of ground
+     and an 8-digit grid appears in a box under it. Click the feed again, press
+     Escape, or send a call for fire, and it clears back to hover.
+
+     WHILE LOCKED:
+       - the mark is GROUND-stabilised: it moves with the sway, because it is a
+         point on the ground, and the grid never changes while it moves;
+       - the view stops chasing the mouse, so the student can go to the chat
+         without dragging the picture — and the mark — with them;
+       - the ordinary cursor comes back, so they can see where they are going.
+
+     The grid is the projection answering at sea level (the plain is 0-8 m),
+     truncated to 8 digits the way MGRS is: a 10 m square. Presentation only —
+     nothing here reaches the missions; the student still types the grid. */
+  let hover = null;            /* {x, y} glass px (frame px, unswayed), or null */
+  let mark = null;             /* {x, y, e, n, grid} ground frame px + grid, or null */
+
+  /** Frame px (ground, unswayed) -> 8-digit grid, or null off the ground. */
+  function gridAt(fx, fy) {
+    const F = frameSize();
+    if (!(fx >= 0 && fy >= 0 && fx <= F.width && fy <= F.height)) return null;
+    const w = SIM_PROJ.screenToWorld(fx, fy, 0);
+    if (!w) return null;
+    return { e: w.e, n: w.n, grid: SIM_PROJ.utmToMgrs(w.e, w.n, 4) };
+  }
+
+  function glassPoint(clientX, clientY) {
+    if (!box || !frameEl) return null;
+    const fr = frameEl.getBoundingClientRect();
+    return { x: (clientX - fr.left - box.left) / box.scale, y: (clientY - fr.top - box.top) / box.scale };
+  }
+
+  function setHoverClass() {
+    if (frameEl) frameEl.classList.toggle('is-designating', !mark);
+  }
+
+  function lockAt(clientX, clientY) {
+    const g = glassPoint(clientX, clientY);
+    if (!g) return false;
+    const p = viewInvert(g, view);                  /* the ground under the X */
+    const at = gridAt(p.x, p.y);
+    if (!at) return false;
+    mark = { x: p.x, y: p.y, e: at.e, n: at.n, grid: at.grid };
+    hover = null;
+    setHoverClass();
+    kick();
+    return true;
+  }
+  function clearMark() {
+    if (!mark) return false;
+    mark = null;
+    setHoverClass();
+    kick();
+    return true;
+  }
+
+  function onDesignatorMove(ev) {
+    if (mark) return;
+    hover = glassPoint(ev.clientX, ev.clientY);
+    kick();
+  }
+  function onDesignatorLeave() { hover = null; kick(); }
+  function onDesignatorClick(ev) {
+    /* The TV / IR readout and the credit corner are not ground. */
+    if (ev.target && ev.target.closest && ev.target.closest('.sim-corner')) return;
+    if (mark) clearMark(); else lockAt(ev.clientX, ev.clientY);
+  }
+  function onDesignatorKey(ev) {
+    if (ev.key === 'Escape' && !ev.defaultPrevented && mark) { clearMark(); }
+  }
+
+  /* The X: four strokes on the diagonals with an open centre, glass-sized. */
+  function drawX(g, x, y) {
+    const gap = 7, arm = 13;
+    g.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      g.moveTo(x + sx * gap, y + sy * gap);
+      g.lineTo(x + sx * (gap + arm), y + sy * (gap + arm));
+    }
+    g.stroke();
+  }
+
+  function drawDesignator() {
+    if (!mark && !hover) return;
+    const ir = mode === 'ir';
+    const ink = ir ? '#ffffff' : '#000000';
+    const g = cx2d;
+    g.save();
+    g.strokeStyle = ink;
+    g.lineWidth = 2;
+    if (!mark) { drawX(g, hover.x, hover.y); g.restore(); return; }
+
+    const at = viewApply(mark, view);                /* where the ground is now */
+    drawX(g, at.x, at.y);
+    g.font = '500 17px "IBM Plex Mono", ui-monospace, monospace';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    const w = g.measureText ? (g.measureText(mark.grid).width || 190) : 190;
+    const bw = w + 20, bh = 28, bx = at.x - bw / 2, by = at.y + 30;
+    /* A backed box, so ten digits stay readable over surf or sand. */
+    g.fillStyle = ir ? 'rgba(0, 0, 0, .6)' : 'rgba(255, 255, 255, .78)';
+    g.fillRect(bx, by, bw, bh);
+    g.lineWidth = 1.5;
+    g.strokeRect(bx, by, bw, bh);
+    g.fillStyle = ink;
+    g.fillText(mark.grid, at.x, by + bh / 2 + 1);
+    g.restore();
+  }
+
   /* ---------- loop ---------- */
   function frame() {
     raf = 0;
@@ -666,6 +856,14 @@ const SIM_RENDER = (() => {
     cx2d.setTransform(1, 0, 0, 1, 0, 0);
     cx2d.clearRect(0, 0, cv.width, cv.height);
     cx2d.restore();
+
+    const easing = updateView();
+
+    /* The ground layer moves with the picture; see "sway" above. */
+    cx2d.save();
+    cx2d.transform(view.zoom, 0, 0, view.zoom,
+                   (1 - view.zoom) * frameSize().width / 2 + view.dx,
+                   (1 - view.zoom) * frameSize().height / 2 + view.dy);
 
     /* Order: footprints, then smoke over them, then the symbols, then the
        bursts. A round landing on a vehicle should obscure it, and so should its
@@ -697,13 +895,18 @@ const SIM_RENDER = (() => {
     }
     bursts = bursts.filter(b => now - b.t0 <= BURST_MS);
 
-    /* The HUD last: it is symbology on the glass, over everything. */
+    cx2d.restore();              /* end of the ground layer */
+
+    /* The HUD last, and outside the sway: it is symbology on the glass. */
     drawHud();
+    drawDesignator();
 
     /* Self-drive only when nothing else is driving. With a clock playing, the
        next frame arrives through SIM_CLOCK.onFrame; with a clock paused the
        picture cannot change, so one draw is the whole job. */
     if ((live || plumes.length) && !hasClock()) raf = requestAnimationFrame(frame);
+    /* The mouse pull eases over a few frames; a paused clock sends none, so ask. */
+    if (easing && !(hasClock() && SIM_CLOCK.isRunning())) raf = requestAnimationFrame(frame);
   }
 
   function kick() { if (!raf) raf = requestAnimationFrame(frame); }
@@ -720,6 +923,14 @@ const SIM_RENDER = (() => {
     if (imgEl.complete) redraw(); else imgEl.addEventListener('load', redraw);
     window.addEventListener('resize', redraw);
     if (window.ResizeObserver) new ResizeObserver(redraw).observe(frameEl);
+    still = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    frameEl.addEventListener('pointermove', onPointer);
+    frameEl.addEventListener('pointerleave', onLeave);
+    frameEl.addEventListener('pointermove', onDesignatorMove);
+    frameEl.addEventListener('pointerleave', onDesignatorLeave);
+    frameEl.addEventListener('click', onDesignatorClick);
+    document.addEventListener('keydown', onDesignatorKey);
+    setHoverClass();
 
     if (hasClock()) {
       /* While playing, the clock is the only thing that asks for a frame. */
@@ -789,12 +1000,16 @@ const SIM_RENDER = (() => {
     const fr = frameEl.getBoundingClientRect();
     const x = (clientX - fr.left - box.left) / box.scale;
     const y = (clientY - fr.top  - box.top ) / box.scale;
-    return { x, y };
+    /* Undo the sway, so the dev readout still names the ground under the
+       mouse rather than the ground that would be there with the camera still. */
+    return viewInvert({ x, y }, view);
   }
 
   return { attach, detach, fireMission, setEntitySource, clear, toFrame, containBox,
            groundQuad, setMode, toggleMode, mode: () => mode,
            plumeState, plumeCount: () => plumes.length, hudValues, latLonText,
+           swayAt, viewApply, viewInvert, VIEW, view: () => ({ ...view }),
+           gridAt, clearMark, mark: () => (mark ? { ...mark } : null), hover: () => (hover ? { ...hover } : null),
            PLUME_MS, PUFFS_PER_PLUME, MAX_PUFFS,
            get box() { return box; } };
 })();

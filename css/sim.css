@@ -99,39 +99,62 @@ body.sim {
   pointer-events: none;
 }
 
-/* The top-left corner of the feed: the credit, then the sensor mode under it.
-   The column is what guarantees the readout never covers the credit. The
-   credit keeps every rule above; only its absolute placement is handed to the
-   column, so the map's copy of the credit is untouched. */
+/* The feed's copy of the credit sits bottom-left. The base rule above anchors
+   it top-left, which the map's copy still overrides for itself; only this
+   one moves.
+
+   It sits UNDER the overlay (z 0 against the canvas's 1). From about T+8:30
+   the D corridor, and later the S, drive along the bottom edge, and over the
+   credit the text was covering their footprints and leaders. Now the contacts
+   draw over the credit instead: the credit is still there, and a vehicle is
+   never hidden by it. */
+.sim-frame > .sim-attribution { top: auto; bottom: 0; z-index: 0; }
+
+/* The top-left corner of the feed: the sensor mode switch. */
 .sim-corner {
   position: absolute;
-  top: 0;
+  top: .4rem;
   left: 0;
   z-index: 2;
-  max-width: calc(100% - 1rem);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   pointer-events: none;
 }
-.sim-corner .sim-attribution { position: static; max-width: none; }
 .feed-mode {
   pointer-events: auto;
+  display: inline-flex;
   margin: 0 0 0 .5rem;
-  padding: 0 .35rem;
+  padding: 0;
   font-family: var(--font-mono);
   font-size: .68rem;
   line-height: 1.5;
   letter-spacing: .06em;
   color: #fff;
   background: rgba(0, 0, 0, .35);
-  border: 1px solid rgba(255, 255, 255, .7);
+  border: 1px solid rgba(255, 255, 255, .8);
   border-radius: 2px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .95);
   cursor: pointer;
+  overflow: hidden;
+}
+/* A two-way switch: both modes always visible, the live one lit. */
+.fm-opt {
+  padding: 0 .4rem;
+  color: rgba(255, 255, 255, .6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .95);
+}
+.fm-opt + .fm-opt { border-left: 1px solid rgba(255, 255, 255, .8); }
+.feed-mode[data-mode="tv"] .fm-opt[data-m="tv"],
+.feed-mode[data-mode="ir"] .fm-opt[data-m="ir"] {
+  color: #111;
+  background: rgba(255, 255, 255, .9);
+  text-shadow: none;
 }
 .feed-mode:hover { background: rgba(0, 0, 0, .55); }
 .feed-mode:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* Hovering the feed, the mouse IS the reticle (drawn on the canvas), so the
+   system cursor goes. Once a grid is locked the cursor comes back, so the
+   student can see their way to the chat. */
+.sim-frame.is-designating { cursor: none; }
+.sim-frame.is-designating .feed-mode { cursor: pointer; }
 
 /* IR. A first guess at the look, to be tuned against the picture by eye —
    which is why it is one custom property. On the image only: the credit and
