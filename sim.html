@@ -76,7 +76,7 @@
     <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
     <!-- Top-left corner: the sensor mode switch. -->
     <div class="sim-corner">
-      <button type="button" id="feed-mode" class="feed-mode" aria-pressed="false" data-mode="tv"
+      <button type="button" id="feed-mode" class="feed-mode" aria-pressed="true" data-mode="ir"
               title="Sensor mode — click or press I"><span class="fm-opt" data-m="tv">TV</span><span class="fm-opt" data-m="ir">IR</span></button>
     </div>
   </div>
@@ -455,6 +455,9 @@ document.querySelectorAll('.dock-head').forEach(head => {
     modeBtn.setAttribute('aria-pressed', String(m === 'ir'));
     modeBtn.setAttribute('aria-label', `Sensor mode ${m === 'ir' ? 'IR' : 'TV'}. Press I to switch.`);
   };
+  /* The feed opens in IR (Lee, 2026-09-27): white-hot contacts on dark water
+     are what the student is looking for first. */
+  SIM_RENDER.setMode('ir');
   paintMode(SIM_RENDER.mode());
   modeBtn && modeBtn.addEventListener('click', ev => {
     paintMode(SIM_RENDER.toggleMode());

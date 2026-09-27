@@ -46,6 +46,7 @@
      SIM_RENDER.clear()                  remove everything in flight
      SIM_RENDER.setMode('tv' | 'ir')     sensor mode; toggleMode() / mode()
      SIM_RENDER.mark() / clearMark()     the clicked grid, and clearing it
+    SIM_RENDER.bracketed() / groupTag(vs)  ids under the hover bracket; its tag text
      SIM_RENDER.toFrame(clientX, clientY)  screen point -> frame px (dev tool)
    ========================================================= */
 
@@ -327,26 +328,24 @@ const SIM_RENDER = (() => {
   }
 
   /* ---------- contacts ----------
-     Lee's concept, 2026-09-19: a small to-scale dark rectangle with a tactical
-     symbol on a leader hovering above it.
+     A small to-scale dark footprint, and nothing standing above it. The
+     floating flags (a leader up to a hostile diamond with the class glyph)
+     were cut by Lee on 2026-09-27: over a busy feed they stacked into a wall of
+     white plates. Identification now comes from the hover bracket below.
 
-     THE RECTANGLE IS FOUR PROJECTED GROUND CORNERS, never an axis-aligned rect.
+     THE FOOTPRINT IS FOUR PROJECTED GROUND CORNERS, never an axis-aligned rect.
      An oblique view compresses range about three times harder than deflection,
      so a ground rectangle is a trapezoid on screen whose shape changes with
      both position and heading. Projecting the corners costs nothing and gives
      the foreshortening and the heading for free.
 
-     The footprint is honestly to scale, which means it is tiny at range — a
-     35 m craft is about 2 px deep at 4.6 km. That is the point: you should not
-     be able to identify a vehicle at that range. The floating symbol is what
-     carries the identification, so it is sized in SCREEN pixels and stays
-     legible wherever the contact is. */
-  const SYMBOL_LEAD_PX = 40;     /* frame px from the footprint up to the symbol */
-  const SYMBOL_HALF_W  = 24;
-  const SYMBOL_HALF_H  = 15;
-  const HOSTILE        = '#b3261e';
+     It is honestly to scale, which means it is tiny at range — a 35 m craft is
+     about 2 px deep at 4.6 km. Below MIN_SMUDGE_PX it is drawn as a smudge of
+     that size instead, so a far contact reads as "something too far away to
+     make out" rather than vanishing. */
   const HULL           = '#22201c';
   const HULL_IR        = '#f6f6f1';   /* white-hot */
+  const MIN_SMUDGE_PX  = 3;
 
   let entitySource = null;
 
@@ -365,41 +364,6 @@ const SIM_RENDER = (() => {
     return pts;
   }
 
-  /* ---------- class glyphs ----------
-     Drawn from Lee's ops graphics as canvas paths rather than an image file:
-     they stay crisp at any size, tint with the hostile colour, and keep the
-     offline requirement (no new asset to ship). Coordinates are relative to the
-     symbol centre and sized to sit inside the 48 x 30 px hostile diamond.
-
-     Only the amphibious assault vehicle is drawn so far, because it is the only
-     class on the field. The rest fall back to their abbreviation until Lee
-     confirms each symbol. */
-  const GLYPHS = {
-    /* Armour ellipse, with the amphibious wave over it: two curves down the
-       flanks and a crest rising through the middle. */
-    'amphibious-assault-vehicle': (g, x, y) => {
-      g.strokeStyle = HOSTILE;
-      g.beginPath();
-      g.ellipse(x, y, 13, 7, 0, 0, Math.PI * 2);
-      g.stroke();
-
-      g.beginPath();
-      g.moveTo(x - 14.5, y - 8.5);
-      g.quadraticCurveTo(x - 17, y + 1, x - 10.5, y + 8.5);
-      g.moveTo(x + 14.5, y - 8.5);
-      g.quadraticCurveTo(x + 17, y + 1, x + 10.5, y + 8.5);
-      g.stroke();
-
-      g.beginPath();
-      g.moveTo(x - 8.5, y + 9);
-      g.quadraticCurveTo(x, y - 13.5, x + 8.5, y + 9);
-      g.stroke();
-    }
-  };
-
-  /* The footprint and the symbol are drawn in two passes so smoke can sit
-     between them: a plume should hide the vehicle, not the track symbol a
-     student needs to read. The symbol code itself is unchanged. */
   function drawFootprint(v) {
     const centre = SIM_PROJ.worldToScreen(v.e, v.n, v.elev);
     if (!centre || !centre.inFront || !centre.inFrame) return null;
@@ -411,79 +375,23 @@ const SIM_RENDER = (() => {
        alone can disappear into nothing, which would read as "no contact"
        rather than "a contact too far away to make out".
        In IR a running vehicle is the hottest thing on the ground, so its
-       footprint goes white-hot. Only the footprint: the symbol is unchanged. */
+       footprint goes white-hot. */
     const hull = mode === 'ir' ? HULL_IR : HULL;
     cx2d.globalAlpha = v.state === 'destroyed' ? 0.35 : 1;
     cx2d.fillStyle = hull;
-    tracePolygon(quad);
-    cx2d.fill();
-    cx2d.strokeStyle = hull;
-    cx2d.lineWidth = 1;
-    cx2d.stroke();
-    cx2d.globalAlpha = 1;
-    return { v, centre, quad };
-  }
-
-  function drawSymbol({ v, centre, quad }) {
-    cx2d.globalAlpha = v.state === 'destroyed' ? 0.35 : 1;
-
-    /* The leader rises from the top of the footprint, so the symbol never sits
-       on top of the thing it is labelling. */
-    const top = Math.min(...quad.map(p => p.y));
-    const sx = centre.x, sy = top - SYMBOL_LEAD_PX;
-
-    cx2d.strokeStyle = HOSTILE;
-    cx2d.lineWidth = 1.5;
-    cx2d.beginPath();
-    cx2d.moveTo(sx, top);
-    cx2d.lineTo(sx, sy + SYMBOL_HALF_H);
-    cx2d.stroke();
-
-    /* A diamond is the hostile ground frame. Deliberately not a full 2525
-       symbol set — the class abbreviation inside it carries the identification
-       until there is a reason for more. */
-    cx2d.beginPath();
-    cx2d.moveTo(sx, sy - SYMBOL_HALF_H);
-    cx2d.lineTo(sx + SYMBOL_HALF_W, sy);
-    cx2d.lineTo(sx, sy + SYMBOL_HALF_H);
-    cx2d.lineTo(sx - SYMBOL_HALF_W, sy);
-    cx2d.closePath();
-    /* The plate stays. Transparent was tried on 2026-09-22 and Lee rejected it:
-       over this imagery a stroke-only frame is unreadable against sand and surf,
-       and the ground it revealed was worth less than the legibility it cost. */
-    cx2d.fillStyle = 'rgba(255, 246, 244, .92)';
-    cx2d.fill();
-    cx2d.stroke();
-
-    /* A high-payoff target gets a second ring. Nothing reads it yet — there is
-       no HPTL — but the flag is already on the entity and drawing it is one
-       line, so the day the list exists the feed already agrees with it. */
-    if (v.hpt) {
+    const xs = quad.map(p => p.x), ys = quad.map(p => p.y);
+    if (Math.max(...xs) - Math.min(...xs) < MIN_SMUDGE_PX && Math.max(...ys) - Math.min(...ys) < MIN_SMUDGE_PX) {
+      const h = MIN_SMUDGE_PX / 2;
+      cx2d.fillRect(centre.x - h, centre.y - h, MIN_SMUDGE_PX, MIN_SMUDGE_PX);
+    } else {
+      tracePolygon(quad);
+      cx2d.fill();
+      cx2d.strokeStyle = hull;
       cx2d.lineWidth = 1;
-      cx2d.beginPath();
-      cx2d.moveTo(sx, sy - SYMBOL_HALF_H - 4);
-      cx2d.lineTo(sx + SYMBOL_HALF_W + 5, sy);
-      cx2d.lineTo(sx, sy + SYMBOL_HALF_H + 4);
-      cx2d.lineTo(sx - SYMBOL_HALF_W - 5, sy);
-      cx2d.closePath();
       cx2d.stroke();
     }
-
-    /* The class glyph if there is one, otherwise the abbreviation. Falling back
-       to text rather than to nothing means a new class is legible the moment it
-       is added, before anyone has drawn its symbol. */
-    const glyph = GLYPHS[v.type];
-    if (glyph) {
-      cx2d.lineWidth = 1.4;
-      glyph(cx2d, sx, sy);
-    } else {
-      cx2d.fillStyle = HOSTILE;
-      cx2d.font = '600 15px "IBM Plex Mono", ui-monospace, monospace';
-      cx2d.textAlign = 'center';
-      cx2d.textBaseline = 'middle';
-      cx2d.fillText(v.label, sx, sy + 0.5);
-    }
     cx2d.globalAlpha = 1;
+    return { v, centre, quad };
   }
 
   /* ---------- the HUD ----------
@@ -508,8 +416,8 @@ const SIM_RENDER = (() => {
     degPx: 5,             /* heading tape: px per degree -> +-30 deg shown */
     /* Elevation tape, 0 to -90. Held in the sea above the left-hand column:
        measured over the whole run, no contact symbol in the left 160 px ever
-       rises above y 266, so the tape ends at 250. Lower and it sits on the
-       left column's symbols (142 collisions when it ran 190-520). */
+       rose above y 266, so the tape ends at 250. (Measured against the old
+       floating flags, cut 2026-09-27; footprints sit lower still.) */
     elevTop: 120, elevH: 130, elevX: 60,
     bracketW: 300, bracketH: 250, bracketArm: 30,
     font: '500 15px "IBM Plex Mono", ui-monospace, monospace',
@@ -660,7 +568,7 @@ const SIM_RENDER = (() => {
      The picture is zoomed ZOOM about its centre so a drift never shows an
      edge, and that same zoom-and-offset is applied, with the same numbers,
      to the image (a CSS transform) and to the ground layer of the canvas
-     (footprints, smoke, symbols, bursts). A burst still lands on the pixel
+     (footprints, smoke, bursts). A burst still lands on the pixel
      the projection says, because the pixel moved with it. The HUD is drawn
      after the ground layer is restored, so it stays fixed on the glass, the
      way sensor symbology does.
@@ -849,6 +757,87 @@ const SIM_RENDER = (() => {
     g.restore();
   }
 
+  /* ---------- the hover bracket ----------
+     Lee, 2026-09-27. Hover the reticle over a contact and corner brackets close
+     on it, with its class in a short tag on the top-right corner: [AAV],
+     [FUEL], [ENG], [LCU]. Where vehicles are packed tighter than the reticle
+     can separate, every contact within reach of the cursor is bracketed as ONE
+     group and the tag counts them: [6 FUEL  3 AAV]. No click — clicking is
+     still the designator's, for a grid.
+
+     Glass symbology like the HUD and the designator: black in TV, white in IR,
+     drawn outside the sway, with a halo in the other colour so the tag reads
+     over surf and sand without a plate. Nothing here touches the entities; it
+     reads the footprints the frame just drew, so it can never bracket a place
+     the vehicle is not. */
+  const HOVER_R_PX   = 18;   /* glass px from the reticle to a contact's centre */
+  const BRACKET_PAD  = 5;    /* glass px of air between the footprints and the bracket */
+  const BRACKET_MIN  = 18;   /* a far contact still gets a bracket you can see */
+  let bracketed = [];        /* ids under the bracket at the last frame */
+
+  /** The tag for a set of contacts. Pure. One contact: its class, [AAV]. Several:
+      a count per class, most first, then in class-table order: [6 FUEL  3 AAV]. */
+  function groupTag(vs) {
+    if (!vs || !vs.length) return '';
+    if (vs.length === 1) return `[${vs[0].label}]`;
+    const order = (typeof SIM_SCENARIO !== 'undefined') ? Object.keys(SIM_SCENARIO.CLASSES) : [];
+    const n = new Map();
+    for (const v of vs) n.set(v.label, { k: v.label, c: ((n.get(v.label) || {}).c || 0) + 1, o: order.indexOf(v.type) });
+    return '[' + [...n.values()].sort((a, b) => b.c - a.c || a.o - b.o).map(x => `${x.c} ${x.k}`).join('  ') + ']';
+  }
+
+  /** Which drawn contacts the reticle is on: everything within HOVER_R_PX of
+      it, measured on the glass (the picture as it sits after sway and pull). */
+  function underReticle(drawn) {
+    if (!hover || mark || !drawn || !drawn.length) return [];
+    return drawn.filter(d => {
+      const g = viewApply(d.centre, view);
+      return Math.hypot(g.x - hover.x, g.y - hover.y) <= HOVER_R_PX;
+    });
+  }
+
+  function drawBracket(drawn) {
+    const hit = underReticle(drawn);
+    bracketed = hit.map(d => d.v.id);
+    if (!hit.length) return;
+    const pts = [];
+    for (const d of hit) for (const q of d.quad) pts.push(viewApply(q, view));
+    let x0 = Math.min(...pts.map(p => p.x)) - BRACKET_PAD, x1 = Math.max(...pts.map(p => p.x)) + BRACKET_PAD;
+    let y0 = Math.min(...pts.map(p => p.y)) - BRACKET_PAD, y1 = Math.max(...pts.map(p => p.y)) + BRACKET_PAD;
+    if (x1 - x0 < BRACKET_MIN) { const c = (x0 + x1) / 2; x0 = c - BRACKET_MIN / 2; x1 = c + BRACKET_MIN / 2; }
+    if (y1 - y0 < BRACKET_MIN) { const c = (y0 + y1) / 2; y0 = c - BRACKET_MIN / 2; y1 = c + BRACKET_MIN / 2; }
+
+    const ir = mode === 'ir';
+    const ink = ir ? '#ffffff' : '#000000', halo = ir ? '#000000' : '#ffffff';
+    const arm = Math.min(8, (x1 - x0) / 3, (y1 - y0) / 3);
+    const g = cx2d;
+    g.save();
+    const corners = () => {
+      g.beginPath();
+      for (const [x, y, sx, sy] of [[x0, y0, 1, 1], [x1, y0, -1, 1], [x1, y1, -1, -1], [x0, y1, 1, -1]]) {
+        g.moveTo(x + sx * arm, y); g.lineTo(x, y); g.lineTo(x, y + sy * arm);
+      }
+      g.stroke();
+    };
+    g.lineCap = 'square';
+    g.strokeStyle = halo; g.lineWidth = 3.5; corners();
+    g.strokeStyle = ink;  g.lineWidth = 1.5; corners();
+
+    const tag = groupTag(hit.map(d => d.v));
+    g.font = '600 14px "IBM Plex Mono", ui-monospace, monospace';
+    g.textAlign = 'left';
+    g.textBaseline = 'bottom';
+    const F = frameSize();
+    const tw = (g.measureText && g.measureText(tag).width) || tag.length * 8.4;
+    const tx = Math.min(x1 + 2, F.width - tw - 4), ty = Math.max(y0 - 2, 18);
+    g.lineJoin = 'round';
+    g.strokeStyle = halo; g.lineWidth = 3;
+    g.strokeText(tag, tx, ty);
+    g.fillStyle = ink;
+    g.fillText(tag, tx, ty);
+    g.restore();
+  }
+
   /* ---------- loop ---------- */
   function frame() {
     raf = 0;
@@ -867,9 +856,9 @@ const SIM_RENDER = (() => {
                    (1 - view.zoom) * frameSize().width / 2 + view.dx,
                    (1 - view.zoom) * frameSize().height / 2 + view.dy);
 
-    /* Order: footprints, then smoke over them, then the symbols, then the
-       bursts. A round landing on a vehicle should obscure it, and so should its
-       smoke — but never the symbol the student is reading. */
+    /* Order: footprints, then smoke over them, then the bursts. A round
+       landing on a vehicle should obscure it, and so should its smoke. The
+       hover bracket is glass symbology and is drawn later, outside the sway. */
     let drawn = [];
     if (entitySource) {
       let vs = null;
@@ -885,8 +874,6 @@ const SIM_RENDER = (() => {
       if (age >= 0) drawPlume(p, age, wind);
     }
 
-    for (const d of drawn) drawSymbol(d);
-
     let live = 0;
     for (const b of bursts) {
       const age = now - b.t0;
@@ -901,6 +888,7 @@ const SIM_RENDER = (() => {
 
     /* The HUD last, and outside the sway: it is symbology on the glass. */
     drawHud();
+    drawBracket(drawn);
     drawDesignator();
 
     /* Self-drive only when nothing else is driving. With a clock playing, the
@@ -1012,6 +1000,7 @@ const SIM_RENDER = (() => {
            plumeState, plumeCount: () => plumes.length, hudValues, latLonText,
            swayAt, viewApply, viewInvert, VIEW, view: () => ({ ...view }),
            gridAt, clearMark, mark: () => (mark ? { ...mark } : null), hover: () => (hover ? { ...hover } : null),
+           groupTag, bracketed: () => bracketed.slice(),
            PLUME_MS, PUFFS_PER_PLUME, MAX_PUFFS,
            get box() { return box; } };
 })();

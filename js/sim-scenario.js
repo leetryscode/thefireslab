@@ -46,7 +46,8 @@ const SIM_SCENARIO = (() => {
      keep refining it, so treat this table as the single place it changes — the
      call-for-fire dropdown is built from it rather than repeating it.
 
-     `label` is what floats above the contact; `hpt` marks a high-payoff target.
+     `label` is the class tag in the hover bracket ([FUEL], [LCU]; Lee's
+     wording, 2026-09-27); `hpt` marks a high-payoff target.
      Only `engineering` carries it, because the breacher is the one Lee has
      actually named as the designed HPT. Nothing else is flagged on a guess.
 
@@ -62,13 +63,18 @@ const SIM_SCENARIO = (() => {
      sized as an LCU 1700-class (~42 x 9 m, from memory, NOT verified); the
      engineer is "slightly bigger" than the AAV, with arm and blade (10.5 x 3.8
      m, an estimate); the fuel truck is deliberately the SAME footprint as the
-     AAV, so the symbol, not the smudge, tells them apart. */
+     AAV, so the tag, not the smudge, tells them apart.
+
+     Lee, later 2026-09-27, once the floating flags were cut: the landing craft
+     and the engineer "a bit bigger" — LCU 42 x 9 -> 50 x 11 m, engineer
+     10.5 x 3.8 -> 12.5 x 4.5 m. A display choice, so they read on the feed;
+     not a researched figure. */
   const CLASSES = {
-    'amphibious-assault-vehicle': { label: 'AAV', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false },
-    'engineering':              { label: 'ENG', lengthM: 10.5, widthM:  3.8, defaultKph: 25, hpt: true  },
-    'landing-craft':            { label: 'LC',  lengthM: 42.0, widthM:  9.0, defaultKph: 20, hpt: false },
-    'self-propelled-artillery': { label: 'SPA', lengthM: 10.0, widthM:  3.5, defaultKph: 35, hpt: false },
-    'logistics':                { label: 'LOG', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false }
+    'amphibious-assault-vehicle': { label: 'AAV',  lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false },
+    'engineering':              { label: 'ENG',  lengthM: 12.5, widthM:  4.5, defaultKph: 25, hpt: true  },
+    'landing-craft':            { label: 'LCU',  lengthM: 50.0, widthM: 11.0, defaultKph: 20, hpt: false },
+    'self-propelled-artillery': { label: 'SPA',  lengthM: 10.0, widthM:  3.5, defaultKph: 35, hpt: false },
+    'logistics':                { label: 'FUEL', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false }
   };
 
   /* What the student says the target is sitting in. Lee's list; the call for
