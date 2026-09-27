@@ -30,6 +30,9 @@
      SIM_SCENARIO.prepare(scn)         resolve grids, measure legs. Returns scn.
      SIM_SCENARIO.routeAt(route, s)    {e, n, elev, heading, leg, speedKph, atEnd}
      SIM_SCENARIO.SAMPLE               the one scenario that exists today
+     SIM_SCENARIO.WIND                 {towardTrueDeg, speedMps} — moves smoke only
+     SIM_SCENARIO.windGrid()           the wind as grid {e, n} metres per second
+     SIM_SCENARIO.PLATFORM             {headingTrueDeg} — the aircraft, for the HUD
    ========================================================= */
 
 const SIM_SCENARIO = (() => {
@@ -75,6 +78,42 @@ const SIM_SCENARIO = (() => {
     'self-propelled-artillery': 'self propelled artillery',
     'logistics':                'logistics'
   };
+
+  /* ---------- wind ----------
+     One constant for the whole scenario, blowing from true north to true
+     south (Lee, 2026-09-26). It moves smoke and nothing else.
+
+     Stated in TRUE degrees because that is how a wind is given, and converted
+     to the grid here, once, so everything downstream works in the same UTM
+     metres as the routes. Grid convergence at the feed is -0.87 deg (the same
+     figure sim-camera.js records), so true south is grid 180.87 — worked
+     independently from a transverse Mercator forward of two points on one
+     meridian, not from this file. Over 60 s at 3 m/s that is about 3 m of
+     westward drift; applied because it is free, not because anyone could see it.
+
+     THE SPEED IS A PLACEHOLDER. 3 m/s is a light breeze chosen so a plume
+     visibly leans without leaving the frame. */
+  const GRID_CONVERGENCE_DEG = -0.87;
+  const WIND = Object.freeze({ towardTrueDeg: 180, speedMps: 3 });
+
+  /* ---------- the platform ----------
+     What the drone itself is doing, for the HUD. The feed is one static frame,
+     so the aircraft never turns and this is a constant.
+
+     INVENTED, 2026-09-26: nothing in the capture says which way the aircraft
+     was pointing — only where the sensor was. 110 true puts the nose a little
+     left of the sensor line (sensor 124 true), which reads as a drone flying
+     toward the objective with the ball slewed slightly right. Lee's call to
+     change. Where the SENSOR points is not invented: it is the fitted camera in
+     sim-camera.js, and the HUD reads it from there. */
+  const PLATFORM = Object.freeze({ headingTrueDeg: 110 });
+
+  /** Wind as grid metres per second: {e, n}. Pure. */
+  function windGrid(w) {
+    const wind = w || WIND;
+    const b = (wind.towardTrueDeg - GRID_CONVERGENCE_DEG) * Math.PI / 180;
+    return { e: wind.speedMps * Math.sin(b), n: wind.speedMps * Math.cos(b) };
+  }
 
   /* ---------- the sample track ----------
      Lee's seven grids, 2026-09-19: in from seaward, across the beach, onto the
@@ -188,7 +227,7 @@ const SIM_SCENARIO = (() => {
     };
   }
 
-  return { CLASSES, CLASS_LABELS, ENVIRONMENTS, SAMPLE, prepare, routeAt };
+  return { CLASSES, CLASS_LABELS, ENVIRONMENTS, SAMPLE, WIND, windGrid, PLATFORM, prepare, routeAt };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SIM_SCENARIO;

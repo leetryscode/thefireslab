@@ -44,6 +44,7 @@
      SIM_RENDER.fireMission(e, n, elev, rounds)  drop one volley on a grid
      SIM_RENDER.setEntitySource(fn)      fn() -> contacts to draw this frame
      SIM_RENDER.clear()                  remove everything in flight
+     SIM_RENDER.setMode('tv' | 'ir')     sensor mode; toggleMode() / mode()
      SIM_RENDER.toFrame(clientX, clientY)  screen point -> frame px (dev tool)
    ========================================================= */
 
@@ -67,6 +68,7 @@ const SIM_RENDER = (() => {
   let bursts = [];
   let raf = 0;
   let unhook = [];               /* clock subscriptions, released by detach() */
+  let creditBottomFr = 0;        /* where the imagery credit ends, in frame px */
 
   /* ---------- the only clock this file reads ----------
      SIM_CLOCK.renderMs() is interpolated sim time: step-aligned time plus the
@@ -113,6 +115,14 @@ const SIM_RENDER = (() => {
     cx2d.setTransform(dpr, 0, 0, dpr, 0, 0);           /* CSS px */
     cx2d.translate(box.left, box.top);
     cx2d.scale(box.scale, box.scale);                   /* now: frame px */
+    /* The HUD's heading tape sits under the imagery credit, whatever the credit
+       is doing at this window size. The credit is sized in CSS px and the HUD
+       in frame px, so measure the one and convert. */
+    const credit = frameEl.querySelector('.sim-attribution');
+    if (credit && box.scale > 0) {
+      const cr = credit.getBoundingClientRect();
+      creditBottomFr = (cr.bottom - fr.top - box.top) / box.scale;
+    }
     return true;
   }
 
@@ -155,7 +165,7 @@ const SIM_RENDER = (() => {
     const smoke = groundDisc(b.e, b.n, b.elev, BURST_R_M * grow);
     if (smoke) {
       cx2d.globalAlpha = 0.55 * (1 - t) * (1 - t);
-      cx2d.fillStyle = '#d8d2c4';
+      cx2d.fillStyle = mode === 'ir' ? '#ffffff' : '#d8d2c4';
       tracePolygon(smoke);
       cx2d.fill();
     }
@@ -169,9 +179,11 @@ const SIM_RENDER = (() => {
       const cyv = top && top.inFront ? (centre.y + top.y) / 2 : centre.y;
       const rPx = Math.max(1.5, (BURST_R_M * (0.3 + 0.7 * flashT)) / metresPerPixel(centre));
       const g = cx2d.createRadialGradient(centre.x, cyv, 0, centre.x, cyv, rPx);
+      /* In IR the flash is heat, so it is white rather than orange. */
+      const ir = mode === 'ir';
       g.addColorStop(0,   'rgba(255, 247, 214, 1)');
-      g.addColorStop(0.45,'rgba(255, 178, 64, 0.95)');
-      g.addColorStop(1,   'rgba(190, 72, 20, 0)');
+      g.addColorStop(0.45, ir ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 178, 64, 0.95)');
+      g.addColorStop(1,   ir ? 'rgba(235, 235, 235, 0)'    : 'rgba(190, 72, 20, 0)');
       cx2d.globalAlpha = 1 - flashT * 0.15;
       cx2d.fillStyle = g;
       cx2d.beginPath();
@@ -188,6 +200,138 @@ const SIM_RENDER = (() => {
   function metresPerPixel(p) {
     const f = (typeof SIM_CAMERA !== 'undefined') ? SIM_CAMERA.intrinsics.focal_px : 1612.77;
     return Math.max(0.05, p.range / f);
+  }
+
+  /* ---------- burst smoke and heat ----------
+     Every round leaves a plume that lasts PLUME_MS of SIM time and fades out
+     gradually: grey smoke in TV, a white-hot bloom cooling to nothing in IR.
+
+     A plume is a handful of puffs, and every puff is a pure function of the
+     plume's age — where it is, how high, how big, how opaque. Nothing is
+     integrated frame to frame, so a pause freezes it exactly, 3x reaches the
+     same picture as 1x, and there is no per-frame state to go stale.
+
+     The wind is applied on the GROUND, in grid metres, and projected at draw
+     time — so a plume leans the way the ground says south is, foreshortened
+     like everything else, rather than sliding down the screen.
+
+     Nothing here reads or writes the engine. Smoke is a picture: it hides
+     nothing from the adjudication that does not exist yet, and toggling the
+     sensor mode cannot change an outcome. */
+  const PLUME_MS        = 60000;   /* Lee: about 60 sim seconds */
+  const PUFFS_PER_PLUME = 8;
+  const MAX_PUFFS       = 768;     /* the cap; oldest plumes go first */
+  const MAX_PLUMES      = Math.floor(MAX_PUFFS / PUFFS_PER_PLUME);
+  const EMIT_S          = 4;       /* puffs leave the crater over the first 4 s */
+
+  let plumes = [];
+  let plumeSeq = 0;
+  let mode = 'tv';                 /* 'tv' | 'ir' */
+
+  const windNow = () => (typeof SIM_SCENARIO !== 'undefined' && SIM_SCENARIO.windGrid)
+    ? SIM_SCENARIO.windGrid() : { e: 0, n: 0 };
+
+  /* Deterministic per-puff variation. Math.random would be harmless here —
+     nothing is graded on smoke — but a hash means the same round draws the
+     same plume every time, which is what you want when comparing two runs. */
+  function hash01(a, b) {
+    let h = (a * 374761393 + b * 668265263) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  /** The whole state of one plume at one age. Pure: plume, age in sim ms, and
+      the grid wind in m/s in; puffs out. `smoke` and `heat` are the TV and IR
+      envelopes, 0..1, and both are exactly 0 at PLUME_MS. */
+  function plumeState(p, ageMs, wind) {
+    if (!(ageMs >= 0) || ageMs > PLUME_MS) return null;
+    const s = ageMs / 1000, x = ageMs / PLUME_MS;
+    const fadeIn = Math.min(1, s / 0.4);
+    const smoke = fadeIn * Math.pow(1 - x, 1.5);
+    const heat  = Math.exp(-s / 20) * (1 - x);
+    const w = wind || { e: 0, n: 0 };
+    const puffs = [];
+    for (let k = 0; k < PUFFS_PER_PLUME; k++) {
+      const a = s - (k / PUFFS_PER_PLUME) * EMIT_S;    /* this puff's own age */
+      if (a < 0) continue;
+      const top = 25 + 20 * hash01(p.seed, k);        /* metres it rises to */
+      const h = top * (1 - Math.exp(-a / 6));
+      /* Smoke near the ground is held back by it; the higher a puff gets, the
+         nearer it moves at the full wind. Integrated, not multiplied, so no puff
+         ever outruns the wind: its speed is 1 - 0.4 e^(-a/6) of it, never more. */
+      const carry = a - 2.4 * (1 - Math.exp(-a / 6));
+      puffs.push({
+        e: p.e + (hash01(p.seed, k + 50) - 0.5) * 6 + w.e * carry,
+        n: p.n + (hash01(p.seed, k + 90) - 0.5) * 6 + w.n * carry,
+        h,
+        rM: 5 + 3.5 * Math.sqrt(a)
+      });
+    }
+    return { smoke, heat, puffs };
+  }
+
+  /* One soft round sprite per colour, made once. A radial gradient per puff
+     per frame is the expensive way to draw 700 puffs. */
+  const sprites = {};
+  function sprite(key, rgb) {
+    if (sprites[key] !== undefined) return sprites[key];
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext && c.getContext('2d');
+    if (!g) return (sprites[key] = null);
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0,    `rgba(${rgb}, 1)`);
+    grad.addColorStop(0.55, `rgba(${rgb}, 0.55)`);
+    grad.addColorStop(1,    `rgba(${rgb}, 0)`);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+    return (sprites[key] = c);
+  }
+  const SMOKE_RGB = '104, 100, 94';
+  const HOT_RGB   = '255, 255, 255';
+
+  function drawPlume(p, ageMs, wind) {
+    const st = plumeState(p, ageMs, wind);
+    if (!st) return;
+    const ir = mode === 'ir';
+    const k = ir ? st.heat : st.smoke;
+    if (k <= 0.004) return;
+
+    /* IR: the crater itself stays hot after the gas has gone. A ground disc,
+       so it foreshortens with the view. */
+    if (ir) {
+      const disc = groundDisc(p.e, p.n, p.elev, 10, 12);
+      if (disc) {
+        cx2d.globalAlpha = 0.9 * k;
+        cx2d.fillStyle = '#ffffff';
+        tracePolygon(disc);
+        cx2d.fill();
+      }
+    }
+
+    const img = sprite(ir ? 'ir' : 'tv', ir ? HOT_RGB : SMOKE_RGB);
+    const base = ir ? 0.8 : 0.85;
+    for (const q of st.puffs) {
+      const c = SIM_PROJ.worldToScreen(q.e, q.n, p.elev + q.h);
+      if (!c || !c.inFront || !isFinite(c.x) || !isFinite(c.y)) continue;
+      const r = Math.max(1, q.rM / metresPerPixel(c));
+      /* A puff thins as it spreads. */
+      cx2d.globalAlpha = base * k * Math.sqrt(Math.min(1, 8 / q.rM));
+      if (img) cx2d.drawImage(img, c.x - r, c.y - r, 2 * r, 2 * r);
+      else {
+        cx2d.fillStyle = `rgb(${ir ? HOT_RGB : SMOKE_RGB})`;
+        cx2d.beginPath();
+        cx2d.arc(c.x, c.y, r, 0, Math.PI * 2);
+        cx2d.fill();
+      }
+    }
+    cx2d.globalAlpha = 1;
+  }
+
+  function addPlume(e, n, elev, t0) {
+    plumes.push({ e, n, elev, t0, seed: ++plumeSeq });
+    /* The cap. The oldest plume is also the faintest, so it goes first. */
+    while (plumes.length > MAX_PLUMES) plumes.shift();
   }
 
   /* ---------- contacts ----------
@@ -210,6 +354,7 @@ const SIM_RENDER = (() => {
   const SYMBOL_HALF_H  = 15;
   const HOSTILE        = '#b3261e';
   const HULL           = '#22201c';
+  const HULL_IR        = '#f6f6f1';   /* white-hot */
 
   let entitySource = null;
 
@@ -260,23 +405,35 @@ const SIM_RENDER = (() => {
     }
   };
 
-  function drawEntity(v) {
+  /* The footprint and the symbol are drawn in two passes so smoke can sit
+     between them: a plume should hide the vehicle, not the track symbol a
+     student needs to read. The symbol code itself is unchanged. */
+  function drawFootprint(v) {
     const centre = SIM_PROJ.worldToScreen(v.e, v.n, v.elev);
-    if (!centre || !centre.inFront || !centre.inFrame) return;
+    if (!centre || !centre.inFront || !centre.inFrame) return null;
 
     const quad = groundQuad(v.e, v.n, v.elev, v.heading, v.lengthM, v.widthM);
-    if (!quad) return;
+    if (!quad) return null;
 
     /* Filled and stroked both: at long range the quad is sub-pixel and a fill
        alone can disappear into nothing, which would read as "no contact"
-       rather than "a contact too far away to make out". */
+       rather than "a contact too far away to make out".
+       In IR a running vehicle is the hottest thing on the ground, so its
+       footprint goes white-hot. Only the footprint: the symbol is unchanged. */
+    const hull = mode === 'ir' ? HULL_IR : HULL;
     cx2d.globalAlpha = v.state === 'destroyed' ? 0.35 : 1;
-    cx2d.fillStyle = HULL;
+    cx2d.fillStyle = hull;
     tracePolygon(quad);
     cx2d.fill();
-    cx2d.strokeStyle = HULL;
+    cx2d.strokeStyle = hull;
     cx2d.lineWidth = 1;
     cx2d.stroke();
+    cx2d.globalAlpha = 1;
+    return { v, centre, quad };
+  }
+
+  function drawSymbol({ v, centre, quad }) {
+    cx2d.globalAlpha = v.state === 'destroyed' ? 0.35 : 1;
 
     /* The leader rises from the top of the footprint, so the symbol never sits
        on top of the thing it is labelling. */
@@ -337,6 +494,169 @@ const SIM_RENDER = (() => {
     cx2d.globalAlpha = 1;
   }
 
+  /* ---------- the HUD ----------
+     Lee's schematic, 2026-09-26: a heading tape across the top, an elevation
+     tape down the left, corner brackets on the line of sight, and the
+     aircraft's position under ACRFT top right. Thin lines, no fills beyond the
+     heading box, black in TV and white in IR, so it reads as sensor symbology
+     laid over the picture and stays out of the way.
+
+     EVERY NUMBER IS COMPUTED, never typed in:
+       - sensor azimuth and elevation are the fitted camera in sim-camera.js
+         (heading 124.14 true, tilt 69.44 from nadir = 20.56 below the horizon)
+       - the brackets centre on the principal point (cx, cy), which is where
+         the line of sight actually meets the picture — not the middle of the
+         JPEG, which is 29 px right and 16 px up of it
+       - the aircraft position is the camera position the fit derived
+       - the aircraft heading is SIM_SCENARIO.PLATFORM, and that one IS
+         invented; see the note there.
+     Static, because the frame is: no drift, so nothing here moves. */
+  const HUD = {
+    tapeHalfW: 150,       /* heading tape: half-width, frame px */
+    degPx: 5,             /* heading tape: px per degree -> +-30 deg shown */
+    /* Elevation tape, 0 to -90. Held in the sea above the left-hand column:
+       measured over the whole run, no contact symbol in the left 160 px ever
+       rises above y 266, so the tape ends at 250. Lower and it sits on the
+       left column's symbols (142 collisions when it ran 190-520). */
+    elevTop: 120, elevH: 130, elevX: 60,
+    bracketW: 300, bracketH: 250, bracketArm: 30,
+    font: '500 15px "IBM Plex Mono", ui-monospace, monospace',
+    margin: 22
+  };
+  const wrap360 = d => ((d % 360) + 360) % 360;
+  const signed = d => { const x = wrap360(d + 180) - 180; return x; };
+  const pad3 = n => String(Math.round(wrap360(n)) % 360).padStart(3, '0');
+
+  /** Degrees and decimal minutes, the way the position reads on the feed. */
+  function latLonText(lat, lon) {
+    const dm = (v, degDigits, pos, neg) => {
+      const h = v >= 0 ? pos : neg, a = Math.abs(v);
+      let d = Math.floor(a), m = (a - d) * 60;
+      if (+m.toFixed(3) >= 60) { d += 1; m = 0; }
+      return `${h}${String(d).padStart(degDigits, '0')}°${m.toFixed(3).padStart(6, '0')}'`;
+    };
+    return [dm(lat, 2, 'N', 'S'), dm(lon, 3, 'E', 'W')];
+  }
+
+  /** The HUD's numbers, pure, so the suite can check them without a canvas. */
+  function hudValues() {
+    const cam = (typeof SIM_CAMERA !== 'undefined') ? SIM_CAMERA : null;
+    if (!cam) return null;
+    const plat = (typeof SIM_SCENARIO !== 'undefined' && SIM_SCENARIO.PLATFORM) || { headingTrueDeg: cam.view.heading_deg };
+    const sensorAz = wrap360(cam.view.heading_deg);
+    const sensorEl = -(90 - cam.view.tilt_deg);        /* negative = below the horizon */
+    const heading = wrap360(plat.headingTrueDeg);
+    return {
+      heading, sensorAz, sensorEl,
+      sensorRel: signed(sensorAz - heading),
+      boresight: { x: cam.intrinsics.cx, y: cam.intrinsics.cy },
+      acft: latLonText(cam.camera.lat, cam.camera.lon),
+      headingText: pad3(heading),
+      relText: (signed(sensorAz - heading) >= 0 ? '+' : '') + Math.round(signed(sensorAz - heading)),
+      elText: String(Math.round(sensorEl)),
+      /* Screen rotation of the north arrow, clockwise positive: up on the
+         glass is the sensor's line of sight, so north sits at minus the
+         sensor azimuth. The usual FMV convention — a compass relative to the
+         look direction, not the foreshortened direction of north across the
+         ground at the boresight. */
+      northRotDeg: -sensorAz
+    };
+  }
+
+  function drawHud() {
+    const v = hudValues();
+    if (!v) return;
+    const ink = mode === 'ir' ? '#ffffff' : '#000000';
+    const W = (typeof SIM_CAMERA !== 'undefined') ? SIM_CAMERA.frame.width : 1860;
+    const g = cx2d;
+    g.save();
+    g.globalAlpha = 0.85;
+    g.strokeStyle = ink; g.fillStyle = ink;
+    g.lineWidth = 1.5;
+    g.font = HUD.font;
+    g.textBaseline = 'middle';
+
+    /* -- heading tape: centred on the aircraft's heading, sensor caret below -- */
+    const cx = v.boresight.x;
+    const boxTop = Math.max(HUD.margin, creditBottomFr + 8);
+    const boxH = 20, tapeY = boxTop + boxH + 26;
+    const x0 = cx - HUD.tapeHalfW, x1 = cx + HUD.tapeHalfW;
+    g.beginPath();
+    g.moveTo(x0, tapeY); g.lineTo(x1, tapeY);
+    const span = HUD.tapeHalfW / HUD.degPx;
+    for (let d = Math.ceil((v.heading - span) / 5) * 5; d <= v.heading + span; d += 5) {
+      const x = cx + (d - v.heading) * HUD.degPx;
+      const len = (wrap360(d) % 10 === 0) ? 16 : 8;
+      g.moveTo(x, tapeY); g.lineTo(x, tapeY - len);
+    }
+    g.stroke();
+    /* the heading box and its pointer */
+    g.beginPath();
+    g.rect(cx - 22, boxTop, 44, boxH);
+    g.moveTo(cx - 9, boxTop + boxH); g.lineTo(cx, boxTop + boxH + 9); g.lineTo(cx + 9, boxTop + boxH);
+    g.stroke();
+    g.textAlign = 'center';
+    g.fillText(v.headingText, cx, boxTop + boxH / 2 + 1);
+    /* the sensor caret, pinned to the end of the tape if it is off the scale */
+    const rel = v.sensorRel;
+    const sx = cx + Math.max(-span, Math.min(span, rel)) * HUD.degPx;
+    g.beginPath();
+    g.moveTo(sx - 8, tapeY + 12); g.lineTo(sx, tapeY + 2); g.lineTo(sx + 8, tapeY + 12);
+    g.stroke();
+    g.fillText(v.relText, sx, tapeY + 24);
+
+    /* -- elevation tape: 0 at the top, -90 at the bottom, caret on the sensor -- */
+    const ex = HUD.elevX, et = HUD.elevTop, eh = HUD.elevH;
+    g.beginPath();
+    g.moveTo(ex, et); g.lineTo(ex, et + eh);
+    for (let d = 0; d <= 90; d += 10) {
+      const y = et + (d / 90) * eh;
+      const len = d % 30 === 0 ? 22 : 12;
+      g.moveTo(ex, y); g.lineTo(ex - len, y);
+    }
+    g.stroke();
+    const ey = et + Math.min(1, Math.max(0, -v.sensorEl / 90)) * eh;
+    g.beginPath();
+    g.moveTo(ex + 18, ey - 9); g.lineTo(ex + 6, ey); g.lineTo(ex + 18, ey + 9);
+    g.stroke();
+    g.textAlign = 'left';
+    g.fillText(v.elText, ex + 22, ey + 1);
+
+    /* -- brackets on the line of sight -- */
+    const bx = v.boresight.x, by = v.boresight.y;
+    const hw = HUD.bracketW / 2, hh = HUD.bracketH / 2, a = HUD.bracketArm;
+    g.beginPath();
+    for (const [sxn, syn] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const px = bx + sxn * hw, py = by + syn * hh;
+      g.moveTo(px - sxn * a, py); g.lineTo(px, py); g.lineTo(px, py - syn * a);
+    }
+    g.stroke();
+
+    /* -- north arrow, in the top-right corner -- */
+    const nr = 20, ncx = W - HUD.margin - nr, ncy = boxTop + nr + 4;
+    g.save();
+    g.translate(ncx, ncy);
+    g.rotate(v.northRotDeg * Math.PI / 180);
+    g.beginPath();
+    g.moveTo(0, nr); g.lineTo(0, -nr);                                 /* shaft */
+    g.moveTo(-7, -nr + 10); g.lineTo(0, -nr); g.lineTo(7, -nr + 10);   /* head */
+    g.stroke();
+    g.restore();
+    /* The N stays upright, just beyond the arrowhead. */
+    const nt = v.northRotDeg * Math.PI / 180;
+    g.textAlign = 'center';
+    g.fillText('N', ncx + Math.sin(nt) * (nr + 10), ncy - Math.cos(nt) * (nr + 10));
+
+    /* -- the aircraft's position, top right, beside the north arrow -- */
+    g.textAlign = 'right';
+    const rx = W - HUD.margin - 2 * nr - 44;
+    g.fillText('ACRFT', rx, boxTop + 8);
+    g.fillText(v.acft[0], rx, boxTop + 28);
+    g.fillText(v.acft[1], rx, boxTop + 46);
+
+    g.restore();
+  }
+
   /* ---------- loop ---------- */
   function frame() {
     raf = 0;
@@ -347,15 +667,26 @@ const SIM_RENDER = (() => {
     cx2d.clearRect(0, 0, cv.width, cv.height);
     cx2d.restore();
 
-    /* Contacts under the bursts: a round landing on a vehicle should obscure
-       it, not the other way round. */
+    /* Order: footprints, then smoke over them, then the symbols, then the
+       bursts. A round landing on a vehicle should obscure it, and so should its
+       smoke — but never the symbol the student is reading. */
+    let drawn = [];
     if (entitySource) {
       let vs = null;
       try { vs = entitySource(); } catch (err) { console.error('[sim-render] entity source threw', err); }
-      if (vs) for (const v of vs) drawEntity(v);
+      if (vs) for (const v of vs) { const d = drawFootprint(v); if (d) drawn.push(d); }
     }
 
     const now = simNow();
+    plumes = plumes.filter(p => now - p.t0 <= PLUME_MS);
+    const wind = windNow();
+    for (const p of plumes) {
+      const age = now - p.t0;
+      if (age >= 0) drawPlume(p, age, wind);
+    }
+
+    for (const d of drawn) drawSymbol(d);
+
     let live = 0;
     for (const b of bursts) {
       const age = now - b.t0;
@@ -366,10 +697,13 @@ const SIM_RENDER = (() => {
     }
     bursts = bursts.filter(b => now - b.t0 <= BURST_MS);
 
+    /* The HUD last: it is symbology on the glass, over everything. */
+    drawHud();
+
     /* Self-drive only when nothing else is driving. With a clock playing, the
        next frame arrives through SIM_CLOCK.onFrame; with a clock paused the
        picture cannot change, so one draw is the whole job. */
-    if (live && !hasClock()) raf = requestAnimationFrame(frame);
+    if ((live || plumes.length) && !hasClock()) raf = requestAnimationFrame(frame);
   }
 
   function kick() { if (!raf) raf = requestAnimationFrame(frame); }
@@ -393,7 +727,7 @@ const SIM_RENDER = (() => {
       /* Pause, play, rate and stop each need one repaint. Stop is a scenario
          reset — sim time goes back to zero, so every burst in flight now has a
          t0 in the future and would hang on screen. Drop them. */
-      unhook.push(SIM_CLOCK.onChange(s => { if (s.reason === 'stop') bursts = []; kick(); }));
+      unhook.push(SIM_CLOCK.onChange(s => { if (s.reason === 'stop') { bursts = []; plumes = []; } kick(); }));
     }
     return true;
   }
@@ -416,18 +750,32 @@ const SIM_RENDER = (() => {
     for (let i = 0; i < shots; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = Math.sqrt(Math.random());
-      bursts.push({
+      const b = {
         e: e + Math.cos(a) * r * SPREAD_DEFL_M,
         n: n + Math.sin(a) * r * SPREAD_RANGE_M,
         elev: elev || 0,
         t0: t + i * STAGGER_MS + Math.random() * STAGGER_MS
-      });
+      };
+      bursts.push(b);
+      addPlume(b.e, b.n, b.elev, b.t0);
     }
     kick();
     return shots;
   }
 
-  function clear() { bursts = []; kick(); }
+  function clear() { bursts = []; plumes = []; kick(); }
+
+  /** Sensor mode. TV is the colour picture; IR puts a CSS filter on the image
+      (the .is-ir class, styled in css/sim.css) and redraws the overlay white-hot.
+      Pure presentation: it touches the frame's class and this file's colours,
+      and nothing the clock, the entities or the missions can see. */
+  function setMode(m) {
+    mode = (m === 'ir') ? 'ir' : 'tv';
+    if (frameEl) frameEl.classList.toggle('is-ir', mode === 'ir');
+    kick();
+    return mode;
+  }
+  const toggleMode = () => setMode(mode === 'ir' ? 'tv' : 'ir');
 
   /** Hand the overlay a function returning the contacts to draw this frame.
       A pull, not a push: the renderer asks at draw time, so it can never show a
@@ -445,7 +793,10 @@ const SIM_RENDER = (() => {
   }
 
   return { attach, detach, fireMission, setEntitySource, clear, toFrame, containBox,
-           groundQuad, get box() { return box; } };
+           groundQuad, setMode, toggleMode, mode: () => mode,
+           plumeState, plumeCount: () => plumes.length, hudValues, latLonText,
+           PLUME_MS, PUFFS_PER_PLUME, MAX_PUFFS,
+           get box() { return box; } };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SIM_RENDER;

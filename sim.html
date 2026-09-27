@@ -73,7 +73,14 @@
 <div class="sim-stage">
   <div class="sim-frame">
     <img class="sim-feed" src="img/sim-pov.jpg" alt="Oblique aerial view of the coastline from the drone's point of view.">
-    <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
+    <!-- Top-left corner: the credit, and under it the sensor mode. Stacked in
+         one column so the readout can never ride up over the credit, however
+         the credit wraps on a narrow window. -->
+    <div class="sim-corner">
+      <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
+      <button type="button" id="feed-mode" class="feed-mode" aria-pressed="false"
+              title="Sensor mode — click or press I">TV</button>
+    </div>
   </div>
 </div>
 
@@ -436,6 +443,32 @@ document.querySelectorAll('.dock-head').forEach(head => {
   /* A pull, not a push: the overlay asks for the contacts at draw time, so it
      can never show a position that disagrees with the one the tick computed. */
   if (typeof SIM_ENTITIES !== 'undefined') SIM_RENDER.setEntitySource(() => SIM_ENTITIES.list());
+
+  /* TV / IR. The readout is the toggle: it says which mode the feed is in, and
+     clicking it or pressing I switches. Presentation only — it calls the
+     renderer and nothing else, so no run can come out differently for it. */
+  const modeBtn = document.getElementById('feed-mode');
+  const paintMode = m => {
+    if (!modeBtn) return;
+    modeBtn.textContent = m === 'ir' ? 'IR' : 'TV';
+    modeBtn.setAttribute('aria-pressed', String(m === 'ir'));
+    modeBtn.setAttribute('aria-label', `Sensor mode ${m === 'ir' ? 'IR' : 'TV'}. Press I to switch.`);
+  };
+  paintMode(SIM_RENDER.mode());
+  modeBtn && modeBtn.addEventListener('click', ev => {
+    paintMode(SIM_RENDER.toggleMode());
+    /* A mouse click must not leave focus here: Space is play/pause, and on a
+       focused button it would press it again and flip the mode back. */
+    if (ev.detail > 0) modeBtn.blur();
+  });
+  document.addEventListener('keydown', ev => {
+    if (ev.key !== 'i' && ev.key !== 'I') return;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;   /* leave Ctrl+Shift+I to the browser */
+    const el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) return;
+    ev.preventDefault();
+    paintMode(SIM_RENDER.toggleMode());
+  });
 })();
 
 (() => {

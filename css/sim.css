@@ -99,6 +99,46 @@ body.sim {
   pointer-events: none;
 }
 
+/* The top-left corner of the feed: the credit, then the sensor mode under it.
+   The column is what guarantees the readout never covers the credit. The
+   credit keeps every rule above; only its absolute placement is handed to the
+   column, so the map's copy of the credit is untouched. */
+.sim-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  max-width: calc(100% - 1rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+}
+.sim-corner .sim-attribution { position: static; max-width: none; }
+.feed-mode {
+  pointer-events: auto;
+  margin: 0 0 0 .5rem;
+  padding: 0 .35rem;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  line-height: 1.5;
+  letter-spacing: .06em;
+  color: #fff;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .95);
+  cursor: pointer;
+}
+.feed-mode:hover { background: rgba(0, 0, 0, .55); }
+.feed-mode:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* IR. A first guess at the look, to be tuned against the picture by eye —
+   which is why it is one custom property. On the image only: the credit and
+   the readout sit outside it and stay exactly as they are in TV. */
+.sim-frame { --ir-filter: grayscale(1) contrast(1.4); }
+.sim-frame.is-ir .sim-feed { filter: var(--ir-filter); }
+
 /* ---------- shared surface ---------- */
 .sim-timeline,
 .dock-panel,
