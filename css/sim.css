@@ -679,8 +679,9 @@ body.is-paused .typing-dots i { animation-play-state: paused; }
 
 /* the one live field: a grid, easting then northing, four digits each */
 .cff-sq { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); }
+/* Wide enough for five digits: six-digit grids are standard, ten must fit. */
 .cff-grid {
-  width: 6.5ch;
+  width: 8ch;
   font-family: var(--font-mono) !important;
   letter-spacing: .06em;
   text-align: center;

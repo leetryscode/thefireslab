@@ -56,13 +56,19 @@ const SIM_SCENARIO = (() => {
      replacing before any tuning. `amphibious-assault-vehicle` is the workhorse,
      since most targets in the real scenario will be one; its 9.5 x 3.4 m is a
      rough stand-in for Lee's reference vehicle (a ZBD-05) and is NOT verified.
-     He is supplying real numbers. */
+     He is supplying real numbers.
+
+     Lee's call 2026-09-27, from his reference pictures: the landing craft is
+     sized as an LCU 1700-class (~42 x 9 m, from memory, NOT verified); the
+     engineer is "slightly bigger" than the AAV, with arm and blade (10.5 x 3.8
+     m, an estimate); the fuel truck is deliberately the SAME footprint as the
+     AAV, so the symbol, not the smudge, tells them apart. */
   const CLASSES = {
     'amphibious-assault-vehicle': { label: 'AAV', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false },
-    'engineering':              { label: 'ENG', lengthM:  7.5, widthM:  3.4, defaultKph: 25, hpt: true  },
-    'landing-craft':            { label: 'LC',  lengthM: 35.0, widthM: 10.0, defaultKph: 20, hpt: false },
+    'engineering':              { label: 'ENG', lengthM: 10.5, widthM:  3.8, defaultKph: 25, hpt: true  },
+    'landing-craft':            { label: 'LC',  lengthM: 42.0, widthM:  9.0, defaultKph: 20, hpt: false },
     'self-propelled-artillery': { label: 'SPA', lengthM: 10.0, widthM:  3.5, defaultKph: 35, hpt: false },
-    'logistics':                { label: 'LOG', lengthM:  9.0, widthM:  2.6, defaultKph: 40, hpt: false }
+    'logistics':                { label: 'LOG', lengthM:  9.5, widthM:  3.4, defaultKph: 40, hpt: false }
   };
 
   /* What the student says the target is sitting in. Lee's list; the call for
@@ -135,10 +141,10 @@ const SIM_SCENARIO = (() => {
      water; that figure came from an assumed landing craft and has not been
      revisited. Lee is supplying the real dimensions and speeds.
 
-     Elevation is a flat 0 for the whole route: right for open water and the
-     0-8 m coastal plain, and wrong the moment a route climbs. A route that goes
-     inland needs per-point elevation, and the plain is where the engagement
-     happens, so that is not today's problem. */
+     elevM is the flat fallback, used only when js/sim-terrain.js is not
+     loaded. With it loaded, every position takes the ground height under it
+     (2026-09-27): the routes now climb the hillside, and a flat 0 there put
+     every symbol 100 m or more below the road it was on. */
   const SAMPLE = {
     id: 'sample-track',
     name: 'Sample track — single contact from seaward',
@@ -216,10 +222,14 @@ const SIM_SCENARIO = (() => {
     const L = legs[leg];
     const a = route.nodes[L.from], b = route.nodes[L.from + 1];
     const f = L.len > 0 ? (d - L.start) / L.len : 0;
+    const e = a.e + (b.e - a.e) * f, n = a.n + (b.n - a.n) * f;
     return {
-      e: a.e + (b.e - a.e) * f,
-      n: a.n + (b.n - a.n) * f,
-      elev: route.elevM,
+      e, n,
+      /* Height of the ground under the vehicle, from js/sim-terrain.js when it
+         is loaded — looked up where the vehicle IS, not interpolated between
+         waypoints, so a long leg over a crest still follows the ground. Without
+         the terrain file a route falls back to its flat elevM, as before. */
+      elev: (typeof SIM_TERRAIN !== 'undefined') ? SIM_TERRAIN.elevAt(e, n) : route.elevM,
       heading: L.heading,
       speedKph: L.speedKph,
       leg,

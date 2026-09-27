@@ -749,8 +749,9 @@ const SIM_RENDER = (() => {
          without dragging the picture — and the mark — with them;
        - the ordinary cursor comes back, so they can see where they are going.
 
-     The grid is the projection answering at sea level (the plain is 0-8 m),
-     truncated to 8 digits the way MGRS is: a 10 m square. Presentation only —
+     The grid is the first ground the pixel's ray meets (SIM_TERRAIN.pick),
+     truncated to 8 digits the way MGRS is: a 10 m square. At sea level it was
+     right on the plain and 100 m+ long up the hillside. Presentation only —
      nothing here reaches the missions; the student still types the grid. */
   let hover = null;            /* {x, y} glass px (frame px, unswayed), or null */
   let mark = null;             /* {x, y, e, n, grid} ground frame px + grid, or null */
@@ -759,7 +760,8 @@ const SIM_RENDER = (() => {
   function gridAt(fx, fy) {
     const F = frameSize();
     if (!(fx >= 0 && fy >= 0 && fx <= F.width && fy <= F.height)) return null;
-    const w = SIM_PROJ.screenToWorld(fx, fy, 0);
+    const w = (typeof SIM_TERRAIN !== 'undefined') ? SIM_TERRAIN.pick(fx, fy)
+                                                   : SIM_PROJ.screenToWorld(fx, fy, 0);
     if (!w) return null;
     return { e: w.e, n: w.n, grid: SIM_PROJ.utmToMgrs(w.e, w.n, 4) };
   }
@@ -949,7 +951,7 @@ const SIM_RENDER = (() => {
   }
 
   /** Drop a sheaf on a grid. elev is metres above sea level at the impact
-      point — the sim has no terrain lookup, so the caller owns it. */
+      point — the caller looks it up (SIM_TERRAIN.elevAt) and passes it in. */
   /** One volley. `rounds` is the gun count for this type of mission — six for
       fire for effect, one for suppression — and the spread is still the file's
       own placeholder pattern, NOT the unit's dispersion diameter. Lee has

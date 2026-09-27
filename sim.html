@@ -116,8 +116,9 @@
              the method of engagement are recorded on the mission and compared
              against nothing, because there is no adjudication yet.
 
-             The grid is easting first, then northing — right and up. Four
-             digits each is 10 m precision inside 20Q KF. -->
+             The grid is easting first, then northing — right and up. Six
+             digits (three each, a 100 m square) is the standard and what the
+             placeholder shows; eight and ten are accepted too. -->
         <div class="cff-builder">
           <!-- Unit and type of mission. Both live, both built in script from
                SIM_MISSIONS so the vocabulary has one home. The type decides
@@ -130,10 +131,10 @@
 
           <div class="cff-line">
             <span class="cff-sq">20Q KF</span>
-            <input id="cff-east"  class="cff-grid" type="text" inputmode="numeric" maxlength="4"
-                   placeholder="EEEE" aria-label="Easting, four digits" autocomplete="off">
-            <input id="cff-north" class="cff-grid" type="text" inputmode="numeric" maxlength="4"
-                   placeholder="NNNN" aria-label="Northing, four digits" autocomplete="off">
+            <input id="cff-east"  class="cff-grid" type="text" inputmode="numeric" maxlength="5"
+                   placeholder="EEE" aria-label="Easting, three to five digits" autocomplete="off">
+            <input id="cff-north" class="cff-grid" type="text" inputmode="numeric" maxlength="5"
+                   placeholder="NNN" aria-label="Northing, three to five digits" autocomplete="off">
             <span class="cff-or">or</span>
             <select disabled><option>Preplanned target</option><option>AB1001</option><option>AB1002</option></select>
           </div>
@@ -256,6 +257,7 @@
 
 <script src="js/sim-camera.js"></script>
 <script src="js/sim-projection.js"></script>
+<script src="js/sim-terrain.js"></script>
 <script src="js/sim-clock.js"></script>
 <script src="js/sim-scenario.js"></script>
 <script src="js/sim-ecoa.js"></script>
@@ -473,11 +475,13 @@ document.querySelectorAll('.dock-head').forEach(head => {
 (() => {
   if (typeof SIM_MISSIONS === 'undefined' || typeof SIM_CLOCK === 'undefined') return;
 
-  /* No terrain lookup exists, so an impact elevation has to be assumed. Zero
-     is right for the whole 0-8 m coastal plain, which is where the engagement
-     happens. It is wrong up the hillside, by roughly 3 m of ground error per
-     metre of height — deliberately so, until waypoints carry their own. */
-  const ASSUMED_ELEV_M = 0;
+  /* Impact elevation is the ground height at the called grid, from
+     js/sim-terrain.js. It used to be a flat 0 — right on the plain, and a
+     burst drawn 100 m+ short up the hillside. Without the terrain file it
+     falls back to 0. */
+  const groundAt = (e, n) => (typeof SIM_TERRAIN !== 'undefined') ? SIM_TERRAIN.elevAt(e, n) : 0;
+  const pickAt = (x, y) => (typeof SIM_TERRAIN !== 'undefined') ? SIM_TERRAIN.pick(x, y)
+                                                                : SIM_PROJ.screenToWorld(x, y, 0);
 
   /* ---------- the vocabularies ----------
      Every list the student picks from is built here from the module that owns
@@ -768,7 +772,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
 
     /* Refuse a mission that would land off the feed rather than firing into
        nothing — the student should see why. */
-    const p = SIM_PROJ.worldToScreen(utm.e, utm.n, ASSUMED_ELEV_M);
+    const elev = groundAt(utm.e, utm.n);
+    const p = SIM_PROJ.worldToScreen(utm.e, utm.n, elev);
     if (!p || !p.inFront || !p.inFrame)
       return fail(`${SIM_PROJ.utmToMgrs(utm.e, utm.n, 5)} is outside the feed.`);
 
@@ -803,7 +808,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
     const res = SIM_MISSIONS.send({
       unit, type, control, totSec, grid, shell,
       count, targetType: targ, environment: env,
-      e: utm.e, n: utm.n, elev: ASSUMED_ELEV_M
+      e: utm.e, n: utm.n, elev
     });
 
     /* A battery that is down is refused before anything is said on the net, so
@@ -833,14 +838,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
     frame.addEventListener('mousemove', ev => {
       const f = SIM_RENDER.toFrame(ev.clientX, ev.clientY);
       if (!f) return;
-      const w = SIM_PROJ.screenToWorld(f.x, f.y, ASSUMED_ELEV_M);
+      const w = pickAt(f.x, f.y);
       tag.textContent = w
         ? `${SIM_PROJ.utmToMgrs(w.e, w.n, 4)}   ${Math.round(w.range)} m   [${Math.round(f.x)}, ${Math.round(f.y)}]`
         : 'above the horizon';
     });
     frame.addEventListener('click', ev => {
       const f = SIM_RENDER.toFrame(ev.clientX, ev.clientY);
-      const w = f && SIM_PROJ.screenToWorld(f.x, f.y, ASSUMED_ELEV_M);
+      const w = f && pickAt(f.x, f.y);
       if (!w) return;
       east.value  = SIM_PROJ.utmToMgrs(w.e, w.n, 4).split(' ')[2];
       north.value = SIM_PROJ.utmToMgrs(w.e, w.n, 4).split(' ')[3];

@@ -73,6 +73,26 @@ const SIM_ENTITIES = (() => {
            at a distance and watch a flag. */
         holdAtM: (typeof spec.holdAtM === 'number') ? spec.holdAtM : null,
         lane: spec.lane || null,
+        /* REFUEL. An amphib that carries a ring slot stops there, facing out,
+           until its depot has a free slot; drives in to a truck; stands for the
+           refuel time; and only then carries on. `phase` walks
+           pending -> ring -> toDepot -> fueling -> done. A vehicle that starts
+           past its ring (startM) has nothing left to do. */
+        fuel: (typeof spec.refuelAtM === 'number' && typeof spec.fuelAtM === 'number' && spec.depot)
+          ? { ringAtM: spec.refuelAtM, fuelAtM: spec.fuelAtM, depot: spec.depot,
+              faceDeg: (typeof spec.faceDeg === 'number') ? spec.faceDeg : null,
+              phase: (Number(spec.startM) || 0) >= spec.refuelAtM ? 'done' : 'pending',
+              ringSince: null, doneAt: null }
+          : null,
+        /* An engineer knows the lane it breaches and where on its path it stops
+           to do the work. It needs no fuel and waits for no escort. */
+        breach: (spec.breachLane && typeof spec.breachAtM === 'number')
+          ? { lane: spec.breachLane, atM: spec.breachAtM,
+              phase: (Number(spec.startM) || 0) >= spec.breachAtM ? 'done' : 'pending' }
+          : null,
+        /* A fuel truck knows its depot; parked (arrived) and not destroyed, it
+           opens `perTruck` refuelling slots there. */
+        depot: spec.depot && !(typeof spec.refuelAtM === 'number') ? spec.depot : null,
         state: (Number(spec.startSec) || 0) <= 0 ? MOVING : 'staged'
       };
     });
@@ -92,7 +112,27 @@ const SIM_ENTITIES = (() => {
     lanes = {};
     for (const [id, spec] of Object.entries((scn && scn.lanes) || {})) {
       lanes[id] = { breachSec: (typeof spec.breachSec === 'number') ? spec.breachSec : null,
-                    firstArrivalSec: null, openAt: null };
+                    firstArrivalSec: null, openAt: null,
+                    byEngineer: false, workSec: 0, engineersAt: 0 };
+    }
+    /* A lane that some engineer is assigned to is opened BY ENGINEERS: its
+       clock runs only while a living one is standing at it, and a replacement
+       picks the work up where the last one stopped. A lane nobody is assigned
+       to keeps the old stand-in timer, started by the first vehicle to reach
+       its holding area. */
+    for (const en of ents) if (en.breach && lanes[en.breach.lane]) lanes[en.breach.lane].byEngineer = true;
+  }
+
+  function workLanes(t, dt) {
+    for (const L of Object.values(lanes)) L.engineersAt = 0;
+    for (const en of ents) {
+      if (en.breach && en.breach.phase === 'breaching' && en.state === HALTED && lanes[en.breach.lane])
+        lanes[en.breach.lane].engineersAt++;
+    }
+    for (const L of Object.values(lanes)) {
+      if (!L.byEngineer || L.openAt !== null || L.breachSec === null || L.engineersAt === 0) continue;
+      L.workSec += dt;                     /* one engineer or three: the same clock */
+      if (L.workSec >= L.breachSec - 1e-9) L.openAt = t + dt;
     }
   }
 
@@ -111,6 +151,56 @@ const SIM_ENTITIES = (() => {
   }
 
   function reset() { if (!scn) return 0; const n = build(); resetLanes(); return n; }
+
+  /* ---------- refuelling ----------
+     A depot's capacity is perTruck x the fuel trucks PARKED there and alive,
+     counted fresh every tick — so killing a truck costs slots the moment it
+     dies, and a depot no truck has reached yet refuels nobody. Vehicles already
+     driving in or fuelling finish; only new releases are held back.
+
+     Release order is first-come at the ring (then id), never array order or
+     distance-to-go, so a run is identical at 1x and 3x.
+
+     Both figures are Lee's (2026-09-27): about four minutes a vehicle, two
+     vehicles per truck. A scenario may override them with
+     `fuelling: { secondsPerVehicle, perTruck }`. */
+  const DEFAULT_FUEL_SEC  = 240;
+  const DEFAULT_PER_TRUCK = 2;
+
+  function fuelling() {
+    const f = (scn && scn.fuelling) || {};
+    return {
+      sec: Number(f.secondsPerVehicle) > 0 ? Number(f.secondsPerVehicle) : DEFAULT_FUEL_SEC,
+      perTruck: Number(f.perTruck) > 0 ? Number(f.perTruck) : DEFAULT_PER_TRUCK
+    };
+  }
+
+  function depotSlots(depot) {
+    const { perTruck } = fuelling();
+    let trucks = 0;
+    for (const en of ents) if (en.depot === depot && en.state === 'arrived') trucks++;
+    return trucks * perTruck;
+  }
+
+  function releaseFromRings() {
+    const busy = {}, waiting = {};
+    for (const en of ents) {
+      if (!en.fuel || en.state === 'destroyed') continue;
+      const d = en.fuel.depot;
+      if (en.fuel.phase === 'toDepot' || en.fuel.phase === 'fueling') busy[d] = (busy[d] || 0) + 1;
+      if (en.fuel.phase === 'ring' && en.state === HALTED) (waiting[d] = waiting[d] || []).push(en);
+    }
+    for (const [d, q] of Object.entries(waiting)) {
+      let free = depotSlots(d) - (busy[d] || 0);
+      if (free <= 0) continue;
+      q.sort((a, b) => (a.fuel.ringSince - b.fuel.ringSince) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      for (const en of q) {
+        if (free-- <= 0) break;
+        en.fuel.phase = 'toDepot';
+        en.state = MOVING;
+      }
+    }
+  }
 
   /* ---------- minimum spacing ----------
      Vehicles keep a longitudinal gap and slow to hold it. That is what turns a
@@ -154,6 +244,17 @@ const SIM_ENTITIES = (() => {
     /* Halted vehicles still occupy ground, so they are in the position map and
        everything still yields to them — a column does not drive through the one
        in front just because it has stopped. */
+    /* Fuel first: a vehicle whose refuel time is up leaves the truck, and ring
+       waiters are released into whatever slots that frees, before anyone moves. */
+    for (const en of ents) {
+      if (en.fuel && en.fuel.phase === 'fueling' && en.state === HALTED && t >= en.fuel.doneAt) {
+        en.fuel.phase = 'done';
+        en.state = MOVING;
+      }
+    }
+    releaseFromRings();
+    workLanes(t, dt);
+
     const active = ents.filter(en => en.state === MOVING || en.state === HALTED);
     if (active.length === 0) return;
 
@@ -168,6 +269,14 @@ const SIM_ENTITIES = (() => {
 
     for (let i = 0; i < active.length; i++) {
       const en = active[i], here = at.get(en);
+
+      if (en.state === HALTED && en.fuel && (en.fuel.phase === 'ring' || en.fuel.phase === 'fueling')) {
+        en.vKph = 0; continue;               /* released above, or not at all */
+      }
+      if (en.state === HALTED && en.breach && en.breach.phase === 'breaching') {
+        if (laneOpen(en.breach.lane, t)) { en.breach.phase = 'done'; en.state = MOVING; }
+        else { en.vKph = 0; continue; }
+      }
 
       if (en.state === HALTED) {
         /* Only a vehicle waiting on a LANE resumes by itself. A contact halted
@@ -185,13 +294,46 @@ const SIM_ENTITIES = (() => {
         const hx = Math.sin(hr), hy = Math.cos(hr);
         let ahead = Infinity;
         for (let j = 0; j < i; j++) {
-          const p = at.get(active[j]);
+          /* A vehicle parked on a refuel ring is pulled off to the side on the
+             perimeter; the ones still arriving drive past it to their own slots.
+             Counting it as "ahead" jammed seven of sixteen short of the ring. */
+          const o = active[j];
+          if (o.fuel && o.fuel.phase === 'ring' && o.state === HALTED) continue;
+          /* An engineer is waved through the column. Everything queued at a
+             holding area — halted, or stopped nose-to-tail behind the halted
+             ones — is waiting on the lane IT has to open, so letting any of it
+             block the engineer deadlocks the breach. Found on v2.8 with two
+             waves: the second engineer sat 62 m short of LANE 01 behind the
+             queue until the first had opened it. Engineers still keep their
+             distance from each other. */
+          if (en.breach && o.type !== 'engineering') continue;
+          const p = at.get(o);
           const dE = p.e - here.e, dN = p.n - here.n;
           const fwd = dE * hx + dN * hy;
           if (fwd <= 0 || fwd >= ahead) continue;
           if (Math.abs(dN * hx - dE * hy) < LANE_TOL) ahead = fwd;
         }
         if (ahead < Infinity) want = Math.min(want, Math.max(0, ahead - MIN_GAP));
+      }
+
+      /* An engineer stops at its lane and works until the lane is open. */
+      if (en.breach && en.breach.phase === 'pending' && en.s + want >= en.breach.atM) {
+        want = Math.max(0, en.breach.atM - en.s);
+        if (!laneOpen(en.breach.lane, t)) { en.state = HALTED; en.breach.phase = 'breaching'; }
+        else en.breach.phase = 'done';
+      }
+
+      /* Stop on the ring slot to wait for fuel, and at the truck to take it. */
+      if (en.fuel && en.fuel.phase === 'pending' && en.s + want >= en.fuel.ringAtM) {
+        want = Math.max(0, en.fuel.ringAtM - en.s);
+        en.state = HALTED;
+        en.fuel.phase = 'ring';
+        en.fuel.ringSince = t;
+      } else if (en.fuel && en.fuel.phase === 'toDepot' && en.s + want >= en.fuel.fuelAtM) {
+        want = Math.max(0, en.fuel.fuelAtM - en.s);
+        en.state = HALTED;
+        en.fuel.phase = 'fueling';
+        en.fuel.doneAt = t + fuelling().sec;
       }
 
       /* Stop at the holding area while the lane is shut. The first vehicle to
@@ -203,7 +345,8 @@ const SIM_ENTITIES = (() => {
           const L = lanes[en.lane];
           if (L && L.firstArrivalSec === null) {
             L.firstArrivalSec = t;
-            L.openAt = (L.breachSec === null) ? null : t + L.breachSec;
+            /* An engineer lane is opened by work (workLanes), not by the clock. */
+            if (!L.byEngineer) L.openAt = (L.breachSec === null) ? null : t + L.breachSec;
           }
         }
       }
@@ -222,17 +365,23 @@ const SIM_ENTITIES = (() => {
      answer to where something is and it always agrees with its distance. */
   function view(en) {
     const p = SIM_SCENARIO.routeAt(en.route, en.s);
+    /* Waiting on the ring it faces OUT — security, not the direction it drove in. */
+    const facing = (en.fuel && en.fuel.phase === 'ring' && en.state === HALTED && en.fuel.faceDeg !== null)
+      ? en.fuel.faceDeg : p.heading;
     return {
       id: en.id, type: en.type, state: en.state, hpt: en.hpt,
       label: en.cls.label, lengthM: en.cls.lengthM, widthM: en.cls.widthM,
-      e: p.e, n: p.n, elev: p.elev, heading: p.heading,
+      e: p.e, n: p.n, elev: p.elev, heading: facing,
       /* The speed it is actually making, not the leg's nominal: a vehicle
          held behind a choke reports 0 while the leg still says 15. */
       speedKph: en.state === MOVING ? (typeof en.vKph === 'number' ? en.vKph : p.speedKph) : 0,
       nominalKph: p.speedKph,
       held: en.state === MOVING && typeof en.vKph === 'number' && en.vKph < p.speedKph - 0.01,
       metresAlongRoute: en.s,
-      waitingForLane: en.state === HALTED ? en.lane : null,
+      waitingForLane: (en.state === HALTED && !(en.fuel && (en.fuel.phase === 'ring' || en.fuel.phase === 'fueling'))) ? en.lane : null,
+      /* 'ring' = waiting for a slot, 'fueling' = at a truck, else null. */
+      breaching: (en.state === HALTED && en.breach && en.breach.phase === 'breaching') ? en.breach.lane : null,
+      waitingForFuel: (en.state === HALTED && en.fuel && (en.fuel.phase === 'ring' || en.fuel.phase === 'fueling')) ? en.fuel.phase : null,
       routeLengthM: en.route.lengthM,
       leg: p.leg
     };
