@@ -658,6 +658,57 @@ const SIM_RENDER = (() => {
     cx2d.globalAlpha = 1;
   }
 
+  /* ---------- Predator drones in flight ----------
+     Lee, 2026-09-28: visible in flight, a tiny bracket when hovered. A small
+     delta at the drone's height, dark with a light halo in TV, white-hot in IR.
+     Positions come from SIM_DRONES.list() — a picture of the engine's drones,
+     never a decision. */
+  let droneSource = null;
+  const DRONE_PX = 3.5;
+  /* Lee's Switchblade silhouette, 2026-09-28: a fuselage with a pointed nose,
+     a long front wing and a shorter rear wing. Unit = fuselage length; u runs
+     nose-ward, v across. Drawn in screen space (not foreshortened) so it reads
+     at a few pixels, nose along the flight path. */
+  const DRONE_SHAPE = (() => {
+    const half = [[0.5, 0], [0.42, 0.08], [0.21, 0.08], [0.21, 0.68], [0.01, 0.68], [0.01, 0.08],
+                  [-0.30, 0.08], [-0.30, 0.55], [-0.49, 0.55], [-0.49, 0]];
+    const mirror = half.slice(1, -1).reverse().map(([u, v]) => [u, -v]);
+    return half.concat(mirror);
+  })();
+  const DRONE_LEN_PX = 6.2;      /* nose to tail; front span ~8.4 px, about the old triangle */
+  function drawDrone(q) {
+    const g0 = (typeof SIM_TERRAIN !== 'undefined' && SIM_TERRAIN.elevAt) ? SIM_TERRAIN.elevAt(q.e, q.n) : 0;
+    const c = SIM_PROJ.worldToScreen(q.e, q.n, g0 + q.h);
+    if (!c || !c.inFront || !isFinite(c.x) || !isFinite(c.y)) return null;
+    const ir = mode === 'ir';
+    const r = DRONE_PX;
+    let fx = 0, fy = -1;                    /* nose up the screen if the path is unknown */
+    if (q.prev) {
+      const g1 = (typeof SIM_TERRAIN !== 'undefined' && SIM_TERRAIN.elevAt) ? SIM_TERRAIN.elevAt(q.prev.e, q.prev.n) : 0;
+      const b = SIM_PROJ.worldToScreen(q.prev.e, q.prev.n, g1 + q.prev.h);
+      if (b && b.inFront && isFinite(b.x) && isFinite(b.y)) {
+        const dx = c.x - b.x, dy = c.y - b.y, L = Math.hypot(dx, dy);
+        if (L > 1e-3) { fx = dx / L; fy = dy / L; }
+      }
+    }
+    const s = DRONE_LEN_PX;
+    const tri = () => {
+      cx2d.beginPath();
+      DRONE_SHAPE.forEach(([u, v], i) => {
+        const x = c.x + (fx * u - fy * v) * s, y = c.y + (fy * u + fx * v) * s;
+        if (i) cx2d.lineTo(x, y); else cx2d.moveTo(x, y);
+      });
+      cx2d.closePath();
+    };
+    cx2d.globalAlpha = 1;
+    cx2d.lineJoin = 'round';
+    cx2d.lineWidth = 2; cx2d.strokeStyle = ir ? '#000000' : '#f4f1e8'; tri(); cx2d.stroke();
+    cx2d.fillStyle = ir ? '#ffffff' : '#141414'; tri(); cx2d.fill();
+    cx2d.lineJoin = 'miter';
+    const quad = [{ x: c.x - r, y: c.y - r }, { x: c.x + r, y: c.y - r }, { x: c.x + r, y: c.y + r }, { x: c.x - r, y: c.y + r }];
+    return { v: { id: q.id, type: 'owa', label: 'OWA' }, centre: c, quad };
+  }
+
   /* ---------- the HUD ----------
      Lee's schematic, 2026-09-26: a heading tape across the top, an elevation
      tape down the left, corner brackets on the line of sight, and the
@@ -1196,6 +1247,11 @@ const SIM_RENDER = (() => {
       /* Wreck smoke over the footprints, under the burst smoke. */
       if (vs) { const tNow = simNow(), wd = windNow(); for (const v of vs) if (v.stopped) drawWreck(v, tNow, wd); }
     }
+    if (droneSource) {
+      let ds = null;
+      try { ds = droneSource(simNow() / 1000); } catch (err) { console.error('[sim-render] drone source threw', err); }
+      if (ds) for (const q of ds) { const d = drawDrone(q); if (d) drawn.push(d); }
+    }
 
     const now = simNow();
     plumes = plumes.filter(p => now - p.t0 <= PLUME_MS);
@@ -1335,6 +1391,9 @@ const SIM_RENDER = (() => {
   /** The same pull, for the debris lines and their breach progress. */
   function setObstacleSource(fn) { obstacleSource = (typeof fn === 'function') ? fn : null; kick(); }
 
+  /** The drones to draw: fn(nowSec) -> [{id, e, n, h}]. */
+  function setDroneSource(fn) { droneSource = (typeof fn === 'function') ? fn : null; kick(); }
+
   /** Screen point -> frame pixels. Dev tool only: nothing the student does
       needs this, because a call for fire names a grid, it does not click one. */
   function toFrame(clientX, clientY) {
@@ -1347,7 +1406,7 @@ const SIM_RENDER = (() => {
     return viewInvert({ x, y }, view);
   }
 
-  return { attach, detach, fireMission, impacts, setEntitySource, wreckState, wreckHull, WRECK, clear, toFrame, containBox,
+  return { attach, detach, fireMission, impacts, setEntitySource, setDroneSource, wreckState, wreckHull, WRECK, clear, toFrame, containBox,
            groundQuad, setMode, toggleMode, mode: () => mode,
            plumeState, plumeCount: () => plumes.length, hudValues, latLonText,
            swayAt, viewApply, viewInvert, VIEW, view: () => ({ ...view }),

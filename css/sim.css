@@ -808,3 +808,31 @@ body.is-paused .typing-dots i { animation-play-state: paused; }
   body.sim > :not(.sim-too-narrow) { display: none; }
   .sim-too-narrow { display: block; padding: 2rem; text-align: center; color: var(--muted); }
 }
+
+/* The Stop confirmation (Lee, 2026-09-27). Its own classes, not the course's
+   .modal (the sim stays out of the course's modal and i18n rules); the
+   buttons borrow .btn. */
+.sim-confirm {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(28, 30, 24, .55);
+  padding: 24px;
+}
+.sim-confirm.show { display: flex; align-items: center; justify-content: center; }
+.sim-confirm-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 5px solid var(--bad);
+  border-radius: var(--radius);
+  padding: 22px 26px;
+  max-width: 26em;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .3);
+}
+.sim-confirm-box p { margin: 0 0 18px; font-size: 1.05rem; }
+.sim-confirm-actions { display: flex; justify-content: flex-end; gap: .6rem; }
+
+/* Predator hides parts of the call for fire (Lee, 2026-09-28). The rows are
+   flex, which would otherwise override the hidden attribute. */
+.cff-builder [hidden] { display: none !important; }

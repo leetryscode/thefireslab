@@ -215,7 +215,21 @@ const SIM_DAMAGE = (() => {
     return { points, rolls, stopped };
   }
 
-  return { reset, pattern, impactPoints, pStop, radius, resolve, inWater, inArea,
+  /* A Predator drone's outcome (js/sim-drones.js), into the same logs the fires
+     log reads: one "volley" per drone, numbered by its place in the mission. */
+  function recordDrone(d, res) {
+    const rolls = res && !res.lost
+      ? [{ mission: d.mission, volley: d.index, id: res.id, type: res.type, nearestM: null, drone: true,
+           pStop: res.pStop, stopped: !!res.stopped, aboard: false, note: '' }]
+      : [];
+    last.push(...rolls);
+    if (last.length > LOG_KEEP) last = last.slice(-LOG_KEEP);
+    volleys.push({ mission: d.mission, volley: d.index, system: 'OWA', lines: rolls.length,
+                   drone: true, lost: !!(res && res.lost) });
+    return rolls;
+  }
+
+  return { reset, pattern, impactPoints, pStop, radius, resolve, inWater, inArea, recordDrone,
            log: () => last.slice(), volleys: () => volleys.slice(), PATTERNS, R, WATER_M };
 })();
 

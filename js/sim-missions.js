@@ -87,6 +87,12 @@ const SIM_MISSIONS = (() => {
                    `Ready, at your command, over.`,
     shot:     m => `${head(m)} ${m.id}, shot, over.`,
     splash:   m => `${head(m)} ${m.id}, splash, over.`,
+    /* Predator (Lee, 2026-09-28). Placeholder wording like the rest. */
+    mtoDrone: m => `${head(m)} ${m.id}, ${m.drones} drone${m.drones === 1 ? '' : 's'}, one every ` +
+                   `${m.intervalSec} seconds, time of flight ${Math.round(m.tofSec / 60)} minutes, over.`,
+    droneAway: m => `${head(m)} ${m.id}, drones away, over.`,
+    noDrones: (unit, left, need) => `${OBSERVER}, this is ${unit}, unable — insufficient drones, ` +
+                                    `${left} remaining, ${need} requested, over.`,
     /* Lee, 2026-09-27: refused from the battery itself, over the net. */
     noAmmo:   (unit, left, need) => `${OBSERVER}, this is ${unit}, unable — insufficient ammunition, ` +
                                     `${left} rounds remaining, ${need} required, over.`,
@@ -127,7 +133,11 @@ const SIM_MISSIONS = (() => {
     { callsign: 'Anvil',      system: 'M101',   tof: [20, 35], rounds: 300 },
     { callsign: 'Lightning',  system: 'M101',   tof: [20, 35], rounds: 300 },
     { callsign: 'Fire Storm', system: 'RT2000', tof: [20, 35], salvos: 2 },
-    { callsign: 'Predator',   system: 'OWA',    tof: [20, 35] }
+    /* PREDATOR (Lee, 2026-09-28): seeking one-way attack drones, 30 on hand,
+       up to 20 a mission, one launched every 10 s, 4 minutes to the aim point.
+       No 15-minute recovery — the launcher is only as busy as its queue. The
+       flight, search and strike live in js/sim-drones.js. */
+    { callsign: 'Predator',   system: 'OWA',    tof: [240, 240], drones: 30 }
   ];
   /* The sheaf diameter, from the damage table. null for Fire Storm (an
      ellipse, not a circle) and for the OWA (postponed). */
@@ -147,6 +157,14 @@ const SIM_MISSIONS = (() => {
   /* Rounds left: what it started with less every mission it has taken. Charged
      when the mission is accepted, so a held at-my-command mission has its
      rounds set aside. */
+  function dronesLeft(callsign) {
+    const u = UNIT[callsign];
+    if (!u || typeof u.drones !== 'number') return null;
+    const used = missions.filter(m => m.unit === callsign).reduce((a, m) => a + (m.drones || 0), 0);
+    return Math.max(0, u.drones - used);
+  }
+  const isDroneUnit = callsign => !!(UNIT[callsign] && typeof UNIT[callsign].drones === 'number');
+
   function roundsLeft(callsign) {
     const u = UNIT[callsign];
     if (!u || typeof u.rounds !== 'number') return null;
@@ -218,6 +236,8 @@ const SIM_MISSIONS = (() => {
   /* Counted, not a flag: two missions to the same unit in quick succession must
      not have the first reply clear the indicator while the second is pending. */
   let typing = new Map();
+  let launcherFreeAt = 0;     /* the next moment the drone launcher is free */
+  let hookedClock = null;
   /* callsign -> the sim second it is back on the air */
   let busyUntil = new Map();
 
@@ -271,13 +291,41 @@ const SIM_MISSIONS = (() => {
     onChange = opts && opts.onChange;
     onTyping = opts && opts.onTyping;
     reset(opts && opts.seed);
+    /* Drones fly on the clock's step, after the vehicles (the page subscribes
+       the vehicle tick first). Hooked once per clock, however often init runs. */
+    if (clock && typeof SIM_DRONES !== 'undefined' && hookedClock !== clock) {
+      hookedClock = clock;
+      clock.onTick((t, dt) => { SIM_DRONES.tick(t, dt); droneProgress(); });
+    }
     return true;
+  }
+
+  /* A drone mission moves on as its drones finish: each one that strikes or is
+     lost counts as a "volley" landed, and the mission completes with the last. */
+  function droneProgress() {
+    let moved = false;
+    for (const m of missions) {
+      if (m.kind !== 'drone' || m.state === 'complete' || m.state === 'sending') continue;
+      const ds = SIM_DRONES.forMission(m.id);
+      const done = ds.filter(d => d.state === 'done' || d.state === 'lost');
+      if (done.length !== (m.volleysLanded || 0)) {
+        m.volleysLanded = done.length;
+        m.stopped = done.filter(d => d.result && d.result.stopped).map(d => d.result.id);
+        if (m.volleysLanded === 1 && m.splashedAt == null) m.splashedAt = clock.time();
+        m.state = m.volleysLanded >= m.drones ? 'complete' : 'impacting';
+        if (m.state === 'complete') m.completedAt = clock.time();
+        moved = true;
+      }
+    }
+    if (moved) changed();
   }
 
   function reset(seed) {
     missions = [];
     nextNum = FIRST_TARGET_NUM;
     rng = seeded(typeof seed === 'number' ? seed : 0x5EED17);
+    launcherFreeAt = 0;
+    if (typeof SIM_DRONES !== 'undefined') SIM_DRONES.reset();
     /* The damage dice are keyed to mission ids, which restart here — so the
        same run replayed lands every round in the same place. */
     if (typeof SIM_DAMAGE !== 'undefined') SIM_DAMAGE.reset();
@@ -295,15 +343,18 @@ const SIM_MISSIONS = (() => {
      as a flag. A flag would have to be cleared in every path that finishes,
      cancels or resets a mission, and the one that got missed would leave a
      battery permanently off the air. */
-  const pending = callsign =>
-    missions.find(m => m.unit === callsign && m.state !== 'complete') || null;
+  /* The drone launcher is never "holding" a mission: it takes the next one and
+     queues its launches behind the last. */
+  const pending = callsign => isDroneUnit(callsign) ? null :
+    (missions.find(m => m.unit === callsign && m.state !== 'complete') || null);
 
   function status(callsign) {
     const now = clock ? clock.time() : 0;
     const recover = busyUntil.get(callsign) || 0;
     const held = pending(callsign);
     const left = salvosLeft(callsign);
-    const spent = left === 0 && !held;
+    const dLeft = dronesLeft(callsign);
+    const spent = (left === 0 && !held) || dLeft === 0;
     /* A held mission that has not been fired yet has no end time — an
        at-my-command mission waits as long as the student leaves it. */
     const end = held ? (held.lastVolleyAt != null ? Math.max(recover, held.lastVolleyAt) : null)
@@ -317,6 +368,8 @@ const SIM_MISSIONS = (() => {
       salvosLeft: left,
       salvosMax: (UNIT[callsign] && typeof UNIT[callsign].salvos === 'number') ? UNIT[callsign].salvos : null,
       roundsLeft: roundsLeft(callsign),
+      dronesLeft: dLeft,
+      dronesMax: (UNIT[callsign] && typeof UNIT[callsign].drones === 'number') ? UNIT[callsign].drones : null,
       roundsMax: (UNIT[callsign] && typeof UNIT[callsign].rounds === 'number') ? UNIT[callsign].rounds : null,
       backAt: spent ? null : end,
       remainingSec: (!spent && end != null) ? Math.max(0, end - now) : null,
@@ -419,6 +472,7 @@ const SIM_MISSIONS = (() => {
        the battery is down. Making them wait five seconds for a unit to tell
        them something they can see on their own screen would be theatre. */
     const st = status(unit);
+    if (isDroneUnit(unit)) return sendDrones(spec, unit, now, st);
     if (!st.ready && st.spent) {
       return { ok: false, error: `${unit} is unavailable — no salvos remaining.`, status: st };
     }
@@ -441,7 +495,7 @@ const SIM_MISSIONS = (() => {
       const at = now + drawReply();
       replyAfter(unit, at, SAY.noAmmo(unit, have, need));
       return { ok: false, error: `${unit}: insufficient ammunition — ${have} rounds remaining, ${need} required.`,
-               status: st };
+               status: st, radio: true };
     }
 
     const m = {
@@ -508,8 +562,61 @@ const SIM_MISSIONS = (() => {
      when it fires — shoot and move starts when the call is taken. */
   function accept(m) {
     missions.push(m);
-    busyUntil.set(m.unit, m.sentAt + RECOVERY_SEC);
+    if (m.kind !== 'drone') busyUntil.set(m.unit, m.sentAt + RECOVERY_SEC);
     changed();
+  }
+
+  /* ---------- Predator ----------
+     spec.drones (1-20), spec.targetType (the class the drones hunt), and either
+     a grid (e, n) or spec.area { name, points: [{e,n}] } — a TAI or EA Lee
+     draws. Always launched on acknowledgement: no at-my-command, no TOT. */
+  function sendDrones(spec, unit, now, st) {
+    if (typeof SIM_DRONES === 'undefined') return { ok: false, error: 'Drones are not loaded.' };
+    const C = SIM_DRONES.CONFIG;
+    const n = Math.max(1, Math.min(C.maxPerMission, Math.floor(Number(spec.drones) || 1)));
+    const left = dronesLeft(unit);
+    if (left !== null && n > left) {
+      replyAfter(unit, now + drawReply(), SAY.noDrones(unit, left, n));
+      return { ok: false, error: `${unit}: insufficient drones — ${left} remaining, ${n} requested.`,
+               status: st, radio: true };
+    }
+    const area = spec.area && spec.area.points && spec.area.points.length >= 3 ? spec.area : null;
+    const aimE = area ? area.points.reduce((a, p) => a + p.e, 0) / area.points.length : spec.e;
+    const aimN = area ? area.points.reduce((a, p) => a + p.n, 0) / area.points.length : spec.n;
+    const aim = area ? { area: area.name, points: area.points, e: aimE, n: aimN }
+                     : { e: aimE, n: aimN,
+                         water: (typeof SIM_DAMAGE !== 'undefined' && SIM_DAMAGE.inWater) ? SIM_DAMAGE.inWater(aimE, aimN) : false };
+    const m = {
+      id: 'AB' + (nextNum++),
+      unit, kind: 'drone', control: 'When ready', type: 'Drones',
+      system: (UNIT[unit] && UNIT[unit].system) || '',
+      dispersionM: null,
+      shell: 'One Way Attack UAS',
+      drones: n, guns: 1, volleys: n, intervalSec: C.launchEverySec, rounds: n,
+      stopped: [],
+      count: spec.count || '', targetType: spec.targetType || '', environment: spec.environment || '',
+      e: aimE, n: aimN, elev: spec.elev || 0,
+      grid: spec.grid || (area ? area.name : ''), area: area ? area.name : null,
+      tofSec: C.tofSec, replySec: drawReply(), totSec: null, sentAt: now, state: 'sending'
+    };
+    m.replyAt = now + m.replySec;
+    accept(m);
+    replyAfter(unit, m.replyAt, SAY.mtoDrone(m), () => {
+      const first = Math.max(m.replyAt, launcherFreeAt);
+      for (let i = 0; i < n; i++) {
+        SIM_DRONES.launch({ id: `${m.id}-${i + 1}`, mission: m.id, index: i,
+                            launchAt: first + i * C.launchEverySec, aim, cls: m.targetType });
+      }
+      launcherFreeAt = first + n * C.launchEverySec;
+      m.fireAt = first;
+      m.splashAt = first + C.tofSec;
+      m.lastVolleyAt = first + (n - 1) * C.launchEverySec + C.tofSec + C.loiterSec;
+      m.state = 'queued';
+      m.volleysLanded = 0;
+      clock.at(first, () => { if (m.state === 'queued') m.state = 'inFlight'; say(unit, SAY.droneAway(m)); changed(); });
+      changed();
+    });
+    return { ok: true, mission: m };
   }
 
   /* "FIRE." The guns were laid and waiting; the time of flight starts now. */
@@ -527,6 +634,7 @@ const SIM_MISSIONS = (() => {
       shell: m.shell, rounds: m.rounds, guns: m.guns, volleys: m.volleys,
       intervalSec: m.intervalSec, volleysLanded: m.volleysLanded || 0,
       dispersionM: m.dispersionM, stopped: (m.stopped || []).slice(),
+      kind: m.kind || 'fires', drones: m.drones || null, area: m.area || null,
       count: m.count, targetType: m.targetType, environment: m.environment,
       grid: m.grid, state: m.state, tofSec: m.tofSec, totSec: m.totSec,
       sentAt: m.sentAt, replySec: m.replySec, replyAt: m.replyAt,
@@ -542,7 +650,7 @@ const SIM_MISSIONS = (() => {
   return { init, reset, send, fireNow, list, get, active,
            SAY, OBSERVER, MUNITIONS, spokenShell, UNITS, UNIT,
            MISSION_TYPES, DEFAULT_TYPE, SPLASH_WARN_SEC, REPLY_BAND, RECOVERY_SEC,
-           status, unitStatus, dispersionOf, salvosLeft, roundsLeft,
+           status, unitStatus, dispersionOf, salvosLeft, roundsLeft, dronesLeft, isDroneUnit,
            typing: () => [...typing.keys()] };
 })();
 

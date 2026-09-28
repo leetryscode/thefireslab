@@ -129,6 +129,8 @@
             <select id="cff-unit" aria-label="Unit called"></select>
             <span class="cff-fixed">this is Dragonfire FSCC</span>
             <select id="cff-type" aria-label="Type of mission"></select>
+            <!-- Predator only (Lee, 2026-09-28): how many drones, 1-20. -->
+            <select id="cff-drones" aria-label="Number of drones" hidden></select>
           </div>
 
           <div class="cff-line">
@@ -138,7 +140,10 @@
             <input id="cff-north" class="cff-grid" type="text" inputmode="numeric" maxlength="5"
                    placeholder="NNN" aria-label="Northing, three to five digits" autocomplete="off">
             <span class="cff-or">or</span>
-            <select disabled><option>Preplanned target</option><option>AB1001</option><option>AB1002</option></select>
+            <!-- Preplanned target. For Predator it lists the TAIs and EAs Lee
+                 draws in the ECOA (the drones search the whole shape); for the
+                 guns it stays disabled until preplanned targets are wired. -->
+            <select id="cff-pre" aria-label="Preplanned target or area" disabled><option value="">Preplanned target</option></select>
           </div>
 
           <!-- TARGET DESCRIPTION — what the student says is there. Both lists
@@ -155,7 +160,7 @@
             <select id="cff-env" aria-label="Environment"></select>
           </div>
 
-          <div class="cff-line">
+          <div class="cff-line" id="cff-shell-line">
             <select id="cff-shell" aria-label="Method of engagement"></select>
           </div>
 
@@ -170,6 +175,8 @@
             <select id="cff-control">
               <option>At my command</option><option>When ready</option><option>Time on target</option>
             </select>
+            <!-- Predator replaces the method of control (Lee, 2026-09-28). -->
+            <span id="cff-drone-note" class="cff-fixed" hidden>Drones launch when you send this mission.</span>
             <span id="cff-tot-wrap" class="cff-tot-wrap" hidden>
               <span class="cff-fixed">T+</span>
               <input id="cff-tot" class="cff-tot" type="text" inputmode="numeric" maxlength="5"
@@ -257,6 +264,20 @@
 
 <p class="sim-too-narrow">The Fire Mission Sim needs a wider screen. Open it on a laptop or a tablet in landscape.</p>
 
+<!-- STOP asks first (Lee, 2026-09-27): Stop is a full reset — enemy, missions,
+     ammunition, the fires log and the chat all go back to T+0 — and it sits
+     one button from Pause. Lee's wording. Its own classes, not the course's
+     .modal: the sim is decoupled from the course's i18n and modal checks. -->
+<div class="sim-confirm" id="stop-confirm" role="dialog" aria-modal="true" aria-describedby="stop-confirm-text">
+  <div class="sim-confirm-box">
+    <p id="stop-confirm-text">This resets the simulation, are you sure?</p>
+    <div class="sim-confirm-actions">
+      <button type="button" class="btn secondary" data-act="cancel">Cancel</button>
+      <button type="button" class="btn" data-act="reset">Yes, reset</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/sim-camera.js"></script>
 <script src="js/sim-projection.js"></script>
 <script src="js/sim-terrain.js"></script>
@@ -265,6 +286,7 @@
 <script src="js/sim-ecoa.js"></script>
 <script src="js/sim-entities.js"></script>
 <script src="js/sim-damage.js"></script>
+<script src="js/sim-drones.js"></script>
 <script src="js/sim-missions.js"></script>
 <script src="js/sim-render.js"></script>
 <script>
@@ -434,13 +456,46 @@ document.querySelectorAll('.dock-head').forEach(head => {
 
   play  && play.addEventListener('click',  () => SIM_CLOCK.play());
   pause && pause.addEventListener('click', () => SIM_CLOCK.pause());
-  stop  && stop.addEventListener('click',  () => SIM_CLOCK.stop());
+  /* Stop asks first. The run is paused while the question is up, and picks up
+     again on Cancel if it was playing. Nothing to lose (T+0, no missions sent)
+     means no question. */
+  const confirmBox = document.getElementById('stop-confirm');
+  let resumeAfter = false;
+  const confirmOpen = () => !!(confirmBox && confirmBox.classList.contains('show'));
+  function closeConfirm(reset) {
+    if (!confirmOpen()) return;
+    confirmBox.classList.remove('show');
+    if (reset) SIM_CLOCK.stop();
+    else if (resumeAfter) SIM_CLOCK.play();
+    resumeAfter = false;
+    if (stop) stop.focus();
+  }
+  function askStop() {
+    const nothingYet = SIM_CLOCK.time() === 0 &&
+      !(typeof SIM_MISSIONS !== 'undefined' && SIM_MISSIONS.list().length);
+    if (!confirmBox || nothingYet) { SIM_CLOCK.stop(); return; }
+    resumeAfter = SIM_CLOCK.isRunning();
+    SIM_CLOCK.pause();
+    confirmBox.classList.add('show');
+    const c = confirmBox.querySelector('[data-act="cancel"]');
+    if (c) c.focus();
+  }
+  if (confirmBox) {
+    confirmBox.addEventListener('click', ev => {
+      const act = ev.target.closest && ev.target.closest('[data-act]');
+      if (act) closeConfirm(act.dataset.act === 'reset');
+      else if (ev.target === confirmBox) closeConfirm(false);   /* the backdrop */
+    });
+    document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && confirmOpen()) { ev.preventDefault(); closeConfirm(false); } });
+  }
+  stop  && stop.addEventListener('click', askStop);
   speeds.forEach(b => b.addEventListener('click', () => SIM_CLOCK.setRate(b.dataset.rate)));
 
   /* Space toggles play/pause, the way every transport does — but not while the
      student is in the grid fields, where a space is a keystroke. */
   document.addEventListener('keydown', ev => {
     if (ev.code !== 'Space' || ev.repeat) return;
+    if (confirmOpen()) return;
     const el = document.activeElement;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' ||
                el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON')) return;
@@ -488,6 +543,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
   /* A pull, not a push: the overlay asks for the contacts at draw time, so it
      can never show a position that disagrees with the one the tick computed. */
   if (typeof SIM_ENTITIES !== 'undefined') SIM_RENDER.setEntitySource(() => SIM_ENTITIES.list());
+  if (typeof SIM_DRONES !== 'undefined' && SIM_RENDER.setDroneSource) SIM_RENDER.setDroneSource(t => SIM_DRONES.list(t));
   /* Rubble and fallen trees at the obstacles, clearing as each lane is breached. */
   if (typeof SIM_ENTITIES !== 'undefined' && SIM_ENTITIES.obstacles) SIM_RENDER.setObstacleSource(() => SIM_ENTITIES.obstacles());
 
@@ -562,6 +618,58 @@ document.querySelectorAll('.dock-head').forEach(head => {
     fill(document.getElementById('cff-env'), SIM_SCENARIO.ENVIRONMENTS, v => v, v => v);
   }
 
+  /* ---------- Predator changes the call for fire (Lee, 2026-09-28) ----------
+     Pick Predator and the mission type becomes a number of drones, the shell
+     line goes (there is only one munition), and the method of control is
+     replaced by a note: drones launch when the mission is sent. The
+     preplanned list offers the TAIs and EAs from the ECOA — the drones search
+     the whole shape. Picking a gun puts everything back. */
+  const droneSel = document.getElementById('cff-drones');
+  const preSel   = document.getElementById('cff-pre');
+  const shellLine = document.getElementById('cff-shell-line');
+  const ctrlBox  = document.getElementById('cff-control');
+  const droneNote = document.getElementById('cff-drone-note');
+  if (droneSel && typeof SIM_DRONES !== 'undefined') {
+    const nums = []; for (let i = 1; i <= SIM_DRONES.CONFIG.maxPerMission; i++) nums.push(i);
+    fill(droneSel, nums, n => String(n), n => `${n} drone${n === 1 ? '' : 's'}`);
+  }
+  /* TAI n / EA n from the converter, as UTM polygons. */
+  const AREAS = (() => {
+    const src = (typeof SIM_ECOA !== 'undefined' && SIM_ECOA && SIM_ECOA.areas && typeof SIM_PROJ !== 'undefined') ? SIM_ECOA.areas : {};
+    const out = [];
+    for (const [name, a] of Object.entries(src)) {
+      const pts = (a.points || []).map(g => SIM_PROJ.mgrsToUtm(g)).filter(Boolean).map(u => ({ e: u.e, n: u.n }));
+      if (pts.length >= 3) out.push({ name, points: pts });
+    }
+    return out;
+  })();
+  const isDrone = () => !!(unitSel && SIM_MISSIONS.isDroneUnit && SIM_MISSIONS.isDroneUnit(unitSel.value));
+  function syncUnit() {
+    const drone = isDrone();
+    if (typeSel) typeSel.hidden = drone;
+    if (droneSel) droneSel.hidden = !drone;
+    if (shellLine) shellLine.hidden = drone;
+    if (ctrlBox) ctrlBox.hidden = drone;
+    if (droneNote) droneNote.hidden = !drone;
+    if (totWrap) totWrap.hidden = drone || !ctrlBox || ctrlBox.value !== 'Time on target';
+    if (preSel) {
+      preSel.textContent = '';
+      const first = document.createElement('option');
+      first.value = ''; first.textContent = drone ? (AREAS.length ? 'Grid (or pick an area)' : 'No TAI or EA drawn') : 'Preplanned target';
+      preSel.appendChild(first);
+      if (drone) for (const a of AREAS) { const o = document.createElement('option'); o.value = a.name; o.textContent = a.name; preSel.appendChild(o); }
+      preSel.disabled = !drone || !AREAS.length;
+      preSel.value = '';
+    }
+    syncPre();
+  }
+  function syncPre() {
+    const area = isDrone() && preSel && preSel.value;
+    [east, north].forEach(el => { if (el) el.disabled = !!area; });
+  }
+  if (unitSel) unitSel.addEventListener('change', syncUnit);
+  if (preSel) preSel.addEventListener('change', syncPre);
+
   /* ---------- the asset status board ----------
      Callsign over type, one tile per taskable unit, and now actually driven:
      a battery that has taken a mission is off the air and the dial runs its
@@ -605,16 +713,19 @@ document.querySelectorAll('.dock-head').forEach(head => {
       /* Ammunition on the right of the row (Lee, 2026-09-27): rounds for the
          tubes, salvos for Fire Storm, a bar for what is left. The OWA has none. */
       const ammo = item.querySelector('.as-ammo');
-      const left = r.roundsLeft != null ? r.roundsLeft : r.salvosLeft;
-      const max  = r.roundsMax  != null ? r.roundsMax  : r.salvosMax;
+      const left = r.roundsLeft != null ? r.roundsLeft : r.dronesLeft != null ? r.dronesLeft : r.salvosLeft;
+      const max  = r.roundsMax  != null ? r.roundsMax  : r.dronesMax  != null ? r.dronesMax  : r.salvosMax;
       ammo.hidden = left == null;
       if (left != null) {
         const frac = max ? left / max : 0;
         ammo.querySelector('.as-ammo-num').textContent =
-          r.roundsLeft != null ? `${left} rds` : `${left} salvo${left === 1 ? '' : 's'}`;
+          r.roundsLeft != null ? `${left} rds`
+          : r.dronesLeft != null ? `${left} drone${left === 1 ? '' : 's'}`
+          : `${left} salvo${left === 1 ? '' : 's'}`;
         ammo.querySelector('i').style.width = (frac * 100).toFixed(0) + '%';
         ammo.classList.toggle('is-low', frac <= 0.25);
-        ammo.title = r.roundsLeft != null ? `${left} of ${max} rounds` : `${left} of ${max} salvos`;
+        ammo.title = r.roundsLeft != null ? `${left} of ${max} rounds`
+                   : r.dronesLeft != null ? `${left} of ${max} drones` : `${left} of ${max} salvos`;
       }
       if (r.ready) ready++;
     });
@@ -645,6 +756,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
      it only exists for it. */
   const syncTot = () => { if (totWrap) totWrap.hidden = ctrlSel.value !== 'Time on target'; };
   if (ctrlSel) { ctrlSel.addEventListener('change', syncTot); syncTot(); }
+  syncUnit();
 
   /* MM:SS, M:SS, or bare digits (MSS / MMSS) — a clock time read off the
      timeline, not a countdown, because that is how a time on target is given
@@ -666,6 +778,12 @@ document.querySelectorAll('.dock-head').forEach(head => {
 
   /* ---------- the chat and the mission board ----------
      Both are read-only views of SIM_MISSIONS. Neither decides anything. */
+  /* Stop is a full reset, so the net goes back to how it opened: the radio
+     check, and nothing from the last run (Lee, 2026-09-27). Target numbers
+     restart at AB1001, so old traffic would otherwise repeat them. */
+  const chatOpening = chatLog ? chatLog.innerHTML : '';
+  SIM_CLOCK.onChange(st => { if (st.reason === 'stop' && chatLog) { chatLog.innerHTML = chatOpening; } });
+
   function chatLine(who, text) {
     if (!chatLog) return;
     const p = document.createElement('p');
@@ -688,11 +806,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
     awaiting:  m => ['Ready — at your command', 'is-queued'],
     queued:    m => [m.totSec !== null ? `TOT ${SIM_CLOCK.format(m.totSec)}`
                                        : `Firing ${SIM_CLOCK.format(m.fireAt)}`, 'is-queued'],
-    inFlight:  m => [`In flight — splash ${SIM_CLOCK.format(m.splashAt)}`, 'is-firing'],
+    inFlight:  m => [m.kind === 'drone' ? `Drones away — first on station ${SIM_CLOCK.format(m.splashAt)}`
+                                        : `In flight — splash ${SIM_CLOCK.format(m.splashAt)}`, 'is-firing'],
     /* A mission is no longer one arrival, so the board says which volley is
        down: a three-volley fire for effect runs for forty seconds and a
        suppression mission for two minutes. */
-    impacting: m => [`Impacting — volley ${m.volleysLanded} of ${m.volleys}`, 'is-firing'],
+    impacting: m => m.kind === 'drone'
+      ? [`Drones — ${m.volleysLanded} of ${m.volleys} done`, 'is-firing']
+      : [`Impacting — volley ${m.volleysLanded} of ${m.volleys}`, 'is-firing'],
     complete:  m => ['Complete', '']
   };
 
@@ -704,7 +825,9 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const li = document.createElement('li');
       li.innerHTML = `<span class="mn"></span> <span></span> <span class="st"></span>`;
       li.children[0].textContent = m.id;
-      li.children[1].textContent = `${m.unit} (${m.system}) · ${m.rounds} rds · ${m.grid}`;
+      li.children[1].textContent = m.kind === 'drone'
+        ? `${m.unit} (${m.system}) · ${m.drones} drones · ${m.grid}`
+        : `${m.unit} (${m.system}) · ${m.rounds} rds · ${m.grid}`;
       li.children[2].textContent = text;
       if (cls) li.children[2].classList.add(cls);
 
@@ -836,10 +959,21 @@ document.querySelectorAll('.dock-head').forEach(head => {
     const cls = t => (SIM_SCENARIO.DISPLAY_CLASS && SIM_SCENARIO.DISPLAY_CLASS[t]) || t;
     const line = r =>
       `${r.mission}/${r.volley + 1} ${name(r).padEnd(9)} ` +
-      `${r.nearestM == null ? '   —' : String(r.nearestM).padStart(4)} m  ` +
+      (r.drone ? 'dive    ' : `${r.nearestM == null ? '   —' : String(r.nearestM).padStart(4)} m  `) +
       `P ${(r.pStop * 100).toFixed(0).padStart(3)}%  ${r.stopped ? 'STOPPED' : '-'}` +
       /* "(aboard)" cut for width (Lee, 2026-09-27); the water reasons stay. */
       (r.note && r.note !== 'aboard' ? ` (${r.note})` : '');
+    /* A drone mission's summary counts STRIKES by class (two drones on one
+       vehicle are two strikes) and the drones that found nothing. */
+    function droneSummary(id, rolls, vols) {
+      const m = SIM_MISSIONS.get(id);
+      const by = new Map();
+      for (const r of rolls) { const k = cls(r.type), c = by.get(k) || { n: 0, s: 0 }; c.n++; if (r.stopped) c.s++; by.set(k, c); }
+      const lost = vols.filter(v => v.lost).length;
+      const parts = [...by.entries()].sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1)).map(([k, c]) => `${k} ${c.s}/${c.n}`);
+      const tail = (parts.length ? parts.join(', ') + ' stopped' : 'nothing struck') + (lost ? `, ${lost} lost` : '');
+      return `${id} ${m ? m.unit : ''} — ${m ? m.drones : vols.length} drones:\n  ${tail}`;
+    }
     function summary(id, rolls) {
       const m = SIM_MISSIONS.get(id);
       const who = m ? m.unit : '';
@@ -867,13 +1001,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
       return order.map(id => {
         const rolls = log.filter(r => r.mission === id);
         const out = [];
-        for (const v of vols.filter(x => x.mission === id)) {
+        const mv = vols.filter(x => x.mission === id);
+        for (const v of mv) {
           const rs = rolls.filter(r => r.volley === v.volley).sort((a, b) => b.pStop - a.pStop || (a.id < b.id ? -1 : 1));
           if (rs.length) out.push(...rs.map(line));
-          else out.push(`${id}/${v.volley + 1} no vehicles in the impact area`);
+          else out.push(v.drone ? `${id}/${v.volley + 1} no target found` : `${id}/${v.volley + 1} no vehicles in the impact area`);
         }
         const m = SIM_MISSIONS.get(id);
-        if (m && m.state === 'complete') out.push(summary(id, rolls));
+        if (m && m.state === 'complete') out.push(m.kind === 'drone' ? droneSummary(id, rolls, mv) : summary(id, rolls));
         return out.join('\n');
       }).join('\n' + RULE + '\n');
     }
@@ -912,6 +1047,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
   }
 
   send.addEventListener('click', () => {
+    if (isDrone()) return sendDrones();
     const e = digits(east), n = digits(north);
 
     /* Accept 3, 4 or 5 digits — 100 m, 10 m, 1 m — because that is how a grid
@@ -972,7 +1108,9 @@ document.querySelectorAll('.dock-head').forEach(head => {
        the student's own transmission should not be left in the log implying it
        went out. Pull it back off. */
     if (!res.ok) {
-      if (res.status) { const last = chatLog && chatLog.querySelector('.chat-line.is-self:last-of-type');
+      /* ...unless the refusal comes back over the net (no ammunition): then
+         the call did go out, and the battery's answer is the reply to it. */
+      if (res.status && !res.radio) { const last = chatLog && chatLog.querySelector('.chat-line.is-self:last-of-type');
                         if (last) last.remove(); }
       return fail(res.error);
     }
@@ -981,6 +1119,47 @@ document.querySelectorAll('.dock-head').forEach(head => {
     /* The grid on the feed has been used: clear it back to hover. */
     if (typeof SIM_RENDER !== 'undefined' && SIM_RENDER.clearMark) SIM_RENDER.clearMark();
   });
+
+  /* ---------- Predator: send drones ----------
+     A grid (checked exactly like a gun mission's) or a TAI / EA from the
+     preplanned list. The class the student names is what the drones hunt. */
+  function sendDrones() {
+    const unit = unitSel.value;
+    const nDr  = droneSel ? Number(droneSel.value) || 1 : 1;
+    const count = countIn ? (countIn.value.replace(/\D/g, '') || '1') : '1';
+    const targ  = targSel ? targSel.value : '';
+    const env   = envSel ? envSel.value : '';
+    const targLabel = (typeof SIM_SCENARIO !== 'undefined' && SIM_SCENARIO.CLASS_LABELS[targ]) || targ;
+    const areaName = preSel && preSel.value;
+    let spec, where;
+    if (areaName) {
+      const a = AREAS.find(x => x.name === areaName);
+      if (!a) return fail('That area is not in the scenario.');
+      spec = { area: a, grid: a.name };
+      where = a.name;
+    } else {
+      const e = digits(east), n = digits(north);
+      if (e.length < 3 || e.length > 5 || n.length < 3 || n.length > 5)
+        return fail('Grid needs three, four or five digits each — or pick a TAI / EA.');
+      if (e.length !== n.length) return fail(`Uneven grid: ${e.length} digits then ${n.length}.`);
+      const grid = `20Q KF ${e} ${n}`;
+      const utm = SIM_PROJ.mgrsToUtm(grid);
+      if (!utm) return fail('That grid does not parse.');
+      const elev = groundAt(utm.e, utm.n);
+      const p = SIM_PROJ.worldToScreen(utm.e, utm.n, elev);
+      if (!p || !p.inFront || !p.inFrame) return fail(`${SIM_PROJ.utmToMgrs(utm.e, utm.n, 5)} is outside the feed.`);
+      spec = { e: utm.e, n: utm.n, elev, grid };
+      where = `Grid ${grid}`;
+    }
+    chatLine(SIM_MISSIONS.OBSERVER,
+      `${unit}, this is ${SIM_MISSIONS.OBSERVER}, ${nDr} drone${nDr === 1 ? '' : 's'}. ` +
+      `${where}. Seek ${count} ${targLabel} ${env}, over.`);
+    const res = SIM_MISSIONS.send({ unit, drones: nDr, count, targetType: targ, environment: env, ...spec });
+    if (!res.ok) return fail(res.error);
+    status.classList.remove('is-bad');
+    status.textContent = `${res.mission.id} — ${nDr} drone${nDr === 1 ? '' : 's'}, ${where}`;
+    if (typeof SIM_RENDER !== 'undefined' && SIM_RENDER.clearMark) SIM_RENDER.clearMark();
+  }
 
   /* ---------- dev readout, hidden ----------
      sim.html?dev=1 only: grid, range and frame pixel on hover, and a click
