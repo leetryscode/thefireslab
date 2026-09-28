@@ -205,8 +205,9 @@ const SIM_DRONES = (() => {
 
       if (d.state === 'dive' && now >= d.strikeAt) {
         const tgt = (typeof SIM_ENTITIES !== 'undefined') ? SIM_ENTITIES.get(d.target) : null;
-        if (!tgt || tgt.stopped) {
-          /* someone else stopped it first: look again if there is time */
+        if (!tgt || tgt.stopped || tgt.through) {
+          /* someone else stopped it first, or it got past the delay line
+             (out of reach): look again if there is time */
           d.state = 'loiter'; d.target = null;
         } else {
           const w = wet(tgt.e, tgt.n);

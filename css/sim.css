@@ -121,6 +121,45 @@ body.sim {
 }
 .sim-fireslog.is-collapsed .fl-body { display: none; }
 
+/* The score (Lee, 2026-09-28): ZBDs through the delay line. Flush in the top
+   right corner, above the HUD (Lee moved it there); one line until clicked. */
+.sim-score {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 3;
+  font-family: var(--font-mono);
+  color: #fff;
+  background: rgba(0, 0, 0, .62);
+}
+.sim-score[hidden] { display: none; }
+.sim-score .sc-head {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  width: 100%;
+  margin: 0;
+  padding: .2rem .45rem;
+  border: 0;
+  background: rgba(0, 0, 0, .35);
+  color: #fff;
+  font: 600 .7rem/1.2 var(--font-head);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sim-score .sc-num { margin-left: auto; font-family: var(--font-mono); letter-spacing: 0; }
+.sim-score .sc-caret::after { content: '\25BE'; }
+.sim-score.is-collapsed .sc-caret::after { content: '\25B8'; }
+.sim-score .sc-body {
+  margin: 0;
+  padding: .25rem .45rem;
+  font-size: .65rem;
+  line-height: 1.35;
+  white-space: pre;
+}
+.sim-score.is-collapsed .sc-body { display: none; }
+
 /* Google Earth imagery credit. Required on screen whenever the frame is, so it
    is anchored to the frame rather than the page, and sits top-left: the dock is
    fixed to the bottom of the window and open panels grow upward over the
@@ -337,7 +376,7 @@ body.sim {
   position: relative;
   /* Kept in step with img/sim-map.jpg — the suite parses the JPEG header and
      fails if the two disagree. */
-  aspect-ratio: var(--map-aspect, 1800 / 1710);
+  aspect-ratio: var(--map-aspect, 1800 / 1718);
   height: 100%;
   width: auto;
   max-width: 100%;

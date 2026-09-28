@@ -104,6 +104,16 @@ const SIM_ENTITIES = (() => {
            Until its startSec it is aboard: at the craft's position, a target
            for the rockets only. */
         carrier: spec.carrier || null,
+        /* A choice of paths (ENG 07 A / B, Lee 2026-09-28): taken once, when it
+           leaves the craft — see pickPath. */
+        alts: Array.isArray(spec.alts) && spec.alts.length > 1
+          ? spec.alts.map(a => ({ route: scn.routes[a.route], lane: a.breachLane || null, atM: a.breachAtM }))
+                     .filter(a => a.route)
+          : null,
+        /* Metres along its route where it crosses the delay line, and when it
+           did. Past it a vehicle is THROUGH: scored, and no longer a target. */
+        crossAtM: null,
+        throughAt: null,
         lostAboard: false,
         stoppedAt: null,
         state: (Number(spec.startSec) || 0) <= 0 ? MOVING : 'staged'
@@ -133,7 +143,10 @@ const SIM_ENTITIES = (() => {
        picks the work up where the last one stopped. A lane nobody is assigned
        to keeps the old stand-in timer, started by the first vehicle to reach
        its holding area. */
-    for (const en of ents) if (en.breach && lanes[en.breach.lane]) lanes[en.breach.lane].byEngineer = true;
+    for (const en of ents) {
+      if (en.breach && lanes[en.breach.lane]) lanes[en.breach.lane].byEngineer = true;
+      if (en.alts) for (const a of en.alts) if (a.lane && lanes[a.lane]) lanes[a.lane].byEngineer = true;
+    }
   }
 
   function workLanes(t, dt) {
@@ -160,10 +173,84 @@ const SIM_ENTITIES = (() => {
     scn = SIM_SCENARIO.prepare(scenario);
     const n = build();
     resetLanes();
+    prepareDelay();
+    for (const en of ents) if (en.state === MOVING) pickPath(en);
     return n;
   }
 
-  function reset() { if (!scn) return 0; const n = build(); resetLanes(); nowT = 0; return n; }
+  function reset() {
+    if (!scn) return 0;
+    const n = build(); resetLanes(); nowT = 0; prepareDelay();
+    for (const en of ents) if (en.state === MOVING) pickPath(en);
+    return n;
+  }
+
+  /* ---------- the engineer's choice (Lee, 2026-09-28) ----------
+     An engineer with more than one drawn path (ENG 07 A / B) picks when it
+     leaves the craft, and keeps it:
+       1. a lane still closed that no living engineer is committed to,
+       2. then the one with the least breach done,
+       3. then the order drawn.
+     A closed lane that does have an engineer comes next (least done first).
+     If every lane is open it takes the first path and simply drives on —
+     through the lanes and past the delay line, which scores nothing for an
+     engineer. Deterministic: same answer at 1x and 30x. */
+  function committed(lane, self) {
+    return ents.some(o => o !== self && o.type === 'engineering' && o.state !== 'destroyed' && !o.lostAboard &&
+                          !(o.alts && !o.picked) && o.breach && o.breach.lane === lane && o.breach.phase !== 'done');
+  }
+  function progress(lane) {
+    const L = lanes[lane];
+    return L && L.breachSec ? L.workSec / L.breachSec : 0;
+  }
+  function pickPath(en) {
+    if (!en.alts || en.picked) return;
+    en.picked = true;
+    const t = nowT;
+    const shut = en.alts.map((a, i) => ({ a, i })).filter(x => x.a.lane && !laneOpen(x.a.lane, t));
+    const order = (xs) => xs.slice().sort((x, y) => (progress(x.a.lane) - progress(y.a.lane)) || (x.i - y.i));
+    const free = shut.filter(x => !committed(x.a.lane, en));
+    const pick = (free.length ? order(free)[0] : shut.length ? order(shut)[0] : { a: en.alts[0], i: 0 }).a;
+    en.route = pick.route;
+    en.pickedLane = pick.lane;
+    en.breach = pick.lane && typeof pick.atM === 'number'
+      ? { lane: pick.lane, atM: pick.atM, phase: laneOpen(pick.lane, t) ? 'done' : 'pending' } : null;
+    en.crossAtM = crossingOf(en.route);
+  }
+
+  /* ---------- the delay line (Lee, 2026-09-28) ----------
+     'PL RED' in the KMZ; 'DELAY LINE RED' to the student. Where each route
+     crosses it is worked out once, as metres along the route. */
+  let delaySegs = [], delayLabel = '';
+  function prepareDelay() {
+    delaySegs = []; delayLabel = '';
+    const src = (scn && scn.delayLines) || {};
+    for (const [id, d] of Object.entries(src)) {
+      const pts = (d.points || []).map(g => SIM_PROJ.mgrsToUtm(g)).filter(Boolean);
+      for (let i = 0; i + 1 < pts.length; i++) delaySegs.push([pts[i], pts[i + 1]]);
+      if (!delayLabel) delayLabel = d.label || id;
+    }
+    for (const en of ents) en.crossAtM = crossingOf(en.route);
+  }
+  function crossingOf(route) {
+    if (!delaySegs.length || !route || !route.legs) return null;
+    let best = null;
+    for (const leg of route.legs) {
+      const a = route.nodes[leg.from], b = route.nodes[leg.from + 1];
+      for (const [c, d] of delaySegs) {
+        const r = { e: b.e - a.e, n: b.n - a.n }, s = { e: d.e - c.e, n: d.n - c.n };
+        const den = r.e * s.n - r.n * s.e;
+        if (Math.abs(den) < 1e-9) continue;
+        const u = ((c.e - a.e) * s.n - (c.n - a.n) * s.e) / den;
+        const v = ((c.e - a.e) * r.n - (c.n - a.n) * r.e) / den;
+        if (u >= 0 && u <= 1 && v >= 0 && v <= 1) {
+          const m = leg.start + u * leg.len;
+          if (best === null || m < best) best = m;
+        }
+      }
+    }
+    return best;
+  }
 
   /* ---------- obstacles, as the student sees them ----------
      Lee, 2026-09-27. The OBS belts are long because they do the halting; the
@@ -314,7 +401,7 @@ const SIM_ENTITIES = (() => {
   function tick(t, dt) {
     nowT = t;
     for (const en of ents) {
-      if (en.state === 'staged' && t >= en.startSec && !en.lostAboard) en.state = MOVING;
+      if (en.state === 'staged' && t >= en.startSec && !en.lostAboard) { en.state = MOVING; pickPath(en); }
     }
 
     /* Halted vehicles still occupy ground, so they are in the position map and
@@ -429,6 +516,7 @@ const SIM_ENTITIES = (() => {
 
       en.vKph = dt > 0 ? (want / dt) * 3.6 : 0;
       en.s += want;
+      if (en.throughAt === null && en.crossAtM !== null && en.s >= en.crossAtM) en.throughAt = t + dt;
       if (en.s >= en.route.lengthM) {
         en.s = en.route.lengthM;
         en.state = 'arrived';
@@ -447,6 +535,7 @@ const SIM_ENTITIES = (() => {
     return {
       id: en.id, type: en.type, state: en.state, hpt: en.hpt,
       stopped: en.state === 'destroyed', stoppedAt: en.stoppedAt,
+      through: en.throughAt !== null, throughAt: en.throughAt,
       label: en.cls.label, lengthM: en.cls.lengthM, widthM: en.cls.widthM,
       e: p.e, n: p.n, elev: p.elev, heading: facing,
       /* The speed it is actually making, not the leg's nominal: a vehicle
@@ -482,6 +571,7 @@ const SIM_ENTITIES = (() => {
     const byId = new Map(ents.map(en => [en.id, en]));
     for (const en of ents) {
       if (en.state === 'destroyed' || en.lostAboard) continue;
+      if (en.throughAt !== null) continue;          /* past the delay line: out of reach */
       if (en.state === 'staged') {
         const c = en.carrier && byId.get(en.carrier);
         if (!c || c.state === 'staged') continue;
@@ -499,6 +589,7 @@ const SIM_ENTITIES = (() => {
   function stop(id, t) {
     const en = ents.find(e => e.id === id);
     if (!en || en.state === 'destroyed' || en.lostAboard) return false;
+    if (en.throughAt !== null) return false;       /* through: a score cannot be undone */
     if (en.state === 'staged') en.lostAboard = true;
     else en.state = 'destroyed';
     en.vKph = 0;
@@ -518,7 +609,37 @@ const SIM_ENTITIES = (() => {
     return true;
   }
 
-  return { load, reset, tick, list, get, setState, targets, stop, obstacles, count: () => ents.length,
+  /* ---------- the score (Lee, 2026-09-28) ----------
+     Every ZBD is in exactly one bucket, so the student can see what the fuel
+     trucks and engineers they hit did to the ZBDs. Kills by type are kept
+     too, "for fun". */
+  const ZBD = 'amphibious-assault-vehicle';
+  function tally() {
+    const out = { label: delayLabel, zbd: 0, through: 0, stopped: 0, heldObstacle: 0, heldFuel: 0, moving: 0,
+                  kills: { ZBD: 0, FUEL: 0, ENG: 0 } };
+    for (const en of ents) {
+      const dead = en.state === 'destroyed' || en.lostAboard;
+      if (dead) {
+        if (en.type === ZBD) out.kills.ZBD++;
+        else if (en.type === 'logistics') out.kills.FUEL++;
+        else if (en.type === 'engineering') out.kills.ENG++;
+      }
+      if (en.type !== ZBD) continue;
+      out.zbd++;
+      if (dead) out.stopped++;
+      else if (en.throughAt !== null) out.through++;
+      else if (en.state === HALTED && en.fuel && (en.fuel.phase === 'ring' || en.fuel.phase === 'fueling')) out.heldFuel++;
+      /* Waiting on a shut lane: at the holding area, or queued nose-to-tail
+         behind the ones that are (moving, but making no way). */
+      else if (en.lane && !laneOpen(en.lane, nowT) && (!en.fuel || en.fuel.phase === 'done') &&
+               (en.state === HALTED || (en.state === MOVING && typeof en.vKph === 'number' && en.vKph < 1)))
+        out.heldObstacle++;
+      else out.moving++;
+    }
+    return out;
+  }
+
+  return { load, reset, tick, list, get, setState, targets, stop, obstacles, tally, count: () => ents.length,
            lanes: () => JSON.parse(JSON.stringify(lanes)) };
 })();
 

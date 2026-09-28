@@ -1049,6 +1049,53 @@ document.querySelectorAll('.dock-head').forEach(head => {
     SIM_CLOCK.onChange(paint);
     return { paint, text };
   })();
+
+  /* ---------- the score: ZBDs through the delay line ----------
+     Lee, 2026-09-28. The objective is delay, so the score is how many ZBDs get
+     through DELAY LINE RED. Collapsed it shows only that; opened, it shows
+     where every other ZBD is (held at the obstacles, waiting for fuel,
+     stopped, still on the move) — which is how a hit on a fuel truck or an
+     engineer shows up in the score — and, last, kills by type "for fun".
+     Top right, under the ACRFT block, in the fires log's style. */
+  const scoreBox = (() => {
+    const fr = document.querySelector('.sim-frame');
+    if (!fr || typeof SIM_ENTITIES === 'undefined' || !SIM_ENTITIES.tally) return null;
+    const box = document.createElement('div');
+    box.className = 'sim-score is-collapsed';
+    box.innerHTML = '<button type="button" class="sc-head" aria-expanded="false">' +
+                    '<span class="sc-title"></span><span class="sc-num"></span>' +
+                    '<span class="sc-caret" aria-hidden="true"></span></button>' +
+                    '<pre class="sc-body"></pre>';
+    fr.appendChild(box);
+    for (const ev of ['click', 'pointerdown', 'pointermove']) box.addEventListener(ev, e => e.stopPropagation());
+    const head = box.querySelector('.sc-head'), body = box.querySelector('.sc-body');
+    head.addEventListener('click', () => {
+      const open = box.classList.toggle('is-collapsed') === false;
+      head.setAttribute('aria-expanded', String(open));
+    });
+    const row = (k, v) => `  ${k.padEnd(18)}${String(v).padStart(3)}`;
+    function text(s) {
+      return `Where the other ${s.zbd - s.through} are:\n` +
+        [row('held at obstacles', s.heldObstacle), row('waiting for fuel', s.heldFuel),
+         row('stopped by fires', s.stopped), row('on the move', s.moving)].join('\n') +
+        `\nStopped: ZBD ${s.kills.ZBD} · FUEL ${s.kills.FUEL} · ENG ${s.kills.ENG}`;
+    }
+    let last = '';
+    function paint() {
+      const s = SIM_ENTITIES.tally();
+      box.hidden = !s.label || !s.zbd;
+      const key = JSON.stringify(s);
+      if (key === last) return;
+      last = key;
+      box.querySelector('.sc-title').textContent = `ZBD through ${s.label}`;
+      box.querySelector('.sc-num').textContent = `${s.through} / ${s.zbd}`;
+      body.textContent = text(s);
+    }
+    SIM_CLOCK.onTick(paint);
+    SIM_CLOCK.onChange(paint);
+    paint();
+    return { paint, text };
+  })();
   paintMissions([]);
   paintAssets();
   paintPrompts([]);
