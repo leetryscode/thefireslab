@@ -33,80 +33,52 @@ window.D3A_LANG_ZH = {
     en: "Commander's Objectives → Fires → Mission Success",
     zh: "指揮官目標 → 火力 → 任務成功"
   },
-  "index.003": {
-    en: "Choose your track",
-    zh: "選擇你的訓練路線"
-  },
-  "index.004": {
-    en: "Pick how you want to train on the D3A targeting methodology.",
-    zh: "選擇你要如何演練D3A目標選定方法。"
-  },
   "index.005": {
-    en: "Battle",
-    zh: "戰鬥"
+    en: "D3A Targeting Course",
+    zh: ""
   },
   "index.006": {
     en: "Master the basics",
     zh: "掌握基礎"
   },
-  "index.007": {
-    en: "D3A basics",
-    zh: "D3A基礎"
+  "index.003": {
+    en: "This is an interactive coursebook explaining targeting basics following the format Decide, Detect, Deliver, Assess.",
+    zh: ""
   },
   "index.008": {
-    en: "High payoff targets",
-    zh: "高效益目標"
+    en: "High Payoff Targets",
+    zh: ""
   },
   "index.009": {
-    en: "Basic target selection standards",
-    zh: "基礎目標選擇條件"
+    en: "Target Selection Standards",
+    zh: ""
   },
   "index.010": {
-    en: "Attack guidance matrix",
-    zh: "攻擊矩陣"
+    en: "Attack Guidance",
+    zh: ""
   },
   "index.011": {
-    en: "Basic collections plan",
-    zh: "基礎蒐集計畫"
+    en: "Target Synchronization Matrix",
+    zh: ""
+  },
+  "index.004": {
+    en: "F2T2EA",
+    zh: ""
+  },
+  "index.007": {
+    en: "Battle Damage Assessment",
+    zh: ""
   },
   "index.012": {
-    en: "Measure of performance and measure of effectiveness",
-    zh: "積效評估與效益評估"
-  },
-  "index.013": {
-    en: "Coming soon",
-    zh: "即將推出"
+    en: "Measures of Performance and Effectiveness",
+    zh: ""
   },
   "index.014": {
     en: "Fire Mission Sim",
     zh: ""
   },
   "index.015": {
-    en: "Run the engagement against a live clock",
-    zh: ""
-  },
-  "index.016": {
-    en: "A drone feed over the engagement area, on one scenario clock",
-    zh: ""
-  },
-  "index.017": {
-    en: "Find, fix and track a moving enemy contact",
-    zh: ""
-  },
-  "index.018": {
-    en: "Engagement area with TRPs and preplanned targets",
-    zh: ""
-  },
-  "index.019": {
-    en: "Build and send the call for fire",
-    zh: ""
-  },
-  "index.020": {
-    en: "Assign artillery or one-way attack UAS",
-    zh: ""
-  },
-  "index.021": {
-    en: "Graded on accuracy, timeliness and asset choice",
+    en: "Practice dynamic targeting",
     zh: ""
   },
 
