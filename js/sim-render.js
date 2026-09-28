@@ -532,8 +532,12 @@ const SIM_RENDER = (() => {
        rather than "a contact too far away to make out".
        In IR a running vehicle is the hottest thing on the ground, so its
        footprint goes white-hot. */
-    const hull = mode === 'ir' ? HULL_IR : HULL;
-    cx2d.globalAlpha = v.state === 'destroyed' ? 0.35 : 1;
+    /* A STOPPED vehicle is shaded differently (Lee, 2026-09-27), full strength
+       so it still reads at range: burnt rust in TV; in IR it fades from
+       white-hot to a cooled grey as its heat dies (wreckHeat below). */
+    const hull = v.stopped ? wreckHull(v, simNow())
+               : (mode === 'ir' ? HULL_IR : HULL);
+    cx2d.globalAlpha = 1;
     cx2d.fillStyle = hull;
     const xs = quad.map(p => p.x), ys = quad.map(p => p.y);
     if (Math.max(...xs) - Math.min(...xs) < MIN_SMUDGE_PX && Math.max(...ys) - Math.min(...ys) < MIN_SMUDGE_PX) {
@@ -548,6 +552,110 @@ const SIM_RENDER = (() => {
     }
     cx2d.globalAlpha = 1;
     return { v, centre, quad };
+  }
+
+  /* ---------- wrecks ----------
+     Lee, 2026-09-27: a stopped vehicle stays on the field for the whole run,
+     shaded differently, and smokes. FUEL trucks burn bigger and longer with
+     more smoke; everything else (ZBD, engineers) smoulders thin, so it does
+     not hide the ground.
+
+     Like the burst plumes, every puff is a pure function of the wreck's age —
+     emitted on a fixed cadence from the moment it stopped — so a pause freezes
+     it, 30x reaches the same picture, and nothing is stored per frame. A
+     picture only: nothing here touches the engine. */
+  const WRECK = {
+    /* a fuel fire: ~15 min of heavy smoke rising to 60-80 m, a flame at the base */
+    logistics: { burnS: 900, emitS: 1.2, lifeS: 45, rise: 70, r0: 6, grow: 4.5, alpha: 0.5,  heatS: 480, fire: true,  hotM: 9 },
+    /* armour, engineers: ~5 min of a thin wisp */
+    other:     { burnS: 300, emitS: 2.5, lifeS: 25, rise: 35, r0: 2.5, grow: 1.8, alpha: 0.16, heatS: 120, fire: false, hotM: 4 }
+  };
+  const WRECK_TV = '#6b4a33';          /* burnt rust */
+  const WRECK_IR_COLD = [112, 112, 108];
+  const wreckSpec = v => WRECK[v.type] || WRECK.other;
+  function idSeed(id) { let h = 2166136261; for (const ch of String(id)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+  /** 0..1, how hot the wreck still is. 1 at the moment it stops. */
+  function wreckHeat(v, nowMs) {
+    if (!v.stopped || typeof v.stoppedAt !== 'number') return 0;
+    const s = nowMs / 1000 - v.stoppedAt;
+    if (s < 0) return 0;
+    return Math.exp(-s / wreckSpec(v).heatS);
+  }
+  function wreckHull(v, nowMs) {
+    if (mode !== 'ir') return WRECK_TV;
+    const k = wreckHeat(v, nowMs);
+    const c = WRECK_IR_COLD.map(x => Math.round(x + (246 - x) * k));
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+
+  /** The whole smoke column of one wreck at one moment. Pure: vehicle (with
+      stoppedAt in sim seconds), now in sim ms, grid wind m/s. Puffs out, each
+      with ground e/n, height h, radius rM and opacity a; plus `fire` 0..1 (the
+      flame at the base) and `heat` 0..1. */
+  function wreckState(v, nowMs, wind) {
+    if (!v || !v.stopped || typeof v.stoppedAt !== 'number') return null;
+    const sp = wreckSpec(v);
+    const now = nowMs / 1000, t0 = v.stoppedAt;
+    if (now < t0) return null;
+    const end = t0 + sp.burnS;
+    const w = wind || { e: 0, n: 0 };
+    const seed = idSeed(v.id);
+    const puffs = [];
+    const kLo = Math.max(0, Math.ceil((now - sp.lifeS - t0) / sp.emitS));
+    const kHi = Math.floor((Math.min(now, end) - t0) / sp.emitS);
+    for (let k = kLo; k <= kHi; k++) {
+      const tE = t0 + k * sp.emitS, a = now - tE;
+      if (a < 0 || a >= sp.lifeS) continue;
+      /* the fire dies down over its last minute, and so does its smoke */
+      const dying = Math.min(1, (end - tE) / 60);
+      const carry = a - 2.4 * (1 - Math.exp(-a / 6));
+      puffs.push({
+        e: v.e + (hash01(seed, k) - 0.5) * 4 + w.e * carry,
+        n: v.n + (hash01(seed, k + 7) - 0.5) * 4 + w.n * carry,
+        h: sp.rise * (0.7 + 0.3 * hash01(seed, k + 13)) * (1 - Math.exp(-a / 8)),
+        rM: sp.r0 + sp.grow * Math.sqrt(a),
+        a: sp.alpha * (1 - a / sp.lifeS) * Math.min(1, a / 0.6) * dying
+      });
+    }
+    const burning = now < end ? Math.min(1, (end - now) / 60) : 0;
+    return { puffs, fire: sp.fire ? burning : 0, heat: wreckHeat(v, nowMs), hotM: sp.hotM };
+  }
+
+  function drawWreck(v, nowMs, wind) {
+    const st = wreckState(v, nowMs, wind);
+    if (!st) return;
+    const ir = mode === 'ir';
+    /* IR: the wreck itself stays a hot spot while it cools. */
+    if (ir && st.heat > 0.02) {
+      const disc = groundDisc(v.e, v.n, v.elev, st.hotM, 12);
+      if (disc) { cx2d.globalAlpha = 0.85 * st.heat; cx2d.fillStyle = '#ffffff'; tracePolygon(disc); cx2d.fill(); }
+    }
+    /* TV: flame at the base of a burning fuel truck, flickering on sim time. */
+    if (!ir && st.fire > 0) {
+      const c = SIM_PROJ.worldToScreen(v.e, v.n, v.elev + 2);
+      if (c && c.inFront) {
+        const flick = 0.75 + 0.25 * hash01(idSeed(v.id), Math.floor(nowMs / 120));
+        const r = Math.max(1.5, (5 * flick) / metresPerPixel(c));
+        const g = cx2d.createRadialGradient(c.x, c.y, 0, c.x, c.y, r);
+        g.addColorStop(0, 'rgba(255, 236, 170, 1)');
+        g.addColorStop(0.5, 'rgba(255, 140, 40, 0.85)');
+        g.addColorStop(1, 'rgba(200, 60, 10, 0)');
+        cx2d.globalAlpha = st.fire * flick;
+        cx2d.fillStyle = g;
+        cx2d.beginPath(); cx2d.arc(c.x, c.y, r, 0, Math.PI * 2); cx2d.fill();
+      }
+    }
+    const img = sprite(ir ? 'ir' : 'tv', ir ? HOT_RGB : SMOKE_RGB);
+    for (const q of st.puffs) {
+      const c = SIM_PROJ.worldToScreen(q.e, q.n, v.elev + q.h);
+      if (!c || !c.inFront || !isFinite(c.x) || !isFinite(c.y)) continue;
+      const r = Math.max(1, q.rM / metresPerPixel(c));
+      /* In IR the smoke is only as bright as the fire under it. */
+      cx2d.globalAlpha = q.a * (ir ? 0.7 * Math.max(st.heat, 0.15) : 1);
+      if (img) cx2d.drawImage(img, c.x - r, c.y - r, 2 * r, 2 * r);
+    }
+    cx2d.globalAlpha = 1;
   }
 
   /* ---------- the HUD ----------
@@ -1085,6 +1193,8 @@ const SIM_RENDER = (() => {
       let vs = null;
       try { vs = entitySource(); } catch (err) { console.error('[sim-render] entity source threw', err); }
       if (vs) for (const v of vs) { const d = drawFootprint(v); if (d) drawn.push(d); }
+      /* Wreck smoke over the footprints, under the burst smoke. */
+      if (vs) { const tNow = simNow(), wd = windNow(); for (const v of vs) if (v.stopped) drawWreck(v, tNow, wd); }
     }
 
     const now = simNow();
@@ -1237,7 +1347,7 @@ const SIM_RENDER = (() => {
     return viewInvert({ x, y }, view);
   }
 
-  return { attach, detach, fireMission, impacts, setEntitySource, clear, toFrame, containBox,
+  return { attach, detach, fireMission, impacts, setEntitySource, wreckState, wreckHull, WRECK, clear, toFrame, containBox,
            groundQuad, setMode, toggleMode, mode: () => mode,
            plumeState, plumeCount: () => plumes.length, hudValues, latLonText,
            swayAt, viewApply, viewInvert, VIEW, view: () => ({ ...view }),

@@ -580,7 +580,9 @@ document.querySelectorAll('.dock-head').forEach(head => {
         const item = document.createElement('div');
         item.className = 'as-item';
         item.innerHTML = '<span class="as-pie"></span><span class="as-text">' +
-                         '<span class="as-label"></span><span class="as-note"></span></span>';
+                         '<span class="as-label"></span><span class="as-note"></span></span>' +
+                         '<span class="as-ammo"><span class="as-ammo-num"></span>' +
+                         '<span class="as-ammo-bar"><i></i></span></span>';
         item.querySelector('.as-label').textContent = r.callsign;
         board.appendChild(item);
       }
@@ -595,13 +597,25 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const frac = r.remainingSec != null ? Math.min(1, r.remainingSec / r.recoverySec)
                                           : (r.ready ? 0 : 1);
       item.style.setProperty('--as-deg', (frac * 360).toFixed(1) + 'deg');
-      /* Fire Storm counts its salvos (Lee, 2026-09-27: two a scenario). */
-      const salvos = r.salvosLeft != null ? ` · ${r.salvosLeft} salvo${r.salvosLeft === 1 ? '' : 's'}` : '';
       item.querySelector('.as-note').textContent =
         r.spent               ? `${r.system} · spent`
-        : r.ready             ? r.system + salvos
-        : r.remainingSec != null ? `${r.system} · back ${SIM_CLOCK.format(r.backAt)}${salvos}`
+        : r.ready             ? r.system
+        : r.remainingSec != null ? `${r.system} · back ${SIM_CLOCK.format(r.backAt)}`
         : `${r.system} · holding ${r.holding}`;
+      /* Ammunition on the right of the row (Lee, 2026-09-27): rounds for the
+         tubes, salvos for Fire Storm, a bar for what is left. The OWA has none. */
+      const ammo = item.querySelector('.as-ammo');
+      const left = r.roundsLeft != null ? r.roundsLeft : r.salvosLeft;
+      const max  = r.roundsMax  != null ? r.roundsMax  : r.salvosMax;
+      ammo.hidden = left == null;
+      if (left != null) {
+        const frac = max ? left / max : 0;
+        ammo.querySelector('.as-ammo-num').textContent =
+          r.roundsLeft != null ? `${left} rds` : `${left} salvo${left === 1 ? '' : 's'}`;
+        ammo.querySelector('i').style.width = (frac * 100).toFixed(0) + '%';
+        ammo.classList.toggle('is-low', frac <= 0.25);
+        ammo.title = r.roundsLeft != null ? `${left} of ${max} rounds` : `${left} of ${max} salvos`;
+      }
       if (r.ready) ready++;
     });
     if (assetHint) assetHint.textContent = `${ready} of ${rows.length} ready`;

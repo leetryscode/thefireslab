@@ -475,6 +475,32 @@ body.sim {
 .dock-body .as-item { width: 100%; }
 .dock-body .as-note { white-space: normal; }
 
+/* Ammunition on the right of each row (Lee, 2026-09-27). Fixed small width,
+   so the panel does not change size: the note beside it wraps instead. */
+.as-ammo {
+  margin-left: auto;
+  flex: 0 0 3.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .15rem;
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  line-height: 1.1;
+}
+.as-ammo[hidden] { display: none; }
+.as-ammo-bar {
+  display: block;
+  width: 100%;
+  height: .3rem;
+  background: rgba(0, 0, 0, .12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.as-ammo-bar > i { display: block; height: 100%; background: var(--ok); }
+.as-ammo.is-low .as-ammo-bar > i { background: var(--bad); }
+.as-ammo.is-low .as-ammo-num { color: var(--bad); }
+
 /* A mission row wraps inside the fixed width instead of stretching it: target
    number and status on the first line, the detail beneath. */
 .mission-list li {

@@ -87,6 +87,9 @@ const SIM_MISSIONS = (() => {
                    `Ready, at your command, over.`,
     shot:     m => `${head(m)} ${m.id}, shot, over.`,
     splash:   m => `${head(m)} ${m.id}, splash, over.`,
+    /* Lee, 2026-09-27: refused from the battery itself, over the net. */
+    noAmmo:   (unit, left, need) => `${OBSERVER}, this is ${unit}, unable — insufficient ammunition, ` +
+                                    `${left} rounds remaining, ${need} required, over.`,
     lateTot:  (m, now) => `${head(m)} unable. Time on target ${SIM_CLOCK.format(m.totSec)} is inside ` +
                           `time of flight — earliest is ${SIM_CLOCK.format(now + m.tofSec)}. ` +
                           `Send a later time on target, over.`
@@ -107,16 +110,22 @@ const SIM_MISSIONS = (() => {
      mission type is picked, and `salvos: 2` a scenario. Once both are fired the
      unit is spent for the rest of the run.
 
+     AMMUNITION (Lee, 2026-09-27): `rounds` on hand for the whole run, no
+     resupply — 230 per M109 battery, 300 per M101 battery (about what six
+     guns carry). At the 15-minute recovery a battery will rarely run dry in a
+     45-minute fight; it is shown on the asset board for realism. A mission
+     needing more than is left is refused by the battery over the net.
+
      Every band is 20-35 s, Lee's figure, on the reasoning that the unit
      displaces after each mission so the range differs every time. THE PREDATOR
      BAND IS A PLACEHOLDER AND IS ALMOST CERTAINLY WRONG — a one-way attack UAS
      does not transit in half a minute. Left at the tube band so the control flow
      could be built, flagged so it is not mistaken for a decision. */
   const UNITS = [
-    { callsign: 'Steel Rain', system: 'M109',   tof: [20, 35] },
-    { callsign: 'Typhoon',    system: 'M109',   tof: [20, 35] },
-    { callsign: 'Anvil',      system: 'M101',   tof: [20, 35] },
-    { callsign: 'Lightning',  system: 'M101',   tof: [20, 35] },
+    { callsign: 'Steel Rain', system: 'M109',   tof: [20, 35], rounds: 230 },
+    { callsign: 'Typhoon',    system: 'M109',   tof: [20, 35], rounds: 230 },
+    { callsign: 'Anvil',      system: 'M101',   tof: [20, 35], rounds: 300 },
+    { callsign: 'Lightning',  system: 'M101',   tof: [20, 35], rounds: 300 },
     { callsign: 'Fire Storm', system: 'RT2000', tof: [20, 35], salvos: 2 },
     { callsign: 'Predator',   system: 'OWA',    tof: [20, 35] }
   ];
@@ -134,6 +143,15 @@ const SIM_MISSIONS = (() => {
     const u = UNIT[callsign];
     if (!u || typeof u.salvos !== 'number') return null;
     return Math.max(0, u.salvos - missions.filter(m => m.unit === callsign).length);
+  }
+  /* Rounds left: what it started with less every mission it has taken. Charged
+     when the mission is accepted, so a held at-my-command mission has its
+     rounds set aside. */
+  function roundsLeft(callsign) {
+    const u = UNIT[callsign];
+    if (!u || typeof u.rounds !== 'number') return null;
+    const used = missions.filter(m => m.unit === callsign).reduce((a, m) => a + (m.rounds || 0), 0);
+    return Math.max(0, u.rounds - used);
   }
   const UNIT = {};
   UNITS.forEach(u => { UNIT[u.callsign] = u; });
@@ -297,6 +315,9 @@ const SIM_MISSIONS = (() => {
       holding: held ? held.id : null,
       spent,
       salvosLeft: left,
+      salvosMax: (UNIT[callsign] && typeof UNIT[callsign].salvos === 'number') ? UNIT[callsign].salvos : null,
+      roundsLeft: roundsLeft(callsign),
+      roundsMax: (UNIT[callsign] && typeof UNIT[callsign].rounds === 'number') ? UNIT[callsign].rounds : null,
       backAt: spent ? null : end,
       remainingSec: (!spent && end != null) ? Math.max(0, end - now) : null,
       recoverySec: RECOVERY_SEC
@@ -413,6 +434,16 @@ const SIM_MISSIONS = (() => {
     const salvo = (typeof SIM_DAMAGE !== 'undefined') && SIM_DAMAGE.pattern(system);
     const shape = (salvo && salvo.kind === 'ellipse')
       ? { guns: salvo.count, volleys: 1, intervalSec: 0 } : pattern;
+    /* Not enough rounds for this mission: the battery says so, after its usual
+       beat, and nothing is fired. No target number is used up. */
+    const have = roundsLeft(unit), need = shape.guns * shape.volleys;
+    if (have !== null && need > have) {
+      const at = now + drawReply();
+      replyAfter(unit, at, SAY.noAmmo(unit, have, need));
+      return { ok: false, error: `${unit}: insufficient ammunition — ${have} rounds remaining, ${need} required.`,
+               status: st };
+    }
+
     const m = {
       id: 'AB' + (nextNum++),
       unit, control, type,
@@ -511,7 +542,7 @@ const SIM_MISSIONS = (() => {
   return { init, reset, send, fireNow, list, get, active,
            SAY, OBSERVER, MUNITIONS, spokenShell, UNITS, UNIT,
            MISSION_TYPES, DEFAULT_TYPE, SPLASH_WARN_SEC, REPLY_BAND, RECOVERY_SEC,
-           status, unitStatus, dispersionOf, salvosLeft,
+           status, unitStatus, dispersionOf, salvosLeft, roundsLeft,
            typing: () => [...typing.keys()] };
 })();
 
