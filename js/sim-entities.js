@@ -35,6 +35,7 @@
      SIM_ENTITIES.reset()          back to the loaded scenario's start state
      SIM_ENTITIES.list()           the live entities, with position resolved
      SIM_ENTITIES.get(id)
+     SIM_ENTITIES.obstacles()      debris lines to draw, with each lane's breach progress
      SIM_ENTITIES.setState(id, s)
    ========================================================= */
 
@@ -42,6 +43,7 @@ const SIM_ENTITIES = (() => {
 
   let scn = null;
   let ents = [];
+  let nowT = 0;                  /* sim time of the last tick, for timer-lane progress */
 
   const MOVING = 'moving';
   const HALTED = 'halted';
@@ -150,7 +152,69 @@ const SIM_ENTITIES = (() => {
     return n;
   }
 
-  function reset() { if (!scn) return 0; const n = build(); resetLanes(); return n; }
+  function reset() { if (!scn) return 0; const n = build(); resetLanes(); nowT = 0; return n; }
+
+  /* ---------- obstacles, as the student sees them ----------
+     Lee, 2026-09-27. The OBS belts are long because they do the halting; the
+     RUBBLE nn / TREES nn lines are what is actually drawn, where the debris
+     really lies. Each is paired to its lane by number at convert time.
+
+     progress is how much of the lane is cleared, 0..1: the engineer's work over
+     the breach time, or — on a lane no engineer is assigned to — the stand-in
+     timer since the first vehicle reached the holding area. The lane line comes
+     back APPROACH END FIRST (the end nearest where the breacher, or failing that
+     the queue, arrives), so the renderer can clear debris from the near side
+     to the far side. Display only: nothing here changes who moves. */
+  let debrisCache = null;
+  function debrisGeometry() {
+    if (debrisCache && debrisCache.scn === scn) return debrisCache.list;
+    const toUtm = g => { const u = SIM_PROJ.mgrsToUtm(g); return u ? { e: u.e, n: u.n } : null; };
+    const list = [];
+    for (const [id, d] of Object.entries((scn && scn.debris) || {})) {
+      const points = (d.points || []).map(toUtm).filter(Boolean);
+      if (points.length < 2) continue;
+      const laneSpec = d.lane && scn.lanes && scn.lanes[d.lane];
+      let laneLine = laneSpec ? (laneSpec.points || []).map(toUtm).filter(Boolean) : [];
+      if (laneLine.length >= 2) {
+        /* where does the breach come from? the breacher's approach, else the queue's */
+        let from = null;
+        const eng = ents.find(en => en.breach && en.breach.lane === d.lane);
+        if (eng) from = SIM_SCENARIO.routeAt(eng.route, Math.max(0, eng.breach.atM - 40));
+        else {
+          const q = ents.find(en => en.lane === d.lane && typeof en.holdAtM === 'number');
+          if (q) from = SIM_SCENARIO.routeAt(q.route, q.holdAtM);
+        }
+        if (from) {
+          const a = laneLine[0], b = laneLine[laneLine.length - 1];
+          if (Math.hypot(b.e - from.e, b.n - from.n) < Math.hypot(a.e - from.e, a.n - from.n)) laneLine = laneLine.slice().reverse();
+        }
+      } else laneLine = [];
+      list.push({ id, style: d.style === 'trees' ? 'trees' : 'rubble', obstacle: d.obstacle || null,
+                  lane: d.lane || null, points, laneLine });
+    }
+    debrisCache = { scn, list };
+    return list;
+  }
+
+  function obstacles() {
+    return debrisGeometry().map(d => {
+      const L = d.lane && lanes[d.lane];
+      let progress = 0, state = 'closed';
+      if (L) {
+        const open = laneOpen(d.lane, nowT);
+        if (open) progress = 1;
+        else if (L.breachSec > 0) {
+          progress = L.byEngineer ? L.workSec / L.breachSec
+                   : (L.firstArrivalSec !== null ? (nowT - L.firstArrivalSec) / L.breachSec : 0);
+        }
+        progress = Math.max(0, Math.min(1, progress));
+        state = open ? 'open'
+              : (L.byEngineer ? L.engineersAt > 0 : L.firstArrivalSec !== null) ? 'opening' : 'closed';
+      }
+      return { id: d.id, style: d.style, obstacle: d.obstacle, lane: d.lane,
+               points: d.points, laneLine: d.laneLine, progress, state };
+    });
+  }
 
   /* ---------- refuelling ----------
      A depot's capacity is perTruck x the fuel trucks PARKED there and alive,
@@ -237,6 +301,7 @@ const SIM_ENTITIES = (() => {
      frame delta: that is what makes a run at 3x come out identical to the same
      run at 1x. */
   function tick(t, dt) {
+    nowT = t;
     for (const en of ents) {
       if (en.state === 'staged' && t >= en.startSec) en.state = MOVING;
     }
@@ -406,7 +471,7 @@ const SIM_ENTITIES = (() => {
     return true;
   }
 
-  return { load, reset, tick, list, get, setState, count: () => ents.length,
+  return { load, reset, tick, list, get, setState, obstacles, count: () => ents.length,
            lanes: () => JSON.parse(JSON.stringify(lanes)) };
 })();
 

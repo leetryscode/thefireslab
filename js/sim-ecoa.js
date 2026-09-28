@@ -1,7 +1,7 @@
 /* The Fires Lab — Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved. */
 /* GENERATED FILE — do not hand-edit.
    Produced by simulation working folder/ecoa-to-scenario-v2.py from
-   ECOA skeleton - Fire Mission Sim v3.0.kmz  (--per-corridor 8 --waves 2 --wave-gap 6 --spawn-back 900 --lc-after-beach 7 --eng-lc-delay 5 --eng-offload-gap 90 --log-count 6 --eng-count 2)
+   ECOA skeleton - Fire Mission Sim v3.1.kmz  (--per-corridor 8 --waves 2 --wave-gap 6 --spawn-back 900 --lc-after-beach 7 --eng-lc-delay 5 --eng-offload-gap 90 --log-count 6 --eng-count 2)
 
    Lee traces the enemy COA in Google Earth. Every checkpoint is a LINE:
    midpoint = centre, length = formation frontage there. Each vehicle
@@ -2719,6 +2719,16 @@ const SIM_ECOA = {
     'OBS 1': { note: 'blocking bridge for north wave', points: ['20Q KF 03897 02780', '20Q KF 03981 02779'] },
     'OBS 2': { note: 'blockingroad for south wave', points: ['20Q KF 03458 02276', '20Q KF 03444 02060'] },
     'OBS 3': { note: 'far south obstable', points: ['20Q KF 03121 01867', '20Q KF 03199 01920'] },
+  },
+  /* What the student sees at each obstacle: RUBBLE nn / TREES nn lines,
+     drawn by Lee where the debris lies and paired to OBS n and LANE 0n by
+     NUMBER. The renderer scatters pieces along each line and clears the
+     ones on the lane as the breach runs. Display only: halting is the
+     OBS belt's job. */
+  debris: {
+    'RUBBLE 01': { style: 'rubble', obstacle: 'OBS 1', lane: 'LANE 01', points: ['20Q KF 03951 02767', '20Q KF 03965 02841'] },
+    'TREES 02': { style: 'trees', obstacle: 'OBS 2', lane: 'LANE 02', points: ['20Q KF 03451 02094', '20Q KF 03451 02137'] },
+    'TREES 03': { style: 'trees', obstacle: 'OBS 3', lane: 'LANE 03', points: ['20Q KF 03157 01881', '20Q KF 03174 01895'] },
   },
   /* A lane opens breachSec after the first vehicle reaches its holding
      area. TODAY THAT IS A TIMER, standing in for an engineering vehicle

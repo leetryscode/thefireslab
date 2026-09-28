@@ -443,6 +443,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
   /* A pull, not a push: the overlay asks for the contacts at draw time, so it
      can never show a position that disagrees with the one the tick computed. */
   if (typeof SIM_ENTITIES !== 'undefined') SIM_RENDER.setEntitySource(() => SIM_ENTITIES.list());
+  /* Rubble and fallen trees at the obstacles, clearing as each lane is breached. */
+  if (typeof SIM_ENTITIES !== 'undefined' && SIM_ENTITIES.obstacles) SIM_RENDER.setObstacleSource(() => SIM_ENTITIES.obstacles());
 
   /* TV / IR. The readout is the toggle: it says which mode the feed is in, and
      clicking it or pressing I switches. Presentation only — it calls the

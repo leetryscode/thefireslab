@@ -47,6 +47,7 @@
      SIM_RENDER.setMode('tv' | 'ir')     sensor mode; toggleMode() / mode()
      SIM_RENDER.mark() / clearMark()     the clicked grid, and clearing it
     SIM_RENDER.bracketed() / groupTag(vs)  ids under the hover bracket; its tag text
+    SIM_RENDER.setObstacleSource(fn)    fn() -> debris lines (SIM_ENTITIES.obstacles())
      SIM_RENDER.toFrame(clientX, clientY)  screen point -> frame px (dev tool)
    ========================================================= */
 
@@ -348,6 +349,161 @@ const SIM_RENDER = (() => {
   const MIN_SMUDGE_PX  = 3;
 
   let entitySource = null;
+  let obstacleSource = null;
+
+  /* ---------- obstacles: rubble and fallen trees ----------
+     Lee, 2026-09-27. What the student sees at an obstacle, drawn from the
+     RUBBLE nn / TREES nn lines he traces in Google Earth (SIM_ENTITIES
+     .obstacles()). Pieces are laid along each line with some spread either
+     side, from a generator seeded by the line's NAME — so they are the same
+     every run and every reload, and only move when he redraws the line.
+
+     THE BREACH SHOWS. Pieces within LANE_HALF_M of the lane are put in a
+     clearing order (see piecesFor) and go one at a time as the lane's
+     progress runs from 0 to 1. A breach in
+     progress eats into the pile from the near side; a killed engineer leaves
+     the gap half-cut; an open lane is a clear road through the debris.
+
+     Sizes are deliberately a little larger than life (DEBRIS_SCALE): at 2 km
+     a metre is about one pixel across and 2.5 deep, and a to-scale lump of
+     rubble would be a speck. Cool, not hot: dark grey in IR, so the white-hot
+     vehicles still pop against it. */
+  const LANE_HALF_M   = 6;
+  const DEBRIS_SCALE  = { rubble: 2.6, trees: 1.3 };   /* larger than life, so it reads */
+  const debrisPieces  = new Map();       /* id + geometry -> generated pieces */
+
+  function seeded(str) {                 /* mulberry32 over a string hash */
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+    let a = h >>> 0;
+    return () => { a = (a + 0x6D2B79F5) | 0; let x = Math.imul(a ^ (a >>> 15), 1 | a);
+                   x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  }
+
+  /** Distance from a point to a polyline, and how far along it (0..1) the
+      nearest point lies. Pure; metres. */
+  function alongLine(p, line) {
+    let total = 0; const segs = [];
+    for (let i = 0; i < line.length - 1; i++) {
+      const a = line[i], b = line[i + 1], len = Math.hypot(b.e - a.e, b.n - a.n);
+      segs.push({ a, b, len, start: total }); total += len;
+    }
+    let best = { d: Infinity, u: 0 };
+    for (const s of segs) {
+      const ax = s.b.e - s.a.e, ay = s.b.n - s.a.n, L2 = ax * ax + ay * ay;
+      const f = L2 > 0 ? Math.max(0, Math.min(1, ((p.e - s.a.e) * ax + (p.n - s.a.n) * ay) / L2)) : 0;
+      const d = Math.hypot(p.e - s.a.e - f * ax, p.n - s.a.n - f * ay);
+      if (d < best.d) best = { d, u: total > 0 ? (s.start + f * s.len) / total : 0 };
+    }
+    best.total = total;
+    return best;
+  }
+
+  /** The pieces of one debris line: {e, n, kind, size, rot, tone, verts, u}.
+      u is the piece's place along the lane, or null if it is not on the lane.
+      Pure given the line; cached by name and geometry. */
+  function piecesFor(ob) {
+    const key = ob.id + '|' + ob.points.map(p => p.e.toFixed(1) + ',' + p.n.toFixed(1)).join(';') +
+                '|' + (ob.laneLine || []).map(p => p.e.toFixed(1) + ',' + p.n.toFixed(1)).join(';');
+    if (debrisPieces.has(key)) return debrisPieces.get(key);
+    const rnd = seeded(ob.id);
+    const trees = ob.style === 'trees';
+    const spacing = trees ? 4 : 1.8, spread = trees ? 4 : 3.5;
+    const out = [];
+    for (let i = 0; i < ob.points.length - 1; i++) {
+      const a = ob.points[i], b = ob.points[i + 1];
+      const len = Math.hypot(b.e - a.e, b.n - a.n);
+      if (!(len > 0)) continue;
+      const fx = (b.e - a.e) / len, fy = (b.n - a.n) / len;       /* along */
+      const n = Math.max(1, Math.round(len / spacing));
+      for (let k = 0; k < n; k++) {
+        const s = (k + 0.2 + 0.6 * rnd()) / n * len;
+        const off = (rnd() * 2 - 1) * spread * (trees ? 1 : (0.6 + 0.4 * rnd()));
+        const p = { e: a.e + fx * s - fy * off, n: a.n + fy * s + fx * off };
+        const piece = { e: p.e, n: p.n, rot: rnd() * Math.PI, tone: rnd() };
+        if (trees) {
+          piece.kind = 'tree';
+          piece.size = (8 + 7 * rnd()) * DEBRIS_SCALE.trees;                 /* trunk length, m */
+        } else {
+          piece.kind = 'rubble';
+          piece.size = (1.2 + 1.8 * rnd() * rnd()) * DEBRIS_SCALE.rubble;     /* radius, m: mostly small */
+          const nv = 5 + Math.floor(rnd() * 3);
+          piece.verts = [...Array(nv)].map((_, j) => ({ a: j / nv * 2 * Math.PI + (rnd() - 0.5) * 0.6, r: 0.6 + 0.4 * rnd() }));
+        }
+        if (ob.laneLine && ob.laneLine.length >= 2) {
+          const q = alongLine(p, ob.laneLine);
+          piece.key = q.d <= LANE_HALF_M ? q.u * q.total + q.d : null;
+        } else piece.key = null;
+        out.push(piece);
+      }
+    }
+    /* Clearing order. Each piece on the lane is ranked by metres along the lane
+       from the breacher's end, plus its distance off the lane's centre line.
+       Debris drawn DOWN the lane then clears front to back; debris drawn
+       ACROSS it (every piece at about the same place along the lane) clears
+       from the centre outward. Either way it goes a piece at a time, and u is
+       the fraction of the breach at which the piece is gone. */
+    const onLane = out.filter(pc => pc.key !== null).sort((x, y) => x.key - y.key);
+    onLane.forEach((pc, i) => { pc.u = (i + 1) / onLane.length; });
+    for (const pc of out) if (pc.key === null) pc.u = null;
+    /* Trees are drawn far to near so a nearer trunk lies over a farther one. */
+    out.sort((x, y) => y.n - x.n);
+    debrisPieces.set(key, out);
+    return out;
+  }
+
+  /** Is this piece still there, given how far the breach has got? */
+  const pieceStands = (pc, progress) => pc.u === null || pc.u > progress;
+
+  function drawDebris(ob) {
+    const ir = mode === 'ir';
+    const pieces = piecesFor(ob);
+    const drawn = [];
+    for (const pc of pieces) {
+      const elev = (typeof SIM_TERRAIN !== 'undefined') ? SIM_TERRAIN.elevAt(pc.e, pc.n) : 0;
+      const c = SIM_PROJ.worldToScreen(pc.e, pc.n, elev);
+      if (!c || !c.inFront || !isFinite(c.x) || !isFinite(c.y)) continue;
+      drawn.push({ x: c.x, y: c.y });
+      if (!pieceStands(pc, ob.progress)) continue;
+      if (pc.kind === 'tree') {
+        const hx = Math.sin(pc.rot) * pc.size / 2, hy = Math.cos(pc.rot) * pc.size / 2;
+        const A = SIM_PROJ.worldToScreen(pc.e - hx, pc.n - hy, elev), B = SIM_PROJ.worldToScreen(pc.e + hx, pc.n + hy, elev);
+        if (!A || !B) continue;
+        cx2d.lineCap = 'round';
+        cx2d.strokeStyle = ir ? '#2c2c2c' : (pc.tone < 0.5 ? '#4a3a28' : '#5b4630');
+        cx2d.lineWidth = 3;
+        cx2d.beginPath(); cx2d.moveTo(A.x, A.y); cx2d.lineTo(B.x, B.y); cx2d.stroke();
+        /* the crown, at the far end of the trunk: a dark leafy smudge */
+        const r = Math.max(2.5, 3 * DEBRIS_SCALE.trees / metresPerPixel(B));
+        cx2d.fillStyle = ir ? '#383838' : (pc.tone < 0.5 ? '#2e4424' : '#3d5230');
+        cx2d.beginPath(); cx2d.ellipse(B.x, B.y, r, r * 0.55, 0, 0, Math.PI * 2); cx2d.fill();
+      } else {
+        const poly = [];
+        for (const v of pc.verts) {
+          const q = SIM_PROJ.worldToScreen(pc.e + Math.cos(v.a + pc.rot) * pc.size * v.r,
+                                           pc.n + Math.sin(v.a + pc.rot) * pc.size * v.r, elev);
+          if (!q) { poly.length = 0; break; }
+          poly.push(q);
+        }
+        if (!poly.length) continue;
+        /* Dark broken masonry with a pale chip on each lump: a pile reads as
+           texture — dark and light together — where a flat grey would sink
+           into the road. */
+        const TV = ['#57514a', '#6b645b', '#48433d', '#7a7267'], IR = ['#2a2a2a', '#353535', '#222222', '#404040'];
+        cx2d.fillStyle = (ir ? IR : TV)[Math.floor(pc.tone * 4)];
+        tracePolygon(poly);
+        cx2d.fill();
+        cx2d.strokeStyle = ir ? '#151515' : '#2e2a26';
+        cx2d.lineWidth = 0.8;
+        cx2d.stroke();
+        const hi = poly[Math.floor(pc.tone * poly.length) % poly.length];
+        cx2d.fillStyle = ir ? '#8a8a8a' : '#c9bfae';
+        cx2d.beginPath(); cx2d.arc((hi.x + c.x) / 2, (hi.y + c.y) / 2, 0.9, 0, Math.PI * 2); cx2d.fill();
+      }
+    }
+    return drawn.length ? { ob, pts: drawn } : null;
+  }
+
 
   function groundQuad(e, n, elev, headingDeg, lengthM, widthM) {
     const b = headingDeg * Math.PI / 180;
@@ -838,6 +994,61 @@ const SIM_RENDER = (() => {
     g.restore();
   }
 
+  /** The obstacle's tag: [OBS 01], [OBS 01 OPENING] while the lane is being
+      worked, [OBS 01 OPEN] once it is through. Pure. */
+  function obstacleTag(ob) {
+    const m = /(\d+)\s*$/.exec(ob.obstacle || ob.id || '');
+    const name = m ? `OBS ${String(+m[1]).padStart(2, '0')}` : (ob.obstacle || ob.id);
+    return `[${name}${ob.state === 'opening' ? ' OPENING' : ob.state === 'open' ? ' OPEN' : ''}]`;
+  }
+
+  let bracketedObstacles = [];
+
+  /* An obstacle under the reticle gets the same corner brackets as a contact,
+     around the whole debris line, with its tag under the bottom-left corner so
+     it never lands on a vehicle tag (those sit top-right). Vehicles queue at
+     obstacles, so both brackets can be up at once. */
+  function drawObstacleBracket(obsDrawn) {
+    bracketedObstacles = [];
+    if (!hover || mark || !obsDrawn || !obsDrawn.length) return;
+    const g = cx2d, ir = mode === 'ir';
+    const ink = ir ? '#ffffff' : '#000000', halo = ir ? '#000000' : '#ffffff';
+    for (const d of obsDrawn) {
+      const pts = d.pts.map(p => viewApply(p, view));
+      if (!pts.some(p => Math.hypot(p.x - hover.x, p.y - hover.y) <= HOVER_R_PX)) continue;
+      bracketedObstacles.push(d.ob.id);
+      let x0 = Math.min(...pts.map(p => p.x)) - BRACKET_PAD, x1 = Math.max(...pts.map(p => p.x)) + BRACKET_PAD;
+      let y0 = Math.min(...pts.map(p => p.y)) - BRACKET_PAD, y1 = Math.max(...pts.map(p => p.y)) + BRACKET_PAD;
+      if (x1 - x0 < BRACKET_MIN) { const c = (x0 + x1) / 2; x0 = c - BRACKET_MIN / 2; x1 = c + BRACKET_MIN / 2; }
+      if (y1 - y0 < BRACKET_MIN) { const c = (y0 + y1) / 2; y0 = c - BRACKET_MIN / 2; y1 = c + BRACKET_MIN / 2; }
+      const arm = Math.min(8, (x1 - x0) / 3, (y1 - y0) / 3);
+      g.save();
+      const corners = () => {
+        g.beginPath();
+        for (const [x, y, sx, sy] of [[x0, y0, 1, 1], [x1, y0, -1, 1], [x1, y1, -1, -1], [x0, y1, 1, -1]]) {
+          g.moveTo(x + sx * arm, y); g.lineTo(x, y); g.lineTo(x, y + sy * arm);
+        }
+        g.stroke();
+      };
+      g.lineCap = 'square';
+      g.strokeStyle = halo; g.lineWidth = 3.5; corners();
+      g.strokeStyle = ink;  g.lineWidth = 1.5; corners();
+      const tag = obstacleTag(d.ob);
+      g.font = '600 14px "IBM Plex Mono", ui-monospace, monospace';
+      g.textAlign = 'left';
+      g.textBaseline = 'top';
+      const F = frameSize();
+      const tw = (g.measureText && g.measureText(tag).width) || tag.length * 8.4;
+      const tx = Math.max(4, Math.min(x0, F.width - tw - 4)), ty = Math.min(y1 + 3, F.height - 18);
+      g.lineJoin = 'round';
+      g.strokeStyle = halo; g.lineWidth = 3;
+      g.strokeText(tag, tx, ty);
+      g.fillStyle = ink;
+      g.fillText(tag, tx, ty);
+      g.restore();
+    }
+  }
+
   /* ---------- loop ---------- */
   function frame() {
     raf = 0;
@@ -856,9 +1067,16 @@ const SIM_RENDER = (() => {
                    (1 - view.zoom) * frameSize().width / 2 + view.dx,
                    (1 - view.zoom) * frameSize().height / 2 + view.dy);
 
-    /* Order: footprints, then smoke over them, then the bursts. A round
+    /* Order: debris on the ground, footprints, then smoke over them, then the bursts. A round
        landing on a vehicle should obscure it, and so should its smoke. The
        hover bracket is glass symbology and is drawn later, outside the sway. */
+    let obsDrawn = [];
+    if (obstacleSource) {
+      let obs = null;
+      try { obs = obstacleSource(); } catch (err) { console.error('[sim-render] obstacle source threw', err); }
+      if (obs) for (const ob of obs) { const d = drawDebris(ob); if (d) obsDrawn.push(d); }
+    }
+
     let drawn = [];
     if (entitySource) {
       let vs = null;
@@ -888,6 +1106,7 @@ const SIM_RENDER = (() => {
 
     /* The HUD last, and outside the sway: it is symbology on the glass. */
     drawHud();
+    drawObstacleBracket(obsDrawn);
     drawBracket(drawn);
     drawDesignator();
 
@@ -983,6 +1202,9 @@ const SIM_RENDER = (() => {
       position that disagrees with the one the tick just computed. */
   function setEntitySource(fn) { entitySource = (typeof fn === 'function') ? fn : null; kick(); }
 
+  /** The same pull, for the debris lines and their breach progress. */
+  function setObstacleSource(fn) { obstacleSource = (typeof fn === 'function') ? fn : null; kick(); }
+
   /** Screen point -> frame pixels. Dev tool only: nothing the student does
       needs this, because a call for fire names a grid, it does not click one. */
   function toFrame(clientX, clientY) {
@@ -1001,6 +1223,7 @@ const SIM_RENDER = (() => {
            swayAt, viewApply, viewInvert, VIEW, view: () => ({ ...view }),
            gridAt, clearMark, mark: () => (mark ? { ...mark } : null), hover: () => (hover ? { ...hover } : null),
            groupTag, bracketed: () => bracketed.slice(),
+           setObstacleSource, obstacleTag, piecesFor, pieceStands, bracketedObstacles: () => bracketedObstacles.slice(),
            PLUME_MS, PUFFS_PER_PLUME, MAX_PUFFS,
            get box() { return box; } };
 })();
