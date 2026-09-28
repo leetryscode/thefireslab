@@ -385,6 +385,58 @@ document.querySelectorAll('.dock-head').forEach(head => {
   const fill  = document.getElementById('tl-fill');
   const head  = document.getElementById('tl-head');
   const track = document.querySelector('.tl-track');
+
+  /* ---------- DEV ONLY: faster rates and jump-to-time ----------
+     sim.html?dev=1 (Lee, 2026-09-27), for testing — the swim ashore was the
+     slowest part of every test run. Self-contained: delete this block and
+     enableDevRates in js/sim-clock.js and nothing else changes.
+
+       - 10x and 30x join the speed buttons.
+       - Clicking the timeline jumps there. FORWARD runs the sim from here to
+         the click, step by step at full speed — the same run you would have
+         watched, missions in flight included, just not drawn. BACKWARD is a
+         reset and a replay from T+0 of the ENEMY ONLY: the sim does not record
+         what you sent, so your missions and their effects are gone. That is
+         the replay-from-zero rule in sim-clock-design.md, and why this is dev
+         only. */
+  const DEV = new URLSearchParams(location.search).get('dev') === '1';
+  if (DEV && SIM_CLOCK.enableDevRates) {
+    const box = document.querySelector('.tl-speeds');
+    for (const r of SIM_CLOCK.enableDevRates()) {
+      const b = document.createElement('button');
+      b.className = 'tl-btn tl-dev'; b.type = 'button'; b.dataset.rate = String(r);
+      b.setAttribute('aria-pressed', 'false'); b.textContent = r + '×'; b.title = 'Dev only';
+      box && box.appendChild(b);
+    }
+    if (track) {
+      track.classList.add('tl-dev-seek');
+      track.title = 'Dev only: click to jump. Forward keeps everything; back replays the enemy only.';
+      track.addEventListener('click', ev => {
+        const r = track.getBoundingClientRect();
+        const dur = SIM_CLOCK.duration();
+        if (!(r.width > 0) || !(dur > 0)) return;
+        jumpTo(Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * dur);
+      });
+    }
+  }
+  /** Run the sim to `sec` as fast as it will go. Frame-sized pumps of advance(),
+      so the clock's own one-frame clamp still holds; the last pump is trimmed
+      so the jump lands on the step asked for. */
+  function jumpTo(sec) {
+    const C = SIM_CLOCK, wasRunning = C.isRunning(), rate = C.rate();
+    if (sec < C.time()) C.stop();
+    if (!C.isRunning()) C.play();
+    const fast = 30; C.setRate(fast);
+    let guard = 0;
+    while (C.isRunning() && C.time() < sec - 1e-9 && guard++ < 1e6) {
+      const need = (sec - C.time()) * 1000 / fast;
+      C.advance(Math.min(C.maxFrameMs(), Math.max(need, 100 / fast)));
+    }
+    C.setRate(rate);
+    if (!wasRunning && C.isRunning()) C.pause();
+  }
+  if (DEV) window.SIM_DEV_JUMP = jumpTo;
+
   const speeds = [...document.querySelectorAll('.tl-speeds .tl-btn[data-rate]')];
 
   play  && play.addEventListener('click',  () => SIM_CLOCK.play());

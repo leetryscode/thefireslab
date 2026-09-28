@@ -220,6 +220,10 @@ body.sim {
 .tl-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 5px; background: var(--gold-fill); }
 .tl-head { position: absolute; top: 50%; left: 0%; width: 3px; height: 20px; transform: translate(-50%, -50%); background: var(--accent-dark); }
 .tl-clock { font-family: var(--font-mono); font-size: .9rem; flex: none; }
+/* DEV ONLY (sim.html?dev=1): the 10x / 30x buttons read as not-for-students,
+   and the track becomes a seek bar. Delete with the dev block in sim.html. */
+.tl-speeds .tl-btn.tl-dev { font-style: italic; opacity: .8; }
+.tl-track.tl-dev-seek { cursor: pointer; height: 14px; border-radius: 7px; }
 .sim-exit { flex: none; font-size: .8rem; color: var(--accent); }
 
 /* ---------- call for fire: the time-on-target field ----------
