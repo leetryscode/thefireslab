@@ -52,6 +52,8 @@
       <button class="tl-btn" type="button" data-rate="1" aria-pressed="true">1×</button>
       <button class="tl-btn" type="button" data-rate="2" aria-pressed="false">2×</button>
       <button class="tl-btn" type="button" data-rate="3" aria-pressed="false">3×</button>
+      <button class="tl-btn" type="button" data-rate="10" aria-pressed="false">10×</button>
+      <button class="tl-btn" type="button" data-rate="30" aria-pressed="false">30×</button>
     </div>
     <div class="tl-track" role="progressbar" aria-label="Scenario progress"
          aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -262,6 +264,7 @@
 <script src="js/sim-scenario.js"></script>
 <script src="js/sim-ecoa.js"></script>
 <script src="js/sim-entities.js"></script>
+<script src="js/sim-damage.js"></script>
 <script src="js/sim-missions.js"></script>
 <script src="js/sim-render.js"></script>
 <script>
@@ -386,38 +389,28 @@ document.querySelectorAll('.dock-head').forEach(head => {
   const head  = document.getElementById('tl-head');
   const track = document.querySelector('.tl-track');
 
-  /* ---------- DEV ONLY: faster rates and jump-to-time ----------
+  /* ---------- DEV ONLY: jump-to-time ----------
      sim.html?dev=1 (Lee, 2026-09-27), for testing — the swim ashore was the
      slowest part of every test run. Self-contained: delete this block and
-     enableDevRates in js/sim-clock.js and nothing else changes.
+     nothing else changes. (10x and 30x started here too and are now ordinary
+     speed buttons in the markup.)
 
-       - 10x and 30x join the speed buttons.
-       - Clicking the timeline jumps there. FORWARD runs the sim from here to
-         the click, step by step at full speed — the same run you would have
-         watched, missions in flight included, just not drawn. BACKWARD is a
-         reset and a replay from T+0 of the ENEMY ONLY: the sim does not record
-         what you sent, so your missions and their effects are gone. That is
-         the replay-from-zero rule in sim-clock-design.md, and why this is dev
-         only. */
+     Clicking the timeline jumps there. FORWARD runs the sim from here to the
+     click, step by step at full speed — the same run you would have watched,
+     missions in flight included, just not drawn. BACKWARD is a reset and a
+     replay from T+0 of the ENEMY ONLY: the sim does not record what you sent,
+     so your missions and their effects are gone. That is the replay-from-zero
+     rule in sim-clock-design.md, and why this stays dev only. */
   const DEV = new URLSearchParams(location.search).get('dev') === '1';
-  if (DEV && SIM_CLOCK.enableDevRates) {
-    const box = document.querySelector('.tl-speeds');
-    for (const r of SIM_CLOCK.enableDevRates()) {
-      const b = document.createElement('button');
-      b.className = 'tl-btn tl-dev'; b.type = 'button'; b.dataset.rate = String(r);
-      b.setAttribute('aria-pressed', 'false'); b.textContent = r + '×'; b.title = 'Dev only';
-      box && box.appendChild(b);
-    }
-    if (track) {
-      track.classList.add('tl-dev-seek');
-      track.title = 'Dev only: click to jump. Forward keeps everything; back replays the enemy only.';
-      track.addEventListener('click', ev => {
-        const r = track.getBoundingClientRect();
-        const dur = SIM_CLOCK.duration();
-        if (!(r.width > 0) || !(dur > 0)) return;
-        jumpTo(Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * dur);
-      });
-    }
+  if (DEV && track) {
+    track.classList.add('tl-dev-seek');
+    track.title = 'Dev only: click to jump. Forward keeps everything; back replays the enemy only.';
+    track.addEventListener('click', ev => {
+      const r = track.getBoundingClientRect();
+      const dur = SIM_CLOCK.duration();
+      if (!(r.width > 0) || !(dur > 0)) return;
+      jumpTo(Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * dur);
+    });
   }
   /** Run the sim to `sec` as fast as it will go. Frame-sized pumps of advance(),
       so the clock's own one-frame clamp still holds; the last pump is trimmed
@@ -602,9 +595,12 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const frac = r.remainingSec != null ? Math.min(1, r.remainingSec / r.recoverySec)
                                           : (r.ready ? 0 : 1);
       item.style.setProperty('--as-deg', (frac * 360).toFixed(1) + 'deg');
+      /* Fire Storm counts its salvos (Lee, 2026-09-27: two a scenario). */
+      const salvos = r.salvosLeft != null ? ` · ${r.salvosLeft} salvo${r.salvosLeft === 1 ? '' : 's'}` : '';
       item.querySelector('.as-note').textContent =
-        r.ready               ? r.system
-        : r.remainingSec != null ? `${r.system} · back ${SIM_CLOCK.format(r.backAt)}`
+        r.spent               ? `${r.system} · spent`
+        : r.ready             ? r.system + salvos
+        : r.remainingSec != null ? `${r.system} · back ${SIM_CLOCK.format(r.backAt)}${salvos}`
         : `${r.system} · holding ${r.holding}`;
       if (r.ready) ready++;
     });
@@ -794,6 +790,96 @@ document.querySelectorAll('.dock-head').forEach(head => {
   /* Both boards carry a countdown, so they repaint on the step like the clock. */
   SIM_CLOCK.onTick(() => { paintMissions(SIM_MISSIONS.list()); paintAssets(); });
   SIM_CLOCK.onChange(paintAssets);
+
+  /* ---------- the fires log ----------
+     Lee, 2026-09-27: every round's effect, in the student's view. Unrealistic —
+     nobody gets this in a real fight — but it teaches: the student watches a
+     salvo land on an armoured vehicle at 4% and a fuel truck at 97%.
+
+     One line per vehicle per volley: everything inside the impact area (even
+     at 0%, with the reason if the rounds could not touch it) plus anything
+     outside it that had a real chance. Missions are divided by a rule, and a
+     finished mission gets a summary. Collapsible; it opens again on every
+     volley. Names are the student's, not our files' (SIM_SCENARIO.displayId). */
+  const fireLog = (() => {
+    const fr = document.querySelector('.sim-frame');
+    if (!fr || typeof SIM_DAMAGE === 'undefined') return null;
+    const box = document.createElement('div');
+    box.className = 'sim-fireslog';
+    box.hidden = true;
+    box.innerHTML = '<button type="button" class="fl-head" aria-expanded="true">' +
+                    '<span class="fl-title">Fires log</span><span class="fl-caret" aria-hidden="true"></span></button>' +
+                    '<pre class="fl-body"></pre>';
+    fr.appendChild(box);
+    /* The log sits on the feed: a click in it is not a click on the ground. */
+    for (const ev of ['click', 'pointerdown', 'pointermove']) box.addEventListener(ev, e => e.stopPropagation());
+    const head = box.querySelector('.fl-head'), body = box.querySelector('.fl-body');
+    const setOpen = open => { box.classList.toggle('is-collapsed', !open); head.setAttribute('aria-expanded', String(open)); };
+    head.addEventListener('click', () => setOpen(box.classList.contains('is-collapsed')));
+
+    const RULE = '-'.repeat(42);
+    const name = r => SIM_SCENARIO.displayId(r.id, r.type);
+    const cls = t => (SIM_SCENARIO.DISPLAY_CLASS && SIM_SCENARIO.DISPLAY_CLASS[t]) || t;
+    const line = r =>
+      `${r.mission}/${r.volley + 1} ${name(r).padEnd(9)} ` +
+      `${r.nearestM == null ? '   —' : String(r.nearestM).padStart(4)} m  ` +
+      `P ${(r.pStop * 100).toFixed(0).padStart(3)}%  ${r.stopped ? 'STOPPED' : '-'}` +
+      /* "(aboard)" cut for width (Lee, 2026-09-27); the water reasons stay. */
+      (r.note && r.note !== 'aboard' ? ` (${r.note})` : '');
+    function summary(id, rolls) {
+      const m = SIM_MISSIONS.get(id);
+      const who = m ? m.unit : '';
+      const seen = new Map();
+      for (const r of rolls) {
+        const v = seen.get(r.id) || { type: r.type, stopped: false };
+        v.stopped = v.stopped || r.stopped;
+        seen.set(r.id, v);
+      }
+      if (!seen.size) return `${id} ${who} — no vehicles inside impact area`;
+      const by = new Map();
+      for (const v of seen.values()) {
+        const k = cls(v.type), c = by.get(k) || { n: 0, s: 0 };
+        c.n++; if (v.stopped) c.s++; by.set(k, c);
+      }
+      const parts = [...by.entries()].sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1))
+        .map(([k, c]) => `${k} ${c.s}/${c.n}`);
+      /* Two lines, to keep the log narrow (Lee, 2026-09-27). */
+      return `${id} ${who} — ${seen.size} inside impact area:\n  ${parts.join(', ')} stopped`;
+    }
+    function text() {
+      const vols = SIM_DAMAGE.volleys(), log = SIM_DAMAGE.log();
+      const order = [];
+      for (const v of vols) if (!order.includes(v.mission)) order.push(v.mission);
+      return order.map(id => {
+        const rolls = log.filter(r => r.mission === id);
+        const out = [];
+        for (const v of vols.filter(x => x.mission === id)) {
+          const rs = rolls.filter(r => r.volley === v.volley).sort((a, b) => b.pStop - a.pStop || (a.id < b.id ? -1 : 1));
+          if (rs.length) out.push(...rs.map(line));
+          else out.push(`${id}/${v.volley + 1} no vehicles in the impact area`);
+        }
+        const m = SIM_MISSIONS.get(id);
+        if (m && m.state === 'complete') out.push(summary(id, rolls));
+        return out.join('\n');
+      }).join('\n' + RULE + '\n');
+    }
+    let seenVolleys = -1, seenDone = -1;
+    function paint() {
+      const nv = SIM_DAMAGE.volleys().length;
+      const nd = SIM_MISSIONS.list().filter(m => m.state === 'complete').length;
+      if (nv === seenVolleys && nd === seenDone) return;
+      const fresh = nv > seenVolleys && seenVolleys >= 0;
+      seenVolleys = nv; seenDone = nd;
+      box.hidden = nv === 0;
+      if (!nv) { body.textContent = ''; setOpen(true); return; }
+      body.textContent = text();
+      if (fresh) setOpen(true);            /* every volley pops it open again */
+      body.scrollTop = body.scrollHeight;
+    }
+    SIM_CLOCK.onTick(paint);
+    SIM_CLOCK.onChange(paint);
+    return { paint, text };
+  })();
   paintMissions([]);
   paintAssets();
   paintPrompts([]);

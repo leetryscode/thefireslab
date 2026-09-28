@@ -77,7 +77,8 @@ const SIM_MISSIONS = (() => {
      Order per Lee, 2026-09-19: recipient, speaker, target number, rounds and
      shell, time of flight. */
   const head = m => `${OBSERVER}, this is ${m.unit},`;
-  const body = m => `${m.id}, ${m.rounds} rounds ${spokenShell(m.shell)}`;
+  /* Fire Storm fires rockets, not rounds. Placeholder wording like the rest. */
+  const body = m => `${m.id}, ${m.rounds} ${m.system === 'RT2000' ? 'rockets' : 'rounds'} ${spokenShell(m.shell)}`;
   const SAY = {
     mto:      m => `${head(m)} ${body(m)}, time of flight ${m.tofSec} seconds, over.`,
     mtoTot:   m => `${head(m)} ${body(m)}, time on target ${SIM_CLOCK.format(m.totSec)}, ` +
@@ -97,13 +98,14 @@ const SIM_MISSIONS = (() => {
      student tasks a CALLSIGN and never sees the designator except as the type
      shown on the asset board. He expects to narrow this list later.
 
-     dispersionM is recorded and NOT YET USED. Lee has it on standby: spreading
-     rounds across that diameter with a burst radius appropriate to the munition,
-     then comparing that footprint to an enemy position, is how adjudication and
-     any BDA call will work — and none of that is built. The sheaf SIM_RENDER
-     draws is still its own placeholder pattern. Fire Storm has no figure at all
-     because Lee has not decided how the RT2000s are employed; it will be a big
-     area.
+     WHERE ROUNDS LAND AND WHAT THEY DO lives in js/sim-damage.js, and nowhere
+     else: the 100 m sheaf, Fire Storm's 600 x 400 m ellipse, the kill radii.
+     A mission's `dispersionM` is read from there, not stored here — one home
+     for the number (2026-09-27; the M109 was 200 m until then).
+
+     FIRE STORM (Lee, 2026-09-27): one salvo of 36 Mk45 rockets whatever
+     mission type is picked, and `salvos: 2` a scenario. Once both are fired the
+     unit is spent for the rest of the run.
 
      Every band is 20-35 s, Lee's figure, on the reasoning that the unit
      displaces after each mission so the range differs every time. THE PREDATOR
@@ -111,13 +113,28 @@ const SIM_MISSIONS = (() => {
      does not transit in half a minute. Left at the tube band so the control flow
      could be built, flagged so it is not mistaken for a decision. */
   const UNITS = [
-    { callsign: 'Steel Rain', system: 'M109',   dispersionM: 200,  tof: [20, 35] },
-    { callsign: 'Typhoon',    system: 'M109',   dispersionM: 200,  tof: [20, 35] },
-    { callsign: 'Anvil',      system: 'M101',   dispersionM: 100,  tof: [20, 35] },
-    { callsign: 'Lightning',  system: 'M101',   dispersionM: 100,  tof: [20, 35] },
-    { callsign: 'Fire Storm', system: 'RT2000', dispersionM: null, tof: [20, 35] },
-    { callsign: 'Predator',   system: 'OWA',    dispersionM: 300,  tof: [20, 35] }
+    { callsign: 'Steel Rain', system: 'M109',   tof: [20, 35] },
+    { callsign: 'Typhoon',    system: 'M109',   tof: [20, 35] },
+    { callsign: 'Anvil',      system: 'M101',   tof: [20, 35] },
+    { callsign: 'Lightning',  system: 'M101',   tof: [20, 35] },
+    { callsign: 'Fire Storm', system: 'RT2000', tof: [20, 35], salvos: 2 },
+    { callsign: 'Predator',   system: 'OWA',    tof: [20, 35] }
   ];
+  /* The sheaf diameter, from the damage table. null for Fire Storm (an
+     ellipse, not a circle) and for the OWA (postponed). */
+  function dispersionOf(callsign) {
+    const u = UNIT[callsign];
+    if (!u || typeof SIM_DAMAGE === 'undefined') return null;
+    const p = SIM_DAMAGE.pattern(u.system);
+    return p && p.kind === 'sheaf' ? p.sheafM : null;
+  }
+  /* A salvo-limited unit: how many it has left. Resolved on read from the
+     mission list, like everything else about availability. */
+  function salvosLeft(callsign) {
+    const u = UNIT[callsign];
+    if (!u || typeof u.salvos !== 'number') return null;
+    return Math.max(0, u.salvos - missions.filter(m => m.unit === callsign).length);
+  }
   const UNIT = {};
   UNITS.forEach(u => { UNIT[u.callsign] = u; });
   const DEFAULT_BAND = [20, 35];
@@ -243,6 +260,9 @@ const SIM_MISSIONS = (() => {
     missions = [];
     nextNum = FIRST_TARGET_NUM;
     rng = seeded(typeof seed === 'number' ? seed : 0x5EED17);
+    /* The damage dice are keyed to mission ids, which restart here — so the
+       same run replayed lands every round in the same place. */
+    if (typeof SIM_DAMAGE !== 'undefined') SIM_DAMAGE.reset();
     /* Stop empties the clock's queue, so a reply in flight never lands. The
        indicator has to go with it or a unit types forever. */
     typing = new Map();
@@ -264,6 +284,8 @@ const SIM_MISSIONS = (() => {
     const now = clock ? clock.time() : 0;
     const recover = busyUntil.get(callsign) || 0;
     const held = pending(callsign);
+    const left = salvosLeft(callsign);
+    const spent = left === 0 && !held;
     /* A held mission that has not been fired yet has no end time — an
        at-my-command mission waits as long as the student leaves it. */
     const end = held ? (held.lastVolleyAt != null ? Math.max(recover, held.lastVolleyAt) : null)
@@ -271,10 +293,12 @@ const SIM_MISSIONS = (() => {
     return {
       callsign,
       system: (UNIT[callsign] && UNIT[callsign].system) || '',
-      ready: !held && now >= recover,
+      ready: !held && now >= recover && !spent,
       holding: held ? held.id : null,
-      backAt: end,
-      remainingSec: end != null ? Math.max(0, end - now) : null,
+      spent,
+      salvosLeft: left,
+      backAt: spent ? null : end,
+      remainingSec: (!spent && end != null) ? Math.max(0, end - now) : null,
       recoverySec: RECOVERY_SEC
     };
   }
@@ -290,7 +314,23 @@ const SIM_MISSIONS = (() => {
   function impact(m, n) {
     m.volleysLanded = n + 1;
     if (n === 0) m.splashedAt = clock.time();
-    if (typeof SIM_RENDER !== 'undefined') SIM_RENDER.fireMission(m.e, m.n, m.elev, m.guns);
+    /* Adjudication (2026-09-27): where each round lands, and who stops, judged
+       against where every vehicle is at THIS instant. Only when the damage
+       table and the entities are loaded — a page without them still fires. */
+    let points = null;
+    if (typeof SIM_DAMAGE !== 'undefined' && typeof SIM_ENTITIES !== 'undefined' && SIM_ENTITIES.targets) {
+      const targets = SIM_ENTITIES.targets().map(t => ({ ...t, inWater: SIM_DAMAGE.inWater(t.e, t.n) }));
+      const res = SIM_DAMAGE.resolve({ id: m.id, system: m.system, e: m.e, n: m.n, guns: m.guns }, n, targets);
+      for (const id of res.stopped) SIM_ENTITIES.stop(id, clock.time());
+      m.stopped.push(...res.stopped);
+      points = res.points;
+    }
+    if (typeof SIM_RENDER !== 'undefined') {
+      if (points && SIM_RENDER.impacts) {
+        const elevAt = (typeof SIM_TERRAIN !== 'undefined' && SIM_TERRAIN.elevAt) ? SIM_TERRAIN.elevAt : null;
+        SIM_RENDER.impacts(points.map(p => ({ e: p.e, n: p.n, elev: elevAt ? elevAt(p.e, p.n) : m.elev })));
+      } else SIM_RENDER.fireMission(m.e, m.n, m.elev, m.guns);
+    }
     m.state = m.volleysLanded >= m.volleys ? 'complete' : 'impacting';
     if (m.state === 'complete') m.completedAt = clock.time();
     changed();
@@ -358,6 +398,9 @@ const SIM_MISSIONS = (() => {
        the battery is down. Making them wait five seconds for a unit to tell
        them something they can see on their own screen would be theatre. */
     const st = status(unit);
+    if (!st.ready && st.spent) {
+      return { ok: false, error: `${unit} is unavailable — no salvos remaining.`, status: st };
+    }
     if (!st.ready) {
       const when = st.backAt != null
         ? `back on the air ${SIM_CLOCK.format(st.backAt)}`
@@ -365,18 +408,23 @@ const SIM_MISSIONS = (() => {
       return { ok: false, error: `${unit} is unavailable — ${when}.`, status: st };
     }
 
+    /* Fire Storm is one salvo whatever type was picked. */
+    const system = (UNIT[unit] && UNIT[unit].system) || '';
+    const salvo = (typeof SIM_DAMAGE !== 'undefined') && SIM_DAMAGE.pattern(system);
+    const shape = (salvo && salvo.kind === 'ellipse')
+      ? { guns: salvo.count, volleys: 1, intervalSec: 0 } : pattern;
     const m = {
       id: 'AB' + (nextNum++),
       unit, control, type,
-      system: (UNIT[unit] && UNIT[unit].system) || '',
-      /* Recorded, not used. Lee has dispersion on standby until rounds are
-         spread over that diameter and compared against an enemy position. */
-      dispersionM: UNIT[unit] ? UNIT[unit].dispersionM : null,
+      system,
+      dispersionM: dispersionOf(unit),
       shell: spec.shell || MUNITIONS[0].value,
-      guns: pattern.guns,
-      volleys: pattern.volleys,
-      intervalSec: pattern.intervalSec,
-      rounds: pattern.guns * pattern.volleys,
+      guns: shape.guns,
+      volleys: shape.volleys,
+      intervalSec: shape.intervalSec,
+      rounds: shape.guns * shape.volleys,
+      /* Who this mission stopped — the engine's truth, never shown as BDA. */
+      stopped: [],
       /* WHAT THE STUDENT CLAIMED IS ON THE TARGET. Carried on the mission and
          graded by nothing, because there is no adjudication. It is deliberately
          kept separate from what the engine knows is actually there: the gap
@@ -447,7 +495,7 @@ const SIM_MISSIONS = (() => {
       id: m.id, unit: m.unit, system: m.system, control: m.control, type: m.type,
       shell: m.shell, rounds: m.rounds, guns: m.guns, volleys: m.volleys,
       intervalSec: m.intervalSec, volleysLanded: m.volleysLanded || 0,
-      dispersionM: m.dispersionM,
+      dispersionM: m.dispersionM, stopped: (m.stopped || []).slice(),
       count: m.count, targetType: m.targetType, environment: m.environment,
       grid: m.grid, state: m.state, tofSec: m.tofSec, totSec: m.totSec,
       sentAt: m.sentAt, replySec: m.replySec, replyAt: m.replyAt,
@@ -463,7 +511,7 @@ const SIM_MISSIONS = (() => {
   return { init, reset, send, fireNow, list, get, active,
            SAY, OBSERVER, MUNITIONS, spokenShell, UNITS, UNIT,
            MISSION_TYPES, DEFAULT_TYPE, SPLASH_WARN_SEC, REPLY_BAND, RECOVERY_SEC,
-           status, unitStatus,
+           status, unitStatus, dispersionOf, salvosLeft,
            typing: () => [...typing.keys()] };
 })();
 

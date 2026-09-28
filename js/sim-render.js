@@ -933,12 +933,15 @@ const SIM_RENDER = (() => {
 
   /** The tag for a set of contacts. Pure. One contact: its class, [AAV]. Several:
       a count per class, most first, then in class-table order: [6 FUEL  3 AAV]. */
+  /* A stopped contact (Lee, 2026-09-27) reads [AAV STOPPED]; in a pack it is
+     counted apart from the live ones of its class: [5 FUEL  1 FUEL STOPPED]. */
+  const tagKey = v => v.stopped ? `${v.label} STOPPED` : v.label;
   function groupTag(vs) {
     if (!vs || !vs.length) return '';
-    if (vs.length === 1) return `[${vs[0].label}]`;
+    if (vs.length === 1) return `[${tagKey(vs[0])}]`;
     const order = (typeof SIM_SCENARIO !== 'undefined') ? Object.keys(SIM_SCENARIO.CLASSES) : [];
     const n = new Map();
-    for (const v of vs) n.set(v.label, { k: v.label, c: ((n.get(v.label) || {}).c || 0) + 1, o: order.indexOf(v.type) });
+    for (const v of vs) { const k = tagKey(v); n.set(k, { k, c: ((n.get(k) || {}).c || 0) + 1, o: order.indexOf(v.type) + (v.stopped ? 0.5 : 0) }); }
     return '[' + [...n.values()].sort((a, b) => b.c - a.c || a.o - b.o).map(x => `${x.c} ${x.k}`).join('  ') + ']';
   }
 
@@ -1183,6 +1186,23 @@ const SIM_RENDER = (() => {
     return shots;
   }
 
+  /** One volley at the points where the rounds actually landed — the damage
+      model's own points (js/sim-damage.js), so what the student sees is what
+      was adjudicated. elev per point, from the caller. The small stagger is a
+      picture, not a ballistic: it is keyed off the point so it is stable. */
+  function impacts(points) {
+    if (!points || !points.length) return 0;
+    const t = simNow();
+    points.forEach((p, i) => {
+      const jitter = ((Math.abs(Math.round(p.e * 7 + p.n * 13)) % 97) / 97) * STAGGER_MS;
+      const b = { e: p.e, n: p.n, elev: p.elev || 0, t0: t + Math.min(i, 12) * STAGGER_MS * 0.5 + jitter };
+      bursts.push(b);
+      addPlume(b.e, b.n, b.elev, b.t0);
+    });
+    kick();
+    return points.length;
+  }
+
   function clear() { bursts = []; plumes = []; kick(); }
 
   /** Sensor mode. TV is the colour picture; IR puts a CSS filter on the image
@@ -1217,7 +1237,7 @@ const SIM_RENDER = (() => {
     return viewInvert({ x, y }, view);
   }
 
-  return { attach, detach, fireMission, setEntitySource, clear, toFrame, containBox,
+  return { attach, detach, fireMission, impacts, setEntitySource, clear, toFrame, containBox,
            groundQuad, setMode, toggleMode, mode: () => mode,
            plumeState, plumeCount: () => plumes.length, hudValues, latLonText,
            swayAt, viewApply, viewInvert, VIEW, view: () => ({ ...view }),

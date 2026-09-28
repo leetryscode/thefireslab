@@ -22,12 +22,15 @@
    ---------------------------------------------------------
 
    States: staged -> moving -> arrived
-           moving <-> halted        (an obstacle, a lost breacher — not built)
-           moving -> breaching      (opening a lane — not built)
-           any    -> destroyed      (adjudication — not built)
+           moving <-> halted        (a holding area, a refuel ring, a breach)
+           any    -> destroyed      (adjudication: js/sim-damage.js)
 
-   Only staged, moving and arrived are reachable today. The rest are named now
-   so that the day they are wired, nothing else has to change shape.
+   'destroyed' means STOPPED. Lee, 2026-09-27: no kill types — the only
+   question is whether it stops moving. The name is the one reserved here from
+   the start and the suite already uses it. A destroyed vehicle stays on the
+   field (drawn dim, tagged STOPPED) but is out of every rule: it moves no
+   more, blocks nobody (wrecks are ignored, 2026-09-21), fuels nobody and
+   breaches nothing.
 
    API:
      SIM_ENTITIES.load(scenario)   build the live list. Returns the count.
@@ -37,6 +40,8 @@
      SIM_ENTITIES.get(id)
      SIM_ENTITIES.obstacles()      debris lines to draw, with each lane's breach progress
      SIM_ENTITIES.setState(id, s)
+     SIM_ENTITIES.targets()        what a volley can hit right now, cargo aboard included
+     SIM_ENTITIES.stop(id, t)      adjudication's one verb: it stops
    ========================================================= */
 
 const SIM_ENTITIES = (() => {
@@ -95,6 +100,12 @@ const SIM_ENTITIES = (() => {
         /* A fuel truck knows its depot; parked (arrived) and not destroyed, it
            opens `perTruck` refuelling slots there. */
         depot: spec.depot && !(typeof spec.refuelAtM === 'number') ? spec.depot : null,
+        /* The landing craft it rides until offload (converter, 2026-09-27).
+           Until its startSec it is aboard: at the craft's position, a target
+           for the rockets only. */
+        carrier: spec.carrier || null,
+        lostAboard: false,
+        stoppedAt: null,
         state: (Number(spec.startSec) || 0) <= 0 ? MOVING : 'staged'
       };
     });
@@ -303,7 +314,7 @@ const SIM_ENTITIES = (() => {
   function tick(t, dt) {
     nowT = t;
     for (const en of ents) {
-      if (en.state === 'staged' && t >= en.startSec) en.state = MOVING;
+      if (en.state === 'staged' && t >= en.startSec && !en.lostAboard) en.state = MOVING;
     }
 
     /* Halted vehicles still occupy ground, so they are in the position map and
@@ -435,6 +446,7 @@ const SIM_ENTITIES = (() => {
       ? en.fuel.faceDeg : p.heading;
     return {
       id: en.id, type: en.type, state: en.state, hpt: en.hpt,
+      stopped: en.state === 'destroyed', stoppedAt: en.stoppedAt,
       label: en.cls.label, lengthM: en.cls.lengthM, widthM: en.cls.widthM,
       e: p.e, n: p.n, elev: p.elev, heading: facing,
       /* The speed it is actually making, not the leg's nominal: a vehicle
@@ -454,9 +466,44 @@ const SIM_ENTITIES = (() => {
 
   /* Staged entities are left out: they have not entered the scenario, and a
      contact sitting on its start point before its time is a contact the student
-     can see and should not. */
+     can see and should not. A STOPPED vehicle stays in (Lee, 2026-09-27: it
+     freezes in place, dim, tagged STOPPED) — except cargo lost aboard its
+     landing craft, which never came ashore to be seen. */
   function list() {
-    return ents.filter(en => en.state !== 'staged' && en.state !== 'destroyed').map(view);
+    return ents.filter(en => en.state !== 'staged' && !en.lostAboard).map(view);
+  }
+
+  /* ---------- what a volley can hit ----------
+     Everything on the field and not already stopped, plus cargo still aboard
+     a landing craft that is itself under way or beached. Cargo aboard sits at
+     the craft's position; the damage table decides who may shoot it. */
+  function targets() {
+    const out = [];
+    const byId = new Map(ents.map(en => [en.id, en]));
+    for (const en of ents) {
+      if (en.state === 'destroyed' || en.lostAboard) continue;
+      if (en.state === 'staged') {
+        const c = en.carrier && byId.get(en.carrier);
+        if (!c || c.state === 'staged') continue;
+        const p = SIM_SCENARIO.routeAt(c.route, c.s);
+        out.push({ id: en.id, type: en.type, e: p.e, n: p.n, aboard: true, carrier: c.id });
+        continue;
+      }
+      const p = SIM_SCENARIO.routeAt(en.route, en.s);
+      out.push({ id: en.id, type: en.type, e: p.e, n: p.n, aboard: false });
+    }
+    return out;
+  }
+
+  /* It stops. Aboard, it is lost with the load and never offloads. */
+  function stop(id, t) {
+    const en = ents.find(e => e.id === id);
+    if (!en || en.state === 'destroyed' || en.lostAboard) return false;
+    if (en.state === 'staged') en.lostAboard = true;
+    else en.state = 'destroyed';
+    en.vKph = 0;
+    en.stoppedAt = typeof t === 'number' ? t : nowT;
+    return true;
   }
 
   function get(id) {
@@ -471,7 +518,7 @@ const SIM_ENTITIES = (() => {
     return true;
   }
 
-  return { load, reset, tick, list, get, setState, obstacles, count: () => ents.length,
+  return { load, reset, tick, list, get, setState, targets, stop, obstacles, count: () => ents.length,
            lanes: () => JSON.parse(JSON.stringify(lanes)) };
 })();
 

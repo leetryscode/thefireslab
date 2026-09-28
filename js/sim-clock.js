@@ -47,7 +47,7 @@
 
    API:
      SIM_CLOCK.play() / pause() / stop() / toggle()
-     SIM_CLOCK.setRate(n) / rate()          1, 2 or 3 (10 and 30 after enableDevRates(), dev only)
+     SIM_CLOCK.setRate(n) / rate()          1, 2, 3, 10 or 30
      SIM_CLOCK.isRunning()
      SIM_CLOCK.time()                       sim seconds, step-aligned
      SIM_CLOCK.renderMs()                   sim ms, interpolated — drawing only
@@ -77,13 +77,11 @@ const SIM_CLOCK = (() => {
      teleports. */
   const MAX_FRAME_MS = 250;
 
-  const RATES = [1, 2, 3];
-  /* DEV ONLY (Lee, 2026-09-27): sim.html?dev=1 adds 10x and 30x so a test run
-     can get past the swim ashore. Faster, not different: the step is still
-     100 ms, so a run at 30x is the same run as at 1x. Remove with the dev
-     block in sim.html. */
-  const DEV_RATES = [10, 30];
-  let devRates = false;
+  /* 10x and 30x were dev-only for a day and went to production on Lee's call
+     (2026-09-27): the class will watch the ECOA play out as a demonstration.
+     Faster, not different — the step is still 100 ms, so 30x is the same run
+     as 1x. */
+  const RATES = [1, 2, 3, 10, 30];
 
   let tMs = 0;          /* sim ms at the last completed step — authoritative */
   let restMs = 0;       /* sim ms taken in but not yet made into a step */
@@ -234,7 +232,7 @@ const SIM_CLOCK = (() => {
   }
 
   function setRate(n) {
-    const r = (RATES.includes(Number(n)) || (devRates && DEV_RATES.includes(Number(n)))) ? Number(n) : 1;
+    const r = RATES.includes(Number(n)) ? Number(n) : 1;
     if (r === rateN) return rateN;
     rateN = r;
     changed('rate');
@@ -284,7 +282,6 @@ const SIM_CLOCK = (() => {
 
   return {
     play, pause, stop, toggle, setRate, advance,
-    enableDevRates: () => { devRates = true; return DEV_RATES.slice(); },
     at, after, cancel, pending,
     setDuration, progress, format,
     onTick:   fn => sub(tickSubs, fn),

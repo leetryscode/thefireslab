@@ -91,6 +91,25 @@ const SIM_SCENARIO = (() => {
     'logistics':                'logistics'
   };
 
+  /* ---------- what the student is shown for a contact ----------
+     Lee, 2026-09-27, for the fires log: the student should not see our file
+     naming. LOG02-5 reads FUEL02-5; an amphib C07 reads ZBD-C07 (the ZBD-05 —
+     what the partner's students will recognise); engineers keep ENG. One home
+     for it, so the next list that shows names uses the same words. */
+  const DISPLAY_CLASS = {
+    'amphibious-assault-vehicle': 'ZBD',
+    'engineering':              'ENG',
+    'landing-craft':            'LCU',
+    'self-propelled-artillery': 'SPA',
+    'logistics':                'FUEL'
+  };
+  function displayId(id, type) {
+    const s = String(id || '');
+    if (type === 'logistics') return s.replace(/^LOG/, 'FUEL');
+    if (type === 'amphibious-assault-vehicle') return /^ZBD-/.test(s) ? s : 'ZBD-' + s;
+    return s;
+  }
+
   /* ---------- wind ----------
      One constant for the whole scenario, blowing from true north to true
      south (Lee, 2026-09-26). It moves smoke and nothing else.
@@ -243,7 +262,8 @@ const SIM_SCENARIO = (() => {
     };
   }
 
-  return { CLASSES, CLASS_LABELS, ENVIRONMENTS, SAMPLE, WIND, windGrid, PLATFORM, prepare, routeAt };
+  return { CLASSES, CLASS_LABELS, ENVIRONMENTS, SAMPLE, WIND, windGrid, PLATFORM, prepare, routeAt,
+           DISPLAY_CLASS, displayId };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = SIM_SCENARIO;
