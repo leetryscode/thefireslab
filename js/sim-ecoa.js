@@ -1,7 +1,7 @@
 /* The Fires Lab — Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved. */
 /* GENERATED FILE — do not hand-edit.
    Produced by simulation working folder/ecoa-to-scenario-v2.py from
-   ECOA skeleton - Fire Mission Sim v3.3 (TAIs and EAs added).kmz  (--per-corridor 8 --waves 2 --wave-gap 6 --spawn-back 900 --lc-after-beach 7 --eng-lc-delay 5 --eng-offload-gap 90 --log-count 6 --eng-count 2)
+   ECOA skeleton - Fire Mission Sim v3.4  preplanned targets added.kmz  (--per-corridor 8 --waves 2 --wave-gap 6 --spawn-back 900 --lc-after-beach 7 --eng-lc-delay 5 --eng-offload-gap 90 --log-count 6 --eng-count 2)
 
    Lee traces the enemy COA in Google Earth. Every checkpoint is a LINE:
    midpoint = centre, length = formation frontage there. Each vehicle
@@ -2825,6 +2825,13 @@ const SIM_ECOA = {
     'TAI 02': { kind: 'TAI', points: ['20Q KF 04423 01973', '20Q KF 04773 01658', '20Q KF 04468 01325', '20Q KF 04069 01647'] },
     'TAI 03': { kind: 'TAI', points: ['20Q KF 04594 02488', '20Q KF 04691 02238', '20Q KF 04445 01967', '20Q KF 04188 02211'] },
     'TAI 04': { kind: 'TAI', points: ['20Q KF 04205 02217', '20Q KF 04445 01983', '20Q KF 04063 01624', '20Q KF 03943 01759'] },
+  },
+  /* WX nnnn: preplanned artillery targets (Lee, 2026-09-28). The guns aim
+     at 'aim', the drawn line's midpoint; 'points' is the line as drawn. */
+  targets: {
+    'WX 1001': { aim: '20Q KF 03943 02728', points: ['20Q KF 03934 02679', '20Q KF 03953 02777'] },
+    'WX 1002': { aim: '20Q KF 03497 02129', points: ['20Q KF 03547 02136', '20Q KF 03448 02122'] },
+    'WX 1003': { aim: '20Q KF 03196 01856', points: ['20Q KF 03163 01894', '20Q KF 03229 01817'] },
   },
   /* A lane opens breachSec after the first vehicle reaches its holding
      area. TODAY THAT IS A TIMER, standing in for an engineering vehicle

@@ -142,7 +142,7 @@
             <span class="cff-or">or</span>
             <!-- Preplanned target. For Predator it lists the TAIs and EAs Lee
                  draws in the ECOA (the drones search the whole shape); for the
-                 guns it stays disabled until preplanned targets are wired. -->
+                 guns and Fire Storm, his WX targets (fills the grid). -->
             <select id="cff-pre" aria-label="Preplanned target or area" disabled><option value="">Preplanned target</option></select>
           </div>
 
@@ -643,6 +643,17 @@ document.querySelectorAll('.dock-head').forEach(head => {
     }
     return out;
   })();
+  /* WX nnnn from the converter: preplanned targets for the guns (Lee,
+     2026-09-28). The guns aim at the drawn line's midpoint. */
+  const TARGETS = (() => {
+    const src = (typeof SIM_ECOA !== 'undefined' && SIM_ECOA && SIM_ECOA.targets && typeof SIM_PROJ !== 'undefined') ? SIM_ECOA.targets : {};
+    const out = [];
+    for (const [name, x] of Object.entries(src)) {
+      const parts = String(x.aim || '').trim().split(/\s+/);
+      if (parts.length === 4 && SIM_PROJ.mgrsToUtm(x.aim)) out.push({ name, east: parts[2], north: parts[3] });
+    }
+    return out.sort((a, b) => (a.name < b.name ? -1 : 1));
+  })();
   const isDrone = () => !!(unitSel && SIM_MISSIONS.isDroneUnit && SIM_MISSIONS.isDroneUnit(unitSel.value));
   function syncUnit() {
     const drone = isDrone();
@@ -655,17 +666,26 @@ document.querySelectorAll('.dock-head').forEach(head => {
     if (preSel) {
       preSel.textContent = '';
       const first = document.createElement('option');
-      first.value = ''; first.textContent = drone ? (AREAS.length ? 'Grid (or pick an area)' : 'No TAI or EA drawn') : 'Preplanned target';
+      first.value = ''; first.textContent = drone ? (AREAS.length ? 'Grid (or pick an area)' : 'No TAI or EA drawn')
+                                                  : (TARGETS.length ? 'Preplanned target' : 'No preplanned targets');
       preSel.appendChild(first);
-      if (drone) for (const a of AREAS) { const o = document.createElement('option'); o.value = a.name; o.textContent = a.name; preSel.appendChild(o); }
-      preSel.disabled = !drone || !AREAS.length;
+      for (const a of (drone ? AREAS : TARGETS)) { const o = document.createElement('option'); o.value = a.name; o.textContent = a.name; preSel.appendChild(o); }
+      preSel.disabled = drone ? !AREAS.length : !TARGETS.length;
+      const was = preSel.dataset.filled === '1';
       preSel.value = '';
+      if (was) { [east, north].forEach(el => { if (el) el.value = ''; }); delete preSel.dataset.filled; }
     }
     syncPre();
   }
+  /* A preplanned pick locks the grid fields: an area empties them (the drones
+     search the shape), a WX target fills them with its aim point so the
+     student sees the grid that will be fired. */
   function syncPre() {
-    const area = isDrone() && preSel && preSel.value;
-    [east, north].forEach(el => { if (el) el.disabled = !!area; });
+    const pick = preSel && preSel.value;
+    const t = pick && !isDrone() ? TARGETS.find(x => x.name === pick) : null;
+    if (t) { if (east) east.value = t.east; if (north) north.value = t.north; preSel.dataset.filled = '1'; }
+    else if (preSel && preSel.dataset.filled === '1') { [east, north].forEach(el => { if (el) el.value = ''; }); delete preSel.dataset.filled; }
+    [east, north].forEach(el => { if (el) el.disabled = !!pick; });
   }
   if (unitSel) unitSel.addEventListener('change', syncUnit);
   if (preSel) preSel.addEventListener('change', syncPre);
@@ -960,7 +980,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
     const line = r =>
       `${r.mission}/${r.volley + 1} ${name(r).padEnd(9)} ` +
       (r.drone ? 'dive    ' : `${r.nearestM == null ? '   —' : String(r.nearestM).padStart(4)} m  `) +
-      `P ${(r.pStop * 100).toFixed(0).padStart(3)}%  ${r.stopped ? 'STOPPED' : '-'}` +
+      `P ${(r.pStop * 100).toFixed(0).padStart(3)}%  ${r.stopped ? 'STOPPED' : 'SURVIVED'}` +
       /* "(aboard)" cut for width (Lee, 2026-09-27); the water reasons stay. */
       (r.note && r.note !== 'aboard' ? ` (${r.note})` : '');
     /* A drone mission's summary counts STRIKES by class (two drones on one
@@ -1092,9 +1112,10 @@ document.querySelectorAll('.dock-head').forEach(head => {
        nowhere. Five lines in spoken order, run together as one transmission —
        which is how it would actually be sent — and opening [recipient] this is
        [speaker] like every other message on this net. */
+    const wx = preSel && !preSel.disabled && preSel.value ? preSel.value : '';
     chatLine(SIM_MISSIONS.OBSERVER,
       `${unit}, this is ${SIM_MISSIONS.OBSERVER}, ${type.toLowerCase()}. ` +
-      `Grid ${grid}. ${count} ${targLabel} ${env}. ` +
+      `${wx ? 'Target ' + wx : 'Grid ' + grid}. ${count} ${targLabel} ${env}. ` +
       `${SIM_MISSIONS.spokenShell(shell)}. ` +
       `${control}${totSec !== null ? ' ' + SIM_CLOCK.format(totSec) : ''}, over.`);
 
@@ -1115,7 +1136,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
       return fail(res.error);
     }
     status.classList.remove('is-bad');
-    status.textContent = `${res.mission.id} — ${grid}`;
+    status.textContent = `${res.mission.id} — ${wx ? wx + ', ' : ''}${grid}`;
     /* The grid on the feed has been used: clear it back to hover. */
     if (typeof SIM_RENDER !== 'undefined' && SIM_RENDER.clearMark) SIM_RENDER.clearMark();
   });
