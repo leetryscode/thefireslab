@@ -236,6 +236,11 @@ body.sim {
    student can see their way to the chat. */
 .sim-frame.is-designating { cursor: none; }
 .sim-frame.is-designating .feed-mode { cursor: pointer; }
+/* Panels laid over the feed keep the ordinary cursor: the crosshair is for the
+   ground, and a hidden pointer over the brief read as broken (Lee, 2026-09-28). */
+.sim-frame.is-designating .sim-brief,
+.sim-frame.is-designating .sim-score,
+.sim-frame.is-designating .sim-fireslog { cursor: default; }
 
 /* IR. A first guess at the look, to be tuned against the picture by eye —
    which is why it is one custom property. On the image only: the credit and
@@ -875,3 +880,121 @@ body.is-paused .typing-dots i { animation-play-state: paused; }
 /* Predator hides parts of the call for fire (Lee, 2026-09-28). The rows are
    flex, which would otherwise override the hidden attribute. */
 .cff-builder [hidden] { display: none !important; }
+
+/* The brief (Lee, 2026-09-28): over the feed, not filling it — a light scrim
+   so the ground shows behind. X closes it; the arrow walks the slides. */
+.sim-brief {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: rgba(10, 12, 8, .28);
+  align-items: center;
+  justify-content: center;
+  padding: 2% 4%;
+  /* Type scales with the feed's width (the feed's height follows it), so a
+     slide always fits: no scroll bar at any supported width (Lee). */
+  font-size: clamp(11px, 1.12vw, 16px);
+}
+.sim-brief.show { display: flex; }
+.sim-brief { container-type: size; }
+.brief-box {
+  position: relative;
+  width: min(52em, 80%);
+  max-height: 100%;
+  overflow: hidden;
+  padding: .9em 1.4em .7em;
+  background: rgba(20, 22, 18, .82);
+  color: #f2f1ea;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-top: 4px solid #c9a227;
+  border-radius: var(--radius);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .35);
+}
+.brief-title {
+  margin: 0 2em .3em 0;
+  padding-bottom: .3em;
+  font: 700 .95em/1.2 var(--font-head);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #c9a227;
+}
+.brief-slide h3 {
+  margin: .6em 0 .15em;
+  font: 600 .85em/1.2 var(--font-head);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #d8d6ca;
+}
+.brief-slide p, .brief-slide li { margin: 0; font-size: 1em; line-height: 1.4; }
+.brief-slide ol { margin: 0; padding-left: 1.3em; }
+.brief-slide li + li { margin-top: .2em; }
+.brief-x {
+  position: absolute;
+  top: .3em;
+  right: .4em;
+  width: 2em;
+  height: 2em;
+  border: 0;
+  background: transparent;
+  color: #f2f1ea;
+  font-size: 1.5em;
+  line-height: 1;
+  cursor: pointer;
+}
+.brief-x:hover, .brief-x:focus-visible { color: #c9a227; }
+.brief-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  margin-top: .7em;
+}
+.brief-count { font-family: var(--font-mono); font-size: .8em; color: #b9b7aa; }
+.brief-arrow {
+  min-width: 2.6em;
+  padding: .25em .7em;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, .08);
+  color: #f2f1ea;
+  font: 600 1em/1 var(--font-head);
+  cursor: pointer;
+}
+.brief-arrow:disabled { opacity: .3; cursor: default; }
+.brief-arrow.is-begin { background: #c9a227; border-color: #c9a227; color: #14160f; letter-spacing: .06em; }
+/* Slide 4, the terrain analysis (Lee, 2026-09-28): the map centred and as
+   tall as the feed allows (so no scroll bar); the key on the open water at
+   the map's right; the slide's name beside the header. */
+.brief-sub { color: #d8d6ca; }
+.brief-terrain:not([hidden]) { display: flex; justify-content: center; margin-top: .4em; }
+.terrain-map { position: relative; }
+.terrain-map img {
+  display: block;
+  height: calc(100cqh - 7em);
+  max-height: 36em;
+  width: auto;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: var(--radius-sm);
+}
+.brief-key {
+  position: absolute;
+  right: 4%;
+  bottom: 14%;
+  list-style: none;
+  margin: 0;
+  padding: .45em .6em;
+  background: rgba(20, 22, 18, .78);
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: var(--radius-sm);
+}
+.brief-key li { display: flex; align-items: center; gap: .5em; font-size: .78em; line-height: 1.2; }
+.brief-key li + li { margin-top: .35em; }
+.key-sw { flex: 0 0 auto; width: 1.9em; height: 1.1em; }
+.key-restricted {
+  border: 2px solid #c8102e;
+  background-color: rgba(200, 16, 46, .15);
+  background-image: repeating-linear-gradient(45deg, rgba(200, 16, 46, .8) 0 1px, transparent 1px 6px),
+                    repeating-linear-gradient(-45deg, rgba(200, 16, 46, .8) 0 1px, transparent 1px 6px);
+}
+.key-open { border: 1.5px dashed #b9b7aa; }

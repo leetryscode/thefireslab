@@ -344,12 +344,24 @@ const SIM_ENTITIES = (() => {
     return trucks * perTruck;
   }
 
+  /* Where a vehicle pulls up to fuel, as a key. Several amphibs share one
+     pull-up point beside a truck (the converter puts them beside trucks, two
+     to a truck, Lee 2026-09-28); only one may be on its way to or at it, or the
+     second blocks the column behind it. */
+  function fuelKey(en) {
+    if (en.fuel.key === undefined) {
+      const p = SIM_SCENARIO.routeAt(en.route, en.fuel.fuelAtM);
+      en.fuel.key = `${Math.round(p.e)},${Math.round(p.n)}`;
+    }
+    return en.fuel.key;
+  }
+
   function releaseFromRings() {
-    const busy = {}, waiting = {};
+    const busy = {}, waiting = {}, taken = new Set();
     for (const en of ents) {
       if (!en.fuel || en.state === 'destroyed') continue;
       const d = en.fuel.depot;
-      if (en.fuel.phase === 'toDepot' || en.fuel.phase === 'fueling') busy[d] = (busy[d] || 0) + 1;
+      if (en.fuel.phase === 'toDepot' || en.fuel.phase === 'fueling') { busy[d] = (busy[d] || 0) + 1; taken.add(fuelKey(en)); }
       if (en.fuel.phase === 'ring' && en.state === HALTED) (waiting[d] = waiting[d] || []).push(en);
     }
     for (const [d, q] of Object.entries(waiting)) {
@@ -357,7 +369,10 @@ const SIM_ENTITIES = (() => {
       if (free <= 0) continue;
       q.sort((a, b) => (a.fuel.ringSince - b.fuel.ringSince) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
       for (const en of q) {
-        if (free-- <= 0) break;
+        if (free <= 0) break;
+        if (taken.has(fuelKey(en))) continue;      /* its spot is in use: the next in line goes */
+        free--;
+        taken.add(fuelKey(en));
         en.fuel.phase = 'toDepot';
         en.state = MOVING;
       }
