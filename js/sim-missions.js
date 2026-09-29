@@ -48,6 +48,12 @@
 
 const SIM_MISSIONS = (() => {
 
+  /* Language (js/sim-i18n.js). Bare in node, where the English is used as is. */
+  const T = (k, en, v) => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.t(k, en, v)
+    : (v ? en.replace(/\{(\w+)\}/g, (m, x) => (x in v ? v[x] : m)) : en);
+  const NAME = cs => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.name(cs) : cs;
+  const SLUG = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
   /* ---------- who the student is ----------
      The STUDENT is the fire support coordination centre. The firing units
      answer to them, so every transmission on this net — in both directions —
@@ -66,7 +72,7 @@ const SIM_MISSIONS = (() => {
   ];
   const spokenShell = v => {
     const m = MUNITIONS.find(x => x.value === v);
-    return m ? m.spoken : v;
+    return m ? T('sim.mun.spoken.' + SLUG(m.value), m.spoken) : v;
   };
 
   /* ---------- everything said on the net, in one place ----------
@@ -76,29 +82,35 @@ const SIM_MISSIONS = (() => {
 
      Order per Lee, 2026-09-19: recipient, speaker, target number, rounds and
      shell, time of flight. */
-  const head = m => `${OBSERVER}, this is ${m.unit},`;
+  const head = m => T('sim.say.head', '{obs}, this is {unit},', { obs: NAME(OBSERVER), unit: NAME(m.unit) });
   /* Fire Storm fires rockets, not rounds. Placeholder wording like the rest. */
-  const body = m => `${m.id}, ${m.rounds} ${m.system === 'RT2000' ? 'rockets' : 'rounds'} ${spokenShell(m.shell)}`;
+  const body = m => m.system === 'RT2000'
+    ? T('sim.say.body.rockets', '{id}, {n} rockets {shell}', { id: m.id, n: m.rounds, shell: spokenShell(m.shell) })
+    : T('sim.say.body.rounds',  '{id}, {n} rounds {shell}',  { id: m.id, n: m.rounds, shell: spokenShell(m.shell) });
+  const drones = n => n === 1 ? T('sim.drone.one', '{n} drone', { n }) : T('sim.drone.many', '{n} drones', { n });
   const SAY = {
-    mto:      m => `${head(m)} ${body(m)}, time of flight ${m.tofSec} seconds, over.`,
-    mtoTot:   m => `${head(m)} ${body(m)}, time on target ${SIM_CLOCK.format(m.totSec)}, ` +
-                   `time of flight ${m.tofSec} seconds, over.`,
-    mtoHold:  m => `${head(m)} ${body(m)}, time of flight ${m.tofSec} seconds. ` +
-                   `Ready, at your command, over.`,
-    shot:     m => `${head(m)} ${m.id}, shot, over.`,
-    splash:   m => `${head(m)} ${m.id}, splash, over.`,
+    mto:      m => T('sim.say.mto', '{head} {body}, time of flight {tof} seconds, over.',
+                     { head: head(m), body: body(m), tof: m.tofSec }),
+    mtoTot:   m => T('sim.say.mtotot', '{head} {body}, time on target {tot}, time of flight {tof} seconds, over.',
+                     { head: head(m), body: body(m), tot: SIM_CLOCK.format(m.totSec), tof: m.tofSec }),
+    mtoHold:  m => T('sim.say.mtohold', '{head} {body}, time of flight {tof} seconds. Ready, at your command, over.',
+                     { head: head(m), body: body(m), tof: m.tofSec }),
+    shot:     m => T('sim.say.shot', '{head} {id}, shot, over.', { head: head(m), id: m.id }),
+    splash:   m => T('sim.say.splash', '{head} {id}, splash, over.', { head: head(m), id: m.id }),
     /* Predator (Lee, 2026-09-28). Placeholder wording like the rest. */
-    mtoDrone: m => `${head(m)} ${m.id}, ${m.drones} drone${m.drones === 1 ? '' : 's'}, one every ` +
-                   `${m.intervalSec} seconds, time of flight ${Math.round(m.tofSec / 60)} minutes, over.`,
-    droneAway: m => `${head(m)} ${m.id}, drones away, over.`,
-    noDrones: (unit, left, need) => `${OBSERVER}, this is ${unit}, unable — insufficient drones, ` +
-                                    `${left} remaining, ${need} requested, over.`,
+    mtoDrone: m => T('sim.say.mtodrone', '{head} {id}, {drones}, one every {sec} seconds, time of flight {min} minutes, over.',
+                     { head: head(m), id: m.id, drones: drones(m.drones), sec: m.intervalSec, min: Math.round(m.tofSec / 60) }),
+    droneAway: m => T('sim.say.droneaway', '{head} {id}, drones away, over.', { head: head(m), id: m.id }),
+    noDrones: (unit, left, need) => T('sim.say.nodrones',
+                     '{obs}, this is {unit}, unable — insufficient drones, {left} remaining, {need} requested, over.',
+                     { obs: NAME(OBSERVER), unit: NAME(unit), left, need }),
     /* Lee, 2026-09-27: refused from the battery itself, over the net. */
-    noAmmo:   (unit, left, need) => `${OBSERVER}, this is ${unit}, unable — insufficient ammunition, ` +
-                                    `${left} rounds remaining, ${need} required, over.`,
-    lateTot:  (m, now) => `${head(m)} unable. Time on target ${SIM_CLOCK.format(m.totSec)} is inside ` +
-                          `time of flight — earliest is ${SIM_CLOCK.format(now + m.tofSec)}. ` +
-                          `Send a later time on target, over.`
+    noAmmo:   (unit, left, need) => T('sim.say.noammo',
+                     '{obs}, this is {unit}, unable — insufficient ammunition, {left} rounds remaining, {need} required, over.',
+                     { obs: NAME(OBSERVER), unit: NAME(unit), left, need }),
+    lateTot:  (m, now) => T('sim.say.latetot',
+                     '{head} unable. Time on target {tot} is inside time of flight — earliest is {earliest}. Send a later time on target, over.',
+                     { head: head(m), tot: SIM_CLOCK.format(m.totSec), earliest: SIM_CLOCK.format(now + m.tofSec) })
   };
 
   /* ---------- the firing units ----------
@@ -474,13 +486,13 @@ const SIM_MISSIONS = (() => {
     const st = status(unit);
     if (isDroneUnit(unit)) return sendDrones(spec, unit, now, st);
     if (!st.ready && st.spent) {
-      return { ok: false, error: `${unit} is unavailable — no salvos remaining.`, status: st };
+      return { ok: false, error: T('sim.err.nosalvos', '{unit} is unavailable — no salvos remaining.', { unit: NAME(unit) }), status: st };
     }
     if (!st.ready) {
       const when = st.backAt != null
-        ? `back on the air ${SIM_CLOCK.format(st.backAt)}`
-        : `still holding ${st.holding}`;
-      return { ok: false, error: `${unit} is unavailable — ${when}.`, status: st };
+        ? T('sim.err.backat', 'back on the air {t}', { t: SIM_CLOCK.format(st.backAt) })
+        : T('sim.err.holding', 'still holding {id}', { id: st.holding });
+      return { ok: false, error: T('sim.err.unavailable', '{unit} is unavailable — {when}.', { unit: NAME(unit), when }), status: st };
     }
 
     /* Fire Storm is one salvo whatever type was picked. */
@@ -494,7 +506,7 @@ const SIM_MISSIONS = (() => {
     if (have !== null && need > have) {
       const at = now + drawReply();
       replyAfter(unit, at, SAY.noAmmo(unit, have, need));
-      return { ok: false, error: `${unit}: insufficient ammunition — ${have} rounds remaining, ${need} required.`,
+      return { ok: false, error: T('sim.err.noammo', '{unit}: insufficient ammunition — {have} rounds remaining, {need} required.', { unit: NAME(unit), have, need }),
                status: st, radio: true };
     }
 
@@ -529,7 +541,7 @@ const SIM_MISSIONS = (() => {
 
     if (control === 'Time on target') {
       const tot = Number(spec.totSec);
-      if (!isFinite(tot)) { nextNum--; return { ok: false, error: 'Time on target needs a time.' }; }
+      if (!isFinite(tot)) { nextNum--; return { ok: false, error: T('sim.err.totneeded', 'Time on target needs a time.') }; }
       m.totSec = tot;
       /* A TOT that cannot be met is refused — and the earliest that CAN be met
          now includes the acknowledgement, because the guns are not laid until
@@ -539,7 +551,7 @@ const SIM_MISSIONS = (() => {
       if (tot < m.replyAt + m.tofSec) {
         nextNum--;
         replyAfter(unit, m.replyAt, SAY.lateTot(m, m.replyAt));
-        return { ok: false, error: `Unable: earliest TOT is ${SIM_CLOCK.format(m.replyAt + m.tofSec)}.`,
+        return { ok: false, error: T('sim.err.earliest', 'Unable: earliest TOT is {t}.', { t: SIM_CLOCK.format(m.replyAt + m.tofSec) }),
                  mission: m };
       }
       accept(m);
@@ -571,13 +583,13 @@ const SIM_MISSIONS = (() => {
      a grid (e, n) or spec.area { name, points: [{e,n}] } — a TAI or EA Lee
      draws. Always launched on acknowledgement: no at-my-command, no TOT. */
   function sendDrones(spec, unit, now, st) {
-    if (typeof SIM_DRONES === 'undefined') return { ok: false, error: 'Drones are not loaded.' };
+    if (typeof SIM_DRONES === 'undefined') return { ok: false, error: T('sim.err.nodronemod', 'Drones are not loaded.') };
     const C = SIM_DRONES.CONFIG;
     const n = Math.max(1, Math.min(C.maxPerMission, Math.floor(Number(spec.drones) || 1)));
     const left = dronesLeft(unit);
     if (left !== null && n > left) {
       replyAfter(unit, now + drawReply(), SAY.noDrones(unit, left, n));
-      return { ok: false, error: `${unit}: insufficient drones — ${left} remaining, ${n} requested.`,
+      return { ok: false, error: T('sim.err.nodrones', '{unit}: insufficient drones — {left} remaining, {n} requested.', { unit: NAME(unit), left, n }),
                status: st, radio: true };
     }
     const area = spec.area && spec.area.points && spec.area.points.length >= 3 ? spec.area : null;

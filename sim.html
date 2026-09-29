@@ -23,6 +23,12 @@
   Deliberately decoupled from the D3A course engine: no D3A.registerPage, not
   in PHASES or SUBPAGES in js/app.js, not in PAGES in tools/tag-i18n.js, and
   no data-i18n keys. Sim styling lives in css/sim.css, not css/style.css.
+
+  LANGUAGE (2026-09-28). The sim translates with its own keys —
+  data-sim-i18n in the markup, SIM_I18N.t() in script — and its own
+  dictionary, js/lang-zh-sim.js. js/i18n.js is loaded only for the EN / 繁中
+  switch and the saved choice, which it shares with the course. See
+  js/sim-i18n.js. Do not run tools/tag-i18n.js over this page.
 --><html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,11 +48,13 @@
        the step size, so a run at 3x comes out identical to the same run at 1x.
        That is the whole reason the clock exists in its own file. -->
 <div class="sim-timeline">
-    <span class="region-label">Timeline</span>
+    <!-- EN / 繁中, top left (Lee, 2026-09-28). Filled in by js/i18n.js. -->
+    <div class="lang-toggle" role="group" aria-label="Language / 語言"></div>
+    <span class="region-label" data-sim-i18n="sim.tl.label">Timeline</span>
     <div class="tl-transport">
-      <button id="tl-play"  class="tl-btn" type="button" title="Play"  aria-pressed="false">▶</button>
-      <button id="tl-pause" class="tl-btn" type="button" title="Pause" aria-pressed="false">❚❚</button>
-      <button id="tl-stop"  class="tl-btn" type="button" title="Stop">■</button>
+      <button id="tl-play"  class="tl-btn" type="button" title="Play" data-sim-i18n-attr="title:sim.tl.play" aria-pressed="false">▶</button>
+      <button id="tl-pause" class="tl-btn" type="button" title="Pause" data-sim-i18n-attr="title:sim.tl.pause" aria-pressed="false">❚❚</button>
+      <button id="tl-stop"  class="tl-btn" type="button" title="Stop" data-sim-i18n-attr="title:sim.tl.stop">■</button>
     </div>
     <div class="tl-speeds">
       <button class="tl-btn" type="button" data-rate="1" aria-pressed="true">1×</button>
@@ -55,12 +63,12 @@
       <button class="tl-btn" type="button" data-rate="10" aria-pressed="false">10×</button>
       <button class="tl-btn" type="button" data-rate="30" aria-pressed="false">30×</button>
     </div>
-    <div class="tl-track" role="progressbar" aria-label="Scenario progress"
+    <div class="tl-track" role="progressbar" aria-label="Scenario progress" data-sim-i18n-attr="aria-label:sim.tl.progress"
          aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div id="tl-fill" class="tl-fill"></div><div id="tl-head" class="tl-head"></div>
     </div>
     <span id="tl-clock" class="tl-clock">T+00:00</span>
-    <a class="sim-exit" href="index.html">Exit</a>
+    <a class="sim-exit" href="index.html" data-sim-i18n="sim.tl.exit">Exit</a>
   </div>
 
 <!-- DRONE FEED. A static oblique image standing in for a live feed, drawn
@@ -74,12 +82,12 @@
      it; test-runtime.js section 28 checks every named data source is there. -->
 <div class="sim-stage">
   <div class="sim-frame">
-    <img class="sim-feed" src="img/sim-pov.jpg" alt="Oblique aerial view of the coastline from the drone's point of view.">
+    <img class="sim-feed" src="img/sim-pov.jpg" alt="Oblique aerial view of the coastline from the drone's point of view." data-sim-i18n-attr="alt:sim.feed.alt">
     <p class="sim-attribution">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
     <!-- Top-left corner: the sensor mode switch. -->
     <div class="sim-corner">
       <button type="button" id="feed-mode" class="feed-mode" aria-pressed="true" data-mode="ir"
-              title="Sensor mode — click or press I"><span class="fm-opt" data-m="tv">TV</span><span class="fm-opt" data-m="ir">IR</span></button>
+              title="Sensor mode — click or press I" data-sim-i18n-attr="title:sim.feed.modetitle"><span class="fm-opt" data-m="tv">TV</span><span class="fm-opt" data-m="ir">IR</span></button>
     </div>
     <!-- THE BRIEF (Lee, 2026-09-28): shown when the sim opens, over the feed
          but not filling it, so the student sees the ground behind it. Next
@@ -87,54 +95,57 @@
          wording; its own classes, not the course's .modal. -->
     <div class="sim-brief show" id="sim-brief" role="dialog" aria-modal="true" aria-labelledby="brief-title">
       <div class="brief-box">
-        <button type="button" class="brief-x" data-act="close" aria-label="Close the brief">&times;</button>
-        <h2 id="brief-title" class="brief-title">Operation Iron Gate<span class="brief-sub"></span></h2>
+        <button type="button" class="brief-x" data-act="close" aria-label="Close the brief" data-sim-i18n-attr="aria-label:sim.brief.close">&times;</button>
+        <h2 id="brief-title" class="brief-title"><span data-sim-i18n="sim.brief.title">Operation Iron Gate</span><span class="brief-sub"></span></h2>
         <section class="brief-slide" data-n="1">
-          <h3>Commander&rsquo;s intent</h3>
-          <p>Keep as many enemy amphibious vehicles as possible east of DELAY LINE RED, for as long as possible, so our maneuver forces have time to reinforce the key terrain to the west.</p>
-          <h3>Mission</h3>
-          <p>At T - 0, 77th Combined Arms Brigade delays the enemy amphibious assault east of DELAY LINE RED in order to allow friendly maneuver forces time to reinforce key terrain west of the objective area.</p>
-          <h3>End state</h3>
-          <p>The enemy is unable to mass significant combat power west of DELAY LINE RED.</p>
+          <!-- EN / 繁中 on the first slide (Lee, 2026-09-28), so the student
+               picks a language before reading. Same switch as the timeline's. -->
+          <div class="lang-toggle brief-lang" role="group" aria-label="Language / 語言"></div>
+          <h3 data-sim-i18n="sim.brief.intent.h">Commander&rsquo;s intent</h3>
+          <p data-sim-i18n="sim.brief.intent">Keep as many enemy amphibious vehicles as possible east of DELAY LINE RED, for as long as possible, so our maneuver forces have time to reinforce the key terrain to the west.</p>
+          <h3 data-sim-i18n="sim.brief.mission.h">Mission</h3>
+          <p data-sim-i18n="sim.brief.mission">At T - 0, 77th Combined Arms Brigade delays the enemy amphibious assault east of DELAY LINE RED in order to allow friendly maneuver forces time to reinforce key terrain west of the objective area.</p>
+          <h3 data-sim-i18n="sim.brief.end.h">End state</h3>
+          <p data-sim-i18n="sim.brief.end">The enemy is unable to mass significant combat power west of DELAY LINE RED.</p>
         </section>
         <section class="brief-slide" data-n="2" hidden>
-          <h3>Objectives</h3>
+          <h3 data-sim-i18n="sim.brief.obj.h">Objectives</h3>
           <ol>
-            <li>Disrupt enemy&rsquo;s ability to breach our obstacles, containing the enemy to the area around the beach where we can continue to fire upon him.</li>
-            <li>Degrade the enemy&rsquo;s ability to refuel, limiting the range of their assault vehicles which the enemy relies upon for maneuver.</li>
+            <li data-sim-i18n="sim.brief.obj1">Disrupt enemy&rsquo;s ability to breach our obstacles, containing the enemy to the area around the beach where we can continue to fire upon him.</li>
+            <li data-sim-i18n="sim.brief.obj2">Degrade the enemy&rsquo;s ability to refuel, limiting the range of their assault vehicles which the enemy relies upon for maneuver.</li>
           </ol>
-          <h3>Effects</h3>
+          <h3 data-sim-i18n="sim.brief.eff.h">Effects</h3>
           <ol>
-            <li>Engineering vehicles are unable to move</li>
-            <li>Fuel logistics vehicles are destroyed</li>
+            <li data-sim-i18n="sim.brief.eff1">Engineering vehicles are unable to move</li>
+            <li data-sim-i18n="sim.brief.eff2">Fuel logistics vehicles are destroyed</li>
           </ol>
         </section>
         <section class="brief-slide" data-n="3" hidden>
-          <h3>High Payoff Target List</h3>
+          <h3 data-sim-i18n="sim.brief.hptl.h">High Payoff Target List</h3>
           <ol>
-            <li>Engineering Vehicles</li>
-            <li>Fuel Vehicles</li>
-            <li>Amphibious Assault Vehicles</li>
+            <li data-sim-i18n="sim.brief.hptl1">Engineering Vehicles</li>
+            <li data-sim-i18n="sim.brief.hptl2">Fuel Vehicles</li>
+            <li data-sim-i18n="sim.brief.hptl3">Amphibious Assault Vehicles</li>
           </ol>
         </section>
         <section class="brief-slide brief-terrain" data-n="4" data-sub="Terrain analysis" hidden>
           <div class="terrain-map">
-            <img src="img/sim-terrain-analysis.jpg" alt="Map of the objective area with restricted terrain hatched in red.">
+            <img src="img/sim-terrain-analysis.jpg" alt="Map of the objective area with restricted terrain hatched in red." data-sim-i18n-attr="alt:sim.brief.terrain.alt">
             <!-- The key sits on the open water, right side (Lee). -->
             <ul class="brief-key">
-              <li><span class="key-sw key-restricted"></span>Restricted</li>
-              <li><span class="key-sw key-open"></span>Unrestricted</li>
+              <li><span class="key-sw key-restricted"></span><span data-sim-i18n="sim.brief.key.restricted">Restricted</span></li>
+              <li><span class="key-sw key-open"></span><span data-sim-i18n="sim.brief.key.open">Unrestricted</span></li>
             </ul>
           </div>
         </section>
         <section class="brief-slide brief-terrain" data-n="5" data-sub="Map" hidden>
           <!-- The same map the MAP button opens (Lee, 2026-09-28). -->
           <div class="terrain-map">
-            <img src="img/sim-map.jpg" alt="The operation map: grid, obstacles, engagement areas, target areas and preplanned targets.">
+            <img src="img/sim-map.jpg" alt="The operation map: grid, obstacles, engagement areas, target areas and preplanned targets." data-sim-i18n-attr="alt:sim.brief.map.alt">
           </div>
         </section>
         <div class="brief-nav">
-          <button type="button" class="brief-arrow" data-act="prev" aria-label="Previous slide">&larr;</button>
+          <button type="button" class="brief-arrow" data-act="prev" aria-label="Previous slide" data-sim-i18n-attr="aria-label:sim.brief.prev">&larr;</button>
           <span class="brief-count" aria-live="polite">1 / 3</span>
           <button type="button" class="brief-arrow" data-act="next" aria-label="Next slide">&rarr;</button>
         </div>
@@ -159,7 +170,7 @@
          other line of the call for fire is chosen from a dropdown. -->
     <section class="dock-panel is-wide" id="dock-chat">
       <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-chat">
-        <span class="region-label">Fires coordination chat</span>
+        <span class="region-label" data-sim-i18n="sim.dock.chat">Fires coordination chat</span>
         <span id="chat-hint" class="dock-hint"></span>
         <span class="chev" aria-hidden="true"></span>
       </button>
@@ -168,9 +179,9 @@
           <!-- The student IS Dragonfire FSCC. The firing units answer to them,
                so every transmission on this net opens [recipient] this is
                [speaker]. -->
-          <p class="chat-line is-self"><span class="who">Dragonfire FSCC</span> All stations, this is Dragonfire FSCC, radio check, over.</p>
-          <p class="chat-line"><span class="who">Steel Rain</span> Dragonfire FSCC, this is Steel Rain, roger, loud and clear, over.</p>
-          <p class="chat-line"><span class="who">Anvil</span> Dragonfire FSCC, this is Anvil, all firing units are up and laid, over.</p>
+          <p class="chat-line is-self"><span class="who" data-sim-i18n="sim.cs.dragonfire-fscc">Dragonfire FSCC</span> <span data-sim-i18n="sim.chat.open1">All stations, this is Dragonfire FSCC, radio check, over.</span></p>
+          <p class="chat-line"><span class="who" data-sim-i18n="sim.cs.steel-rain">Steel Rain</span> <span data-sim-i18n="sim.chat.open2">Dragonfire FSCC, this is Steel Rain, roger, loud and clear, over.</span></p>
+          <p class="chat-line"><span class="who" data-sim-i18n="sim.cs.anvil">Anvil</span> <span data-sim-i18n="sim.chat.open3">Dragonfire FSCC, this is Anvil, all firing units are up and laid, over.</span></p>
         </div>
         <!-- CALL FOR FIRE — five lines, spoken order, no field labels.
              Every line is live. Nothing is graded: the target description and
@@ -180,29 +191,29 @@
              The grid is easting first, then northing — right and up. Six
              digits (three each, a 100 m square) is the standard and what the
              placeholder shows; eight and ten are accepted too. -->
-        <div class="cff-builder">
+        <div class="cff-builder" data-label="Fire mission" data-sim-i18n-attr="data-label:sim.cff.label">
           <!-- Unit and type of mission. Both live, both built in script from
                SIM_MISSIONS so the vocabulary has one home. The type decides
                how many guns fire and how many volleys arrive. -->
           <div class="cff-line">
-            <select id="cff-unit" aria-label="Unit called"></select>
-            <span class="cff-fixed">this is Dragonfire FSCC</span>
-            <select id="cff-type" aria-label="Type of mission"></select>
+            <select id="cff-unit" aria-label="Unit called" data-sim-i18n-attr="aria-label:sim.cff.unit"></select>
+            <span class="cff-fixed" data-sim-i18n="sim.cff.thisis">this is Dragonfire FSCC</span>
+            <select id="cff-type" aria-label="Type of mission" data-sim-i18n-attr="aria-label:sim.cff.type"></select>
             <!-- Predator only (Lee, 2026-09-28): how many drones, 1-20. -->
-            <select id="cff-drones" aria-label="Number of drones" hidden></select>
+            <select id="cff-drones" aria-label="Number of drones" data-sim-i18n-attr="aria-label:sim.cff.drones" hidden></select>
           </div>
 
           <div class="cff-line">
             <span class="cff-sq">20Q KF</span>
             <input id="cff-east"  class="cff-grid" type="text" inputmode="numeric" maxlength="5"
-                   placeholder="EEE" aria-label="Easting, three to five digits" autocomplete="off">
+                   placeholder="EEE" aria-label="Easting, three to five digits" data-sim-i18n-attr="aria-label:sim.cff.east" autocomplete="off">
             <input id="cff-north" class="cff-grid" type="text" inputmode="numeric" maxlength="5"
-                   placeholder="NNN" aria-label="Northing, three to five digits" autocomplete="off">
-            <span class="cff-or">or</span>
+                   placeholder="NNN" aria-label="Northing, three to five digits" data-sim-i18n-attr="aria-label:sim.cff.north" autocomplete="off">
+            <span class="cff-or" data-sim-i18n="sim.cff.or">or</span>
             <!-- Preplanned target. For Predator it lists the TAIs and EAs Lee
                  draws in the ECOA (the drones search the whole shape); for the
                  guns and Fire Storm, his WX targets (fills the grid). -->
-            <select id="cff-pre" aria-label="Preplanned target or area" disabled><option value="">Preplanned target</option></select>
+            <select id="cff-pre" aria-label="Preplanned target or area" data-sim-i18n-attr="aria-label:sim.cff.pre" disabled><option value="">Preplanned target</option></select>
           </div>
 
           <!-- TARGET DESCRIPTION — what the student says is there. Both lists
@@ -214,13 +225,13 @@
                will live. -->
           <div class="cff-line">
             <input id="cff-count" class="cff-num" type="text" inputmode="numeric" maxlength="2"
-                   value="1" aria-label="Number of targets">
-            <select id="cff-target" aria-label="Target type"></select>
-            <select id="cff-env" aria-label="Environment"></select>
+                   value="1" aria-label="Number of targets" data-sim-i18n-attr="aria-label:sim.cff.count">
+            <select id="cff-target" aria-label="Target type" data-sim-i18n-attr="aria-label:sim.cff.target"></select>
+            <select id="cff-env" aria-label="Environment" data-sim-i18n-attr="aria-label:sim.cff.env"></select>
           </div>
 
           <div class="cff-line" id="cff-shell-line">
-            <select id="cff-shell" aria-label="Method of engagement"></select>
+            <select id="cff-shell" aria-label="Method of engagement" data-sim-i18n-attr="aria-label:sim.cff.shell"></select>
           </div>
 
           <!-- METHOD OF CONTROL — live. The three differ only in WHEN the guns
@@ -231,17 +242,17 @@
                scenario clock time, because that is how a TOT is given and
                because it makes the student read the timeline. -->
           <div class="cff-line">
-            <select id="cff-control">
-              <option>At my command</option><option>When ready</option><option>Time on target</option>
+            <select id="cff-control" aria-label="Method of control" data-sim-i18n-attr="aria-label:sim.cff.control">
+              <option value="At my command" data-sim-i18n="sim.ctl.at-my-command">At my command</option><option value="When ready" data-sim-i18n="sim.ctl.when-ready">When ready</option><option value="Time on target" data-sim-i18n="sim.ctl.time-on-target">Time on target</option>
             </select>
             <!-- Predator replaces the method of control (Lee, 2026-09-28). -->
-            <span id="cff-drone-note" class="cff-fixed" hidden>Drones launch when you send this mission.</span>
+            <span id="cff-drone-note" class="cff-fixed" data-sim-i18n="sim.cff.dronenote" hidden>Drones launch when you send this mission.</span>
             <span id="cff-tot-wrap" class="cff-tot-wrap" hidden>
               <span class="cff-fixed">T+</span>
               <input id="cff-tot" class="cff-tot" type="text" inputmode="numeric" maxlength="5"
-                     placeholder="MM:SS" aria-label="Time on target, minutes and seconds" autocomplete="off">
+                     placeholder="MM:SS" aria-label="Time on target, minutes and seconds" data-sim-i18n-attr="aria-label:sim.cff.tot" autocomplete="off">
             </span>
-            <button id="cff-send" class="cff-send" type="button">Send</button>
+            <button id="cff-send" class="cff-send" type="button" data-sim-i18n="sim.cff.send">Send</button>
             <span id="cff-status" class="cff-status" role="status"></span>
           </div>
         </div>
@@ -259,7 +270,7 @@
          When availability is built, drive it from the clock's event queue. -->
     <section class="dock-panel" id="dock-assets">
       <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-assets">
-        <span class="region-label">Asset status board</span>
+        <span class="region-label" data-sim-i18n="sim.dock.assets">Asset status board</span>
         <span id="asset-hint" class="dock-hint"></span>
         <span class="chev" aria-hidden="true"></span>
       </button>
@@ -272,12 +283,12 @@
          timeline. -->
     <section class="dock-panel" id="dock-missions">
       <button class="dock-head" type="button" aria-expanded="false" aria-controls="body-missions">
-        <span class="region-label">Active missions</span>
+        <span class="region-label" data-sim-i18n="sim.dock.missions">Active missions</span>
         <span id="mission-hint" class="dock-hint">None</span>
         <span class="chev" aria-hidden="true"></span>
       </button>
       <div class="dock-body" id="body-missions">
-        <ul id="mission-list" class="mission-list"></ul>
+        <ul id="mission-list" class="mission-list" data-empty="No missions sent." data-sim-i18n-attr="data-empty:sim.ms.empty"></ul>
       </div>
     </section>
 
@@ -286,8 +297,8 @@
          not need it, HPTL because it was inert and was costing width in a row
          that must not move. It comes back when there is a list behind it. -->
     <div class="dock-rail">
-      <button id="rail-map" class="rail-btn" type="button" title="Engagement area map (M)"
-              aria-expanded="false" aria-controls="sim-map">MAP</button>
+      <button id="rail-map" class="rail-btn" type="button" title="Engagement area map (M)" data-sim-i18n-attr="title:sim.rail.maptitle"
+              aria-expanded="false" aria-controls="sim-map"><span data-sim-i18n="sim.rail.map">MAP</span></button>
     </div>
 
 </div>
@@ -313,15 +324,15 @@
 
      The imagery credit is a licensing requirement, the same as on the feed.
      Do not delete or shorten it. -->
-<div class="sim-map" id="sim-map" role="region" aria-label="Engagement area map" hidden>
+<div class="sim-map" id="sim-map" role="region" aria-label="Engagement area map" data-sim-i18n-attr="aria-label:sim.map.label" hidden>
   <div class="map-inner">
     <img class="map-img" src="img/sim-map.jpg"
-         alt="Gridded overhead map of the engagement area, 20Q KF, with obstacle belts and target areas of interest marked.">
+         alt="Gridded overhead map of the engagement area, 20Q KF, with obstacle belts and target areas of interest marked." data-sim-i18n-attr="alt:sim.map.alt">
     <p class="sim-attribution map-credit">Map data © 2026 Google, Data SIO, NOAA, U.S. Navy, NGA, GEBCO, Airbus, Data LDEO-Columbia, NSF, Landsat / Copernicus, Maxar Technologies, CNES / Airbus</p>
   </div>
 </div>
 
-<p class="sim-too-narrow">The Fire Mission Sim needs a wider screen. Open it on a laptop or a tablet in landscape.</p>
+<p class="sim-too-narrow" data-sim-i18n="sim.narrow">The Fire Mission Sim needs a wider screen. Open it on a laptop or a tablet in landscape.</p>
 
 <!-- STOP asks first (Lee, 2026-09-27): Stop is a full reset — enemy, missions,
      ammunition, the fires log and the chat all go back to T+0 — and it sits
@@ -329,14 +340,17 @@
      .modal: the sim is decoupled from the course's i18n and modal checks. -->
 <div class="sim-confirm" id="stop-confirm" role="dialog" aria-modal="true" aria-describedby="stop-confirm-text">
   <div class="sim-confirm-box">
-    <p id="stop-confirm-text">This resets the simulation, are you sure?</p>
+    <p id="stop-confirm-text" data-sim-i18n="sim.confirm.text">This resets the simulation, are you sure?</p>
     <div class="sim-confirm-actions">
-      <button type="button" class="btn secondary" data-act="cancel">Cancel</button>
-      <button type="button" class="btn" data-act="reset">Yes, reset</button>
+      <button type="button" class="btn secondary" data-act="cancel" data-sim-i18n="sim.confirm.cancel">Cancel</button>
+      <button type="button" class="btn" data-act="reset" data-sim-i18n="sim.confirm.reset">Yes, reset</button>
     </div>
   </div>
 </div>
 
+<script src="js/lang-zh-sim.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/sim-i18n.js"></script>
 <script src="js/sim-camera.js"></script>
 <script src="js/sim-projection.js"></script>
 <script src="js/sim-terrain.js"></script>
@@ -349,6 +363,24 @@
 <script src="js/sim-missions.js"></script>
 <script src="js/sim-render.js"></script>
 <script>
+/* Language (js/sim-i18n.js). Every word this script writes goes through T(),
+   with its English beside the key. Without SIM_I18N (the test harness) the
+   English is used as is. Callsigns go through NAME() for display only. */
+const T = (k, en, v) => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.t(k, en, v)
+  : (v ? en.replace(/\{(\w+)\}/g, (m, x) => (x in v ? v[x] : m)) : en);
+const NAME = cs => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.name(cs) : cs;
+const SLUG = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const onLang = fn => { if (typeof SIM_I18N !== 'undefined') SIM_I18N.onChange(fn); };
+const padW = (s, w) => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.padEnd(s, w) : s.padEnd(w);
+const padWs = (s, w) => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.padStart(s, w) : s.padStart(w);
+
+/* The language switches are buttons, and Space is play / pause: a mouse click
+   must not leave focus on one, or the next Space flips the language back. */
+document.querySelectorAll('.lang-toggle').forEach(box => box.addEventListener('click', ev => {
+  const b = ev.target.closest && ev.target.closest('button');
+  if (b && ev.detail > 0) b.blur();
+}));
+
 /* Opens and closes the docked panels. Panels are independent — any number can
    be open at once. */
 document.querySelectorAll('.dock-head').forEach(head => {
@@ -567,12 +599,13 @@ document.querySelectorAll('.dock-head').forEach(head => {
       slides.forEach((s, k) => { s.hidden = k !== at; });
       /* a slide may name itself beside the header (slide 4: Terrain analysis) */
       const sub = brief.querySelector('.brief-sub');
-      if (sub) sub.textContent = slides[at].dataset.sub ? ` · ${slides[at].dataset.sub}` : '';
+      const subEn = slides[at].dataset.sub;
+      if (sub) sub.textContent = subEn ? ` · ${T('sim.brief.sub.' + SLUG(subEn), subEn)}` : '';
       count.textContent = `${at + 1} / ${slides.length}`;
       prevB.disabled = at === 0;
       const last = at === slides.length - 1;
-      nextB.innerHTML = last ? 'Begin &rarr;' : '&rarr;';
-      nextB.setAttribute('aria-label', last ? 'Close the brief and begin' : 'Next slide');
+      nextB.innerHTML = last ? T('sim.brief.begin', 'Begin &rarr;') : '&rarr;';
+      nextB.setAttribute('aria-label', last ? T('sim.brief.beginlabel', 'Close the brief and begin') : T('sim.brief.next', 'Next slide'));
       nextB.classList.toggle('is-begin', last);
     };
     const close = () => { brief.classList.remove('show'); const pb = document.getElementById('tl-play'); if (pb) pb.focus(); };
@@ -597,6 +630,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
     }, true);
     SIM_CLOCK.pause();
     show(0);
+    onLang(() => show(at));
     nextB.focus();
   }
 
@@ -665,12 +699,13 @@ document.querySelectorAll('.dock-head').forEach(head => {
     /* Both labels are always shown; the lit one is the live mode. */
     modeBtn.dataset.mode = m === 'ir' ? 'ir' : 'tv';
     modeBtn.setAttribute('aria-pressed', String(m === 'ir'));
-    modeBtn.setAttribute('aria-label', `Sensor mode ${m === 'ir' ? 'IR' : 'TV'}. Press I to switch.`);
+    modeBtn.setAttribute('aria-label', T('sim.feed.modelabel', 'Sensor mode {m}. Press I to switch.', { m: m === 'ir' ? 'IR' : 'TV' }));
   };
   /* The feed opens in IR (Lee, 2026-09-27): white-hot contacts on dark water
      are what the student is looking for first. */
   SIM_RENDER.setMode('ir');
   paintMode(SIM_RENDER.mode());
+  onLang(() => paintMode(SIM_RENDER.mode()));
   modeBtn && modeBtn.addEventListener('click', ev => {
     paintMode(SIM_RENDER.toggleMode());
     /* A mouse click must not leave focus here: Space is play/pause, and on a
@@ -704,27 +739,34 @@ document.querySelectorAll('.dock-head').forEach(head => {
      classes and environments from SIM_SCENARIO. Lee expects to keep refining
      the class list, and one home for it is what makes that a one-line change
      rather than a hunt. */
+  /* Each list remembers how to label an option from its value, so a language
+     switch relabels it in place without losing what is picked. */
+  const relabel = [];
   const fill = (el, items, value, text) => {
     if (!el) return;
     el.textContent = '';
+    const byValue = new Map();
     for (const it of items) {
       const o = document.createElement('option');
       o.value = value(it); o.textContent = text(it);
+      byValue.set(o.value, it);
       el.appendChild(o);
     }
+    relabel.push(() => { for (const o of el.options) if (byValue.has(o.value)) o.textContent = text(byValue.get(o.value)); });
   };
+  onLang(() => relabel.forEach(fn => fn()));
 
   const unitSel = document.getElementById('cff-unit');
   const typeSel = document.getElementById('cff-type');
-  fill(unitSel, SIM_MISSIONS.UNITS, u => u.callsign, u => u.callsign);
-  fill(typeSel, Object.keys(SIM_MISSIONS.MISSION_TYPES), k => k, k => k);
-  fill(document.getElementById('cff-shell'), SIM_MISSIONS.MUNITIONS, m => m.value, m => m.value);
+  fill(unitSel, SIM_MISSIONS.UNITS, u => u.callsign, u => NAME(u.callsign));
+  fill(typeSel, Object.keys(SIM_MISSIONS.MISSION_TYPES), k => k, k => T('sim.mt.' + SLUG(k), k));
+  fill(document.getElementById('cff-shell'), SIM_MISSIONS.MUNITIONS, m => m.value, m => T('sim.mun.' + SLUG(m.value), m.value));
   if (typeSel) typeSel.value = SIM_MISSIONS.DEFAULT_TYPE;
 
   if (typeof SIM_SCENARIO !== 'undefined') {
     fill(document.getElementById('cff-target'), Object.keys(SIM_SCENARIO.CLASSES),
-         k => k, k => SIM_SCENARIO.CLASS_LABELS[k] || k);
-    fill(document.getElementById('cff-env'), SIM_SCENARIO.ENVIRONMENTS, v => v, v => v);
+         k => k, k => T('sim.class.' + k, SIM_SCENARIO.CLASS_LABELS[k] || k));
+    fill(document.getElementById('cff-env'), SIM_SCENARIO.ENVIRONMENTS, v => v, v => T('sim.env.' + SLUG(v), v));
   }
 
   /* ---------- Predator changes the call for fire (Lee, 2026-09-28) ----------
@@ -740,7 +782,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
   const droneNote = document.getElementById('cff-drone-note');
   if (droneSel && typeof SIM_DRONES !== 'undefined') {
     const nums = []; for (let i = 1; i <= SIM_DRONES.CONFIG.maxPerMission; i++) nums.push(i);
-    fill(droneSel, nums, n => String(n), n => `${n} drone${n === 1 ? '' : 's'}`);
+    fill(droneSel, nums, n => String(n), n => n === 1 ? T('sim.drone.one', '{n} drone', { n }) : T('sim.drone.many', '{n} drones', { n }));
   }
   /* TAI n / EA n from the converter, as UTM polygons. */
   const AREAS = (() => {
@@ -775,8 +817,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
     if (preSel) {
       preSel.textContent = '';
       const first = document.createElement('option');
-      first.value = ''; first.textContent = drone ? (AREAS.length ? 'Grid (or pick an area)' : 'No TAI or EA drawn')
-                                                  : (TARGETS.length ? 'Preplanned target' : 'No preplanned targets');
+      first.value = ''; first.textContent = preFirst(drone);
       preSel.appendChild(first);
       for (const a of (drone ? AREAS : TARGETS)) { const o = document.createElement('option'); o.value = a.name; o.textContent = a.name; preSel.appendChild(o); }
       preSel.disabled = drone ? !AREAS.length : !TARGETS.length;
@@ -796,6 +837,11 @@ document.querySelectorAll('.dock-head').forEach(head => {
     else if (preSel && preSel.dataset.filled === '1') { [east, north].forEach(el => { if (el) el.value = ''; }); delete preSel.dataset.filled; }
     [east, north].forEach(el => { if (el) el.disabled = !!pick; });
   }
+  function preFirst(drone) {
+    return drone ? (AREAS.length ? T('sim.pre.area', 'Grid (or pick an area)') : T('sim.pre.noarea', 'No TAI or EA drawn'))
+                 : (TARGETS.length ? T('sim.pre.target', 'Preplanned target') : T('sim.pre.notarget', 'No preplanned targets'));
+  }
+  onLang(() => { if (preSel && preSel.options[0]) preSel.options[0].textContent = preFirst(isDrone()); });
   if (unitSel) unitSel.addEventListener('change', syncUnit);
   if (preSel) preSel.addEventListener('change', syncPre);
 
@@ -820,7 +866,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
                          '<span class="as-label"></span><span class="as-note"></span></span>' +
                          '<span class="as-ammo"><span class="as-ammo-num"></span>' +
                          '<span class="as-ammo-bar"><i></i></span></span>';
-        item.querySelector('.as-label').textContent = r.callsign;
+        item.querySelector('.as-label').textContent = NAME(r.callsign);
         board.appendChild(item);
       }
     }
@@ -834,11 +880,12 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const frac = r.remainingSec != null ? Math.min(1, r.remainingSec / r.recoverySec)
                                           : (r.ready ? 0 : 1);
       item.style.setProperty('--as-deg', (frac * 360).toFixed(1) + 'deg');
+      item.querySelector('.as-label').textContent = NAME(r.callsign);
       item.querySelector('.as-note').textContent =
-        r.spent               ? `${r.system} · spent`
+        r.spent               ? T('sim.as.spent', '{sys} · spent', { sys: r.system })
         : r.ready             ? r.system
-        : r.remainingSec != null ? `${r.system} · back ${SIM_CLOCK.format(r.backAt)}`
-        : `${r.system} · holding ${r.holding}`;
+        : r.remainingSec != null ? T('sim.as.back', '{sys} · back {t}', { sys: r.system, t: SIM_CLOCK.format(r.backAt) })
+        : T('sim.as.holding', '{sys} · holding {id}', { sys: r.system, id: r.holding });
       /* Ammunition on the right of the row (Lee, 2026-09-27): rounds for the
          tubes, salvos for Fire Storm, a bar for what is left. The OWA has none. */
       const ammo = item.querySelector('.as-ammo');
@@ -848,23 +895,25 @@ document.querySelectorAll('.dock-head').forEach(head => {
       if (left != null) {
         const frac = max ? left / max : 0;
         ammo.querySelector('.as-ammo-num').textContent =
-          r.roundsLeft != null ? `${left} rds`
-          : r.dronesLeft != null ? `${left} drone${left === 1 ? '' : 's'}`
-          : `${left} salvo${left === 1 ? '' : 's'}`;
+          r.roundsLeft != null ? T('sim.as.rds', '{n} rds', { n: left })
+          : r.dronesLeft != null ? (left === 1 ? T('sim.as.drone', '{n} drone', { n: left }) : T('sim.as.drones', '{n} drones', { n: left }))
+          : (left === 1 ? T('sim.as.salvo', '{n} salvo', { n: left }) : T('sim.as.salvos', '{n} salvos', { n: left }));
         ammo.querySelector('i').style.width = (frac * 100).toFixed(0) + '%';
         ammo.classList.toggle('is-low', frac <= 0.25);
-        ammo.title = r.roundsLeft != null ? `${left} of ${max} rounds`
-                   : r.dronesLeft != null ? `${left} of ${max} drones` : `${left} of ${max} salvos`;
+        ammo.title = r.roundsLeft != null ? T('sim.as.rdsof', '{n} of {max} rounds', { n: left, max })
+                   : r.dronesLeft != null ? T('sim.as.dronesof', '{n} of {max} drones', { n: left, max })
+                   : T('sim.as.salvosof', '{n} of {max} salvos', { n: left, max });
       }
       if (r.ready) ready++;
     });
-    if (assetHint) assetHint.textContent = `${ready} of ${rows.length} ready`;
+    if (assetHint) assetHint.textContent = T('sim.as.hint', '{n} of {total} ready', { n: ready, total: rows.length });
   }
 
   /* The panel hint said "last 00:02 ago", which nothing computed. The student's
      own callsign is both true and more use — it is who they are on this net. */
   const chatHint = document.getElementById('chat-hint');
-  if (chatHint) chatHint.textContent = SIM_MISSIONS.OBSERVER;
+  const paintChatHint = () => { if (chatHint) chatHint.textContent = NAME(SIM_MISSIONS.OBSERVER); };
+  paintChatHint();
 
   const east    = document.getElementById('cff-east');
   const north   = document.getElementById('cff-north');
@@ -911,7 +960,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
      check, and nothing from the last run (Lee, 2026-09-27). Target numbers
      restart at AB1001, so old traffic would otherwise repeat them. */
   const chatOpening = chatLog ? chatLog.innerHTML : '';
-  SIM_CLOCK.onChange(st => { if (st.reason === 'stop' && chatLog) { chatLog.innerHTML = chatOpening; } });
+  SIM_CLOCK.onChange(st => { if (st.reason === 'stop' && chatLog) { chatLog.innerHTML = chatOpening;
+                                if (typeof SIM_I18N !== 'undefined') SIM_I18N.apply(chatLog); } });
 
   function chatLine(who, text) {
     if (!chatLog) return;
@@ -921,7 +971,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
        transmission, or the two disagree. */
     p.className = 'chat-line' + (who === SIM_MISSIONS.OBSERVER ? ' is-self' : '');
     const w = document.createElement('span');
-    w.className = 'who'; w.textContent = who;
+    w.className = 'who'; w.textContent = NAME(who);
     p.appendChild(w);
     p.appendChild(document.createTextNode(' ' + text));
     /* Above the typing bubbles and the pending command: a transmission that has
@@ -931,19 +981,19 @@ document.querySelectorAll('.dock-head').forEach(head => {
   }
 
   const STATE_TEXT = {
-    sending:   m => ['Sent — awaiting acknowledgement', 'is-queued'],
-    awaiting:  m => ['Ready — at your command', 'is-queued'],
-    queued:    m => [m.totSec !== null ? `TOT ${SIM_CLOCK.format(m.totSec)}`
-                                       : `Firing ${SIM_CLOCK.format(m.fireAt)}`, 'is-queued'],
-    inFlight:  m => [m.kind === 'drone' ? `Drones away — first on station ${SIM_CLOCK.format(m.splashAt)}`
-                                        : `In flight — splash ${SIM_CLOCK.format(m.splashAt)}`, 'is-firing'],
+    sending:   m => [T('sim.st.sending', 'Sent — awaiting acknowledgement'), 'is-queued'],
+    awaiting:  m => [T('sim.st.awaiting', 'Ready — at your command'), 'is-queued'],
+    queued:    m => [m.totSec !== null ? T('sim.st.tot', 'TOT {t}', { t: SIM_CLOCK.format(m.totSec) })
+                                       : T('sim.st.firing', 'Firing {t}', { t: SIM_CLOCK.format(m.fireAt) }), 'is-queued'],
+    inFlight:  m => [m.kind === 'drone' ? T('sim.st.dronesaway', 'Drones away — first on station {t}', { t: SIM_CLOCK.format(m.splashAt) })
+                                        : T('sim.st.inflight', 'In flight — splash {t}', { t: SIM_CLOCK.format(m.splashAt) }), 'is-firing'],
     /* A mission is no longer one arrival, so the board says which volley is
        down: a three-volley fire for effect runs for forty seconds and a
        suppression mission for two minutes. */
     impacting: m => m.kind === 'drone'
-      ? [`Drones — ${m.volleysLanded} of ${m.volleys} done`, 'is-firing']
-      : [`Impacting — volley ${m.volleysLanded} of ${m.volleys}`, 'is-firing'],
-    complete:  m => ['Complete', '']
+      ? [T('sim.st.dronesdone', 'Drones — {n} of {total} done', { n: m.volleysLanded, total: m.volleys }), 'is-firing']
+      : [T('sim.st.impacting', 'Impacting — volley {n} of {total}', { n: m.volleysLanded, total: m.volleys }), 'is-firing'],
+    complete:  m => [T('sim.st.complete', 'Complete'), '']
   };
 
   function paintMissions(ms) {
@@ -955,8 +1005,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
       li.innerHTML = `<span class="mn"></span> <span></span> <span class="st"></span>`;
       li.children[0].textContent = m.id;
       li.children[1].textContent = m.kind === 'drone'
-        ? `${m.unit} (${m.system}) · ${m.drones} drones · ${m.grid}`
-        : `${m.unit} (${m.system}) · ${m.rounds} rds · ${m.grid}`;
+        ? T('sim.ms.drones', '{unit} ({sys}) · {n} drones · {grid}', { unit: NAME(m.unit), sys: m.system, n: m.drones, grid: m.grid })
+        : T('sim.ms.rounds', '{unit} ({sys}) · {n} rds · {grid}', { unit: NAME(m.unit), sys: m.system, n: m.rounds, grid: m.grid });
       li.children[2].textContent = text;
       if (cls) li.children[2].classList.add(cls);
 
@@ -964,10 +1014,9 @@ document.querySelectorAll('.dock-head').forEach(head => {
          moment this is pressed, which is the whole point of at-my-command. */
       if (m.state === 'awaiting') {
         const b = document.createElement('button');
-        b.type = 'button'; b.className = 'mission-fire'; b.textContent = 'FIRE';
+        b.type = 'button'; b.className = 'mission-fire'; b.textContent = T('sim.fire', 'FIRE');
         b.addEventListener('click', () => {
-          chatLine(SIM_MISSIONS.OBSERVER,
-            `${m.unit}, this is ${SIM_MISSIONS.OBSERVER}, ${m.id}, fire, over.`);
+          chatLine(SIM_MISSIONS.OBSERVER, fireLine(m));
           SIM_MISSIONS.fireNow(m.id);
         });
         li.appendChild(b);
@@ -975,7 +1024,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
       misList.appendChild(li);
     }
     const active = ms.filter(m => m.state !== 'complete').length;
-    if (misHint) misHint.textContent = active ? `${active} active` : 'None';
+    if (misHint) misHint.textContent = active ? T('sim.ms.active', '{n} active', { n: active }) : T('sim.ms.none', 'None');
   }
 
   /* ---------- the command waiting to be given ----------
@@ -987,6 +1036,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
      It is a draft, not traffic: dashed, and it never enters the transcript
      until the button is pressed. Pressing it says the line for real and gives
      the command. */
+  const fireLine = m => T('sim.say.fire', '{unit}, this is {obs}, {id}, fire, over.',
+                          { unit: NAME(m.unit), obs: NAME(SIM_MISSIONS.OBSERVER), id: m.id });
   function paintPrompts(ms) {
     if (!chatLog) return;
     chatLog.querySelectorAll('.chat-prompt').forEach(el => el.remove());
@@ -995,20 +1046,19 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const p = document.createElement('p');
       p.className = 'chat-line is-self chat-prompt';
       const w = document.createElement('span');
-      w.className = 'who'; w.textContent = SIM_MISSIONS.OBSERVER;
+      w.className = 'who'; w.textContent = NAME(SIM_MISSIONS.OBSERVER);
       p.appendChild(w);
-      p.appendChild(document.createTextNode(
-        `${m.unit}, this is ${SIM_MISSIONS.OBSERVER}, ${m.id}, `));
+      p.appendChild(document.createTextNode(T('sim.prompt.pre', '{unit}, this is {obs}, {id}, ',
+        { unit: NAME(m.unit), obs: NAME(SIM_MISSIONS.OBSERVER), id: m.id })));
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'cmd-fire'; b.textContent = 'FIRE';
-      b.setAttribute('aria-label', `Fire ${m.id}, ${m.unit}`);
+      b.type = 'button'; b.className = 'cmd-fire'; b.textContent = T('sim.fire', 'FIRE');
+      b.setAttribute('aria-label', T('sim.prompt.label', 'Fire {id}, {unit}', { id: m.id, unit: NAME(m.unit) }));
       b.addEventListener('click', () => {
-        chatLine(SIM_MISSIONS.OBSERVER,
-          `${m.unit}, this is ${SIM_MISSIONS.OBSERVER}, ${m.id}, fire, over.`);
+        chatLine(SIM_MISSIONS.OBSERVER, fireLine(m));
         SIM_MISSIONS.fireNow(m.id);
       });
       p.appendChild(b);
-      p.appendChild(document.createTextNode(', over.'));
+      p.appendChild(document.createTextNode(T('sim.prompt.post', ', over.')));
       chatLog.appendChild(p);
     }
     chatLog.scrollTop = chatLog.scrollHeight;
@@ -1027,9 +1077,9 @@ document.querySelectorAll('.dock-head').forEach(head => {
       p.className = 'chat-line chat-typing';
       p.setAttribute('aria-live', 'polite');
       const w = document.createElement('span');
-      w.className = 'who'; w.textContent = who;
+      w.className = 'who'; w.textContent = NAME(who);
       p.appendChild(w);
-      p.appendChild(document.createTextNode('is typing'));
+      p.appendChild(document.createTextNode(T('sim.typing', 'is typing')));
       const d = document.createElement('span');
       d.className = 'typing-dots';
       d.innerHTML = '<i></i><i></i><i></i>';
@@ -1056,6 +1106,10 @@ document.querySelectorAll('.dock-head').forEach(head => {
   /* Both boards carry a countdown, so they repaint on the step like the clock. */
   SIM_CLOCK.onTick(() => { paintMissions(SIM_MISSIONS.list()); paintAssets(); });
   SIM_CLOCK.onChange(paintAssets);
+  /* A language switch repaints everything this script wrote itself. Traffic
+     already on the net stays in the language it was sent in. */
+  onLang(() => { const ms = SIM_MISSIONS.list(); paintMissions(ms); paintAssets(); paintPrompts(ms); paintChatHint();
+                 if (fireLog) fireLog.paint(true); if (scoreBox) scoreBox.paint(true); });
 
   /* ---------- the fires log ----------
      Lee, 2026-09-27: every round's effect, in the student's view. Unrealistic —
@@ -1074,12 +1128,13 @@ document.querySelectorAll('.dock-head').forEach(head => {
     box.className = 'sim-fireslog';
     box.hidden = true;
     box.innerHTML = '<button type="button" class="fl-head" aria-expanded="true">' +
-                    '<span class="fl-title">Fires log</span><span class="fl-caret" aria-hidden="true"></span></button>' +
+                    '<span class="fl-title"></span><span class="fl-caret" aria-hidden="true"></span></button>' +
                     '<pre class="fl-body"></pre>';
     fr.appendChild(box);
     /* The log sits on the feed: a click in it is not a click on the ground. */
     for (const ev of ['click', 'pointerdown', 'pointermove']) box.addEventListener(ev, e => e.stopPropagation());
     const head = box.querySelector('.fl-head'), body = box.querySelector('.fl-body');
+    const title = box.querySelector('.fl-title');
     const setOpen = open => { box.classList.toggle('is-collapsed', !open); head.setAttribute('aria-expanded', String(open)); };
     head.addEventListener('click', () => setOpen(box.classList.contains('is-collapsed')));
 
@@ -1088,10 +1143,10 @@ document.querySelectorAll('.dock-head').forEach(head => {
     const cls = t => (SIM_SCENARIO.DISPLAY_CLASS && SIM_SCENARIO.DISPLAY_CLASS[t]) || t;
     const line = r =>
       `${r.mission}/${r.volley + 1} ${name(r).padEnd(9)} ` +
-      (r.drone ? 'dive    ' : `${r.nearestM == null ? '   —' : String(r.nearestM).padStart(4)} m  `) +
-      `P ${(r.pStop * 100).toFixed(0).padStart(3)}%  ${r.stopped ? 'STOPPED' : 'SURVIVED'}` +
+      (r.drone ? padW(T('sim.fl.dive', 'dive'), 8) : `${r.nearestM == null ? '   —' : String(r.nearestM).padStart(4)} m  `) +
+      `P ${(r.pStop * 100).toFixed(0).padStart(3)}%  ${r.stopped ? T('sim.fl.stopped', 'STOPPED') : T('sim.fl.survived', 'SURVIVED')}` +
       /* "(aboard)" cut for width (Lee, 2026-09-27); the water reasons stay. */
-      (r.note && r.note !== 'aboard' ? ` (${r.note})` : '');
+      (r.note && r.note !== 'aboard' ? ` (${T('sim.fl.note.' + SLUG(r.note), r.note)})` : '');
     /* A drone mission's summary counts STRIKES by class (two drones on one
        vehicle are two strikes) and the drones that found nothing. */
     function droneSummary(id, rolls, vols) {
@@ -1100,19 +1155,20 @@ document.querySelectorAll('.dock-head').forEach(head => {
       for (const r of rolls) { const k = cls(r.type), c = by.get(k) || { n: 0, s: 0 }; c.n++; if (r.stopped) c.s++; by.set(k, c); }
       const lost = vols.filter(v => v.lost).length;
       const parts = [...by.entries()].sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1)).map(([k, c]) => `${k} ${c.s}/${c.n}`);
-      const tail = (parts.length ? parts.join(', ') + ' stopped' : 'nothing struck') + (lost ? `, ${lost} lost` : '');
-      return `${id} ${m ? m.unit : ''} — ${m ? m.drones : vols.length} drones:\n  ${tail}`;
+      const tail = (parts.length ? T('sim.fl.partsstopped', '{parts} stopped', { parts: parts.join(', ') }) : T('sim.fl.nothing', 'nothing struck')) +
+                   (lost ? T('sim.fl.lost', ', {n} lost', { n: lost }) : '');
+      return T('sim.fl.dronesum', '{id} {unit} — {n} drones:\n  {tail}', { id, unit: m ? NAME(m.unit) : '', n: m ? m.drones : vols.length, tail });
     }
     function summary(id, rolls) {
       const m = SIM_MISSIONS.get(id);
-      const who = m ? m.unit : '';
+      const who = m ? NAME(m.unit) : '';
       const seen = new Map();
       for (const r of rolls) {
         const v = seen.get(r.id) || { type: r.type, stopped: false };
         v.stopped = v.stopped || r.stopped;
         seen.set(r.id, v);
       }
-      if (!seen.size) return `${id} ${who} — no vehicles inside impact area`;
+      if (!seen.size) return T('sim.fl.nonesum', '{id} {unit} — no vehicles inside impact area', { id, unit: who });
       const by = new Map();
       for (const v of seen.values()) {
         const k = cls(v.type), c = by.get(k) || { n: 0, s: 0 };
@@ -1121,7 +1177,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const parts = [...by.entries()].sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1))
         .map(([k, c]) => `${k} ${c.s}/${c.n}`);
       /* Two lines, to keep the log narrow (Lee, 2026-09-27). */
-      return `${id} ${who} — ${seen.size} inside impact area:\n  ${parts.join(', ')} stopped`;
+      return T('sim.fl.sum', '{id} {unit} — {n} inside impact area:\n  {parts} stopped', { id, unit: who, n: seen.size, parts: parts.join(', ') });
     }
     function text() {
       const vols = SIM_DAMAGE.volleys(), log = SIM_DAMAGE.log();
@@ -1134,7 +1190,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
         for (const v of mv) {
           const rs = rolls.filter(r => r.volley === v.volley).sort((a, b) => b.pStop - a.pStop || (a.id < b.id ? -1 : 1));
           if (rs.length) out.push(...rs.map(line));
-          else out.push(v.drone ? `${id}/${v.volley + 1} no target found` : `${id}/${v.volley + 1} no vehicles in the impact area`);
+          else out.push(v.drone ? T('sim.fl.notarget', '{id}/{v} no target found', { id, v: v.volley + 1 })
+                                : T('sim.fl.novehicles', '{id}/{v} no vehicles in the impact area', { id, v: v.volley + 1 }));
         }
         const m = SIM_MISSIONS.get(id);
         if (m && m.state === 'complete') out.push(m.kind === 'drone' ? droneSummary(id, rolls, mv) : summary(id, rolls));
@@ -1142,10 +1199,11 @@ document.querySelectorAll('.dock-head').forEach(head => {
       }).join('\n' + RULE + '\n');
     }
     let seenVolleys = -1, seenDone = -1;
-    function paint() {
+    function paint(force) {
+      title.textContent = T('sim.fl.title', 'Fires log');
       const nv = SIM_DAMAGE.volleys().length;
       const nd = SIM_MISSIONS.list().filter(m => m.state === 'complete').length;
-      if (nv === seenVolleys && nd === seenDone) return;
+      if (nv === seenVolleys && nd === seenDone && force !== true) return;
       const fresh = nv > seenVolleys && seenVolleys >= 0;
       seenVolleys = nv; seenDone = nd;
       box.hidden = nv === 0;
@@ -1154,8 +1212,8 @@ document.querySelectorAll('.dock-head').forEach(head => {
       if (fresh) setOpen(true);            /* every volley pops it open again */
       body.scrollTop = body.scrollHeight;
     }
-    SIM_CLOCK.onTick(paint);
-    SIM_CLOCK.onChange(paint);
+    SIM_CLOCK.onTick(() => paint());
+    SIM_CLOCK.onChange(() => paint());
     return { paint, text };
   })();
 
@@ -1182,26 +1240,26 @@ document.querySelectorAll('.dock-head').forEach(head => {
       const open = box.classList.toggle('is-collapsed') === false;
       head.setAttribute('aria-expanded', String(open));
     });
-    const row = (k, v) => `  ${k.padEnd(18)}${String(v).padStart(3)}`;
+    const row = (k, v) => `  ${padW(k, 18)}${String(v).padStart(3)}`;
     function text(s) {
-      return `Where the other ${s.zbd - s.through} are:\n` +
-        [row('held at obstacles', s.heldObstacle), row('waiting for fuel', s.heldFuel),
-         row('stopped by fires', s.stopped), row('on the move', s.moving)].join('\n') +
-        `\nStopped: ZBD ${s.kills.ZBD} · FUEL ${s.kills.FUEL} · ENG ${s.kills.ENG}`;
+      return T('sim.sc.where', 'Where the other {n} are:', { n: s.zbd - s.through }) + '\n' +
+        [row(T('sim.sc.obstacles', 'held at obstacles'), s.heldObstacle), row(T('sim.sc.fuel', 'waiting for fuel'), s.heldFuel),
+         row(T('sim.sc.stopped', 'stopped by fires'), s.stopped), row(T('sim.sc.moving', 'on the move'), s.moving)].join('\n') +
+        '\n' + T('sim.sc.kills', 'Stopped: ZBD {zbd} · FUEL {fuel} · ENG {eng}', { zbd: s.kills.ZBD, fuel: s.kills.FUEL, eng: s.kills.ENG });
     }
     let last = '';
-    function paint() {
+    function paint(force) {
       const s = SIM_ENTITIES.tally();
       box.hidden = !s.label || !s.zbd;
       const key = JSON.stringify(s);
-      if (key === last) return;
+      if (key === last && force !== true) return;
       last = key;
-      box.querySelector('.sc-title').textContent = `ZBD through ${s.label}`;
+      box.querySelector('.sc-title').textContent = T('sim.sc.title', 'ZBD through {line}', { line: s.label });
       box.querySelector('.sc-num').textContent = `${s.through} / ${s.zbd}`;
       body.textContent = text(s);
     }
-    SIM_CLOCK.onTick(paint);
-    SIM_CLOCK.onChange(paint);
+    SIM_CLOCK.onTick(() => paint());
+    SIM_CLOCK.onChange(() => paint());
     paint();
     return { paint, text };
   })();
@@ -1245,20 +1303,20 @@ document.querySelectorAll('.dock-head').forEach(head => {
        copying from a UTM easting (204263) instead of the MGRS one (04262).
        Both halves must be the same length or it is not a grid. */
     if (e.length < 3 || e.length > 5 || n.length < 3 || n.length > 5)
-      return fail('Grid needs three, four or five digits each.');
+      return fail(T('sim.err.griddigits', 'Grid needs three, four or five digits each.'));
     if (e.length !== n.length)
-      return fail(`Uneven grid: ${e.length} digits then ${n.length}.`);
+      return fail(T('sim.err.uneven', 'Uneven grid: {e} digits then {n}.', { e: e.length, n: n.length }));
 
     const grid = `20Q KF ${e} ${n}`;
     const utm = SIM_PROJ.mgrsToUtm(grid);
-    if (!utm) return fail('That grid does not parse.');
+    if (!utm) return fail(T('sim.err.parse', 'That grid does not parse.'));
 
     /* Refuse a mission that would land off the feed rather than firing into
        nothing — the student should see why. */
     const elev = groundAt(utm.e, utm.n);
     const p = SIM_PROJ.worldToScreen(utm.e, utm.n, elev);
     if (!p || !p.inFront || !p.inFrame)
-      return fail(`${SIM_PROJ.utmToMgrs(utm.e, utm.n, 5)} is outside the feed.`);
+      return fail(T('sim.err.offfeed', '{grid} is outside the feed.', { grid: SIM_PROJ.utmToMgrs(utm.e, utm.n, 5) }));
 
     /* Everything above this line validates a grid. Everything below hands the
        mission to the clock. Nothing fires here. */
@@ -1266,7 +1324,7 @@ document.querySelectorAll('.dock-head').forEach(head => {
     let totSec = null;
     if (control === 'Time on target') {
       totSec = parseTot(totIn && totIn.value);
-      if (totSec === null) return fail('Time on target needs a clock time, as MM:SS.');
+      if (totSec === null) return fail(T('sim.err.totformat', 'Time on target needs a clock time, as MM:SS.'));
     }
 
     const unit  = unitSel ? unitSel.value : SIM_MISSIONS.UNITS[0].callsign;
@@ -1283,11 +1341,14 @@ document.querySelectorAll('.dock-head').forEach(head => {
        which is how it would actually be sent — and opening [recipient] this is
        [speaker] like every other message on this net. */
     const wx = preSel && !preSel.disabled && preSel.value ? preSel.value : '';
-    chatLine(SIM_MISSIONS.OBSERVER,
-      `${unit}, this is ${SIM_MISSIONS.OBSERVER}, ${type.toLowerCase()}. ` +
-      `${wx ? 'Target ' + wx : 'Grid ' + grid}. ${count} ${targLabel} ${env}. ` +
-      `${SIM_MISSIONS.spokenShell(shell)}. ` +
-      `${control}${totSec !== null ? ' ' + SIM_CLOCK.format(totSec) : ''}, over.`);
+    chatLine(SIM_MISSIONS.OBSERVER, T('sim.say.cff',
+      '{unit}, this is {obs}, {type}. {where}. {count} {target} {env}. {shell}. {control}{tot}, over.', {
+        unit: NAME(unit), obs: NAME(SIM_MISSIONS.OBSERVER),
+        type: T('sim.mt.' + SLUG(type), type).toLowerCase(),
+        where: wx ? T('sim.where.target', 'Target {wx}', { wx }) : T('sim.where.grid', 'Grid {grid}', { grid }),
+        count, target: T('sim.class.' + targ, targLabel), env: T('sim.env.' + SLUG(env), env),
+        shell: SIM_MISSIONS.spokenShell(shell), control: T('sim.ctl.' + SLUG(control), control),
+        tot: totSec !== null ? ' ' + SIM_CLOCK.format(totSec) : '' }));
 
     const res = SIM_MISSIONS.send({
       unit, type, control, totSec, grid, shell,
@@ -1325,30 +1386,32 @@ document.querySelectorAll('.dock-head').forEach(head => {
     let spec, where;
     if (areaName) {
       const a = AREAS.find(x => x.name === areaName);
-      if (!a) return fail('That area is not in the scenario.');
+      if (!a) return fail(T('sim.err.noarea', 'That area is not in the scenario.'));
       spec = { area: a, grid: a.name };
       where = a.name;
     } else {
       const e = digits(east), n = digits(north);
       if (e.length < 3 || e.length > 5 || n.length < 3 || n.length > 5)
-        return fail('Grid needs three, four or five digits each — or pick a TAI / EA.');
-      if (e.length !== n.length) return fail(`Uneven grid: ${e.length} digits then ${n.length}.`);
+        return fail(T('sim.err.griddigitsarea', 'Grid needs three, four or five digits each — or pick a TAI / EA.'));
+      if (e.length !== n.length) return fail(T('sim.err.uneven', 'Uneven grid: {e} digits then {n}.', { e: e.length, n: n.length }));
       const grid = `20Q KF ${e} ${n}`;
       const utm = SIM_PROJ.mgrsToUtm(grid);
-      if (!utm) return fail('That grid does not parse.');
+      if (!utm) return fail(T('sim.err.parse', 'That grid does not parse.'));
       const elev = groundAt(utm.e, utm.n);
       const p = SIM_PROJ.worldToScreen(utm.e, utm.n, elev);
-      if (!p || !p.inFront || !p.inFrame) return fail(`${SIM_PROJ.utmToMgrs(utm.e, utm.n, 5)} is outside the feed.`);
+      if (!p || !p.inFront || !p.inFrame) return fail(T('sim.err.offfeed', '{grid} is outside the feed.', { grid: SIM_PROJ.utmToMgrs(utm.e, utm.n, 5) }));
       spec = { e: utm.e, n: utm.n, elev, grid };
-      where = `Grid ${grid}`;
+      where = T('sim.where.grid', 'Grid {grid}', { grid });
     }
-    chatLine(SIM_MISSIONS.OBSERVER,
-      `${unit}, this is ${SIM_MISSIONS.OBSERVER}, ${nDr} drone${nDr === 1 ? '' : 's'}. ` +
-      `${where}. Seek ${count} ${targLabel} ${env}, over.`);
+    const dronesTxt = nDr === 1 ? T('sim.drone.one', '{n} drone', { n: nDr }) : T('sim.drone.many', '{n} drones', { n: nDr });
+    chatLine(SIM_MISSIONS.OBSERVER, T('sim.say.cffdrone',
+      '{unit}, this is {obs}, {drones}. {where}. Seek {count} {target} {env}, over.', {
+        unit: NAME(unit), obs: NAME(SIM_MISSIONS.OBSERVER), drones: dronesTxt, where,
+        count, target: T('sim.class.' + targ, targLabel), env: T('sim.env.' + SLUG(env), env) }));
     const res = SIM_MISSIONS.send({ unit, drones: nDr, count, targetType: targ, environment: env, ...spec });
     if (!res.ok) return fail(res.error);
     status.classList.remove('is-bad');
-    status.textContent = `${res.mission.id} — ${nDr} drone${nDr === 1 ? '' : 's'}, ${where}`;
+    status.textContent = `${res.mission.id} — ${dronesTxt}, ${where}`;
     if (typeof SIM_RENDER !== 'undefined' && SIM_RENDER.clearMark) SIM_RENDER.clearMark();
   }
 

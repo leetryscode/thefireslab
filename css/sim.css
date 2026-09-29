@@ -337,8 +337,10 @@ body.sim {
 }
 .mission-fire:hover { filter: brightness(1.12); }
 
+/* The words come from the markup (data-empty / data-label) so the sim's
+   dictionary can translate them; CSS cannot. */
 .mission-list:empty::after {
-  content: 'No missions sent.';
+  content: attr(data-empty);
   color: var(--muted);
   font-size: .85rem;
 }
@@ -762,7 +764,7 @@ body.is-paused .typing-dots i { animation-play-state: paused; }
   .cff-builder { background: var(--border-soft); }
 }
 .cff-builder::before {
-  content: 'Fire mission';
+  content: attr(data-label);
   color: var(--accent);
   font-family: var(--font-head);
   font-size: .7rem;
@@ -998,3 +1000,54 @@ body.is-paused .typing-dots i { animation-play-state: paused; }
                     repeating-linear-gradient(-45deg, rgba(200, 16, 46, .8) 0 1px, transparent 1px 6px);
 }
 .key-open { border: 1.5px dashed #b9b7aa; }
+
+/* ---------- language switch (Lee, 2026-09-28) ----------
+   The course's EN / 繁中 switch (js/i18n.js), twice: top left of the
+   timeline, ahead of its label, and on the first slide of the brief. The
+   course draws it for a dark header; the timeline is a light panel, so it is
+   re-inked here. The brief is dark and takes the course look as it is. */
+.sim-timeline .lang-toggle {
+  flex: none;
+  margin: 0;
+  border-color: var(--border);
+}
+.sim-timeline .lang-toggle button {
+  color: var(--ink);
+  font-size: .8rem;
+  padding: .3rem .65rem;
+  line-height: 1.2;
+}
+.sim-timeline .lang-toggle button:hover { background: var(--border-soft); color: var(--ink); }
+.sim-timeline .lang-toggle button.on { background: var(--gold-fill); color: var(--gold-on-fill); }
+/* Slide 1 only: beside the X, on the title's line. */
+.brief-lang {
+  position: absolute;
+  top: .75em;
+  right: 3.4em;
+  margin: 0;
+}
+.brief-lang button { font-size: .8em; padding: .2em .8em; line-height: 1.3; }
+
+/* ---------- Chinese ----------
+   The course switches every button, heading and the body to the CJK face with
+   a taller line in Chinese (css/style.css). The sim's controls are sized
+   tight and must not grow: the transport keeps its mono glyphs, the dock
+   keeps its heights, and the logs keep monospaced columns. */
+html:lang(zh-Hant) body.sim { line-height: 1.5; }
+html:lang(zh-Hant) body.sim .tl-btn { font-family: var(--font-mono); line-height: 1; }
+html:lang(zh-Hant) body.sim button,
+html:lang(zh-Hant) body.sim select { line-height: 1.3; }
+html:lang(zh-Hant) body.sim .region-label,
+html:lang(zh-Hant) body.sim .brief-title,
+html:lang(zh-Hant) body.sim .brief-slide h3 { letter-spacing: .04em; text-transform: none; }
+html:lang(zh-Hant) body.sim .fl-body,
+html:lang(zh-Hant) body.sim .sc-body {
+  font-family: 'IBM Plex Mono', Consolas, "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", monospace;
+}
+/* The course caps Chinese paragraphs at 40em and resizes every h2 / h3 for
+   its own pages; neither suits the sim's panels. The imagery credit keeps
+   the Latin face so it stays on one line. */
+html:lang(zh-Hant) body.sim p { max-width: none; }
+html:lang(zh-Hant) body.sim .sim-attribution { max-width: calc(100% - 1rem); font-family: var(--font-body); }
+html:lang(zh-Hant) body.sim .brief-title { font-size: 1.05em; }
+html:lang(zh-Hant) body.sim .brief-slide h3 { font-size: .9em; }

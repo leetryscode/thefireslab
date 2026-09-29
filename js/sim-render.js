@@ -53,6 +53,11 @@
 
 const SIM_RENDER = (() => {
 
+  /* Language (js/sim-i18n.js): the words on the overlay translate; class codes
+     (AAV, FUEL, ENG, LCU), grids and numbers do not (Lee, 2026-09-28). */
+  const T = (k, en, v) => (typeof SIM_I18N !== 'undefined') ? SIM_I18N.t(k, en, v)
+    : (v ? en.replace(/\{(\w+)\}/g, (m, x) => (x in v ? v[x] : m)) : en);
+
   /* ---------- the sheaf ----------
      Placeholder pattern. Six rounds scattered in an ellipse about the called
      grid: wider in range than in deflection, which is the right shape but not
@@ -735,7 +740,7 @@ const SIM_RENDER = (() => {
        floating flags, cut 2026-09-27; footprints sit lower still.) */
     elevTop: 120, elevH: 130, elevX: 60,
     bracketW: 300, bracketH: 250, bracketArm: 30,
-    font: '500 15px "IBM Plex Mono", ui-monospace, monospace',
+    font: '500 15px "IBM Plex Mono", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", ui-monospace, monospace',
     margin: 22,
     top: 43              /* frame px, heading box and ACRFT block */
   };
@@ -863,12 +868,12 @@ const SIM_RENDER = (() => {
     /* The N stays upright, just beyond the arrowhead. */
     const nt = v.northRotDeg * Math.PI / 180;
     g.textAlign = 'center';
-    g.fillText('N', ncx + Math.sin(nt) * (nr + 10), ncy - Math.cos(nt) * (nr + 10));
+    g.fillText(T('sim.hud.north', 'N'), ncx + Math.sin(nt) * (nr + 10), ncy - Math.cos(nt) * (nr + 10));
 
     /* -- the aircraft's position, top right, beside the north arrow -- */
     g.textAlign = 'right';
     const rx = W - HUD.margin - 2 * nr - 44;
-    g.fillText('ACRFT', rx, boxTop + 8);
+    g.fillText(T('sim.hud.acrft', 'ACRFT'), rx, boxTop + 8);
     g.fillText(v.acft[0], rx, boxTop + 28);
     g.fillText(v.acft[1], rx, boxTop + 46);
 
@@ -1057,7 +1062,7 @@ const SIM_RENDER = (() => {
 
     const at = viewApply(mark, view);                /* where the ground is now */
     drawX(g, at.x, at.y);
-    g.font = '500 17px "IBM Plex Mono", ui-monospace, monospace';
+    g.font = '500 17px "IBM Plex Mono", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", ui-monospace, monospace';
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     const w = g.measureText ? (g.measureText(mark.grid).width || 190) : 190;
@@ -1094,7 +1099,7 @@ const SIM_RENDER = (() => {
       a count per class, most first, then in class-table order: [6 FUEL  3 AAV]. */
   /* A stopped contact (Lee, 2026-09-27) reads [AAV STOPPED]; in a pack it is
      counted apart from the live ones of its class: [5 FUEL  1 FUEL STOPPED]. */
-  const tagKey = v => v.stopped ? `${v.label} STOPPED` : v.label;
+  const tagKey = v => v.stopped ? T('sim.tag.stopped', '{cls} STOPPED', { cls: v.label }) : v.label;
   function groupTag(vs) {
     if (!vs || !vs.length) return '';
     if (vs.length === 1) return `[${tagKey(vs[0])}]`;
@@ -1142,7 +1147,7 @@ const SIM_RENDER = (() => {
     g.strokeStyle = ink;  g.lineWidth = 1.5; corners();
 
     const tag = groupTag(hit.map(d => d.v));
-    g.font = '600 14px "IBM Plex Mono", ui-monospace, monospace';
+    g.font = '600 14px "IBM Plex Mono", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", ui-monospace, monospace';
     g.textAlign = 'left';
     g.textBaseline = 'bottom';
     const F = frameSize();
@@ -1160,8 +1165,9 @@ const SIM_RENDER = (() => {
       worked, [OBS 01 OPEN] once it is through. Pure. */
   function obstacleTag(ob) {
     const m = /(\d+)\s*$/.exec(ob.obstacle || ob.id || '');
-    const name = m ? `OBS ${String(+m[1]).padStart(2, '0')}` : (ob.obstacle || ob.id);
-    return `[${name}${ob.state === 'opening' ? ' OPENING' : ob.state === 'open' ? ' OPEN' : ''}]`;
+    const name = m ? T('sim.tag.obs', 'OBS {n}', { n: String(+m[1]).padStart(2, '0') }) : (ob.obstacle || ob.id);
+    return '[' + (ob.state === 'opening' ? T('sim.tag.opening', '{name} OPENING', { name })
+                : ob.state === 'open'    ? T('sim.tag.open', '{name} OPEN', { name }) : name) + ']';
   }
 
   let bracketedObstacles = [];
@@ -1196,7 +1202,7 @@ const SIM_RENDER = (() => {
       g.strokeStyle = halo; g.lineWidth = 3.5; corners();
       g.strokeStyle = ink;  g.lineWidth = 1.5; corners();
       const tag = obstacleTag(d.ob);
-      g.font = '600 14px "IBM Plex Mono", ui-monospace, monospace';
+      g.font = '600 14px "IBM Plex Mono", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", ui-monospace, monospace';
       g.textAlign = 'left';
       g.textBaseline = 'top';
       const F = frameSize();

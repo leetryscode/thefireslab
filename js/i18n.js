@@ -132,30 +132,35 @@ const I18N = (() => {
     /* A page may already contain its own .lang-toggle; if not, add one.
        Placement is deliberate: never inside a.brand-link, or clicking the
        switch would navigate away. Pages with a phase nav get it on the tab
-       row; the two splash pages get it under the title. */
-    let box = document.querySelector('.lang-toggle');
-    if (!box) {
+       row; the two splash pages get it under the title. A page may carry
+       more than one (the Fire Mission Sim has one on its timeline and one on
+       the first slide of its brief); every one is filled and wired. */
+    let boxes = [...document.querySelectorAll('.lang-toggle')];
+    if (!boxes.length) {
       const host = document.querySelector('nav.phases') || document.querySelector('.header-inner');
       if (!host) return;
-      box = document.createElement('div');
+      const box = document.createElement('div');
       box.className = 'lang-toggle';
       box.setAttribute('role', 'group');
       box.setAttribute('aria-label', 'Language / 語言');
       host.appendChild(box);
+      boxes = [box];
     }
-    if (!box.children.length) {
-      Object.keys(LANGS).forEach(code => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.dataset.lang = code;
-        b.textContent = LANGS[code].label;
-        b.title = LANGS[code].name;
-        box.appendChild(b);
+    boxes.forEach(box => {
+      if (!box.children.length) {
+        Object.keys(LANGS).forEach(code => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.dataset.lang = code;
+          b.textContent = LANGS[code].label;
+          b.title = LANGS[code].name;
+          box.appendChild(b);
+        });
+      }
+      box.addEventListener('click', e => {
+        const b = e.target.closest('button[data-lang]');
+        if (b) setLang(b.dataset.lang);
       });
-    }
-    box.addEventListener('click', e => {
-      const b = e.target.closest('button[data-lang]');
-      if (b) setLang(b.dataset.lang);
     });
   }
 
