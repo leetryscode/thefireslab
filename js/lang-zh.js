@@ -81,6 +81,18 @@ window.D3A_LANG_ZH = {
     en: "Practice dynamic targeting",
     zh: "練習動態目標獲取"
   },
+  "index.013": {
+    en: "In progress",
+    zh: ""
+  },
+  "index.016": {
+    en: "FiST Trainer",
+    zh: ""
+  },
+  "index.017": {
+    en: "Plan and shoot on real terrain",
+    zh: ""
+  },
 
   /* ---------- battle.html ---------- */
   "battle.001": {

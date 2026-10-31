@@ -1023,6 +1023,7 @@ dl.glossary dd { margin: 2px 0 0 0; color: var(--muted); font-size: .98rem; }
 }
 .mode-card:hover { transform: translateY(-3px); }
 .mode-card:nth-of-type(2) { border-top-color: var(--p-detect); }
+.mode-card:nth-of-type(3) { border-top-color: var(--p-deliver); }
 .mode-card h2 { margin: 0 0 2px; color: var(--accent-dark); font-size: 1.9rem; border-bottom: none; padding-bottom: 0; }
 .mode-card .mode-tag {
   font-family: var(--font-head);
