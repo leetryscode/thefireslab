@@ -199,6 +199,12 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .oped[hidden] { display: none; }
 .units { display: grid; gap: 4px; }
 .mini { font-size: 12px; color: var(--dim); display: inline-flex; gap: 4px; align-items: center; }
+.gwrap { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: stretch; }
+.ghalt { min-width: 64px; }
+.ghalt[aria-pressed="true"] { border-color: #c8402c; color: #ffb3a5; background: rgba(200, 64, 44, .12); }
+.ghalt:disabled { opacity: .4; cursor: default; }
+.ptrow { display: grid; gap: 6px; background: rgba(214, 178, 90, .08); border-radius: 4px; padding: 6px; }
+.tag.holdtag { color: var(--brass); border: 1px solid rgba(214, 178, 90, .5); transform: translate(0, -50%); font-size: 11px; }
 #oplabels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .tag.oplab { transform: translate(-50%, -100%); }
 
@@ -1054,7 +1060,7 @@ const OCEAN="rgb(19,71,106)";</script>
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser only; scenario files come later)
-    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload })) })); } catch (e) {} }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt })) })); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
     // ---- motion profile: arc length vs time along the route, speed by land or water
@@ -1062,9 +1068,15 @@ const OCEAN="rgb(19,71,106)";</script>
       const pts = g.route.map(p => toLocal(p.e, p.n));
       const S = [0], T = [0], X = [], Z = [];
       if (pts.length < 2) { g.prof = null; return; }
-      const ship = isShip(g), step = 5;
+      const ship = isShip(g), step = 5, stops = [];
       let s = 0, t = 0;
       X.push(pts[0].x); Z.push(pts[0].z);
+      const hold = k => {                      // scripted wait at route point k: time passes, distance does not
+        const w = +g.route[k].hold || 0; if (w <= 0 || k === pts.length - 1) return;
+        stops.push({ k, s, t0: t, t1: t + w }); t += w; S.push(s); T.push(t); X.push(X[X.length - 1]); Z.push(Z[Z.length - 1]);
+      };
+      const wpS = [0];
+      hold(0);
       for (let k = 1; k < pts.length; k++) {
         const a = pts[k - 1], b = pts[k], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(L / step));
         for (let j = 1; j <= n; j++) {
@@ -1073,20 +1085,79 @@ const OCEAN="rgb(19,71,106)";</script>
           s += ds; t += ds / Math.max(0.5, kmh / 3.6);
           S.push(s); T.push(t); X.push(x); Z.push(z);
         }
+        wpS[k] = s;
+        hold(k);
       }
-      g.prof = { S, T, X, Z, len: s, dur: t };
+      g.prof = { S, T, X, Z, len: s, dur: t, stops, wpS };
     }
-    // when the group's lead starts moving (cargo: after its carrier arrives and unloads)
+    // ---- branches: a group that rides at the rear of its parent's column and peels off at a split point
+    const parentOf = g => g.parent ? groups.find(o => o.id === g.parent) : null;
+    const branchesOf = g => groups.filter(o => o.parent === g.id);
+    const ownCount = g => g.units.reduce((a, u) => a + u.n, 0);
+    const total = (g, d = 0) => ownCount(g) + (d > 6 ? 0 : branchesOf(g).reduce((a, b) => a + total(b, d + 1), 0));
+    function offsetOf(b) {                     // how many vehicles of the parent's column are ahead of this branch
+      const p = parentOf(b); let o = ownCount(p);
+      for (const s of branchesOf(p)) if (s !== b && (s.splitAt > b.splitAt || (s.splitAt === b.splitAt && s.id < b.id))) o += total(s);
+      return o;
+    }
+    function timeAtS(P, A) {                   // movement time at which the lead first reaches arc length A
+      if (A <= 0) return 0; if (A > P.len + 1e-6) return null;
+      let lo = 0, hi = P.S.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P.S[m] < A) lo = m; else hi = m; }
+      const f = (A - P.S[lo]) / (P.S[hi] - P.S[lo] || 1);
+      return P.T[lo] + (P.T[hi] - P.T[lo]) * f;
+    }
+    const splitNeed = b => { const p = parentOf(b); return p && p.prof && p.prof.wpS[b.splitAt] !== undefined ? p.prof.wpS[b.splitAt] + offsetOf(b) * p.gap : null; };
+    function resolve(g, s) {                   // a point behind a branch's start lies on its parent's route
+      let d = 0;
+      while (s < 0 && g.parent && d++ < 8) { const p = parentOf(g); if (!p || !p.prof || p.prof.wpS[g.splitAt] === undefined) return null; s = p.prof.wpS[g.splitAt] + s; g = p; }
+      if (s < 0 && g.carrier) return null;     // still aboard a ship
+      return { g, s };
+    }
+    // when the group's lead starts moving (cargo: after its carrier arrives and unloads; branch: when its lead reaches the split)
     function startOf(g, depth = 0) {
+      if (g.parent && depth <= 6) {
+        const p = parentOf(g), A = splitNeed(g); if (!p || A === null) return null;
+        const e = timeAtS(p.prof, A); if (e === null) return null;
+        return realTimeAt(p, e, depth + 1);
+      }
       const c = carrierOf(g);
       if (!c || depth > 5) return g.start;
-      const cs = startOf(c, depth + 1);
-      if (cs === null || !c.prof) return null;
-      return cs + c.prof.dur + (c.unload || 0) + g.start;
+      if (!c.prof) return null;
+      const arr = realTimeAt(c, c.prof.dur, depth + 1);
+      return arr === null ? null : arr + (c.unload || 0) + g.start;
+    }
+    // instructor Halt / Resume: live actions, not part of the saved plan
+    const halts = g => g.halts || (g.halts = []);
+    const isHalted = g => { const h = halts(g); return h.length > 0 && h[h.length - 1].to === null; };
+    function halt(g) { if (!isHalted(g)) halts(g).push({ from: simT(), to: null }); }
+    function resume(g) { if (isHalted(g)) { const h = halts(g); h[h.length - 1].to = Math.max(h[h.length - 1].from, simT()); } }
+    function moveTime(g, t) {                  // seconds of movement the lead has had by time t (<= 0 before start)
+      const st = startOf(g); if (st === null) return null;
+      let e = t - st; if (e <= 0) return e;
+      for (const h of halts(g)) { const a = Math.max(h.from, st), b = Math.min(h.to === null ? t : h.to, t); if (b > a) e -= b - a; }
+      return e;
+    }
+    function realTimeAt(g, E, depth = 0) {     // the clock time at which the lead has had E seconds of movement
+      const st = startOf(g, depth); if (st === null) return null;
+      let t = st, rem = E;
+      const hs = halts(g).map(h => ({ a: Math.max(h.from, st), b: h.to === null ? Infinity : h.to })).filter(h => h.b > h.a).sort((x, y) => x.a - y.a);
+      for (const h of hs) {
+        if (h.a >= t + rem) break;
+        if (h.a > t) { rem -= h.a - t; t = h.a; }
+        if (h.b === Infinity) return Infinity;
+        t = Math.max(t, h.b);
+      }
+      return t + rem;
     }
     function sAt(g, t) {                       // lead's arc length at time t (may be < 0 before start)
-      const st = startOf(g); if (st === null || !g.prof) return null;
-      const dt = t - st, P = g.prof;
+      if (g.parent) {
+        const st = startOf(g);
+        if (st === null || t < st) { const p = parentOf(g); if (!p || !p.prof || p.prof.wpS[g.splitAt] === undefined) return null;
+          const sp = sAt(p, t); return sp === null ? null : Math.min(0, sp - offsetOf(g) * p.gap - p.prof.wpS[g.splitAt]); }
+      }
+      if (!g.prof) return null;
+      const dt = moveTime(g, t), P = g.prof; if (dt === null) return null;
       if (dt <= 0) return dt * 0;              // waiting at the start point
       if (dt >= P.dur) return P.len;
       let lo = 0, hi = P.T.length - 1;
@@ -1146,11 +1217,22 @@ const OCEAN="rgb(19,71,106)";</script>
       }
       return out;
     }
+    const ringTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 48; const x = c.getContext('2d');
+      x.strokeStyle = '#d6b25a'; x.lineWidth = 6; x.beginPath(); x.arc(24, 24, 17, 0, Math.PI * 2); x.stroke();
+      x.fillStyle = '#d6b25a'; x.fillRect(19, 15, 4, 18); x.fillRect(26, 15, 4, 18); return new THREE.CanvasTexture(c); })();
+    let holdTags = [];
     function rebuildLines() {
-      lines.clear(); handles.clear();
+      lines.clear(); handles.clear(); for (const h of holdTags) h.el.remove(); holdTags = [];
       for (const g of groups) {
         if (g.route.length < 2) continue;
         const on = sel && sel.id === g.id;
+        g.route.forEach((p, k) => {
+          if (!(+p.hold > 0) || k === g.route.length - 1) return;
+          const l = toLocal(p.e, p.n), s = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTex, depthTest: false, transparent: true, sizeAttenuation: false }));
+          s.scale.set(0.022, 0.022, 1); s.position.set(l.x, heightAt(l.x, l.z) * ex + 8, l.z); s.renderOrder = 22; lines.add(s);
+          const el = document.createElement('div'); el.className = 'tag holdtag'; el.textContent = 'Hold ' + fmt(p.hold).slice(2); labelLayer.appendChild(el);
+          holdTags.push({ el, pos: s.position });
+        });
         const pts = drape(g.route.map(p => toLocal(p.e, p.n)), 4);
         const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
           new THREE.LineDashedMaterial({ color: on ? 0xd6b25a : 0xff6a55, dashSize: 60, gapSize: 40, transparent: true, opacity: on ? 1 : 0.7, depthTest: false }));
@@ -1167,19 +1249,38 @@ const OCEAN="rgb(19,71,106)";</script>
       const big = !data.mid; s.scale.set(big ? 0.016 : 0.011, big ? 0.016 : 0.011, 1);
       s.position.set(p.x, heightAt(p.x, p.z) * ex + 6, p.z); s.renderOrder = 25; s.userData = data; handles.add(s);
     }
-    function refresh() { for (const g of groups) profile(g); rebuildViews(); rebuildLines(); renderList(); renderEditor(); save(); }
+    function syncBranches() {
+      for (const g of groups) if (g.parent) {
+        const p = parentOf(g), q = p && p.route[g.splitAt];
+        if (!q) { detach(g); continue; }
+        const first = { e: q.e, n: q.n }; if (g.route[0] && g.route[0].hold) first.hold = g.route[0].hold;
+        if (g.route.length) g.route[0] = first; else g.route.push(first);
+      }
+    }
+    function detach(b) { const st = b.parent ? startOf(b) : b.start; b.parent = null; delete b.splitAt; b.start = st === null || !isFinite(st) ? 0 : Math.round(st); }
+    let note = '';
+    function refresh() { syncBranches(); for (const g of groups) profile(g); rebuildViews(); rebuildLines(); renderList(); renderEditor(); save(); }
 
     // ---- per-frame placement
     const pv = new THREE.Vector3();
     function status(g) {
+      if (g.parent) {
+        const p = parentOf(g), st0 = startOf(g);
+        if (st0 === null) return p && p.prof ? 'Never reaches point ' + (g.splitAt + 1) : 'Waiting for main route';
+        if (simT() < st0) return 'With ' + p.name + ' until point ' + (g.splitAt + 1);
+      }
       if (!g.prof) return 'No route';
       const st = startOf(g), t = simT();
       if (st === null) return 'Waiting for carrier route';
       const c = carrierOf(g);
       if (c && t < st - g.start) return t < st - g.start - (c.unload || 0) ? 'Aboard ' + c.name : 'Unloading';
-      if (t < st || (t === st && t === 0)) return 'Starts ' + fmt(st);
-      const s = sAt(g, t);
-      return s >= g.prof.len ? 'Halted at end' : 'Moving ' + (s / 1000).toFixed(1) + ' / ' + (g.prof.len / 1000).toFixed(1) + ' km';
+      if (isHalted(g)) return 'Halted by instructor';
+      if (!g.parent && (t < st || (t === st && t === 0))) return 'Starts ' + fmt(st);
+      const s = sAt(g, t), e = moveTime(g, t);
+      if (s >= g.prof.len) return 'At end of route';
+      const stop = g.prof.stops.find(o => e >= o.t0 && e < o.t1);
+      if (stop) return 'Holding at point ' + (stop.k + 1) + ' until ' + fmt(realTimeAt(g, stop.t1));
+      return 'Moving ' + (s / 1000).toFixed(1) + ' / ' + (g.prof.len / 1000).toFixed(1) + ' km';
     }
     function tick() {
       const t = simT(), w = canvas.clientWidth, h = canvas.clientHeight;
@@ -1190,12 +1291,12 @@ const OCEAN="rgb(19,71,106)";</script>
         let leadPos = null, gap = g.gap;
         v.meshes.forEach((m, i) => {
           if (s0 === null) { m.visible = false; return; }
-          const s = s0 - i * gap;
-          if (cargo && s < 0) { m.visible = false; return; }       // still aboard
-          const p = posAt(g, s), T = VT[m.userData.t];
+          const r = resolve(g, s0 - i * gap);
+          if (!r || !r.g.prof) { m.visible = false; return; }       // aboard, or no route to stand on
+          const p = posAt(r.g, r.s), T = VT[m.userData.t];
           const ground = waterAt(p.x, p.z) ? 0 : heightAt(p.x, p.z) * ex;
           m.position.set(p.x, ground + T.H / 2 - (T.draft || 0), p.z); m.rotation.y = p.hd; m.visible = true;
-          if (!leadPos) leadPos = m.position;
+          if (!leadPos && (!g.parent || s0 >= 0)) leadPos = m.position;
         });
         const showSym = !!leadPos && !obs;
         v.sym.visible = showSym;
@@ -1206,6 +1307,12 @@ const OCEAN="rgb(19,71,106)";</script>
         v.label.style.display = showLab ? '' : 'none';
       }
       lines.visible = handles.visible = !obs;
+      const hideTags = obs || labelHidden();
+      for (const h of holdTags) {
+        let show = !hideTags; if (show) { pv.copy(h.pos).project(camera); show = pv.z < 1 && Math.abs(pv.x) < 1.1 && Math.abs(pv.y) < 1.1; }
+        h.el.style.display = show ? '' : 'none';
+        if (show) { h.el.style.left = ((pv.x + 1) / 2 * w + 16) + 'px'; h.el.style.top = ((1 - pv.y) / 2 * h) + 'px'; }
+      }
       if (++tickN % 15 === 0) updateStatuses();
     }
     let tickN = 0;
@@ -1229,14 +1336,15 @@ const OCEAN="rgb(19,71,106)";</script>
       downAt = { x: e.clientX, y: e.clientY }; dragged = false;
       const h = hitHandle(e); if (!h) return;
       e.stopPropagation(); e.preventDefault(); controls.enabled = false;
-      if (h.mid) { const a = sel.route[h.i], b = sel.route[h.i + 1]; sel.route.splice(h.i + 1, 0, { e: (a.e + b.e) / 2, n: (a.n + b.n) / 2 }); drag = h.i + 1; }
-      else drag = h.i;
-      selPt = drag; rebuildLines();
+      if (h.mid) { drag = { mid: h.i }; return; }
+      drag = { i: h.i }; selPt = h.i; rebuildLines();
     }, true);
     addEventListener('pointermove', e => {
       if (drag === null) return;
       const p = pick(e.clientX, e.clientY); if (!p) return;
-      sel.route[drag] = toEN(p); dragged = true; profile(sel); rebuildLines();
+      if (drag.mid !== undefined) { sel.route.splice(drag.mid + 1, 0, toEN(p)); for (const b of branchesOf(sel)) if (b.splitAt >= drag.mid + 1) b.splitAt++; drag = { i: drag.mid + 1 }; selPt = drag.i; }
+      if (sel.parent && drag.i === 0) return;              // a branch starts where its parent splits
+      sel.route[drag.i] = Object.assign({}, sel.route[drag.i], toEN(p)); dragged = true; profile(sel); rebuildLines();
     }, true);
     addEventListener('pointerup', e => {
       if (drag !== null) { drag = null; controls.enabled = !obs; refresh(); downAt = null; return; }
@@ -1251,8 +1359,11 @@ const OCEAN="rgb(19,71,106)";</script>
       if (!editing || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
       if (e.key === 'Enter' || e.key === 'Escape') { setEditing(false); e.preventDefault(); }
       if ((e.key === 'Delete' || e.key === 'Backspace') && sel && sel.route.length) {
-        const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1;
-        sel.route.splice(i, 1); selPt = Math.min(i, sel.route.length - 1); refresh(); e.preventDefault();
+        const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1; e.preventDefault();
+        if (sel.parent && i === 0) { note = 'That point is the split from ' + parentOf(sel).name + '; it cannot be removed here.'; renderEditor(); return; }
+        if (branchesOf(sel).some(b => b.splitAt === i)) { note = 'A branch splits at that point. Delete or move the branch first.'; renderEditor(); return; }
+        sel.route.splice(i, 1); for (const b of branchesOf(sel)) if (b.splitAt > i) b.splitAt--;
+        selPt = Math.min(i, sel.route.length - 1); refresh();
       }
     });
     function setEditing(on) { editing = on && !!sel; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
@@ -1265,33 +1376,62 @@ const OCEAN="rgb(19,71,106)";</script>
       if (opts && opts.carrier) { const c = groups.find(o => o.id === opts.carrier); g.carrier = c.id; if (c.route.length) g.route = [{ ...c.route[c.route.length - 1] }]; }
       groups.push(g); sel = g; refresh(); setEditing(true); return g;
     }
+    function splitHere(g, k) {
+      const own = ownCount(g), take = Math.floor(own / 2), type = g.units.length ? g.units[g.units.length - 1].type : 'zbd';
+      const units = [];
+      let need = take;
+      for (let r = g.units.length - 1; r >= 0 && need > 0; r--) {      // the rear of the column peels off
+        const u = g.units[r], m = Math.min(need, u.n - (r === 0 ? 1 : 0)); if (m <= 0) continue;
+        u.n -= m; need -= m; units.unshift({ type: u.type, n: m });
+      }
+      g.units = g.units.filter(u => u.n > 0);
+      const b = { id: nextId++, name: g.name + ' B' + (branchesOf(g).length + 1), units: units.length ? units : [{ type, n: 1 }],
+        route: [{ e: g.route[k].e, n: g.route[k].n }], start: 0, land: g.land, water: g.water, gap: g.gap, carrier: null, unload: 0, parent: g.id, splitAt: k };
+      groups.push(b); sel = b; refresh(); setEditing(true); return b;
+    }
     function removeGroup(g) {
-      for (const o of groups) if (o.carrier === g.id) { const st = startOf(o); o.carrier = null; o.start = st === null ? 0 : Math.round(st); }
+      for (const o of groups) if (o.carrier === g.id) { const st = startOf(o); o.carrier = null; o.start = st === null || !isFinite(st) ? 0 : Math.round(st); }
+      for (const o of groups) if (o.parent === g.id) detach(o);
       groups = groups.filter(o => o !== g); if (sel === g) sel = null; editing = false; refresh();
     }
 
     // ---- panel
     const list = $('op-list'), ed = $('op-ed');
     function vtOptions(ship, cur) { return (ship ? SHIPS : LAND).map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${VT[k].name}</option>`).join(''); }
-    function summary(g) { return g.units.map(u => u.n + '× ' + VT[u.type].name).join(', ') || 'no vehicles'; }
+    function summary(g) {
+      const s = g.units.map(u => u.n + '× ' + VT[u.type].name).join(', ') || 'no vehicles', b = branchesOf(g).reduce((a, o) => a + total(o), 0);
+      return (g.parent ? 'branch at point ' + (g.splitAt + 1) + ' · ' : '') + s + (b ? ' (+' + b + ' on branches)' : '');
+    }
     function renderList() {
       list.textContent = '';
       if (!groups.length) { list.innerHTML = '<p class="hint">No enemy yet. Add a group, then click its route on the map.</p>'; return; }
-      const top = groups.filter(g => !g.carrier);
+      const top = groups.filter(g => !g.carrier && !g.parent);
       const row = (g, depth) => {
-        const b = document.createElement('button'); b.className = 'grow' + (sel === g ? ' on' : ''); b.style.marginLeft = depth * 14 + 'px';
+        const wrap = document.createElement('div'); wrap.className = 'gwrap'; wrap.style.marginLeft = depth * 14 + 'px';
+        const b = document.createElement('button'); b.className = 'grow' + (sel === g ? ' on' : '');
         b.innerHTML = `<span class="gn"></span><span class="gs"></span><span class="gt" data-st="${g.id}"></span>`;
         b.querySelector('.gn').textContent = (depth ? '↳ ' : '') + g.name; b.querySelector('.gs').textContent = summary(g);
         b.addEventListener('click', () => { sel = g; editing = false; selPt = -1; rebuildLines(); renderList(); renderEditor(); });
-        list.appendChild(b);
-        for (const c of groups.filter(o => o.carrier === g.id)) row(c, depth + 1);
+        const hb = document.createElement('button'); hb.className = 'ghalt'; hb.dataset.halt = g.id;
+        hb.addEventListener('click', () => { isHalted(g) ? resume(g) : halt(g); updateStatuses(); });
+        wrap.append(b, hb); list.appendChild(wrap);
+        for (const c of groups.filter(o => o.carrier === g.id || o.parent === g.id)) row(c, depth + 1);
       };
       for (const g of top) row(g, 0);
       updateStatuses();
     }
-    function updateStatuses() { for (const el of list.querySelectorAll('[data-st]')) { const g = groups.find(o => o.id === +el.dataset.st); if (g) el.textContent = status(g); } }
+    function updateStatuses() {
+      for (const el of list.querySelectorAll('[data-st]')) { const g = groups.find(o => o.id === +el.dataset.st); if (g) el.textContent = status(g); }
+      for (const el of list.querySelectorAll('[data-halt]')) { const g = groups.find(o => o.id === +el.dataset.halt); if (!g) continue;
+        const on = isHalted(g); el.textContent = on ? 'Resume' : 'Halt'; el.setAttribute('aria-pressed', String(on));
+        el.setAttribute('aria-label', (on ? 'Resume ' : 'Halt ') + g.name); el.disabled = !g.prof; }
+    }
     function warnings(g) {
       const out = [];
+      for (const b of [g, ...branchesOf(g)]) if (b.parent && b.prof !== undefined && startOf(b) === null && parentOf(b) && parentOf(b).prof) {
+        const p = parentOf(b), short = Math.ceil(splitNeed(b) - p.prof.len);
+        out.push(`${b.name}: the column's rear never reaches point ${b.splitAt + 1}. Extend ${p.name}'s route about ${short} m past it, or split earlier.`);
+      }
       if (!g.units.length) out.push('Add at least one vehicle.');
       if (g.route.length < 2) out.push(editing ? 'Click on the map to add route points.' : 'No route yet: press Edit route and click on the map.');
       else {
@@ -1312,7 +1452,8 @@ const OCEAN="rgb(19,71,106)";</script>
         <div class="row"><span class="lbl">Name</span><input id="op-name" class="grid-in" aria-label="Group name"></div>
         <div class="units" id="op-units"></div>
         <div class="row"><button id="op-addunit">+ ${ship ? 'Ship' : 'Vehicle type'}</button></div>
-        ${c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Drives off after it arrives and unloads.</p>
+        ${g.parent ? `<p class="hint">Rides at the rear of <b>${esc(parentOf(g).name)}</b> and turns off at its point ${g.splitAt + 1}.</p>`
+          : c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Drives off after it arrives and unloads.</p>
                <div class="row"><span class="lbl">Delay after unload</span><input id="op-start" style="width:70px" aria-label="Delay after unloading, mm:ss"></div>`
             : `<div class="row"><span class="lbl">Start</span><input id="op-start" style="width:70px" aria-label="Start time, mm:ss"><span class="hint">mm:ss</span></div>`}
         <div class="row"><span class="lbl">Speed km/h</span>
@@ -1322,6 +1463,10 @@ const OCEAN="rgb(19,71,106)";</script>
         ${ship ? `<div class="row"><span class="lbl">Unload s</span><input id="op-unload" style="width:60px" aria-label="Unloading time in seconds"></div>` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
         <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
+        ${editing && selPt >= 0 && selPt < g.route.length ? `<div class="ptrow">
+            ${selPt < g.route.length - 1 ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
+            <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || 'rear vehicles take a new road'}</span></div></div>` : ''}
+        ${!editing && g.route.some((p, k) => +p.hold > 0 && k < g.route.length - 1) ? `<p class="hint">Holds: ${g.route.map((p, k) => +p.hold > 0 && k < g.route.length - 1 ? 'point ' + (k + 1) + ' for ' + fmt(p.hold).slice(2) : '').filter(Boolean).join(', ')}.</p>` : ''}
         ${ship ? `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
                   <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '.' : 'Nothing aboard yet.'}</p>` : ''}
         <div class="row"><button id="op-del" class="fire-btn">Delete group</button></div>`;
@@ -1337,18 +1482,25 @@ const OCEAN="rgb(19,71,106)";</script>
         ub.appendChild(r);
       });
       $('op-addunit').addEventListener('click', () => { g.units.push({ type: ship ? 'lcu' : (g.units[0] ? g.units[0].type : 'zbd'), n: ship ? 1 : 2 }); refresh(); });
-      $('op-start').value = fmt(g.start).slice(2);
-      $('op-start').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(g.start).slice(2); return; } g.start = v; refresh(); });
+      if ($('op-start')) $('op-start').value = fmt(g.start).slice(2);
+      if ($('op-start')) $('op-start').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(g.start).slice(2); return; } g.start = v; refresh(); });
       if ($('op-land')) { $('op-land').value = g.land; $('op-land').addEventListener('change', e => { g.land = Math.max(1, +e.target.value || g.land); refresh(); }); }
       $('op-water').value = g.water; $('op-water').addEventListener('change', e => { g.water = Math.max(0, +e.target.value || 0); refresh(); });
       $('op-gap').value = g.gap; $('op-gap').addEventListener('change', e => { g.gap = Math.max(5, +e.target.value || g.gap); refresh(); });
       if ($('op-unload')) { $('op-unload').value = g.unload; $('op-unload').addEventListener('change', e => { g.unload = Math.max(0, +e.target.value || 0); refresh(); }); }
+      if ($('op-hold')) { const p = g.route[selPt]; $('op-hold').value = fmt(+p.hold || 0).slice(2);
+        $('op-hold').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(+p.hold || 0).slice(2); return; }
+          if (v > 0) p.hold = v; else delete p.hold; refresh(); }); }
+      if ($('op-split')) $('op-split').addEventListener('click', () => splitHere(g, selPt));
       $('op-edit').addEventListener('click', () => setEditing(!editing));
-      $('op-clear').addEventListener('click', () => { g.route = c && c.route.length ? [{ ...c.route[c.route.length - 1] }] : []; refresh(); setEditing(true); });
+      $('op-clear').addEventListener('click', () => {
+        for (const b of branchesOf(g)) detach(b);
+        g.route = g.parent ? g.route.slice(0, 1) : c && c.route.length ? [{ ...c.route[c.route.length - 1] }] : []; refresh(); setEditing(true); });
       if ($('op-cargo')) $('op-cargo').addEventListener('click', () => newGroup({ type: 'fuel', carrier: g.id, name: g.name + ' cargo ' + (kids.length + 1) }));
       $('op-del').addEventListener('click', e => { if (e.target.dataset.armed) removeGroup(g); else { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm delete'; } });
       const w = warnings(g), m = $('op-msg');
-      m.textContent = editing ? 'Click the map to add points. Drag a square to move it; drag a faint square to add a bend. Delete removes the white point. Enter or Done to finish.' + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
+      if (note) { w.unshift(note); note = ''; }
+      m.textContent = editing ? 'Click the map to add points. Click a square to select it (white): set a hold or split there; drag it to move. Drag a faint square to add a bend. Delete removes the white point. Enter or Done to finish.' + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
                               : w.join(' ') || (g.prof ? `Route ${(g.prof.len / 1000).toFixed(1)} km, about ${Math.round(g.prof.dur / 60)} min for the lead.` : '');
       if (!editing && w.length) m.className = 'msg bad';
     }
@@ -1361,7 +1513,7 @@ const OCEAN="rgb(19,71,106)";</script>
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { get groups() { return groups; }, VT, waterAt, toLocal, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, halt, resume, isHalted, moveTime, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
