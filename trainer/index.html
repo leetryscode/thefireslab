@@ -1060,19 +1060,24 @@ const OCEAN="rgb(19,71,106)";</script>
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser only; scenario files come later)
-    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt })) })); } catch (e) {} }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null })) })); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
     // ---- motion profile: arc length vs time along the route, speed by land or water
+    function fullRoute(g, d = 0) {             // own points, then (if rejoined) the rest of the route it joins
+      if (!g.join || d > 6) return g.route;
+      const tg = groups.find(o => o.id === g.join.group); if (!tg) return g.route;
+      return g.route.concat(fullRoute(tg, d + 1).slice(g.join.at + 1));
+    }
     function profile(g) {
-      const pts = g.route.map(p => toLocal(p.e, p.n));
+      const R = fullRoute(g), pts = R.map(p => toLocal(p.e, p.n));
       const S = [0], T = [0], X = [], Z = [];
       if (pts.length < 2) { g.prof = null; return; }
       const ship = isShip(g), step = 5, stops = [];
       let s = 0, t = 0;
       X.push(pts[0].x); Z.push(pts[0].z);
       const hold = k => {                      // scripted wait at route point k: time passes, distance does not
-        const w = +g.route[k].hold || 0; if (w <= 0 || k === pts.length - 1) return;
+        const w = +R[k].hold || 0; if (w <= 0 || k === pts.length - 1) return;
         stops.push({ k, s, t0: t, t1: t + w }); t += w; S.push(s); T.push(t); X.push(X[X.length - 1]); Z.push(Z[Z.length - 1]);
       };
       const wpS = [0];
@@ -1195,6 +1200,7 @@ const OCEAN="rgb(19,71,106)";</script>
     const handleTex = (fill) => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d');
       x.fillStyle = fill; x.strokeStyle = '#11140f'; x.lineWidth = 4; x.fillRect(5, 5, 22, 22); x.strokeRect(5, 5, 22, 22); return new THREE.CanvasTexture(c); };
     const hTexPt = handleTex('#d6b25a'), hTexSel = handleTex('#ffffff'), hTexMid = handleTex('rgba(214,178,90,.35)');
+    const hTexFam = handleTex('rgba(255,106,85,.6)'), hTexJoin = handleTex('#6fb4ff');
     const labelLayer = document.createElement('div'); labelLayer.id = 'oplabels'; document.body.insertBefore(labelLayer, document.getElementById('labels'));
     const view = { g: new Map() };            // group id -> { meshes, sym, label }
 
@@ -1239,17 +1245,37 @@ const OCEAN="rgb(19,71,106)";</script>
         l.computeLineDistances(); l.renderOrder = 15; lines.add(l);
       }
       if (sel && editing) {
-        const pts = sel.route.map(p => toLocal(p.e, p.n));
-        pts.forEach((p, i) => addHandle(p, i === selPt ? hTexSel : hTexPt, { i }));
-        for (let i = 1; i < pts.length; i++) addHandle({ x: (pts[i - 1].x + pts[i].x) / 2, z: (pts[i - 1].z + pts[i].z) / 2 }, hTexMid, { i: i - 1, mid: true });
+        if (joinPick) {
+          for (const o of groups) if (canJoin(sel, o)) o.route.forEach((q, i) => { if (i > 0 || !o.parent) addHandle(toLocal(q.e, q.n), hTexJoin, { gid: o.id, i, join: true }); });
+        } else {
+          for (const o of groups) if (o !== sel && inFamily(o, sel)) o.route.forEach((q, i) => addHandle(toLocal(q.e, q.n), hTexFam, { gid: o.id, i, fam: true }));
+          const pts = sel.route.map(p => toLocal(p.e, p.n));
+          pts.forEach((p, i) => addHandle(p, i === selPt ? hTexSel : hTexPt, { gid: sel.id, i }));
+          for (let i = 1; i < pts.length; i++) addHandle({ x: (pts[i - 1].x + pts[i].x) / 2, z: (pts[i - 1].z + pts[i].z) / 2 }, hTexMid, { i: i - 1, mid: true });
+        }
       }
     }
     function addHandle(p, tex, data) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true, sizeAttenuation: false }));
-      const big = !data.mid; s.scale.set(big ? 0.016 : 0.011, big ? 0.016 : 0.011, 1);
+      const k = data.mid ? 0.011 : data.fam ? 0.013 : 0.016; s.scale.set(k, k, 1);
       s.position.set(p.x, heightAt(p.x, p.z) * ex + 6, p.z); s.renderOrder = 25; s.userData = data; handles.add(s);
     }
+    const refsAt = (g, i) => groups.filter(o => (o.parent === g.id && o.splitAt === i) || (o.join && o.join.group === g.id && o.join.at === i));
+    function shiftRefs(g, from, delta) {
+      for (const o of groups) { if (o.parent === g.id && o.splitAt >= from) o.splitAt += delta; if (o.join && o.join.group === g.id && o.join.at >= from) o.join.at += delta; }
+    }
+    const familyRoot = g => { let r = g, d = 0; while (r.parent && d++ < 8) { const p = parentOf(r); if (!p) break; r = p; } return r; };
+    const inFamily = (a, b) => familyRoot(a) === familyRoot(b);
+    function joinsThrough(o, g, d = 0) { if (o === g) return true; if (!o.join || d > 8) return false; const n = groups.find(x => x.id === o.join.group); return !!n && joinsThrough(n, g, d + 1); }
+    const canJoin = (g, o) => o !== g && o.route.length >= 2 && isShip(o) === isShip(g) && !joinsThrough(o, g) && !(o.parent === g.id);
+    let joinPick = false;
     function syncBranches() {
+      for (const g of groups) if (g.join) {
+        const tg = groups.find(o => o.id === g.join.group), q = tg && tg.route[g.join.at];
+        if (!q || g.route.length < 1) { delete g.join; continue; }
+        const last = g.route.length - 1, keep = g.route[last] && g.route[last].hold;
+        g.route[last] = { e: q.e, n: q.n }; if (keep) g.route[last].hold = keep;
+      }
       for (const g of groups) if (g.parent) {
         const p = parentOf(g), q = p && p.route[g.splitAt];
         if (!q) { detach(g); continue; }
@@ -1326,7 +1352,8 @@ const OCEAN="rgb(19,71,106)";</script>
       for (const s of handles.children) {
         pv.copy(s.position).project(camera); if (pv.z > 1) continue;
         const x = (pv.x + 1) / 2 * r.width + r.left, y = (1 - pv.y) / 2 * r.height + r.top, d = Math.hypot(x - e.clientX, y - e.clientY);
-        if (d < bd || (best && best.mid && !s.userData.mid && d < 11)) { bd = d; best = s.userData; }
+        const own = s.userData.gid === (sel && sel.id) && !s.userData.mid;     // own points win over family points and midpoints
+        if (d < bd || (best && (best.mid || best.fam) && own && d < 11)) { bd = d; best = s.userData; }
       }
       return best;
     }
@@ -1334,16 +1361,20 @@ const OCEAN="rgb(19,71,106)";</script>
     addEventListener('pointerdown', e => {
       if (!editing || !sel || e.target !== canvas || e.button !== 0) return;
       downAt = { x: e.clientX, y: e.clientY }; dragged = false;
-      const h = hitHandle(e); if (!h) return;
+      const h = hitHandle(e);
+      if (joinPick) { if (h && h.join) { e.stopPropagation(); e.preventDefault(); doJoin(sel, groups.find(o => o.id === h.gid), h.i); downAt = null; } return; }
+      if (!h) return;
       e.stopPropagation(); e.preventDefault(); controls.enabled = false;
       if (h.mid) { drag = { mid: h.i }; return; }
-      drag = { i: h.i }; selPt = h.i; rebuildLines();
+      if (h.gid !== sel.id) { sel = groups.find(o => o.id === h.gid); renderList(); }
+      drag = { i: h.i }; selPt = h.i; rebuildLines(); renderEditor();
     }, true);
     addEventListener('pointermove', e => {
       if (drag === null) return;
       const p = pick(e.clientX, e.clientY); if (!p) return;
-      if (drag.mid !== undefined) { sel.route.splice(drag.mid + 1, 0, toEN(p)); for (const b of branchesOf(sel)) if (b.splitAt >= drag.mid + 1) b.splitAt++; drag = { i: drag.mid + 1 }; selPt = drag.i; }
+      if (drag.mid !== undefined) { sel.route.splice(drag.mid + 1, 0, toEN(p)); shiftRefs(sel, drag.mid + 1, 1); drag = { i: drag.mid + 1 }; selPt = drag.i; }
       if (sel.parent && drag.i === 0) return;              // a branch starts where its parent splits
+      if (sel.join && drag.i === sel.route.length - 1) return;   // and ends where it rejoins
       sel.route[drag.i] = Object.assign({}, sel.route[drag.i], toEN(p)); dragged = true; profile(sel); rebuildLines();
     }, true);
     addEventListener('pointerup', e => {
@@ -1352,21 +1383,32 @@ const OCEAN="rgb(19,71,106)";</script>
       const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y); downAt = null;
       if (moved > 5) return;
       const p = pick(e.clientX, e.clientY); if (!p) return;
-      sel.route.push(toEN(p)); selPt = sel.route.length - 1; refresh();
+      if (joinPick) return;
+      if (sel.join) { sel.route.splice(sel.route.length - 1, 0, toEN(p)); selPt = sel.route.length - 2; }   // new points go before the rejoin
+      else { sel.route.push(toEN(p)); selPt = sel.route.length - 1; }
+      refresh();
     }, true);
     canvas.addEventListener('dblclick', () => { if (editing) setEditing(false); });
     addEventListener('keydown', e => {
       if (!editing || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      if (joinPick && e.key === 'Escape') { joinPick = false; rebuildLines(); renderEditor(); e.preventDefault(); return; }
       if (e.key === 'Enter' || e.key === 'Escape') { setEditing(false); e.preventDefault(); }
       if ((e.key === 'Delete' || e.key === 'Backspace') && sel && sel.route.length) {
         const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1; e.preventDefault();
         if (sel.parent && i === 0) { note = 'That point is the split from ' + parentOf(sel).name + '; it cannot be removed here.'; renderEditor(); return; }
-        if (branchesOf(sel).some(b => b.splitAt === i)) { note = 'A branch splits at that point. Delete or move the branch first.'; renderEditor(); return; }
-        sel.route.splice(i, 1); for (const b of branchesOf(sel)) if (b.splitAt > i) b.splitAt--;
+        if (sel.join && i === sel.route.length - 1) { note = 'That point is where it rejoins; press Unjoin first.'; renderEditor(); return; }
+        const used = refsAt(sel, i); if (used.length) { note = used.map(o => o.name).join(', ') + ' ' + (used.length > 1 ? 'use' : 'uses') + ' that point to split or rejoin. Change ' + (used.length > 1 ? 'them' : 'it') + ' first.'; renderEditor(); return; }
+        sel.route.splice(i, 1); shiftRefs(sel, i + 1, -1);
         selPt = Math.min(i, sel.route.length - 1); refresh();
       }
     });
-    function setEditing(on) { editing = on && !!sel; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
+    function setEditing(on) { editing = on && !!sel; joinPick = false; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
+    function doJoin(g, o, i) {
+      if (!o || !canJoin(g, o)) return;
+      if (!g.join) g.route.push({ e: o.route[i].e, n: o.route[i].n });
+      g.join = { group: o.id, at: i }; joinPick = false; selPt = g.route.length - 1; refresh();
+    }
+    function unjoin(g) { if (g.join) { delete g.join; refresh(); } }
 
     // ---- groups
     function newGroup(opts) {
@@ -1392,6 +1434,7 @@ const OCEAN="rgb(19,71,106)";</script>
     function removeGroup(g) {
       for (const o of groups) if (o.carrier === g.id) { const st = startOf(o); o.carrier = null; o.start = st === null || !isFinite(st) ? 0 : Math.round(st); }
       for (const o of groups) if (o.parent === g.id) detach(o);
+      for (const o of groups) if (o.join && o.join.group === g.id) delete o.join;
       groups = groups.filter(o => o !== g); if (sel === g) sel = null; editing = false; refresh();
     }
 
@@ -1463,8 +1506,10 @@ const OCEAN="rgb(19,71,106)";</script>
         ${ship ? `<div class="row"><span class="lbl">Unload s</span><input id="op-unload" style="width:60px" aria-label="Unloading time in seconds"></div>` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
         <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
+        ${g.join ? `<div class="row"><span class="hint">Rejoins <b>${esc((groups.find(o => o.id === g.join.group) || {}).name || '?')}</b> at its point ${g.join.at + 1}, then follows its route.</span><button id="op-unjoin">Unjoin</button></div>`
+          : editing && g.route.length >= 1 && groups.some(o => canJoin(g, o)) ? `<div class="row"><button id="op-join" aria-pressed="${joinPick}">${joinPick ? 'Cancel rejoin' : 'Rejoin a route'}</button><span class="hint">${joinPick ? 'Click a blue point on the route to rejoin.' : 'snap the end onto another route'}</span></div>` : ''}
         ${editing && selPt >= 0 && selPt < g.route.length ? `<div class="ptrow">
-            ${selPt < g.route.length - 1 ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
+            ${selPt < g.route.length - 1 || g.join ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
             <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || 'rear vehicles take a new road'}</span></div></div>` : ''}
         ${!editing && g.route.some((p, k) => +p.hold > 0 && k < g.route.length - 1) ? `<p class="hint">Holds: ${g.route.map((p, k) => +p.hold > 0 && k < g.route.length - 1 ? 'point ' + (k + 1) + ' for ' + fmt(p.hold).slice(2) : '').filter(Boolean).join(', ')}.</p>` : ''}
         ${ship ? `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
@@ -1492,17 +1537,21 @@ const OCEAN="rgb(19,71,106)";</script>
         $('op-hold').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(+p.hold || 0).slice(2); return; }
           if (v > 0) p.hold = v; else delete p.hold; refresh(); }); }
       if ($('op-split')) $('op-split').addEventListener('click', () => splitHere(g, selPt));
+      if ($('op-join')) $('op-join').addEventListener('click', () => { joinPick = !joinPick; rebuildLines(); renderEditor(); });
+      if ($('op-unjoin')) $('op-unjoin').addEventListener('click', () => unjoin(g));
       $('op-edit').addEventListener('click', () => setEditing(!editing));
       $('op-clear').addEventListener('click', () => {
         for (const b of branchesOf(g)) detach(b);
+        for (const o of groups) if (o.join && o.join.group === g.id) delete o.join;
+        delete g.join;
         g.route = g.parent ? g.route.slice(0, 1) : c && c.route.length ? [{ ...c.route[c.route.length - 1] }] : []; refresh(); setEditing(true); });
       if ($('op-cargo')) $('op-cargo').addEventListener('click', () => newGroup({ type: 'fuel', carrier: g.id, name: g.name + ' cargo ' + (kids.length + 1) }));
       $('op-del').addEventListener('click', e => { if (e.target.dataset.armed) removeGroup(g); else { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm delete'; } });
       const w = warnings(g), m = $('op-msg');
-      if (note) { w.unshift(note); note = ''; }
-      m.textContent = editing ? 'Click the map to add points. Click a square to select it (white): set a hold or split there; drag it to move. Drag a faint square to add a bend. Delete removes the white point. Enter or Done to finish.' + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
-                              : w.join(' ') || (g.prof ? `Route ${(g.prof.len / 1000).toFixed(1)} km, about ${Math.round(g.prof.dur / 60)} min for the lead.` : '');
-      if (!editing && w.length) m.className = 'msg bad';
+      const n0 = note; note = '';
+      m.textContent = (n0 ? n0 + ' ' : '') + (editing ? (joinPick ? 'Pick the point where this group rejoins: click a blue square. Esc cancels.' : 'Click the map to add points. Click a square to select it (white): set a hold or split there; drag it to move. Drag a faint square to add a bend. Red squares belong to the rest of the split: click one to edit that group. Delete removes the white point. Enter or Done to finish.') + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
+                              : w.join(' ') || (g.prof ? `Route ${(g.prof.len / 1000).toFixed(1)} km, about ${Math.round(g.prof.dur / 60)} min for the lead.` : ''));
+      if (n0 || (!editing && w.length)) m.className = 'msg bad';
     }
     const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
     $('op-new').addEventListener('click', () => newGroup({ type: $('op-newtype').value }));
@@ -1513,7 +1562,7 @@ const OCEAN="rgb(19,71,106)";</script>
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, halt, resume, isHalted, moveTime, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
