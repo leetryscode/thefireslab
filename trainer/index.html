@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FiST Trainer — Honolulu Battlespace</title>
+<title>FiST Trainer — Fires Lab</title>
 <style>
 /* fonts bundled with the course (css/fonts), so nothing loads from Google */
 @font-face {
@@ -61,7 +61,7 @@
   src: url('../css/fonts/ibm-plex-mono-latin-ext-500-normal.woff2') format('woff2');
   unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;
 }
-/* Layout: full-bleed 3D terrain; one instrument panel top-left, readout strip bottom. Single dark look on purpose (a viewport, not a document). */
+/* Layout: full-bleed 3D terrain; exercise banner across the top (clock, timeline, view, panel toolbar); draggable control panels; readout strip bottom. Single dark look on purpose (a viewport, not a document). */
 :root {
   --ground: #11140f;
   --panel: rgba(18, 22, 16, 0.88);
@@ -85,14 +85,6 @@ body { background: var(--ground); color: var(--ink); font-family: var(--font-bod
   padding: 1px 6px; border-radius: 3px; background: rgba(10, 14, 10, .78); }
 .tag.op { color: var(--friend); border: 1px solid rgba(111, 180, 255, .5); }
 .tag.rt { color: var(--enemy); border: 1px solid rgba(255, 106, 85, .5); transform: translate(-50%, -50%); }
-.panel {
-  position: fixed;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  left: max(16px, env(safe-area-inset-left, 0px));
-  width: min(320px, calc(100% - 32px)); max-height: calc(100% - 90px); overflow-y: auto;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
-  padding: 12px 14px; display: grid; gap: 10px; backdrop-filter: blur(4px);
-}
 h1 { margin: 0; font-family: var(--font-head); font-weight: 600; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
 .meta { margin: 0; font-size: 13px; line-height: 1.45; color: var(--dim); }
 .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -122,8 +114,8 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .hint { font-size: 12px; color: var(--dim); margin: 0; }
 .ops .oprow { display: grid; grid-template-columns: 1fr auto; gap: 4px; }
 .ops .stand { color: var(--brass); }
-#obsbar[hidden], #binos[hidden], #reticle[hidden], .panel[hidden] { display: none; }
-#obsbar { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+#obsbar[hidden], #binos[hidden], #reticle[hidden], .win[hidden] { display: none; }
+#obsbar { position: fixed; top: calc(var(--tb-h, 56px) + 10px); right: max(16px, env(safe-area-inset-right, 0px));
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; max-width: calc(100% - 32px);
   background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 #obsbar .where { font: 600 14px var(--font-head); letter-spacing: .06em; text-transform: uppercase; color: var(--friend); margin-right: 6px; }
@@ -139,20 +131,14 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .cov .bar i { display: block; height: 100%; background: var(--brass); }
 .cov .pc { text-align: right; }
 .vkey { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--dim); }
-#fires { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
-  width: min(330px, calc(100% - 32px)); max-height: calc(100% - 90px); overflow-y: auto;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; display: grid; gap: 10px; }
-#fires[hidden] { display: none; }
-#fires h2 { margin: 0; font-family: var(--font-head); font-weight: 600; font-size: 20px; letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-#clock { font: 500 15px var(--font-mono); color: var(--brass); font-variant-numeric: tabular-nums; }
 .fsec { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 9px; }
 .fsec h3 { margin: 0; font-family: var(--font-head); font-weight: 600; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
-#fires input, #fires select { font: 500 12px var(--font-mono); color: var(--ink); background: var(--ground); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; min-width: 0; }
-#fires input:focus-visible, #fires select:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
-#fires .grid-in { flex: 1 1 150px; }
-#fires .msg { font-size: 12px; color: var(--dim); min-height: 1.2em; margin: 0; }
-#fires .msg.bad { color: #ff9c8a; }
-#fires .msg.arm { color: var(--brass); }
+.win input, .win select { font: 500 12px var(--font-mono); color: var(--ink); background: var(--ground); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; min-width: 0; }
+.win input:focus-visible, .win select:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.win .grid-in { flex: 1 1 150px; }
+.win .msg { font-size: 12px; color: var(--dim); min-height: 1.2em; margin: 0; }
+.win .msg.bad { color: #ff9c8a; }
+.win .msg.arm { color: var(--brass); }
 .ulist { display: grid; gap: 4px; }
 .urow { display: grid; grid-template-columns: 1fr auto auto; gap: 4px; align-items: center; font: 500 12px var(--font-mono); font-variant-numeric: tabular-nums; }
 .urow .un { color: var(--friend); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -161,20 +147,53 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .flog { display: grid; gap: 2px; font: 500 11.5px var(--font-mono); font-variant-numeric: tabular-nums; max-height: 150px; overflow-y: auto; }
 .flog div { display: grid; grid-template-columns: 54px 1fr; gap: 6px; }
 .flog .t { color: var(--brass); }
-#fires .fire-btn { border-color: #c8402c; color: #ffb3a5; font-weight: 600; }
-.panel.collapsed > :not(h1), #fires.collapsed > :not(h2) { display: none; }
-.panel.collapsed, #fires.collapsed { max-height: none; }
-.hide-btn { font: 500 11px var(--font-mono); padding: 2px 7px; margin-left: auto; letter-spacing: 0; text-transform: none; }
-.panel h1 { display: flex; align-items: center; gap: 8px; }
+.win .fire-btn { border-color: #c8402c; color: #ffb3a5; font-weight: 600; }
 #loading[hidden] { display: none; }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; font: 500 13px var(--font-mono); color: var(--dim); pointer-events: none; }
+/* ---- exercise banner ---- */
+#topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(14, 18, 13, .94); border-bottom: 1px solid var(--line); backdrop-filter: blur(4px); }
+.tb-name { font: 600 15px var(--font-head); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+.tb-clock, .tb-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tb-right { margin-left: auto; }
+.tb-right[hidden] { display: none; }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; margin-left: -1px; }
+.seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 4px 4px 0; }
+.seg button[aria-pressed="true"] { position: relative; z-index: 1; background: rgba(214, 178, 90, .12); }
+.tb-play { min-width: 64px; }
+.tb-play[aria-pressed="false"] { border-color: #c8402c; color: #ffb3a5; }
+#clock { font: 500 16px var(--font-mono); color: var(--brass); font-variant-numeric: tabular-nums; min-width: 84px; }
+.tb-timeline { position: relative; flex: 1 1 160px; min-width: 120px; height: 26px; border: 1px solid var(--line); border-radius: 4px; background: rgba(255,255,255,.03); overflow: hidden; }
+.tl-ticks { position: absolute; inset: 0; }
+.tl-ticks i { position: absolute; bottom: 0; width: 1px; height: 6px; background: var(--line); }
+.tl-ticks i.maj { height: 11px; background: #59634c; }
+.tl-ticks b { position: absolute; top: 2px; transform: translateX(3px); font: 500 10px var(--font-mono); color: var(--dim); font-weight: 500; }
+.tl-done { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(214, 178, 90, .10); }
+.tl-now { position: absolute; top: 0; bottom: 0; width: 2px; left: 0; background: var(--brass); }
+.tb-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb-tools button[aria-pressed="true"] { background: rgba(214, 178, 90, .12); }
+/* ---- control panels: open from the toolbar, drag by the title bar ---- */
+.win { position: fixed; z-index: 10; width: min(336px, calc(100% - 32px));
+  max-height: calc(100% - var(--tb-h, 56px) - 70px); display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; backdrop-filter: blur(4px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+.win-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid var(--line); cursor: move; touch-action: none; user-select: none; }
+.win-h h2 { margin: 0; font: 600 16px var(--font-head); letter-spacing: .06em; text-transform: uppercase; }
+.win-x { font: 500 16px/1 var(--font-mono); padding: 2px 8px; }
+.win-b { display: grid; gap: 10px; padding: 12px 14px; overflow-y: auto; }
+.fsec.first { border-top: none; padding-top: 0; }
+.win .vs { border-top: 1px solid var(--line); }
 
 /* hosted on thefireslab.com: link home and an in-progress flag */
-.home-link { display: inline-block; font: 600 12px var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); text-decoration: none; margin-bottom: 4px; }
-.home-link:hover { color: var(--brass); }
-.wip { display: inline-block; vertical-align: middle; margin-left: 8px; padding: 2px 9px; border-radius: 999px; background: #c9a227; color: #2e2609;
+a.tb-name { color: inherit; text-decoration: none; }
+a.tb-name:hover { color: var(--brass); }
+.wip { display: inline-block; padding: 2px 9px; border-radius: 999px; background: #c9a227; color: #2e2609;
   font: 600 11px var(--font-head); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-.panel.collapsed > .home-link { display: inline-block; }
 </style>
 
 </head>
@@ -190,65 +209,91 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
   <button id="obsexit">Back to map (Esc)</button>
 </div>
 
-<div class="panel" role="region" aria-label="Battlespace view">
-  <a class="home-link" href="../index.html">&larr; The Fires Lab</a>
-  <h1>Honolulu Battlespace <span class="wip" title="Under construction: features and figures will change">In progress</span> <button class="hide-btn" id="hide-left" aria-expanded="true">Hide</button></h1>
-  <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N. No 3D buildings or trees yet.</p>
-  <div class="key">
-    <span><i class="sw" style="background:var(--friend)"></i>Friendly position</span>
-    <span><i class="sw" style="background:var(--enemy)"></i>Enemy route</span>
-    <span><i class="sw" style="background:#cfd6c4"></i>Battlespace border</span>
+<header id="topbar" aria-label="Exercise control">
+  <a class="tb-name" href="../index.html" title="Back to The Fires Lab home">Fires Lab</a>
+  <span class="wip" title="Under construction: features and figures will change">In progress</span>
+  <div class="tb-clock" role="group" aria-label="Clock">
+    <button id="ck-play" class="tb-play" aria-pressed="true" aria-label="Pause">Pause</button>
+    <span class="seg"><button id="ck-1" aria-pressed="true">1×</button><button id="ck-5" aria-pressed="false">5×</button><button id="ck-10" aria-pressed="false">10×</button></span>
+    <span id="clock">T+00:00</span>
   </div>
-  <div class="row"><span class="lbl">Ground</span><button id="gr-photo" aria-pressed="true">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
-  <div class="row"><span class="lbl">Exaggeration</span>
-    <button id="ex1" aria-pressed="true">1×</button><button id="ex2" aria-pressed="false">2×</button><button id="ex3" aria-pressed="false">3×</button></div>
-  <div class="row"><span class="lbl">Layers</span>
-    <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true">Sketch</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
-  <div class="row"><span class="lbl">Go to</span><button id="home">Whole area</button></div>
-  <div class="ops" id="oplist"></div>
-  <div class="vs" role="group" aria-label="Viewshed">
-    <div class="row"><span class="lbl">Viewshed from</span>
-      <select id="vs-op" aria-label="Viewshed from"><option value="">Off</option></select></div>
-    <div class="row"><span class="lbl">Observer</span>
-      <button id="vs-stand" aria-pressed="true">Standing 1.8 m</button><button id="vs-prone" aria-pressed="false">Prone 0.5 m</button></div>
-    <div class="row"><span class="lbl">Looking for</span>
-      <button id="vs-veh" aria-pressed="true">Vehicle 2.5 m</button><button id="vs-gnd" aria-pressed="false">Bare ground</button></div>
-    <div class="row"><span class="lbl">Out to</span>
-      <button id="vs-5" aria-pressed="false">5 km</button><button id="vs-10" aria-pressed="true">10 km</button></div>
-    <div class="vkey"><span><i class="sw" style="background:#c8402c"></i>Hidden (dead space)</span><span><i class="sw" style="background:#1b1f1a"></i>Beyond range</span></div>
-    <div class="cov" id="cov" aria-live="polite"></div>
-    <p class="hint" id="vs-note">Bare earth only: buildings and trees will add dead space once the lidar is in.</p>
+  <div class="tb-timeline" aria-hidden="true"><div class="tl-ticks" id="tl-ticks"></div><div class="tl-done" id="tl-done"></div><div class="tl-now" id="tl-now"></div></div>
+  <div class="tb-right">
+    <span class="seg" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
+    <nav class="tb-tools" id="tools" aria-label="Control panels">
+      <button data-win="w-display" aria-pressed="false">Display</button>
+      <button data-win="w-ops" aria-pressed="false">OPs &amp; Viewshed</button>
+      <button data-win="w-fires" aria-pressed="false">Fires</button>
+    </nav>
   </div>
-  <p class="hint">Map: drag to orbit, right-drag to pan, scroll to zoom. Pick a position to look at it, or <b>Stand</b> to go there at eye height. Standing: drag or arrow keys to look, B for binoculars, Esc to leave.</p>
-</div>
+</header>
 
-<div id="fires" role="region" aria-label="Fires">
-  <h2>Fires <span id="clock">T+00:00</span><button class="hide-btn" id="hide-fires" aria-expanded="true">Hide</button></h2>
-  <div class="row"><span class="lbl">Clock</span>
-    <button id="ck-0" aria-pressed="false">Pause</button><button id="ck-1" aria-pressed="true">1×</button><button id="ck-5" aria-pressed="false">5×</button><button id="ck-10" aria-pressed="false">10×</button></div>
-  <div class="row"><span class="lbl">View</span><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button>
-    <button id="tg-arcs" aria-pressed="true">Arcs</button></div>
-  <div class="fsec">
-    <h3>Firing units</h3>
-    <div class="row" id="addbtns"></div>
-    <div class="row"><input id="place-grid" class="grid-in" placeholder="or grid: 4Q FJ 21500 55200" aria-label="Grid to place the unit at"><input id="place-alt" placeholder="alt m" aria-label="Altitude for an off-map unit" style="width:62px"><button id="place-go">Place</button></div>
-    <p class="msg" id="place-msg">Pick a unit type, then click the map or type a grid. A grid off the map is fine.</p>
-    <div class="ulist" id="ulist"></div>
+<section class="win" id="w-display" aria-label="Display settings" hidden>
+  <header class="win-h"><h2>Display</h2><button class="win-x" aria-label="Close Display">×</button></header>
+  <div class="win-b">
+    <div class="key">
+      <span><i class="sw" style="background:var(--friend)"></i>Friendly position</span>
+      <span><i class="sw" style="background:var(--enemy)"></i>Enemy route</span>
+      <span><i class="sw" style="background:#cfd6c4"></i>Battlespace border</span>
+    </div>
+    <div class="row"><span class="lbl">Ground</span><button id="gr-photo" aria-pressed="true">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
+    <div class="row"><span class="lbl">Exaggeration</span>
+      <button id="ex1" aria-pressed="true">1×</button><button id="ex2" aria-pressed="false">2×</button><button id="ex3" aria-pressed="false">3×</button></div>
+    <div class="row"><span class="lbl">Layers</span>
+      <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true">Sketch</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
+    <div class="row"><span class="lbl">Artillery</span><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
+    <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N. No 3D buildings or trees yet.</p>
+    <p class="hint">3D: drag to orbit, right-drag to pan, scroll to zoom. Map: drag to pan, scroll to zoom.</p>
   </div>
-  <div class="fsec">
-    <h3>Fire mission</h3>
-    <div class="row"><select id="fm-unit" aria-label="Firing unit"></select>
-      <select id="fm-rds" aria-label="Rounds per tube"><option value="1">1 rd/tube</option><option value="2" selected>2 rds/tube</option><option value="3">3 rds/tube</option><option value="4">4 rds/tube</option><option value="6">6 rds/tube</option></select></div>
-    <div class="row"><input id="fm-grid" class="grid-in" placeholder="target grid" aria-label="Target grid"><button id="fm-pick">Pick on map</button></div>
-    <div class="row"><button id="fm-fire" class="fire-btn">Fire</button></div>
-    <p class="msg" id="fm-msg"></p>
+</section>
+
+<section class="win" id="w-ops" aria-label="OPs and viewshed" hidden>
+  <header class="win-h"><h2>OPs &amp; Viewshed</h2><button class="win-x" aria-label="Close OPs and Viewshed">×</button></header>
+  <div class="win-b">
+    <div class="row"><span class="lbl">Go to</span><button id="home">Whole area</button></div>
+    <div class="ops" id="oplist"></div>
+    <div class="vs" role="group" aria-label="Viewshed">
+      <div class="row"><span class="lbl">Viewshed from</span>
+        <select id="vs-op" aria-label="Viewshed from"><option value="">Off</option></select></div>
+      <div class="row"><span class="lbl">Observer</span>
+        <button id="vs-stand" aria-pressed="true">Standing 1.8 m</button><button id="vs-prone" aria-pressed="false">Prone 0.5 m</button></div>
+      <div class="row"><span class="lbl">Looking for</span>
+        <button id="vs-veh" aria-pressed="true">Vehicle 2.5 m</button><button id="vs-gnd" aria-pressed="false">Bare ground</button></div>
+      <div class="row"><span class="lbl">Out to</span>
+        <button id="vs-5" aria-pressed="false">5 km</button><button id="vs-10" aria-pressed="true">10 km</button></div>
+      <div class="vkey"><span><i class="sw" style="background:#c8402c"></i>Hidden (dead space)</span><span><i class="sw" style="background:#1b1f1a"></i>Beyond range</span></div>
+      <div class="cov" id="cov" aria-live="polite"></div>
+      <p class="hint" id="vs-note">Bare earth only: buildings and trees will add dead space once the lidar is in.</p>
+    </div>
+    <p class="hint">Pick a position to look at it, or <b>Stand</b> to go there at eye height. Standing: drag or arrow keys to look, B for binoculars, Esc to leave.</p>
   </div>
-  <div class="fsec">
-    <h3>Fires log</h3>
-    <div class="flog" id="flog"><div><span class="t">—</span><span>No missions yet.</span></div></div>
+</section>
+
+<section class="win" id="w-fires" aria-label="Fires control" hidden>
+  <header class="win-h"><h2>Fires Control</h2><button class="win-x" aria-label="Close Fires Control">×</button></header>
+  <div class="win-b">
+    <div class="fsec first">
+      <h3>Firing units</h3>
+      <div class="row" id="addbtns"></div>
+      <div class="row"><input id="place-grid" class="grid-in" placeholder="or grid: 4Q FJ 21500 55200" aria-label="Grid to place the unit at"><input id="place-alt" placeholder="alt m" aria-label="Altitude for an off-map unit" style="width:62px"><button id="place-go">Place</button></div>
+      <p class="msg" id="place-msg">Pick a unit type, then click the map or type a grid. A grid off the map is fine.</p>
+      <div class="ulist" id="ulist"></div>
+    </div>
+    <div class="fsec">
+      <h3>Fire mission</h3>
+      <div class="row"><select id="fm-unit" aria-label="Firing unit"></select>
+        <select id="fm-rds" aria-label="Rounds per tube"><option value="1">1 rd/tube</option><option value="2" selected>2 rds/tube</option><option value="3">3 rds/tube</option><option value="4">4 rds/tube</option><option value="6">6 rds/tube</option></select></div>
+      <div class="row"><input id="fm-grid" class="grid-in" placeholder="target grid" aria-label="Target grid"><button id="fm-pick">Pick on map</button></div>
+      <div class="row"><button id="fm-fire" class="fire-btn">Fire</button></div>
+      <p class="msg" id="fm-msg"></p>
+    </div>
+    <div class="fsec">
+      <h3>Fires log</h3>
+      <div class="flog" id="flog"><div><span class="t">—</span><span>No missions yet.</span></div></div>
+    </div>
+    <p class="hint">Unit figures (range, time of flight, dispersion, rate) are unclassified placeholders until replaced with real values. Trajectories are drawn for the eye, not ballistic.</p>
   </div>
-  <p class="hint">Unit figures (range, time of flight, dispersion, rate) are unclassified placeholders until replaced with real values. Arcs are drawn for the eye, not ballistic.</p>
-</div>
+</section>
 
 <div class="readout" aria-live="polite">
   <span><b>GRID</b><span id="g">—</span></span>
@@ -575,13 +620,13 @@ const OCEAN="rgb(19,71,106)";</script>
     obsbar.hidden = false; document.getElementById('rngbox').hidden = false; document.getElementById('dirbox').hidden = false;
     // daylight sky and haze while standing; the map panel and the sketch step aside
     scene.background.set(0xaebfcc); scene.fog.color.set(0xaebfcc); scene.fog.near = 3000; scene.fog.far = 28000;
-    panel.hidden = true; document.getElementById('fires').hidden = true; groups.sketch.visible = false; groups.grid.visible = false; ovl.setAttribute('aria-pressed', 'false');
+    if (window.__wins) window.__wins.observer(true); groups.sketch.visible = false; groups.grid.visible = false; ovl.setAttribute('aria-pressed', 'false');
     labelBox.hidden = true;
   }
   function leaveObserver() {
     obs = null; binos = false; controls.enabled = true;
     scene.background.set(0x0e1418); scene.fog.color.set(0x0e1418); scene.fog.near = 11000; scene.fog.far = 30000;
-    panel.hidden = false; document.getElementById('fires').hidden = false;
+    if (window.__wins) window.__wins.observer(false);
     groups.sketch.visible = document.getElementById('tg-sketch').getAttribute('aria-pressed') === 'true';
     groups.grid.visible = document.getElementById('tg-grid').getAttribute('aria-pressed') === 'true';
     camera.fov = 45; camera.near = 10; camera.updateProjectionMatrix();
@@ -590,7 +635,7 @@ const OCEAN="rgb(19,71,106)";</script>
     home();
   }
   binoBtn.addEventListener('click', () => { if (obs) { binos = !binos; setFov(); } });
-  const panel = document.querySelector('.panel'), ovl = document.getElementById('ovl');
+  const ovl = document.getElementById('ovl');
   ovl.addEventListener('click', () => {
     const on = ovl.getAttribute('aria-pressed') !== 'true'; ovl.setAttribute('aria-pressed', String(on));
     groups.sketch.visible = on; labelBox.hidden = binos || !(on && showLabels);
@@ -910,8 +955,14 @@ const OCEAN="rgb(19,71,106)";</script>
     }
 
     // ---- clock and view controls
-    const ck = { 'ck-0': 0, 'ck-1': 1, 'ck-5': 5, 'ck-10': 10 };
-    for (const id of Object.keys(ck)) $(id).addEventListener('click', () => { speed = ck[id]; for (const o of Object.keys(ck)) $(o).setAttribute('aria-pressed', String(o === id)); });
+    // Play/Pause is separate from the rate, so pausing keeps the chosen 1x/5x/10x
+    let rate = 1, playing = true;
+    const ck = { 'ck-1': 1, 'ck-5': 5, 'ck-10': 10 };
+    function applyClock() { speed = playing ? rate : 0; const p = $('ck-play');
+      p.textContent = playing ? 'Pause' : 'Play'; p.setAttribute('aria-pressed', String(playing)); p.setAttribute('aria-label', playing ? 'Pause' : 'Play'); }
+    $('ck-play').addEventListener('click', () => { playing = !playing; applyClock(); });
+    for (const id of Object.keys(ck)) $(id).addEventListener('click', () => { rate = ck[id]; for (const o of Object.keys(ck)) $(o).setAttribute('aria-pressed', String(o === id)); applyClock(); });
+    addEventListener('keydown', e => { if (e.code === 'Space' && !obs && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); playing = !playing; applyClock(); } });
     function setMap(on) {
       mapMode = on; $('vw-map').setAttribute('aria-pressed', String(on)); $('vw-3d').setAttribute('aria-pressed', String(!on));
       if (on) {
@@ -949,11 +1000,84 @@ const OCEAN="rgb(19,71,106)";</script>
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = FIRES.onExaggeration;
 
 
-  // ---- panels fold down to their title bar so the battlefield can be seen
-  for (const [btnId, sel] of [['hide-left', '.panel'], ['hide-fires', '#fires']]) {
-    const b = document.getElementById(btnId), p = document.querySelector(sel);
-    b.addEventListener('click', () => { const c = !p.classList.contains('collapsed'); p.classList.toggle('collapsed', c); b.textContent = c ? 'Show' : 'Hide'; b.setAttribute('aria-expanded', String(!c)); });
-  }
+  // ---- banner: keep --tb-h in step with the banner so panels and the observer bar sit below it
+  const topbar = document.getElementById('topbar');
+  function setTbH() { document.documentElement.style.setProperty('--tb-h', topbar.offsetHeight + 'px'); }
+  setTbH(); new ResizeObserver(setTbH).observe(topbar);
+
+  // ---- timeline: elapsed sim time on a scale that stretches as the exercise runs (events go here later)
+  (function timeline() {
+    const ticks = document.getElementById('tl-ticks'), now = document.getElementById('tl-now'), done = document.getElementById('tl-done');
+    let span = 0;
+    function draw() {
+      ticks.textContent = '';
+      const step = span <= 1200 ? 60 : span <= 3600 ? 300 : 600, major = step * 5;
+      for (let s = step; s < span; s += step) {
+        const i = document.createElement('i'); i.style.left = (100 * s / span) + '%'; if (s % major === 0) i.className = 'maj'; ticks.appendChild(i);
+        if (s % major === 0) { const b = document.createElement('b'); b.style.left = (100 * s / span) + '%'; b.textContent = Math.round(s / 60) + 'm'; ticks.appendChild(b); }
+      }
+    }
+    (function upd() {
+      const t = window.__fires ? window.__fires.simT : 0;
+      const want = Math.max(600, Math.ceil((t + 120) / 600) * 600);
+      if (want !== span) { span = want; draw(); }
+      const f = Math.min(1, t / span); now.style.left = `calc(${100 * f}% - 1px)`; done.style.width = (100 * f) + '%';
+      setTimeout(upd, 250);
+    })();
+  })();
+
+  // ---- control panels: toolbar toggles, drag by the title bar, several open at once,
+  //      position and open/closed remembered in this browser only
+  window.__wins = (function () {
+    const KEY = 'fist-trainer-panels-v1', wins = [...document.querySelectorAll('.win')];
+    const tools = [...document.querySelectorAll('#tools [data-win]')];
+    let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { saved = {}; }
+    const save = () => { try { const o = {}; for (const w of wins) o[w.id] = { x: w.offsetLeft, y: w.offsetTop, open: !w.hidden }; localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+    let z = 10;
+    const tbH = () => topbar.offsetHeight;
+    function defaults(w) {
+      const W = innerWidth, gap = 16, top = tbH() + 12;
+      if (W < 700) return { x: gap, y: top, open: w.id === 'w-ops' };
+      if (w.id === 'w-ops') return { x: gap, y: top, open: true };
+      if (w.id === 'w-display') return { x: gap + 336 + 12, y: top, open: false };
+      return { x: W - 336 - gap, y: top, open: true };
+    }
+    function clamp(w, x, y) {
+      const minY = tbH() + 4, maxX = innerWidth - 60, maxY = innerHeight - 44;
+      w.style.left = Math.max(-w.offsetWidth + 80, Math.min(maxX, x)) + 'px';
+      w.style.top = Math.max(minY, Math.min(maxY, y)) + 'px';
+    }
+    function sync() { for (const b of tools) b.setAttribute('aria-pressed', String(!document.getElementById(b.dataset.win).hidden)); }
+    function front(w) { w.style.zIndex = ++z; }
+    function show(w, on) { w.hidden = !on; if (on) { front(w); clamp(w, w.offsetLeft, w.offsetTop); } sync(); save(); }
+    for (const w of wins) {
+      const s = saved[w.id] || defaults(w);
+      w.hidden = !s.open; w.style.left = s.x + 'px'; w.style.top = s.y + 'px';
+      if (!w.hidden) clamp(w, s.x, s.y);
+      w.addEventListener('pointerdown', () => front(w));
+      w.querySelector('.win-x').addEventListener('click', () => show(w, false));
+      const h = w.querySelector('.win-h');
+      h.addEventListener('pointerdown', e => {
+        if (e.target.closest('button')) return;
+        const ox = e.clientX - w.offsetLeft, oy = e.clientY - w.offsetTop; try { h.setPointerCapture(e.pointerId); } catch (err) {}
+        const mv = ev => clamp(w, ev.clientX - ox, ev.clientY - oy);
+        const up = () => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); save(); };
+        h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+      });
+    }
+    for (const b of tools) b.addEventListener('click', () => { const w = document.getElementById(b.dataset.win); show(w, w.hidden); });
+    addEventListener('resize', () => { for (const w of wins) if (!w.hidden) clamp(w, w.offsetLeft, w.offsetTop); });
+    sync();
+    // standing at an OP: panels, toolbar and the 3D/Map switch step aside; the clock stays
+    let before = null;
+    const right = document.querySelector('.tb-right');
+    function observer(on) {
+      if (on) { before = wins.filter(w => !w.hidden); for (const w of wins) w.hidden = true; right.hidden = true; }
+      else { for (const w of before || []) w.hidden = false; before = null; right.hidden = false; sync(); }
+    }
+    return { observer, show: (id, on) => show(document.getElementById(id), on) };
+  })();
+
   // ---- render loop with label projection
   const v = new THREE.Vector3();
   document.getElementById('loading').hidden = true;
