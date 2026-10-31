@@ -188,6 +188,19 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .win-b { display: grid; gap: 10px; padding: 12px 14px; overflow-y: auto; }
 .fsec.first { border-top: none; padding-top: 0; }
 .win .vs { border-top: 1px solid var(--line); }
+/* ---- OPFOR panel ---- */
+.glist { display: grid; gap: 4px; }
+.grow { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "n t" "s s"; gap: 1px 8px; text-align: left; padding: 5px 8px; }
+.grow.on { border-color: var(--enemy); background: rgba(255, 106, 85, .08); }
+.grow .gn { grid-area: n; color: var(--enemy); font: 600 13px var(--font-head); letter-spacing: .05em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grow .gt { grid-area: t; color: var(--dim); font-size: 11px; }
+.grow .gs { grid-area: s; color: var(--ink); font-size: 11.5px; }
+.oped { display: grid; gap: 7px; border-top: 1px solid var(--line); padding-top: 10px; }
+.oped[hidden] { display: none; }
+.units { display: grid; gap: 4px; }
+.mini { font-size: 12px; color: var(--dim); display: inline-flex; gap: 4px; align-items: center; }
+#oplabels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.tag.oplab { transform: translate(-50%, -100%); }
 
 /* hosted on thefireslab.com: link home and an in-progress flag */
 a.tb-name { color: inherit; text-decoration: none; }
@@ -224,6 +237,7 @@ a.tb-name:hover { color: var(--brass); }
       <button data-win="w-display" aria-pressed="false">Display</button>
       <button data-win="w-ops" aria-pressed="false">OPs &amp; Viewshed</button>
       <button data-win="w-fires" aria-pressed="false">Fires</button>
+      <button data-win="w-opfor" aria-pressed="false">OPFOR</button>
     </nav>
   </div>
 </header>
@@ -292,6 +306,17 @@ a.tb-name:hover { color: var(--brass); }
       <div class="flog" id="flog"><div><span class="t">—</span><span>No missions yet.</span></div></div>
     </div>
     <p class="hint">Unit figures (range, time of flight, dispersion, rate) are unclassified placeholders until replaced with real values. Trajectories are drawn for the eye, not ballistic.</p>
+  </div>
+</section>
+
+<section class="win" id="w-opfor" aria-label="OPFOR editor" hidden>
+  <header class="win-h"><h2>OPFOR</h2><button class="win-x" aria-label="Close OPFOR">×</button></header>
+  <div class="win-b">
+    <div class="row"><select id="op-newtype" aria-label="Type for the new group"></select><button id="op-new">+ New group</button></div>
+    <div class="glist" id="op-list"></div>
+    <div class="oped" id="op-ed" hidden></div>
+    <div class="row"><button id="op-clearall">Remove all</button></div>
+    <p class="hint">Vehicle sizes and speeds are rough placeholders. Saved in this browser only for now; scenario files come next. No damage yet.</p>
   </div>
 </section>
 
@@ -995,10 +1020,350 @@ const OCEAN="rgb(19,71,106)";</script>
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     drawUnits();
-    return { tick, onExaggeration() { for (const u of units) placeSprite(u); }, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, get simT() { return simT; } } };
+    return { tick, onExaggeration() { for (const u of units) placeSprite(u); }, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
-  window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = FIRES.onExaggeration;
+  window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
+
+  // ---- OPFOR: enemy groups (convoys), drawn routes, ships that carry cargo groups.
+  //      Everything a vehicle does is a pure function of the sim clock, so pause, 5x/10x and
+  //      editing at T+0 all just work. Damage comes later. Vehicle figures are placeholders.
+  const OPFOR = (function () {
+    const $ = id => document.getElementById(id);
+    // L x W x H metres, approximate public figures; speeds km/h; all placeholders to tune
+    const VT = {
+      zbd:  { name: 'ZBD',         L: 9.5, W: 3.4, H: 2.6, amph: true,  land: 40, water: 20, gap: 50 },
+      ztd:  { name: 'ZTD',         L: 9.5, W: 3.4, H: 2.8, amph: true,  land: 40, water: 20, gap: 50 },
+      eng:  { name: 'Engineering', L: 8.0, W: 3.2, H: 3.2, amph: false, land: 30, water: 0,  gap: 50 },
+      fuel: { name: 'Fuel Truck',  L: 9.0, W: 2.5, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },
+      lcu:  { name: 'LCU',         L: 41,  W: 9,   H: 5,   ship: true,  land: 0,  water: 18, gap: 150, draft: 1.5, unload: 120 },
+      roro: { name: 'RoRo',        L: 150, W: 25,  H: 22,  ship: true,  land: 0,  water: 25, gap: 500, draft: 6,   unload: 600 }
+    };
+    const LAND = ['zbd', 'ztd', 'eng', 'fuel'], SHIPS = ['lcu', 'roro'];
+    const KEY = 'fist-trainer-opfor-v1';
+    let groups = [], sel = null, editing = false, nextId = 1, selPt = -1;
+    const simT = () => FIRES.debug.simT;
+    const fmt = s => { s = Math.max(0, Math.round(s)); return 'T+' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+    const parseT = v => { const m = String(v).trim().replace(/^T\+/i, '').match(/^(\d+)(?::(\d{1,2}))?$/); return m ? (+m[1]) * 60 + (m[2] !== undefined ? +m[2] : 0) : null; };
+    function waterAt(x, z) {
+      const c = Math.round((x + HW) / CELL - 0.5), r = Math.round((z + HH) / CELL - 0.5);
+      if (c < 0 || r < 0 || c >= NX || r >= NY) return true;
+      return dm[r * NX + c] < 0 || H[r * NX + c] < 0.3;
+    }
+    const isShip = g => g.units.length > 0 && !!VT[g.units[0].type].ship;
+    const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
+
+    // ---- persistence (this browser only; scenario files come later)
+    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload })) })); } catch (e) {} }
+    function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
+
+    // ---- motion profile: arc length vs time along the route, speed by land or water
+    function profile(g) {
+      const pts = g.route.map(p => toLocal(p.e, p.n));
+      const S = [0], T = [0], X = [], Z = [];
+      if (pts.length < 2) { g.prof = null; return; }
+      const ship = isShip(g), step = 5;
+      let s = 0, t = 0;
+      X.push(pts[0].x); Z.push(pts[0].z);
+      for (let k = 1; k < pts.length; k++) {
+        const a = pts[k - 1], b = pts[k], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(L / step));
+        for (let j = 1; j <= n; j++) {
+          const x = a.x + (b.x - a.x) * j / n, z = a.z + (b.z - a.z) * j / n, ds = L / n;
+          const wet = waterAt(x, z), kmh = ship ? g.water : (wet ? (g.water || g.land) : g.land);
+          s += ds; t += ds / Math.max(0.5, kmh / 3.6);
+          S.push(s); T.push(t); X.push(x); Z.push(z);
+        }
+      }
+      g.prof = { S, T, X, Z, len: s, dur: t };
+    }
+    // when the group's lead starts moving (cargo: after its carrier arrives and unloads)
+    function startOf(g, depth = 0) {
+      const c = carrierOf(g);
+      if (!c || depth > 5) return g.start;
+      const cs = startOf(c, depth + 1);
+      if (cs === null || !c.prof) return null;
+      return cs + c.prof.dur + (c.unload || 0) + g.start;
+    }
+    function sAt(g, t) {                       // lead's arc length at time t (may be < 0 before start)
+      const st = startOf(g); if (st === null || !g.prof) return null;
+      const dt = t - st, P = g.prof;
+      if (dt <= 0) return dt * 0;              // waiting at the start point
+      if (dt >= P.dur) return P.len;
+      let lo = 0, hi = P.T.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P.T[m] <= dt) lo = m; else hi = m; }
+      const f = (dt - P.T[lo]) / (P.T[hi] - P.T[lo] || 1);
+      return P.S[lo] + (P.S[hi] - P.S[lo]) * f;
+    }
+    function posAt(g, s) {                     // point and heading at arc length s; behind the start, extend backwards
+      const P = g.prof;
+      if (s <= 0) {
+        const dx = P.X[1] - P.X[0], dz = P.Z[1] - P.Z[0], L = Math.hypot(dx, dz) || 1;
+        return { x: P.X[0] + dx / L * s, z: P.Z[0] + dz / L * s, hd: Math.atan2(dx, dz) };
+      }
+      let lo = 0, hi = P.S.length - 1;
+      if (s >= P.len) lo = hi - 1;
+      else while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P.S[m] <= s) lo = m; else hi = m; }
+      const f = Math.min(1, (s - P.S[lo]) / (P.S[hi] - P.S[lo] || 1));
+      const dx = P.X[hi] - P.X[lo], dz = P.Z[hi] - P.Z[lo];
+      return { x: P.X[lo] + dx * f, z: P.Z[lo] + dz * f, hd: Math.atan2(dx, dz) };
+    }
+    function vehicles(g) { const out = []; for (const u of g.units) for (let i = 0; i < u.n; i++) out.push(u.type); return out; }
+
+    // ---- 3D: one box per vehicle, a hostile diamond and label per group, draped route lines
+    const root = new THREE.Group(); scene.add(root);
+    const lines = new THREE.Group(); scene.add(lines);
+    const handles = new THREE.Group(); scene.add(handles);
+    const boxGeo = {}, boxMat = {};
+    for (const k of Object.keys(VT)) {
+      boxGeo[k] = new THREE.BoxGeometry(VT[k].W, VT[k].H, VT[k].L);
+      boxMat[k] = new THREE.MeshLambertMaterial({ color: VT[k].ship ? 0x7a2a22 : 0xc8402c });
+    }
+    const diamondTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+      x.translate(32, 32); x.rotate(Math.PI / 4); x.fillStyle = 'rgba(255,106,85,.9)'; x.strokeStyle = '#2a0b07'; x.lineWidth = 4;
+      x.fillRect(-17, -17, 34, 34); x.strokeRect(-17, -17, 34, 34); return new THREE.CanvasTexture(c); })();
+    const handleTex = (fill) => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d');
+      x.fillStyle = fill; x.strokeStyle = '#11140f'; x.lineWidth = 4; x.fillRect(5, 5, 22, 22); x.strokeRect(5, 5, 22, 22); return new THREE.CanvasTexture(c); };
+    const hTexPt = handleTex('#d6b25a'), hTexSel = handleTex('#ffffff'), hTexMid = handleTex('rgba(214,178,90,.35)');
+    const labelLayer = document.createElement('div'); labelLayer.id = 'oplabels'; document.body.insertBefore(labelLayer, document.getElementById('labels'));
+    const view = { g: new Map() };            // group id -> { meshes, sym, label }
+
+    function rebuildViews() {
+      for (const [, v] of view.g) { for (const m of v.meshes) root.remove(m); root.remove(v.sym); v.label.remove(); }
+      view.g.clear();
+      for (const g of groups) {
+        const meshes = vehicles(g).map(t => { const m = new THREE.Mesh(boxGeo[t], boxMat[t]); m.userData.t = t; m.visible = false; root.add(m); return m; });
+        const sym = new THREE.Sprite(new THREE.SpriteMaterial({ map: diamondTex, depthTest: false, transparent: true, sizeAttenuation: false }));
+        sym.scale.set(0.028, 0.028, 1); sym.renderOrder = 20; sym.visible = false; root.add(sym);
+        const label = document.createElement('div'); label.className = 'tag rt oplab'; label.textContent = g.name; labelLayer.appendChild(label);
+        view.g.set(g.id, { meshes, sym, label });
+      }
+    }
+    function drape(pts, lift) {
+      const out = [];
+      for (let k = 1; k < pts.length; k++) {
+        const a = pts[k - 1], b = pts[k], n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 25));
+        for (let j = (k === 1 ? 0 : 1); j <= n; j++) { const x = a.x + (b.x - a.x) * j / n, z = a.z + (b.z - a.z) * j / n; out.push(new THREE.Vector3(x, heightAt(x, z) * ex + lift, z)); }
+      }
+      return out;
+    }
+    function rebuildLines() {
+      lines.clear(); handles.clear();
+      for (const g of groups) {
+        if (g.route.length < 2) continue;
+        const on = sel && sel.id === g.id;
+        const pts = drape(g.route.map(p => toLocal(p.e, p.n)), 4);
+        const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineDashedMaterial({ color: on ? 0xd6b25a : 0xff6a55, dashSize: 60, gapSize: 40, transparent: true, opacity: on ? 1 : 0.7, depthTest: false }));
+        l.computeLineDistances(); l.renderOrder = 15; lines.add(l);
+      }
+      if (sel && editing) {
+        const pts = sel.route.map(p => toLocal(p.e, p.n));
+        pts.forEach((p, i) => addHandle(p, i === selPt ? hTexSel : hTexPt, { i }));
+        for (let i = 1; i < pts.length; i++) addHandle({ x: (pts[i - 1].x + pts[i].x) / 2, z: (pts[i - 1].z + pts[i].z) / 2 }, hTexMid, { i: i - 1, mid: true });
+      }
+    }
+    function addHandle(p, tex, data) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true, sizeAttenuation: false }));
+      const big = !data.mid; s.scale.set(big ? 0.016 : 0.011, big ? 0.016 : 0.011, 1);
+      s.position.set(p.x, heightAt(p.x, p.z) * ex + 6, p.z); s.renderOrder = 25; s.userData = data; handles.add(s);
+    }
+    function refresh() { for (const g of groups) profile(g); rebuildViews(); rebuildLines(); renderList(); renderEditor(); save(); }
+
+    // ---- per-frame placement
+    const pv = new THREE.Vector3();
+    function status(g) {
+      if (!g.prof) return 'No route';
+      const st = startOf(g), t = simT();
+      if (st === null) return 'Waiting for carrier route';
+      const c = carrierOf(g);
+      if (c && t < st - g.start) return t < st - g.start - (c.unload || 0) ? 'Aboard ' + c.name : 'Unloading';
+      if (t < st || (t === st && t === 0)) return 'Starts ' + fmt(st);
+      const s = sAt(g, t);
+      return s >= g.prof.len ? 'Halted at end' : 'Moving ' + (s / 1000).toFixed(1) + ' / ' + (g.prof.len / 1000).toFixed(1) + ' km';
+    }
+    function tick() {
+      const t = simT(), w = canvas.clientWidth, h = canvas.clientHeight;
+      for (const g of groups) {
+        const v = view.g.get(g.id); if (!v) continue;
+        const cargo = !!g.carrier, st0 = startOf(g), aboard = cargo && (st0 === null || t < st0);
+        const s0 = aboard ? null : sAt(g, t);
+        let leadPos = null, gap = g.gap;
+        v.meshes.forEach((m, i) => {
+          if (s0 === null) { m.visible = false; return; }
+          const s = s0 - i * gap;
+          if (cargo && s < 0) { m.visible = false; return; }       // still aboard
+          const p = posAt(g, s), T = VT[m.userData.t];
+          const ground = waterAt(p.x, p.z) ? 0 : heightAt(p.x, p.z) * ex;
+          m.position.set(p.x, ground + T.H / 2 - (T.draft || 0), p.z); m.rotation.y = p.hd; m.visible = true;
+          if (!leadPos) leadPos = m.position;
+        });
+        const showSym = !!leadPos && !obs;
+        v.sym.visible = showSym;
+        if (showSym) v.sym.position.set(leadPos.x, leadPos.y + 30, leadPos.z);
+        let showLab = showSym && !labelHidden();
+        if (showLab) { pv.copy(v.sym.position).project(camera); showLab = pv.z < 1 && Math.abs(pv.x) < 1.1 && Math.abs(pv.y) < 1.1;
+          if (showLab) { v.label.style.left = ((pv.x + 1) / 2 * w) + 'px'; v.label.style.top = ((1 - pv.y) / 2 * h - 14) + 'px'; } }
+        v.label.style.display = showLab ? '' : 'none';
+      }
+      lines.visible = handles.visible = !obs;
+      if (++tickN % 15 === 0) updateStatuses();
+    }
+    let tickN = 0;
+    const labelHidden = () => document.getElementById('tg-labels').getAttribute('aria-pressed') !== 'true';
+
+    // ---- route editing on the map: click to add, drag a square to move, drag a faint square to insert,
+    //      Delete removes the selected point, Enter or Done finishes
+    let drag = null, downAt = null, dragged = false;
+    function hitHandle(e) {
+      const r = canvas.getBoundingClientRect(); let best = null, bd = 11;
+      for (const s of handles.children) {
+        pv.copy(s.position).project(camera); if (pv.z > 1) continue;
+        const x = (pv.x + 1) / 2 * r.width + r.left, y = (1 - pv.y) / 2 * r.height + r.top, d = Math.hypot(x - e.clientX, y - e.clientY);
+        if (d < bd || (best && best.mid && !s.userData.mid && d < 11)) { bd = d; best = s.userData; }
+      }
+      return best;
+    }
+    const toEN = p => ({ e: Math.round(CE + p.x), n: Math.round(CN - p.z) });
+    addEventListener('pointerdown', e => {
+      if (!editing || !sel || e.target !== canvas || e.button !== 0) return;
+      downAt = { x: e.clientX, y: e.clientY }; dragged = false;
+      const h = hitHandle(e); if (!h) return;
+      e.stopPropagation(); e.preventDefault(); controls.enabled = false;
+      if (h.mid) { const a = sel.route[h.i], b = sel.route[h.i + 1]; sel.route.splice(h.i + 1, 0, { e: (a.e + b.e) / 2, n: (a.n + b.n) / 2 }); drag = h.i + 1; }
+      else drag = h.i;
+      selPt = drag; rebuildLines();
+    }, true);
+    addEventListener('pointermove', e => {
+      if (drag === null) return;
+      const p = pick(e.clientX, e.clientY); if (!p) return;
+      sel.route[drag] = toEN(p); dragged = true; profile(sel); rebuildLines();
+    }, true);
+    addEventListener('pointerup', e => {
+      if (drag !== null) { drag = null; controls.enabled = !obs; refresh(); downAt = null; return; }
+      if (!editing || !sel || e.target !== canvas || !downAt) return;
+      const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y); downAt = null;
+      if (moved > 5) return;
+      const p = pick(e.clientX, e.clientY); if (!p) return;
+      sel.route.push(toEN(p)); selPt = sel.route.length - 1; refresh();
+    }, true);
+    canvas.addEventListener('dblclick', () => { if (editing) setEditing(false); });
+    addEventListener('keydown', e => {
+      if (!editing || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      if (e.key === 'Enter' || e.key === 'Escape') { setEditing(false); e.preventDefault(); }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && sel && sel.route.length) {
+        const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1;
+        sel.route.splice(i, 1); selPt = Math.min(i, sel.route.length - 1); refresh(); e.preventDefault();
+      }
+    });
+    function setEditing(on) { editing = on && !!sel; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
+
+    // ---- groups
+    function newGroup(opts) {
+      const type = (opts && opts.type) || 'zbd', T = VT[type];
+      const g = { id: nextId++, name: (opts && opts.name) || (T.name + ' ' + (groups.filter(o => o.units[0] && o.units[0].type === type).length + 1)),
+        units: [{ type, n: T.ship ? 1 : 6 }], route: [], start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
+      if (opts && opts.carrier) { const c = groups.find(o => o.id === opts.carrier); g.carrier = c.id; if (c.route.length) g.route = [{ ...c.route[c.route.length - 1] }]; }
+      groups.push(g); sel = g; refresh(); setEditing(true); return g;
+    }
+    function removeGroup(g) {
+      for (const o of groups) if (o.carrier === g.id) { const st = startOf(o); o.carrier = null; o.start = st === null ? 0 : Math.round(st); }
+      groups = groups.filter(o => o !== g); if (sel === g) sel = null; editing = false; refresh();
+    }
+
+    // ---- panel
+    const list = $('op-list'), ed = $('op-ed');
+    function vtOptions(ship, cur) { return (ship ? SHIPS : LAND).map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${VT[k].name}</option>`).join(''); }
+    function summary(g) { return g.units.map(u => u.n + '× ' + VT[u.type].name).join(', ') || 'no vehicles'; }
+    function renderList() {
+      list.textContent = '';
+      if (!groups.length) { list.innerHTML = '<p class="hint">No enemy yet. Add a group, then click its route on the map.</p>'; return; }
+      const top = groups.filter(g => !g.carrier);
+      const row = (g, depth) => {
+        const b = document.createElement('button'); b.className = 'grow' + (sel === g ? ' on' : ''); b.style.marginLeft = depth * 14 + 'px';
+        b.innerHTML = `<span class="gn"></span><span class="gs"></span><span class="gt" data-st="${g.id}"></span>`;
+        b.querySelector('.gn').textContent = (depth ? '↳ ' : '') + g.name; b.querySelector('.gs').textContent = summary(g);
+        b.addEventListener('click', () => { sel = g; editing = false; selPt = -1; rebuildLines(); renderList(); renderEditor(); });
+        list.appendChild(b);
+        for (const c of groups.filter(o => o.carrier === g.id)) row(c, depth + 1);
+      };
+      for (const g of top) row(g, 0);
+      updateStatuses();
+    }
+    function updateStatuses() { for (const el of list.querySelectorAll('[data-st]')) { const g = groups.find(o => o.id === +el.dataset.st); if (g) el.textContent = status(g); } }
+    function warnings(g) {
+      const out = [];
+      if (!g.units.length) out.push('Add at least one vehicle.');
+      if (g.route.length < 2) out.push(editing ? 'Click on the map to add route points.' : 'No route yet: press Edit route and click on the map.');
+      else {
+        const P = g.prof, ship = isShip(g); let wet = 0, dry = 0;
+        for (let i = 0; i < P.X.length; i++) { if (P.S[i] < 40 || P.S[i] > P.len - 60) continue; if (waterAt(P.X[i], P.Z[i])) wet++; else dry++; }
+        if (ship && dry > 3) out.push('Route crosses land: ships stay on water.');
+        const swimmers = g.units.every(u => VT[u.type].amph);
+        if (!ship && wet > 3 && !swimmers) out.push('Route crosses water: ' + g.units.filter(u => !VT[u.type].amph).map(u => VT[u.type].name).join(', ') + ' cannot swim.');
+      }
+      return out;
+    }
+    function renderEditor() {
+      const g = sel;
+      if (!g) { ed.hidden = true; return; }
+      ed.hidden = false;
+      const ship = isShip(g), c = carrierOf(g), kids = groups.filter(o => o.carrier === g.id);
+      ed.innerHTML = `
+        <div class="row"><span class="lbl">Name</span><input id="op-name" class="grid-in" aria-label="Group name"></div>
+        <div class="units" id="op-units"></div>
+        <div class="row"><button id="op-addunit">+ ${ship ? 'Ship' : 'Vehicle type'}</button></div>
+        ${c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Drives off after it arrives and unloads.</p>
+               <div class="row"><span class="lbl">Delay after unload</span><input id="op-start" style="width:70px" aria-label="Delay after unloading, mm:ss"></div>`
+            : `<div class="row"><span class="lbl">Start</span><input id="op-start" style="width:70px" aria-label="Start time, mm:ss"><span class="hint">mm:ss</span></div>`}
+        <div class="row"><span class="lbl">Speed km/h</span>
+          ${ship ? '' : '<label class="mini">land <input id="op-land" style="width:50px"></label>'}
+          <label class="mini">water <input id="op-water" style="width:50px"></label></div>
+        <div class="row"><span class="lbl">Spacing m</span><input id="op-gap" style="width:60px" aria-label="Spacing in metres"></div>
+        ${ship ? `<div class="row"><span class="lbl">Unload s</span><input id="op-unload" style="width:60px" aria-label="Unloading time in seconds"></div>` : ''}
+        <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
+        <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
+        ${ship ? `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
+                  <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '.' : 'Nothing aboard yet.'}</p>` : ''}
+        <div class="row"><button id="op-del" class="fire-btn">Delete group</button></div>`;
+      $('op-name').value = g.name;
+      $('op-name').addEventListener('change', e => { g.name = e.target.value.trim() || g.name; refresh(); });
+      const ub = $('op-units');
+      g.units.forEach((u, i) => {
+        const r = document.createElement('div'); r.className = 'row';
+        r.innerHTML = `<select aria-label="Type">${vtOptions(ship, u.type)}</select><input type="number" min="1" max="60" value="${u.n}" style="width:56px" aria-label="Count"><button aria-label="Remove">×</button>`;
+        r.querySelector('select').addEventListener('change', e => { u.type = e.target.value; refresh(); });
+        r.querySelector('input').addEventListener('change', e => { u.n = Math.max(1, Math.min(60, Math.round(+e.target.value || 1))); refresh(); });
+        r.querySelector('button').addEventListener('click', () => { g.units.splice(i, 1); refresh(); });
+        ub.appendChild(r);
+      });
+      $('op-addunit').addEventListener('click', () => { g.units.push({ type: ship ? 'lcu' : (g.units[0] ? g.units[0].type : 'zbd'), n: ship ? 1 : 2 }); refresh(); });
+      $('op-start').value = fmt(g.start).slice(2);
+      $('op-start').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(g.start).slice(2); return; } g.start = v; refresh(); });
+      if ($('op-land')) { $('op-land').value = g.land; $('op-land').addEventListener('change', e => { g.land = Math.max(1, +e.target.value || g.land); refresh(); }); }
+      $('op-water').value = g.water; $('op-water').addEventListener('change', e => { g.water = Math.max(0, +e.target.value || 0); refresh(); });
+      $('op-gap').value = g.gap; $('op-gap').addEventListener('change', e => { g.gap = Math.max(5, +e.target.value || g.gap); refresh(); });
+      if ($('op-unload')) { $('op-unload').value = g.unload; $('op-unload').addEventListener('change', e => { g.unload = Math.max(0, +e.target.value || 0); refresh(); }); }
+      $('op-edit').addEventListener('click', () => setEditing(!editing));
+      $('op-clear').addEventListener('click', () => { g.route = c && c.route.length ? [{ ...c.route[c.route.length - 1] }] : []; refresh(); setEditing(true); });
+      if ($('op-cargo')) $('op-cargo').addEventListener('click', () => newGroup({ type: 'fuel', carrier: g.id, name: g.name + ' cargo ' + (kids.length + 1) }));
+      $('op-del').addEventListener('click', e => { if (e.target.dataset.armed) removeGroup(g); else { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm delete'; } });
+      const w = warnings(g), m = $('op-msg');
+      m.textContent = editing ? 'Click the map to add points. Drag a square to move it; drag a faint square to add a bend. Delete removes the white point. Enter or Done to finish.' + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
+                              : w.join(' ') || (g.prof ? `Route ${(g.prof.len / 1000).toFixed(1)} km, about ${Math.round(g.prof.dur / 60)} min for the lead.` : '');
+      if (!editing && w.length) m.className = 'msg bad';
+    }
+    const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    $('op-new').addEventListener('click', () => newGroup({ type: $('op-newtype').value }));
+    $('op-newtype').innerHTML = [...LAND, ...SHIPS].map(k => `<option value="${k}">${VT[k].name}${VT[k].ship ? ' (ship)' : ''}</option>`).join('');
+    $('op-clearall').addEventListener('click', e => {
+      if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm: remove all'; return; }
+      groups = []; sel = null; editing = false; delete e.target.dataset.armed; e.target.textContent = 'Remove all'; refresh();
+    });
+
+    load(); refresh();
+    return { tick, onExaggeration: rebuildLines, debug: { get groups() { return groups; }, VT, waterAt, toLocal, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+  })();
+  window.__opfor = OPFOR.debug;
 
   // ---- banner: keep --tb-h in step with the banner so panels and the observer bar sit below it
   const topbar = document.getElementById('topbar');
@@ -1039,8 +1404,8 @@ const OCEAN="rgb(19,71,106)";</script>
       const W = innerWidth, gap = 16, top = tbH() + 12;
       if (W < 700) return { x: gap, y: top, open: w.id === 'w-ops' };
       if (w.id === 'w-ops') return { x: gap, y: top, open: true };
-      if (w.id === 'w-display') return { x: gap + 336 + 12, y: top, open: false };
-      return { x: W - 336 - gap, y: top, open: true };
+      if (w.id === 'w-fires') return { x: W - 336 - gap, y: top, open: true };
+      return { x: gap + 336 + 12, y: top, open: false };   // Display, OPFOR and later panels open beside OPs
     }
     function clamp(w, x, y) {
       const minY = tbH() + 4, maxX = innerWidth - 60, maxY = innerHeight - 44;
@@ -1085,6 +1450,7 @@ const OCEAN="rgb(19,71,106)";</script>
   (function loop(now) {
     now = now || performance.now(); const dt = Math.min(0.25, (now - lastT) / 1000); lastT = now;
     FIRES.tick(dt);
+    OPFOR.tick();
     if (!obs) controls.update(); renderer.render(scene, camera);
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
