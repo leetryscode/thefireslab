@@ -224,7 +224,7 @@ a.tb-name:hover { color: var(--brass); }
 <div id="obsbar" hidden role="region" aria-label="Observer">
   <span class="where" id="obswhere">OP</span>
   <button id="bino" aria-pressed="false">Binoculars (B)</button>
-  <button id="ovl" aria-pressed="false">Sketch overlay</button>
+  <button id="ovl" aria-pressed="false">Friendly overlay</button>
   <button id="obsexit">Back to map (Esc)</button>
 </div>
 
@@ -253,14 +253,14 @@ a.tb-name:hover { color: var(--brass); }
   <div class="win-b">
     <div class="key">
       <span><i class="sw" style="background:var(--friend)"></i>Friendly position</span>
-      <span><i class="sw" style="background:var(--enemy)"></i>Enemy route</span>
-      <span><i class="sw" style="background:#cfd6c4"></i>Battlespace border</span>
+      <span><i class="sw" style="background:var(--enemy)"></i>OPFOR route</span>
     </div>
     <div class="row"><span class="lbl">Ground</span><button id="gr-photo" aria-pressed="true">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
     <div class="row"><span class="lbl">Exaggeration</span>
       <button id="ex1" aria-pressed="true">1×</button><button id="ex2" aria-pressed="false">2×</button><button id="ex3" aria-pressed="false">3×</button></div>
     <div class="row"><span class="lbl">Layers</span>
-      <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true">Sketch</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
+      <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true">Friendly</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
+    <div class="row"><span class="lbl">Enemy</span><button id="tg-enemy" aria-pressed="true">Enemy</button><button id="tg-eroutes" aria-pressed="true">Enemy routes</button></div>
     <div class="row"><span class="lbl">Artillery</span><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
     <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N. No 3D buildings or trees yet.</p>
     <p class="hint">3D: drag to orbit, right-drag to pan, scroll to zoom. Map: drag to pan, scroll to zoom.</p>
@@ -439,23 +439,7 @@ const OCEAN="rgb(19,71,106)";</script>
   function tag(text, cls, v) { const d = document.createElement('div'); d.className = 'tag ' + cls; d.textContent = text; labelBox.appendChild(d); tags.push({ d, v }); }
   function buildSketch() {
     clear(groups.sketch); labelBox.textContent = ''; tags.length = 0;
-    // border
-    const bpts = SKETCH.border.map(p => toLocal(p[0], p[1]));
-    const bl = new THREE.Line(new THREE.BufferGeometry().setFromPoints(drape(bpts, 12, 20)),
-      new THREE.LineDashedMaterial({ color: 0xcfd6c4, dashSize: 120, gapSize: 70 }));
-    bl.computeLineDistances(); groups.sketch.add(bl);
-    // enemy routes with an arrowhead at the end
-    for (const r of SKETCH.routes) {
-      const p = r.pts.map(q => toLocal(q[0], q[1]));
-      const v = drape(p, 10, 15);
-      groups.sketch.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(v), new THREE.LineBasicMaterial({ color: 0xff6a55 })));
-      const a = v[v.length - 1], b = v[Math.max(0, v.length - 8)];
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(45, 140, 12), new THREE.MeshBasicMaterial({ color: 0xff6a55 }));
-      cone.position.copy(a);
-      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), a.clone().sub(b).normalize());
-      groups.sketch.add(cone);
-      tag(r.name, 'rt', v[Math.floor(v.length * 0.45)].clone().add(new THREE.Vector3(0, 30, 0)));
-    }
+    // Lee's KML routes and border are retired (2026-10-31); only the friendly positions are drawn
     // friendly positions: a pole and a ball
     for (const o of SKETCH.ops) {
       const p = toLocal(o.e, o.n), g = heightAt(p.x, p.z) * ex;
@@ -577,7 +561,9 @@ const OCEAN="rgb(19,71,106)";</script>
   function coverage() {
     covEl.textContent = '';
     if (!VS.op) return;
-    for (const rt of SKETCH.routes) {
+    const enemy = (window.__opfor ? window.__opfor.groups : []).map(g => ({ name: g.name, pts: window.__opfor.fullRoute(g).map(q => [q.e, q.n]) })).filter(r => r.pts.length >= 2);
+    if (!enemy.length) { const p0 = document.createElement('p'); p0.className = 'hint'; p0.textContent = 'No enemy routes yet: draw OPFOR groups to see how much of each route ' + VS.op.name + ' can see.'; covEl.appendChild(p0); return; }
+    for (const rt of enemy) {
       let seen = 0, total = 0;
       const p = rt.pts.map(q => toLocal(q[0], q[1]));
       for (let k = 0; k < p.length - 1; k++) {
@@ -596,7 +582,7 @@ const OCEAN="rgb(19,71,106)";</script>
       row.append(nm, bar, pcs); covEl.appendChild(row);
     }
     const cap = document.createElement('p'); cap.className = 'hint'; cap.style.margin = '2px 0 0';
-    cap.textContent = 'Share of each enemy route, within range, where a vehicle is visible from ' + VS.op.name + '.';
+    cap.textContent = 'Share of each OPFOR route, within range, where a vehicle is visible from ' + VS.op.name + '.';
     covEl.appendChild(cap);
   }
   function runViewshed() {
@@ -772,7 +758,9 @@ const OCEAN="rgb(19,71,106)";</script>
   gp.addEventListener('click', () => { ground.material = photoMat; gp.setAttribute('aria-pressed', 'true'); gr.setAttribute('aria-pressed', 'false'); });
   gr.addEventListener('click', () => { ground.material = reliefMat; gr.setAttribute('aria-pressed', 'true'); gp.setAttribute('aria-pressed', 'false'); });
   toggle('tg-grid', on => { groups.grid.visible = on; });
-  toggle('tg-sketch', on => { groups.sketch.visible = on; labelBox.hidden = !(on && showLabels); });
+  toggle('tg-enemy', on => { if (window.__opfor) window.__opfor.showEnemy = on; });
+  toggle('tg-eroutes', on => { if (window.__opfor) window.__opfor.showRoutes = on; });
+  toggle('tg-sketch', on => { groups.sketch.visible = on; labelBox.hidden = !(on && showLabels); if (window.__fires) window.__fires.unitGroup.visible = on; });
   toggle('tg-labels', on => { showLabels = on; labelBox.hidden = !(on && groups.sketch.visible); });
 
   // ---- FIRES: instructor firing units, point-and-shoot, bursts and arcs, on one sim clock.
@@ -1026,7 +1014,7 @@ const OCEAN="rgb(19,71,106)";</script>
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     drawUnits();
-    return { tick, onExaggeration() { for (const u of units) placeSprite(u); }, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, onExaggeration() { for (const u of units) placeSprite(u); }, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, unitGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -1047,7 +1035,7 @@ const OCEAN="rgb(19,71,106)";</script>
     };
     const LAND = ['zbd', 'ztd', 'eng', 'fuel'], SHIPS = ['lcu', 'roro'];
     const KEY = 'fist-trainer-opfor-v1';
-    let groups = [], sel = null, editing = false, nextId = 1, selPt = -1;
+    let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true;
     const simT = () => FIRES.debug.simT;
     const fmt = s => { s = Math.max(0, Math.round(s)); return 'T+' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
     const parseT = v => { const m = String(v).trim().replace(/^T\+/i, '').match(/^(\d+)(?::(\d{1,2}))?$/); return m ? (+m[1]) * 60 + (m[2] !== undefined ? +m[2] : 0) : null; };
@@ -1324,7 +1312,7 @@ const OCEAN="rgb(19,71,106)";</script>
           m.position.set(p.x, ground + T.H / 2 - (T.draft || 0), p.z); m.rotation.y = p.hd; m.visible = true;
           if (!leadPos && (!g.parent || s0 >= 0)) leadPos = m.position;
         });
-        const showSym = !!leadPos && !obs;
+        const showSym = !!leadPos && !obs && showEnemy;
         v.sym.visible = showSym;
         if (showSym) v.sym.position.set(leadPos.x, leadPos.y + 30, leadPos.z);
         let showLab = showSym && !labelHidden();
@@ -1332,8 +1320,8 @@ const OCEAN="rgb(19,71,106)";</script>
           if (showLab) { v.label.style.left = ((pv.x + 1) / 2 * w) + 'px'; v.label.style.top = ((1 - pv.y) / 2 * h - 14) + 'px'; } }
         v.label.style.display = showLab ? '' : 'none';
       }
-      lines.visible = handles.visible = !obs;
-      const hideTags = obs || labelHidden();
+      root.visible = showEnemy; lines.visible = !obs && showRoutes; handles.visible = !obs;
+      const hideTags = obs || labelHidden() || !showRoutes;
       for (const h of holdTags) {
         let show = !hideTags; if (show) { pv.copy(h.pos).project(camera); show = pv.z < 1 && Math.abs(pv.x) < 1.1 && Math.abs(pv.y) < 1.1; }
         h.el.style.display = show ? '' : 'none';
@@ -1562,7 +1550,7 @@ const OCEAN="rgb(19,71,106)";</script>
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
