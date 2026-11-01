@@ -120,10 +120,13 @@
   <header class="win-h"><h2>Friendly UAS</h2><button class="win-x" aria-label="Close">×</button></header>
   <div class="win-b">
     <div class="fsec first"><h3>Launch points</h3>
-      <div class="row" id="uas-add"></div>
-      <div class="row"><input class="grid-in" id="uas-grid" placeholder="grid, e.g. 4Q FJ 12345 67890"><button id="uas-place">Place</button></div>
-      <p class="msg" id="uas-msg"></p>
       <div class="ulist" id="uas-lps"></div>
+      <p class="msg" id="uas-lmsg"></p>
+      <details class="custom-lp"><summary>Custom launch point</summary>
+        <div class="row" id="uas-add"></div>
+        <div class="row"><input class="grid-in" id="uas-grid" placeholder="grid, e.g. 4Q FJ 12345 67890"><button id="uas-place">Place</button></div>
+        <p class="msg" id="uas-msg"></p>
+      </details>
     </div>
     <div class="fsec"><h3>Drones</h3>
       <p class="msg" id="uas-dmsg"></p>
@@ -146,6 +149,7 @@
 <script src="vendor/three.min.js"></script>
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/fatlines.js"></script>
 <script src="js/trainer.js"></script>
 </body>
 </html>

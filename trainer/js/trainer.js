@@ -64,6 +64,27 @@
   tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); tex.encoding = THREE.sRGBEncoding;
   const photoMat = new THREE.MeshLambertMaterial({ map: tex });
   renderer.outputEncoding = THREE.sRGBEncoding;
+  // Clip the terrain to the NAIP imagery footprint (outside it the photo is only a painted relief fill, and the
+  // seam looked unprofessional). Polygon in photo pixels (4096 x 3412, top = north), traced from the photo's edges.
+  const IMG = [[1457, 0], [2531, 0], [4095, 679], [4095, 2300], [3392, 3411], [3030, 3411], [0, 1692], [0, 1668]];
+  { const cu = IMG.reduce((t, p) => t + p[0], 0) / IMG.length, cv = IMG.reduce((t, p) => t + p[1], 0) / IMG.length;   // pull in ~10 px so no fill shows at the seam
+    for (const p of IMG) { p[0] = cu + (p[0] - cu) * 0.995; p[1] = cv + (p[1] - cv) * 0.995; } }
+  const imgPoly = IMG.map(([u, v]) => ({ x: (u / 4096 - 0.5) * (NX - 1) * CELL, z: (v / 3412 - 0.5) * (NY - 1) * CELL }));
+  function inImagery(x, z) {
+    let inside = false;
+    for (let i = 0, j = imgPoly.length - 1; i < imgPoly.length; j = i++) {
+      const a = imgPoly[i], b = imgPoly[j];
+      if ((a.z > z) !== (b.z > z) && x < (b.x - a.x) * (z - a.z) / (b.z - a.z) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+  const clipTex = (() => {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 853; const g = c.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#fff'; g.beginPath();
+    IMG.forEach(([u, v], i) => g[i ? 'lineTo' : 'moveTo'](u / 4096 * c.width, v / 3412 * c.height)); g.closePath(); g.fill();
+    return new THREE.CanvasTexture(c);
+  })();
+  for (const m of [photoMat, reliefMat]) { m.alphaMap = clipTex; m.alphaTest = 0.5; }
   const ground = new THREE.Mesh(geo, photoMat);
   scene.add(ground);
   // open ocean beyond the data, in the photo's deep-water colour, so the horizon is sea rather than void
@@ -97,30 +118,35 @@
     const pts = [];
     for (let e = Math.ceil(W / 1000) * 1000; e <= W + NX * CELL; e += 1000) {
       const v = drape([toLocal(e, NTOP - 5), toLocal(e, NTOP - NY * CELL + 5)], 4, CELL);
-      for (let k = 0; k < v.length - 1; k++) pts.push(v[k], v[k + 1]);
+      for (let k = 0; k < v.length - 1; k++) if (inImagery((v[k].x + v[k + 1].x) / 2, (v[k].z + v[k + 1].z) / 2)) pts.push(v[k], v[k + 1]);
     }
     for (let n = Math.ceil((NTOP - NY * CELL) / 1000) * 1000; n <= NTOP; n += 1000) {
       const v = drape([toLocal(W + 5, n), toLocal(W + NX * CELL - 5, n)], 4, CELL);
-      for (let k = 0; k < v.length - 1; k++) pts.push(v[k], v[k + 1]);
+      for (let k = 0; k < v.length - 1; k++) if (inImagery((v[k].x + v[k + 1].x) / 2, (v[k].z + v[k + 1].z) / 2)) pts.push(v[k], v[k + 1]);
     }
     groups.grid.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),
       new THREE.LineBasicMaterial({ color: 0xd6b25a, transparent: true, opacity: 0.45 })));
   }
 
+  const opTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    g.lineJoin = 'round'; g.beginPath(); g.moveTo(64, 14); g.lineTo(116, 106); g.lineTo(12, 106); g.closePath();
+    g.lineWidth = 18; g.strokeStyle = '#0b1a2a'; g.stroke(); g.lineWidth = 10; g.strokeStyle = '#6fb4ff'; g.stroke();
+    g.beginPath(); g.arc(64, 74, 10, 0, Math.PI * 2); g.fillStyle = '#6fb4ff'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#0b1a2a'; g.stroke();
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  })();
   const tags = [];
   const labelBox = document.getElementById('labels');
   function tag(text, cls, v) { const d = document.createElement('div'); d.className = 'tag ' + cls; d.textContent = text; labelBox.appendChild(d); tags.push({ d, v }); }
   function buildSketch() {
     clear(groups.sketch); labelBox.textContent = ''; tags.length = 0;
     // Lee's KML routes and border are retired (2026-10-31); only the friendly positions are drawn
-    // friendly positions: a pole and a ball
+    // friendly positions: the observation-post symbol (triangle with a centre dot), screen-sized
     for (const o of SKETCH.ops) {
       const p = toLocal(o.e, o.n), g = heightAt(p.x, p.z) * ex;
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 90, 8), new THREE.MeshBasicMaterial({ color: 0x6fb4ff }));
-      pole.position.set(p.x, g + 45, p.z); groups.sketch.add(pole);
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12), new THREE.MeshBasicMaterial({ color: 0x6fb4ff }));
-      ball.position.set(p.x, g + 100, p.z); groups.sketch.add(ball);
-      tag(o.name, 'op', new THREE.Vector3(p.x, g + 120, p.z));
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: opTex, depthTest: false, transparent: true, sizeAttenuation: false }));
+      s.scale.set(0.028, 0.028, 1); s.center.set(0.5, 0.15); s.renderOrder = 12; s.position.set(p.x, g + 2, p.z); groups.sketch.add(s);
+      tag(o.name, 'op', new THREE.Vector3(p.x, g + 2, p.z));
     }
     labelBox.hidden = !(showLabels && groups.sketch.visible);
   }
@@ -159,7 +185,20 @@
   });
   document.getElementById('home').addEventListener('click', () => { if (obs) leaveObserver(); home(); });
 
-  function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  // thick screen-space lines (vendor/fatlines.js): plain WebGL lines are always 1 px, too faint on the imagery
+  const fatMats = new Set();
+  function fatMat(color, width, o) {
+    const m = new THREE.LineMaterial(Object.assign({ color, linewidth: width, transparent: true, depthTest: false }, o || {}));
+    if (o && o.dashed) { m.defines.USE_DASH = ''; m.needsUpdate = true; }   // r128 needs the define set by hand
+    m.resolution.set(innerWidth, innerHeight); fatMats.add(m); return m;
+  }
+  function fatLine(pts, mat, loop) {
+    const a = []; for (const p of loop ? [...pts, pts[0]] : pts) a.push(p.x, p.y, p.z);
+    const g = new THREE.LineGeometry(); g.setPositions(a);
+    const l = new THREE.Line2(g, mat); l.computeLineDistances(); return l;
+  }
+  function dropFat(o) { if (!o) return; o.parent && o.parent.remove(o); o.geometry && o.geometry.dispose(); if (o.material) { fatMats.delete(o.material); o.material.dispose(); } }
+  function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); for (const m of fatMats) m.resolution.set(w, h); }
   addEventListener('resize', resize); resize();
 
 
@@ -170,7 +209,7 @@
   const vsCanvas = document.createElement('canvas'); vsCanvas.width = NX; vsCanvas.height = NY;
   const vsCtx = vsCanvas.getContext('2d'), vsImg = vsCtx.createImageData(NX, NY);
   const vsTex = new THREE.CanvasTexture(vsCanvas); vsTex.magFilter = THREE.NearestFilter;
-  const vsMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: vsTex, transparent: true, depthWrite: false,
+  const vsMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: vsTex, alphaMap: clipTex, alphaTest: 0.5, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   vsMesh.visible = false; scene.add(vsMesh);
   const R_EARTH = 6371000, K_REFR = 0.13, NEAR = 60;
@@ -465,7 +504,7 @@
     }
     function parseGrid(str) {
       let s = String(str || '').toUpperCase().replace(/\s+/g, '');
-      s = s.replace(/^4Q/, '');
+      s = s.replace(/^0?4Q/, '');
       let sq = 'FJ';
       const m = s.match(/^([A-H])([A-HJ-NP-V])(\d+)$/);
       if (m) { sq = m[1] + m[2]; s = m[3]; }
@@ -903,7 +942,7 @@
       x.fillStyle = '#d6b25a'; x.fillRect(19, 15, 4, 18); x.fillRect(26, 15, 4, 18); return new THREE.CanvasTexture(c); })();
     let holdTags = [];
     function rebuildLines() {
-      lines.clear(); handles.clear(); for (const h of holdTags) h.el.remove(); holdTags = [];
+      for (const o of [...lines.children]) if (o.isLine2) dropFat(o); lines.clear(); handles.clear(); for (const h of holdTags) h.el.remove(); holdTags = [];
       for (const g of groups) {
         if (g.route.length < 2) continue;
         const on = sel && sel.id === g.id;
@@ -915,9 +954,8 @@
           holdTags.push({ el, pos: s.position });
         });
         const pts = drape(g.route.map(p => toLocal(p.e, p.n)), 4);
-        const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-          new THREE.LineDashedMaterial({ color: on ? 0xd6b25a : 0xff6a55, dashSize: 60, gapSize: 40, transparent: true, opacity: on ? 1 : 0.7, depthTest: false }));
-        l.computeLineDistances(); l.renderOrder = 15; lines.add(l);
+        const l = fatLine(pts, fatMat(on ? 0xd6b25a : 0xff6a55, on ? 4 : 3, { dashed: true, dashSize: 60, gapSize: 40, opacity: on ? 1 : 0.9 }));
+        l.renderOrder = 15; lines.add(l);
       }
       if (sel && editing) {
         if (joinPick) {
@@ -1258,12 +1296,16 @@
       sb:     { res: 0.35, noise: 0.16, blur: 0.9, fovMin: 5,   fovMax: 45, drop: 0.03 }
     };
     // Variants. Published where noted (see project doc claude/trainer-owa-uas.md); the rest are estimates.
-    //  speed/dive m/s, endur s, alt m above ground, r orbit radius m, turn deg/s, burst = blast size, rounds per launch point.
+    //  speed = transit m/s, loiter = speed once on station (max-endurance), dive m/s, endur s, alt m above ground,
+    //  r orbit radius m, turn deg/s, burst = blast size, rounds per launch point.
+    //  Altius: Anduril publishes no speeds; transit 33 / loiter 22 m/s are estimates (the older Altius-600 is quoted at
+    //  60 km/h cruise, 90 km/h max). Altius height 610 m = Lee's ~2,000 ft AGL assumption. Switchblade 200 m = its
+    //  published 650 ft AGL operating height; its published loiter speed is 113 km/h (31 m/s).
     const S600 = [1.24, 0.6, 0.53];      // the model is an Altius-700; the 600s are ~1.0 m long, ~2.54 m span
     const TYPES = {
-      altius_isr:  { fam: 'altius', label: 'Altius ISR',  short: 'ISR',  model: 'data/m08.bin', scale: S600, speed: 35, dive: 0,  endur: 3.5 * 3600, alt: 900, r: 1000, turn: 12, cam: 'isr',    burst: 0,    rounds: 4, recover: true },
-      altius_600m: { fam: 'altius', label: 'Altius 600M', short: '600M', model: 'data/m08.bin', scale: S600, speed: 35, dive: 60, endur: 90 * 60,    alt: 600, r: 700,  turn: 12, cam: 'attack', burst: 0.45, rounds: 6 },
-      altius_700m: { fam: 'altius', label: 'Altius 700M', short: '700M', model: 'data/m08.bin', scale: null, speed: 35, dive: 65, endur: 75 * 60,    alt: 600, r: 700,  turn: 10, cam: 'attack', burst: 0.85, rounds: 4 },
+      altius_isr:  { fam: 'altius', label: 'Altius ISR',  short: 'ISR',  model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 0,  endur: 3.5 * 3600, alt: 610, r: 1000, turn: 12, cam: 'isr',    burst: 0,    rounds: 4, recover: true },
+      altius_600m: { fam: 'altius', label: 'Altius 600M', short: '600M', model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 60, endur: 90 * 60,    alt: 610, r: 700,  turn: 12, cam: 'attack', burst: 0.45, rounds: 6 },
+      altius_700m: { fam: 'altius', label: 'Altius 700M', short: '700M', model: 'data/m08.bin', scale: null, speed: 33, loiter: 22, dive: 65, endur: 75 * 60,    alt: 610, r: 700,  turn: 10, cam: 'attack', burst: 0.85, rounds: 4 },
       switchblade: { fam: 'switchblade', label: 'Switchblade', short: 'SB', model: 'data/m09.bin', scale: null, speed: 31, dive: 51, endur: 40 * 60, alt: 200, r: 350, turn: 18, cam: 'sb', burst: 0.6, rounds: 6, waveoff: true },
       lucas:       { fam: 'lucas', label: 'LUCAS', short: 'LUCAS', model: 'data/m10.bin', scale: null, speed: 51, dive: 60, endur: 6 * 3600, alt: 1000, r: 0, turn: 8, cam: null, burst: 0.9, rounds: 4, gps: true }
     };
@@ -1301,14 +1343,18 @@
     }
     function sprite(label, lp) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: symTex(label, lp), depthTest: false, transparent: true, sizeAttenuation: false }));
-      s.scale.set(0.12, 0.06, 1); s.renderOrder = 12; ui.add(s); return s;
+      s.scale.set(lp ? 0.085 : 0.075, lp ? 0.0425 : 0.0375, 1); s.renderOrder = 12; ui.add(s); return s;
     }
-    const lineMat = c => new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 1, depthTest: false });
-    function polyline(pts, color, loop) {
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      const l = new (loop ? THREE.LineLoop : THREE.Line)(geo, lineMat(color)); l.renderOrder = 11; ui.add(l); return l;
+    // overlays: thick lines (friendly blue for flight paths, gold for the camera), all hidden from the feeds
+    function polyline(pts, color, loop, width, o) { const l = fatLine(pts, fatMat(color, width || 3, o), loop); l.renderOrder = 11; ui.add(l); return l; }
+    function setLine(l, pts, loop) { const a = []; for (const p of loop ? [...pts, pts[0]] : pts) a.push(p.x, p.y, p.z); l.geometry.dispose(); l.geometry = new THREE.LineGeometry(); l.geometry.setPositions(a); l.computeLineDistances(); }
+    function dropObj(o) { if (!o) return; if (o.isLine2) return dropFat(o); ui.remove(o); models.remove(o); o.geometry && o.geometry.dispose(); o.material && o.material.dispose && o.material.dispose(); }
+    function footFill() {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); g.setIndex([0, 1, 2, 0, 2, 3]);
+      const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xd6b25a, transparent: true, opacity: 0.18, depthTest: false, depthWrite: false, side: THREE.DoubleSide }));
+      m.renderOrder = 10; m.frustumCulled = false; ui.add(m); return m;
     }
-    function dropObj(o) { if (!o) return; ui.remove(o); models.remove(o); o.geometry && o.geometry.dispose(); o.material && o.material.dispose && o.material.dispose(); }
+    const FT = 0.3048, ft = m => Math.round(m / FT / 100) * 100, ftStr = m => ft(m).toLocaleString('en-US') + ' ft';
 
     // ---- ground hits: march a ray to the terrain (same idea as the map pick)
     function rayGround(o, d, maxT, step) {
@@ -1330,10 +1376,10 @@
     // ---- launch points: one per family; holds rounds of each variant in that family
     function addLP(fam, x, z, name, rounds) {
       const n = lps.filter(l => l.fam === fam).length + 1;
-      const lp = { id: nextId++, fam, name: name || (FAMS[fam] + ' LP' + (n > 1 ? ' ' + n : '')), x, z, rounds: {} };
+      const lp = { id: nextId++, fam, name: name || (FAMS[fam] + (n > 1 ? ' ' + n : '')), x, z, rounds: {} };
       for (const k of famTypes(fam)) lp.rounds[k] = rounds && rounds[k] != null ? rounds[k] : TYPES[k].rounds;
       lp.sprite = sprite(lp.name, true); lp.sprite.position.set(x, gy(x, z) + 40, z);
-      lps.push(lp); FIRES.log('Placed ' + lp.name + ' at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); draw(); return lp;
+      lps.push(lp); FIRES.log('Placed ' + lp.name + ' launch point at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); draw(); return lp;
     }
     // Scenario file (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n, rounds? }] }
     fetch('data/uas.json').then(r => r.ok ? r.json() : null).then(j => {
@@ -1344,8 +1390,8 @@
     // ---- drones
     function launch(lp, type, target) {
       const T = TYPES[type];
-      if (!(lp.rounds[type] > 0)) return msg('uas-msg', lp.name + ' has no ' + T.label + ' left.', 'bad');
-      if (T.gps && !target) return msg('uas-msg', 'Enter a target grid for ' + T.label + '.', 'bad');
+      if (!(lp.rounds[type] > 0)) return msg('uas-lmsg', lp.name + ' has no ' + T.label + ' left.', 'bad');
+      if (T.gps && !target) return msg('uas-lmsg', 'Enter a target grid for ' + T.label + '.', 'bad');
       lp.rounds[type]--;
       const n = drones.filter(d => d.type === type).length + 1;
       const d = { id: nextId++, type, name: T.label + ' ' + n, lp, t0: simT(), state: 'fly', why: '',
@@ -1368,17 +1414,26 @@
       const div = diveStart(d), cruise = Math.max(0, h - div);
       return cruise / T.speed + Math.hypot(Math.min(h, div), agl) / T.dive;
     }
-    const diveStart = d => Math.max(800, (d.pos.y - gy(d.pos.x, d.pos.z)) * 1.2);
+    const diveStart = d => Math.max(250, (d.pos.y - gy(d.pos.x, d.pos.z)) * 0.45);   // ~65 deg dive from cruise height
     function setTask(d, task) { if (d.state !== 'fly') return; d.task = task; drawTask(d); draw(); }
+    // flight paths are drawn at flight height, with a thin drop line to the ground where it helps
     function drawTask(d) {
-      dropObj(d.taskLine); d.taskLine = null; const k = d.task;
+      dropObj(d.taskLine); dropObj(d.dropLine); d.taskLine = d.dropLine = null; const k = d.task;
       if (d.state !== 'fly') return;
-      if (k.kind === 'orbit') { const pts = []; for (let i = 0; i < 64; i++) { const a = i / 64 * Math.PI * 2, x = k.cx + Math.cos(a) * k.r, z = k.cz + Math.sin(a) * k.r; pts.push(new THREE.Vector3(x, gy(x, z) + 6, z)); } d.taskLine = polyline(pts, 0x8fd0ff, true); }
-      else if (k.kind === 'route') d.taskLine = polyline(k.pts.map(p => new THREE.Vector3(p.x, gy(p.x, p.z) + 6, p.z)), 0x8fd0ff, false);
-      else if (k.kind === 'gps') d.taskLine = polyline([d.pos.clone(), new THREE.Vector3(k.tx, gy(k.tx, k.tz) + 6, k.tz)], 0xd6b25a, false);
-      else if (k.kind === 'recover') d.taskLine = polyline([d.pos.clone(), new THREE.Vector3(d.lp.x, gy(d.lp.x, d.lp.z) + 6, d.lp.z)], 0x8fd0ff, false);
+      const BLUE = 0x6fb4ff;
+      if (k.kind === 'orbit') {
+        const y = gy(k.cx, k.cz) + d.alt, pts = [];
+        for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2; pts.push(new THREE.Vector3(k.cx + Math.cos(a) * k.r, y, k.cz + Math.sin(a) * k.r)); }
+        d.taskLine = polyline(pts, BLUE, true, 3);
+        d.dropLine = polyline([new THREE.Vector3(k.cx, y, k.cz), new THREE.Vector3(k.cx, gy(k.cx, k.cz), k.cz)], BLUE, false, 1.5, { dashed: true, dashSize: 25, gapSize: 25, opacity: 0.8 });
+      } else if (k.kind === 'route') d.taskLine = polyline([d.pos.clone(), ...k.pts.slice(k.i).map(p => new THREE.Vector3(p.x, gy(p.x, p.z) + d.alt, p.z))], BLUE, false, 3);
+      else if (k.kind === 'gps') {
+        const dx = k.tx - d.pos.x, dz = k.tz - d.pos.z, h = Math.hypot(dx, dz), ds = Math.min(h, diveStart(d));
+        const turn = new THREE.Vector3(k.tx - dx / h * ds, d.pos.y, k.tz - dz / h * ds);
+        d.taskLine = polyline([d.pos.clone(), turn, new THREE.Vector3(k.tx, gy(k.tx, k.tz), k.tz)], 0xd6b25a, false, 3);
+      } else if (k.kind === 'recover') d.taskLine = polyline([d.pos.clone(), new THREE.Vector3(d.lp.x, gy(d.lp.x, d.lp.z) + 20, d.lp.z)], BLUE, false, 3, { dashed: true, dashSize: 60, gapSize: 40 });
     }
-    function clearOverlays(d) { dropObj(d.taskLine); dropObj(d.foot); dropObj(d.spiLine); d.taskLine = d.foot = d.spiLine = null; d.obj.visible = false; d.sym.visible = false; }
+    function clearOverlays(d) { dropObj(d.taskLine); dropObj(d.dropLine); dropObj(d.foot); dropObj(d.footFill); dropObj(d.spiLine); d.taskLine = d.dropLine = d.foot = d.footFill = d.spiLine = null; d.obj.visible = false; d.sym.visible = false; }
     function kill(d, why) { d.state = 'dead'; d.why = why; clearOverlays(d); FIRES.log(d.name + ' ' + why); draw(); }
     function land(d) {
       d.state = 'landed'; d.why = 'recovered at ' + d.lp.name; d.landedAt = simT(); clearOverlays(d);
@@ -1422,10 +1477,11 @@
     }
 
     // ---- flight: steered toward a target point, limited turn rate, eased to the set height
-    function steer(d, tx, tz, dt) {
+    function steer(d, tx, tz, dt, spd) {
       const T = TYPES[d.type], want = Math.atan2(tx - d.pos.x, tz - d.pos.z), maxT = T.turn * Math.PI / 180 * dt;
+      spd = spd || T.speed; d.spd = spd;
       d.hdg = wrapPi(d.hdg + clamp(wrapPi(want - d.hdg), -maxT, maxT));
-      d.pos.x += Math.sin(d.hdg) * T.speed * dt; d.pos.z += Math.cos(d.hdg) * T.speed * dt;
+      d.pos.x += Math.sin(d.hdg) * spd * dt; d.pos.z += Math.cos(d.hdg) * spd * dt;
     }
     function step(d, dt) {
       const T = TYPES[d.type];
@@ -1451,7 +1507,7 @@
         const wantY = gy(d.pos.x, d.pos.z) + (h < 1500 ? Math.max(5, h * 0.25) : d.alt);
         d.pos.y += clamp(wantY - d.pos.y, -8 * dt, 8 * dt); return;
       } else {
-        let tx, tz;
+        let tx, tz, spd = T.speed;
         if (k.kind === 'route') {
           const w = k.pts[k.i];
           if (Math.hypot(w.x - d.pos.x, w.z - d.pos.z) < 80) { k.i++; if (k.i >= k.pts.length) { d.task = { kind: 'orbit', cx: w.x, cz: w.z, r: T.r }; drawTask(d); draw(); return step(d, dt); } }
@@ -1460,8 +1516,9 @@
           const ox = d.pos.x - k.cx, oz = d.pos.z - k.cz, D = Math.hypot(ox, oz);
           if (D > k.r * 1.5) { tx = k.cx; tz = k.cz; }
           else { const th = Math.atan2(oz, ox) + 0.45; tx = k.cx + Math.cos(th) * k.r; tz = k.cz + Math.sin(th) * k.r; }
+          if (D <= k.r * 1.3) spd = T.loiter || T.speed;          // on station: slow to max-endurance speed
         }
-        steer(d, tx, tz, dt);
+        steer(d, tx, tz, dt, spd);
       }
       const wantY = gy(d.pos.x, d.pos.z) + d.alt; d.pos.y += clamp(wantY - d.pos.y, -8 * dt, 8 * dt);
     }
@@ -1508,7 +1565,7 @@
         if (d.state !== 'fly') continue;
         d.obj.position.copy(d.pos); d.obj.rotation.set(d.pitch, d.hdg, 0, 'YXZ');
         d.sym.position.set(d.pos.x, d.pos.y + 25, d.pos.z); d.sym.visible = !obs;
-        if (d.task.kind === 'gps' || d.task.kind === 'recover') drawTask(d);
+        if ((d.task.kind === 'gps' || d.task.kind === 'recover' || d.task.kind === 'route') && uiTick % 10 === 0) drawTask(d);
         if (!TYPES[d.type].cam) continue;           // LUCAS: no camera, no footprint
         updateCam(d);
         const pts = [];
@@ -1517,10 +1574,12 @@
           const h = rayGround(rc.ray.origin, rc.ray.direction, 9000, 20);
           pts.push(h ? h.setY(h.y + 4) : rc.ray.origin.clone().addScaledVector(rc.ray.direction, 3000).setY(gy(d.pos.x, d.pos.z) + 4));
         }
-        if (!d.foot) d.foot = polyline(pts, 0xd6b25a, true); else { d.foot.geometry.setFromPoints(pts); d.foot.geometry.computeBoundingSphere(); }
+        if (!d.foot) d.foot = polyline(pts, 0xd6b25a, true, 2); else setLine(d.foot, pts, true);
+        if (!d.footFill) d.footFill = footFill();
+        { const a = d.footFill.geometry.attributes.position; pts.forEach((q, i) => a.setXYZ(i, q.x, q.y, q.z)); a.needsUpdate = true; }
         nv.set(0, 0); rc.setFromCamera(nv, d.cam3); d.spi = rayGround(rc.ray.origin, rc.ray.direction);
         const sp = [d.pos.clone(), d.spi ? d.spi.clone().setY(d.spi.y + 2) : d.pos.clone()];
-        if (!d.spiLine) d.spiLine = polyline(sp, 0xd6b25a, false); else { d.spiLine.geometry.setFromPoints(sp); d.spiLine.geometry.computeBoundingSphere(); }
+        if (!d.spiLine) d.spiLine = polyline(sp, 0xd6b25a, false, 1.5, { dashed: true, dashSize: 30, gapSize: 20 }); else setLine(d.spiLine, sp, false);
       }
       ui.visible = !obs;
       if (++uiTick % 15 === 0 && !$('w-uas').contains(document.activeElement)) draw();   // don't rebuild under a focused input or open select
@@ -1576,7 +1635,9 @@
       const fly = d.state === 'fly', left = Math.max(0, T.endur - (simT() - d.t0)), spi = d.spi;
       doc.getElementById('h-name').textContent = d.name;
       doc.getElementById('h-mode').textContent = !fly ? (d.state === 'dead' ? 'LOST' : 'RECOVERED') : d.task.kind === 'strike' ? 'TERMINAL' : d.task.kind === 'recover' ? 'RTB' : d.cam.mode.toUpperCase();
-      doc.getElementById('h-alt').textContent = fly ? Math.round(d.pos.y - gy(d.pos.x, d.pos.z)) + ' m AGL' : '—';
+      const agl = d.pos.y - gy(d.pos.x, d.pos.z);       // true metres above ground (the scene may be height-exaggerated)
+      doc.getElementById('h-pos').textContent = fly ? gridAt(d.pos.x, d.pos.z) : '—';
+      doc.getElementById('h-alt').textContent = fly ? ftStr(agl) + ' AGL · ' + ftStr(heightAt(d.pos.x, d.pos.z) + agl) + ' MSL' : '—';
       doc.getElementById('h-spi').textContent = fly && spi ? gridAt(spi.x, spi.z) : '—';
       doc.getElementById('h-rng').textContent = fly && spi ? (spi.distanceTo(d.pos) / 1000).toFixed(2) + ' km' : '—';
       doc.getElementById('h-fov').textContent = d.cam.fov.toFixed(1) + '°';
@@ -1607,7 +1668,7 @@
       .sep{width:1px;height:20px;background:#2c3a2f}
     </style></head><body><div id="wrap">
       <div style="position:relative;flex:1 1 auto;min-height:0;display:flex"><canvas id="fv" width="${FEED_W}" height="${FEED_H}"></canvas>
-      <div id="hud"><span><b>UAS</b><span id="h-name"></span></span><span><b>MODE</b><span id="h-mode"></span></span><span><b>ALT</b><span id="h-alt"></span></span>
+      <div id="hud"><span><b>UAS</b><span id="h-name"></span></span><span><b>MODE</b><span id="h-mode"></span></span><span><b>POS</b><span id="h-pos"></span></span><span><b>ALT</b><span id="h-alt"></span></span>
       <span><b>SPI</b><span id="h-spi"></span></span><span><b>RNG</b><span id="h-rng"></span></span><span><b>FOV</b><span id="h-fov"></span></span>
       <span><b>END</b><span id="h-end"></span></span><span id="h-t"></span></div></div>
       <div id="bar">
@@ -1621,11 +1682,36 @@
         ${T.recover ? '<button id="f-recover" title="Fly back to the launch point and land">Recover</button>' : ''}
         <div id="f-msg">Click: stare at a point. Shift-click: track a vehicle. Drag: slew. Wheel: zoom.</div>
       </div></div></body></html>`;
-    function openFeed(d) {
+    // reminder before the first feed (and again if the browser blocks one): feeds open as pop-up windows
+    let modal = null, skipModal = false;
+    try { skipModal = localStorage.getItem('fist-uas-popup-ok') === '1'; } catch (e) {}
+    function feedModal(d, blocked) {
+      if (!modal) {
+        modal = document.createElement('div'); modal.className = 'umodal'; modal.hidden = true;
+        modal.innerHTML = '<div class="umodal-b" role="dialog" aria-modal="true" aria-labelledby="umodal-h"><h3 id="umodal-h"></h3><p class="umodal-t"></p>' +
+          '<p class="umodal-t2">If nothing opens, the browser blocked it: click the blocked pop-up icon at the right end of the address bar, choose <b>Always allow pop-ups</b> for this site, then press <b>View feed</b> again.</p>' +
+          '<label class="umodal-c"><input type="checkbox"> Don\'t show this again</label><div class="row"><button class="feed-btn umodal-go">Open feed</button><button class="umodal-x">Cancel</button></div></div>';
+        document.body.appendChild(modal);
+        modal.querySelector('.umodal-x').addEventListener('click', () => { modal.hidden = true; });
+        modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+        modal.querySelector('.umodal-go').addEventListener('click', () => {
+          if (modal.querySelector('input').checked) { skipModal = true; try { localStorage.setItem('fist-uas-popup-ok', '1'); } catch (e) {} }
+          modal.hidden = true; if (modal.d) openFeed(modal.d, true);
+        });
+      }
+      modal.d = d;
+      modal.querySelector('h3').textContent = blocked ? 'The browser blocked the feed window' : 'Drone feeds open in their own window';
+      modal.querySelector('.umodal-t').textContent = blocked ? 'Pop-ups are blocked for this site, so ' + d.name + "'s feed could not open."
+        : "Each drone's camera opens in a separate window, so you can drag it to another monitor.";
+      modal.querySelector('.umodal-c').hidden = blocked;
+      modal.hidden = false; modal.querySelector('.umodal-go').focus();
+    }
+    function openFeed(d, confirmed) {
       if (!TYPES[d.type].cam) return;
       if (d.feed && !d.feed.closed) { d.feed.focus(); return; }
+      if (!confirmed && !skipModal) return feedModal(d, false);
       const w = window.open('', 'uas-feed-' + d.id, 'width=860,height=640');
-      if (!w) return msg('uas-dmsg', 'The browser blocked the pop-up. Allow pop-ups for this site, then press Feed again.', 'bad');
+      if (!w) return feedModal(d, true);
       w.document.open(); w.document.write(FEED_HTML(d.name, TYPES[d.type])); w.document.close();
       const doc = w.document, cv = doc.getElementById('fv');
       d.feed = w; d.fctx = cv.getContext('2d');
@@ -1704,16 +1790,17 @@
       for (const lp of lps) {
         const row = document.createElement('div'); row.className = 'drow';
         const nm = document.createElement('div'); nm.className = 'dn'; nm.innerHTML = '<span></span><span class="ug"></span>';
-        nm.firstChild.textContent = lp.name; nm.lastChild.textContent = gridAt(lp.x, lp.z) + (onMap(lp.x, lp.z) ? '' : ' · off map');
+        nm.firstChild.textContent = lp.name; nm.lastChild.textContent = 'Launch Point ' + gridAt(lp.x, lp.z) + (onMap(lp.x, lp.z) ? '' : ' · off map');
         row.appendChild(nm);
         const bar = document.createElement('div'); bar.className = 'row';
         if (lp.fam === 'lucas') {
-          const inp = document.createElement('input'); inp.className = 'grid-in'; inp.placeholder = 'target grid'; inp.value = lp.draft || ''; inp.addEventListener('input', () => { lp.draft = inp.value; });
+          const inp = document.createElement('input'); inp.className = 'grid-in'; inp.placeholder = 'target grid'; inp.value = lp.draft != null ? lp.draft : '4Q FJ ';
+          inp.addEventListener('focus', () => { const n = inp.value.length; inp.setSelectionRange(n, n); }); inp.addEventListener('input', () => { lp.draft = inp.value; });
           bar.appendChild(inp);
           bar.appendChild(btn('Launch (' + lp.rounds.lucas + ')', 'Fly to the grid and strike it. No camera.', () => {
-            const g = FIRES.debug.parseGrid(inp.value); if (g.err) return msg('uas-msg', g.err, 'bad');
-            const p = toLocal(g.e, g.n); if (!onMap(p.x, p.z)) return msg('uas-msg', 'Target must be on the map.', 'bad');
-            lp.draft = ''; launch(lp, 'lucas', p);
+            const g = FIRES.debug.parseGrid(inp.value); if (g.err) return msg('uas-lmsg', g.err, 'bad');
+            const p = toLocal(g.e, g.n); if (!onMap(p.x, p.z)) return msg('uas-lmsg', 'Target must be on the map.', 'bad');
+            lp.draft = null; msg('uas-lmsg', ''); launch(lp, 'lucas', p);
           }));
         } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch') + ' (' + lp.rounds[k] + ')', 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
         bar.appendChild(btn('Remove', '', () => { dropObj(lp.sprite); lps.splice(lps.indexOf(lp), 1); FIRES.log('Removed ' + lp.name); draw(); }));
@@ -1730,20 +1817,20 @@
         nm.innerHTML = '<span></span><span class="ug"></span>'; nm.firstChild.textContent = d.name + '  ' + st;
         nm.lastChild.textContent = d.state === 'landed' ? 'ready in ' + fmt(TURNAROUND - (simT() - d.landedAt)) : d.state !== 'fly' ? d.why :
           T.gps ? 'impact in about ' + fmt(eta(d)) + ' · ' + gridAt(k.kind === 'gps' ? k.tx : k.lx, k.kind === 'gps' ? k.tz : k.lz)
-            : 'cam ' + d.cam.mode + ' · ' + fmt(Math.max(0, T.endur - (simT() - d.t0))) + ' left · ' + Math.round(d.alt) + ' m';
+            : 'cam ' + d.cam.mode + ' · ' + fmt(Math.max(0, T.endur - (simT() - d.t0))) + ' left · ' + ftStr(d.alt) + ' AGL';
         row.appendChild(nm);
         const bar = document.createElement('div'); bar.className = 'row';
-        if (T.cam && d.state !== 'ready') bar.appendChild(btn('Feed', 'Open this drone\'s camera in its own window', () => openFeed(d)));
         if (d.state === 'fly' && !T.gps && k.kind !== 'strike') {
           bar.appendChild(btn('Orbit', 'Click the map: orbit there', () => { armed = { kind: 'orbit', d }; msg('uas-dmsg', 'Click the map where ' + d.name + ' should orbit. Esc cancels.', 'arm'); }));
           bar.appendChild(btn('Route', 'Click the map for each waypoint; Enter or Done to finish', () => { armed = { kind: 'route', d }; routeDraft = []; msg('uas-dmsg', 'Click waypoints for ' + d.name + ', then press Done or Enter. Esc cancels.', 'arm'); draw(); }));
           if (armed && armed.kind === 'route' && armed.d === d) bar.appendChild(btn('Done', '', finishRoute));
-          bar.appendChild(sel('Height above ground', [150, 300, 600, 900, 1500], d.alt, v => { d.alt = v; }, v => v + ' m'));
+          bar.appendChild(sel('Height above ground', [500, 1000, 2000, 3000, 5000, 8000], ft(d.alt), v => { d.alt = v * FT; drawTask(d); draw(); }, v => v.toLocaleString('en-US') + ' ft'));
           if (k.kind === 'orbit') bar.appendChild(sel('Orbit radius', [250, 400, 700, 1000, 1500, 2500], k.r, v => { k.r = v; drawTask(d); }, v => 'r ' + v));
           if (T.recover && k.kind !== 'recover') bar.appendChild(btn('Recover', 'Fly back to the launch point and land; ready again after turnaround', () => recover(d)));
         }
         if (d.state === 'fly' && T.waveoff && k.kind === 'strike') bar.appendChild(btn('Wave off', 'Pull out of the dive', () => waveOff(d)));
         if (d.state === 'fly') bar.appendChild(btn('Go', 'Look at this drone on the map', () => { controls.target.set(d.pos.x, gy(d.pos.x, d.pos.z), d.pos.z); }));
+        if (T.cam) bar.appendChild(btn('View feed', 'Open this drone\'s camera in its own window', () => openFeed(d), 'feed-btn'));
         row.appendChild(bar); D.appendChild(row);
       }
       const M = $('uas-marks'); M.textContent = '';

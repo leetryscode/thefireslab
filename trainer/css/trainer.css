@@ -216,3 +216,21 @@ a.tb-name:hover { color: var(--brass); }
 .drow button, .drow select { padding: 2px 6px; font-size: 12px; }
 .drow.dead .dn { color: var(--dim); }
 .urow.mrow .un { white-space: normal; }
+
+/* UAS: prominent feed button, custom launch point fold, pop-up reminder */
+.win .feed-btn { margin-left: auto; border-color: var(--brass, #d6b25a); color: #10140f; background: var(--brass, #d6b25a); font-weight: 700; padding: 3px 10px; }
+.win .feed-btn:hover { filter: brightness(1.1); }
+.custom-lp { margin-top: 8px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 6px; }
+.custom-lp summary { cursor: pointer; color: var(--dim); font: 600 12px var(--font-head, inherit); letter-spacing: .06em; text-transform: uppercase; }
+.custom-lp[open] summary { color: inherit; margin-bottom: 6px; }
+.umodal { position: fixed; inset: 0; z-index: 1000; background: rgba(5, 8, 6, .6); display: flex; align-items: center; justify-content: center; }
+.umodal[hidden] { display: none; }
+.umodal-b { width: min(440px, 92vw); background: #121812; border: 1px solid rgba(214, 178, 90, .5); border-radius: 8px; padding: 16px 18px; color: #e6e9df; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.umodal-b h3 { margin: 0 0 8px; font: 600 18px var(--font-head, inherit); letter-spacing: .03em; }
+.umodal-b p { margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
+.umodal-c { display: block; margin: 4px 0 12px; font-size: 13px; color: var(--dim); }
+.umodal-b .row { gap: 8px; }
+.umodal-b .feed-btn { margin-left: 0; border: 1px solid #d6b25a; color: #10140f; background: #d6b25a; font-weight: 700; padding: 6px 14px; border-radius: 4px; cursor: pointer; }
+.umodal-b .umodal-x { padding: 6px 14px; }
+.tag.op { margin-top: -16px; }
+.umodal-b .umodal-x { background: transparent; border: 1px solid #3a4a3d; color: #e6e9df; border-radius: 4px; cursor: pointer; font: inherit; }
