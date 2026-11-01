@@ -1,0 +1,38 @@
+Vehicle model credits (FiST Trainer)
+
+data/m05.bin (Engineering vehicle placeholder)
+"Boxer AFV (Engineering, HMG)" (https://skfb.ly/pLV67) by 42manako is licensed under
+Creative Commons Attribution-NonCommercial 4.0 (http://creativecommons.org/licenses/by-nc/4.0/).
+Changes: textures converted to JPEG, model re-centred on the ground for the trainer (2026-10-31).
+Non-commercial: this model may not be used in any paid, sold or commercially contracted version of the trainer.
+
+data/civ/: see data/civ/CREDITS.txt (CC BY 4.0).
+
+Other models in data/ (m01-m04) are licensed under the Fab Standard licence, and m07 (ZTD-05, by EXcaliburK117) under the
+Sketchfab Standard licence, for use inside this trainer only; they may not be extracted or redistributed.
+m07 was repainted for the trainer (camouflage generated to match m01).
+
+data/m06.bin (PLZ-05 self-propelled howitzer)
+"PLZ05 SHP" (https://skfb.ly/pL7sx) by Jeyhun1985 is licensed under Creative Commons Attribution 4.0
+(http://creativecommons.org/licenses/by/4.0/).
+Changes: parts regrouped into hull, turret and gun so the gun can aim; geometry simplified; textures reduced
+to 1024 px JPEG; re-centred on the ground (2026-10-31).
+
+data/m08.bin (ALTIUS-700M loitering munition, friendly; not used by the trainer yet)
+"Anduril ALTIUS 700M" (https://sketchfab.com/3d-models/anduril-altius-700m-4e7fe35b0279418d85af34d33faa9db5)
+by KillCaptureDestroy is licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+Changes: materials converted, geometry simplified, textures reduced to 512 px JPEG, rescaled to about 1.9 m long,
+centred, variant markings ("700") painted out (2026-10-31).
+
+data/m09.bin (Switchblade 600 loitering munition, friendly; not used by the trainer yet)
+"SWITCHBLADE Painted" (https://sketchfab.com/3d-models/switchblade-painted-59368bf5f8f14da6bb7cdd7d239c6874)
+by Idmenthal is licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+Changes: geometry simplified, textures reduced to 512 px JPEG, rescaled to 1.3 m long, turned and centred,
+variant markings ("SWITCHBLADE 600") painted out and glow map removed (2026-10-31).
+
+data/m10.bin (one-way-attack UAS shown in the trainer as "LUCAS"; not used by the trainer yet)
+"Shahed-136" (https://sketchfab.com/3d-models/shahed-136-ba684d04d3b9474185910363a6058de2)
+by KillCaptureDestroy is licensed under Creative Commons Attribution-NonCommercial 4.0
+(http://creativecommons.org/licenses/by-nc/4.0/).
+Changes: geometry simplified, rescaled to 2.5 m span, centred (2026-10-31).
+Non-commercial: this model may not be used in any paid, sold or commercially contracted version of the trainer.

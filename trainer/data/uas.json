@@ -1,0 +1,23 @@
+{
+ "note": "Launch points from Lee's KML 'battlespace and ECOA sketch v1.2' (WGS84 -> UTM 4N). fam: altius | switchblade | lucas. Optional rounds: {variant: n}.",
+ "lps": [
+  {
+   "fam": "altius",
+   "name": "Altius LP",
+   "e": 623645,
+   "n": 2357348
+  },
+  {
+   "fam": "switchblade",
+   "name": "Switchblade LP",
+   "e": 620528,
+   "n": 2357346
+  },
+  {
+   "fam": "lucas",
+   "name": "LUCAS LP",
+   "e": 627893,
+   "n": 2372326
+  }
+ ]
+}

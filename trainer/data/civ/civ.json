@@ -1,0 +1,275 @@
+{
+ "note": "Civilian vehicles: glTF binaries, metres, pivot bottom centre, nose +Z. Not used by the trainer yet.",
+ "vehicles": [
+  {
+   "file": "c01.bin",
+   "type": "hatch",
+   "colour": "white",
+   "L": 4.1,
+   "W": 2.26,
+   "H": 1.53,
+   "src": 1
+  },
+  {
+   "file": "c02.bin",
+   "type": "hatch",
+   "colour": "silver",
+   "L": 4.1,
+   "W": 2.26,
+   "H": 1.53,
+   "src": 2
+  },
+  {
+   "file": "c03.bin",
+   "type": "hatch",
+   "colour": "black",
+   "L": 4.1,
+   "W": 2.26,
+   "H": 1.53,
+   "src": 3
+  },
+  {
+   "file": "c04.bin",
+   "type": "hatch",
+   "colour": "dark blue",
+   "L": 4.1,
+   "W": 2.26,
+   "H": 1.53,
+   "src": 4
+  },
+  {
+   "file": "c05.bin",
+   "type": "hatch",
+   "colour": "red",
+   "L": 4.1,
+   "W": 2.26,
+   "H": 1.53,
+   "src": 9
+  },
+  {
+   "file": "c06.bin",
+   "type": "pickup",
+   "colour": "white",
+   "L": 5.3,
+   "W": 2.2,
+   "H": 1.85,
+   "src": 10
+  },
+  {
+   "file": "c07.bin",
+   "type": "pickup",
+   "colour": "silver",
+   "L": 5.3,
+   "W": 2.2,
+   "H": 1.85,
+   "src": 13
+  },
+  {
+   "file": "c08.bin",
+   "type": "pickup",
+   "colour": "dark green",
+   "L": 5.3,
+   "W": 2.2,
+   "H": 1.85,
+   "src": 17
+  },
+  {
+   "file": "c09.bin",
+   "type": "pickup",
+   "colour": "brown",
+   "L": 5.3,
+   "W": 2.2,
+   "H": 1.85,
+   "src": 21
+  },
+  {
+   "file": "c10.bin",
+   "type": "pickup",
+   "colour": "black",
+   "L": 5.3,
+   "W": 2.2,
+   "H": 1.85,
+   "src": 25
+  },
+  {
+   "file": "c11.bin",
+   "type": "van",
+   "colour": "white",
+   "L": 5,
+   "W": 2.35,
+   "H": 2.11,
+   "src": 11
+  },
+  {
+   "file": "c12.bin",
+   "type": "van",
+   "colour": "grey",
+   "L": 5,
+   "W": 2.35,
+   "H": 2.11,
+   "src": 14
+  },
+  {
+   "file": "c13.bin",
+   "type": "van",
+   "colour": "black",
+   "L": 5,
+   "W": 2.35,
+   "H": 2.11,
+   "src": 18
+  },
+  {
+   "file": "c14.bin",
+   "type": "van",
+   "colour": "navy",
+   "L": 5,
+   "W": 2.35,
+   "H": 2.11,
+   "src": 28
+  },
+  {
+   "file": "c15.bin",
+   "type": "minivan",
+   "colour": "dark green",
+   "L": 4.4,
+   "W": 2.14,
+   "H": 1.86,
+   "src": 12
+  },
+  {
+   "file": "c16.bin",
+   "type": "minivan",
+   "colour": "red",
+   "L": 4.4,
+   "W": 2.14,
+   "H": 1.86,
+   "src": 15
+  },
+  {
+   "file": "c17.bin",
+   "type": "minivan",
+   "colour": "silver",
+   "L": 4.4,
+   "W": 2.14,
+   "H": 1.86,
+   "src": 24
+  },
+  {
+   "file": "c18.bin",
+   "type": "minivan",
+   "colour": "cream",
+   "L": 4.4,
+   "W": 2.14,
+   "H": 1.86,
+   "src": 27
+  },
+  {
+   "file": "c19.bin",
+   "type": "smallvan",
+   "colour": "dark grey",
+   "L": 4,
+   "W": 1.74,
+   "H": 1.88,
+   "src": 16
+  },
+  {
+   "file": "c20.bin",
+   "type": "smallvan",
+   "colour": "red",
+   "L": 4,
+   "W": 1.74,
+   "H": 1.88,
+   "src": 23
+  },
+  {
+   "file": "c21.bin",
+   "type": "smallvan",
+   "colour": "white",
+   "L": 4,
+   "W": 1.74,
+   "H": 1.88,
+   "src": 26
+  },
+  {
+   "file": "c22.bin",
+   "type": "sedan",
+   "colour": "maroon",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 31
+  },
+  {
+   "file": "c23.bin",
+   "type": "sedan",
+   "colour": "red",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 32
+  },
+  {
+   "file": "c24.bin",
+   "type": "sedan",
+   "colour": "rust",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 33
+  },
+  {
+   "file": "c25.bin",
+   "type": "sedan",
+   "colour": "olive",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 34
+  },
+  {
+   "file": "c26.bin",
+   "type": "sedan",
+   "colour": "dark green",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 35
+  },
+  {
+   "file": "c27.bin",
+   "type": "sedan",
+   "colour": "black",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 36
+  },
+  {
+   "file": "c28.bin",
+   "type": "sedan",
+   "colour": "taupe",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 37
+  },
+  {
+   "file": "c29.bin",
+   "type": "sedan",
+   "colour": "off-white",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 38
+  },
+  {
+   "file": "c30.bin",
+   "type": "sedan",
+   "colour": "dark teal",
+   "L": 4.6,
+   "W": 1.84,
+   "H": 1.45,
+   "src": 39
+  }
+ ]
+}

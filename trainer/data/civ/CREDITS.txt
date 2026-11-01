@@ -1,0 +1,11 @@
+Civilian vehicles (c01.bin - c30.bin)
+
+"Low Poly cars pack" by matisosanimation, from Fab (fab.com).
+Licence: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Listing: <add the Fab listing URL>
+
+Changes made for the FiST Trainer (2026-10-31): the pack was split into separate
+vehicles, nine colour variants were left out, each type was rescaled to a typical
+real-world length, turned to face +Z, its materials changed from metallic to plain
+paint, and its textures reduced to 512 px JPEG.

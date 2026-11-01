@@ -1,0 +1,100 @@
+{
+ "note": "Friendly positions and the battlespace border (UTM 4N, NAD83). The border only sets the first look direction when standing; it is not drawn.",
+ "ops": [
+  {
+   "name": "OP Volcano",
+   "note": "overlooks some beach looking west",
+   "e": 623282,
+   "n": 2351454,
+   "h": 217.5
+  },
+  {
+   "name": "OP little volcano",
+   "note": "",
+   "e": 619459.5,
+   "n": 2356988.4,
+   "h": 133.6
+  },
+  {
+   "name": "SOF Stay-Behind Harbour",
+   "note": "in a building in position to oberserve the harbour",
+   "e": 617980.5,
+   "n": 2356441.1,
+   "h": 2.9
+  },
+  {
+   "name": "Beach camera",
+   "note": "maybe a pannable, zoomable camera placed in this building overlooking this beach for amphibious landing",
+   "e": 620484.7,
+   "n": 2353821.0,
+   "h": 1.3
+  },
+  {
+   "name": "OP Hill",
+   "note": "overlooks city",
+   "e": 624477.0,
+   "n": 2356123.8,
+   "h": 279.3
+  },
+  {
+   "name": "OP Jungle Hill",
+   "note": "overlooks city near OP Hill",
+   "e": 623298.4,
+   "n": 2355737.3,
+   "h": 136.5
+  },
+  {
+   "name": "OP Mountain House",
+   "note": "overlooks city",
+   "e": 621878.1,
+   "n": 2356920.4,
+   "h": 198.6
+  }
+ ],
+ "border": [
+  [
+   615483.0,
+   2353189.9
+  ],
+  [
+   617748.9,
+   2357020.7
+  ],
+  [
+   619842.3,
+   2358951.9
+  ],
+  [
+   621153.8,
+   2359560.1
+  ],
+  [
+   625189.7,
+   2357149.8
+  ],
+  [
+   626657.2,
+   2355384.8
+  ],
+  [
+   625306.8,
+   2353171.9
+  ],
+  [
+   624185.0,
+   2351905.2
+  ],
+  [
+   622616.4,
+   2350340.3
+  ],
+  [
+   621226.8,
+   2349828.5
+  ],
+  [
+   615483.0,
+   2353189.9
+  ]
+ ]
+}
