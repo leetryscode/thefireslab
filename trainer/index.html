@@ -46,14 +46,17 @@
       <span><i class="sw" style="background:var(--friend)"></i>Friendly position</span>
       <span><i class="sw" style="background:var(--enemy)"></i>OPFOR route</span>
     </div>
-    <div class="row"><span class="lbl">Ground</span><button id="gr-photo" aria-pressed="true">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
+    <div class="row"><span class="lbl">Ground</span><button id="gr-hybrid" aria-pressed="true">Hybrid</button><button id="gr-photo" aria-pressed="false">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
     <div class="row"><span class="lbl">Exaggeration</span>
       <button id="ex1" aria-pressed="true">1×</button><button id="ex2" aria-pressed="false">2×</button><button id="ex3" aria-pressed="false">3×</button></div>
     <div class="row"><span class="lbl">Layers</span>
       <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true">Friendly</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
+    <div class="row"><span class="lbl">City</span><button id="tg-bldg" aria-pressed="true">Buildings</button><button id="tg-trees" aria-pressed="true">Trees</button></div>
+    <div class="row"><span class="lbl">Roofs</span><button id="rf-plain" aria-pressed="true">Plain</button><button id="rf-photo" aria-pressed="false">Photo</button></div>
     <div class="row"><span class="lbl">Enemy</span><button id="tg-enemy" aria-pressed="true">Enemy</button><button id="tg-eroutes" aria-pressed="true">Enemy routes</button></div>
     <div class="row"><span class="lbl">Artillery</span><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
-    <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N. No 3D buildings or trees yet.</p>
+    <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N.</p>
+    <p class="meta" id="city-meta">Buildings and trees: loading…</p>
     <p class="hint">3D: drag to orbit, right-drag to pan, scroll to zoom. Map: drag to pan, scroll to zoom.</p>
   </div>
 </section>
