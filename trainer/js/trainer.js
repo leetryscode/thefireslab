@@ -303,9 +303,111 @@ vec3 gradeGround(vec3 base, vec3 lit){
   // ---- camera
   const controls = new THREE.OrbitControls(camera, canvas);
   controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 150; controls.maxDistance = 40000;
-  controls.enableDamping = true;
+  controls.enableDamping = false;       // no inertia: the view stops when the mouse or key stops (Google Earth feel)
+  controls.screenSpacePanning = false;  // 3D view: pan across the ground, not up into the sky (map mode turns it on)
+  // Google Earth mouse layout (Lee, 2026-11-02): left-drag moves the terrain, Shift+left-drag (or right-drag) orbits and
+  // tilts; one finger pans, two fingers pinch-zoom and rotate. OrbitControls turns PAN into ROTATE when Shift/Ctrl is held.
+  function setButtons(map) {
+    controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+    controls.mouseButtons.RIGHT = map ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
+    controls.touches.ONE = THREE.TOUCH.PAN;
+    controls.touches.TWO = map ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
+  }
+  setButtons(false);
   function home() { camera.position.set(1200, 8200, 10200); controls.target.set(-2200, 0, 600); }
   home();
+
+  // keyboard navigation in the god's-eye view: arrows / WASD pan, Shift+←/→ or Q/E orbit, Shift+↑/↓ tilt,
+  // PageUp/PageDown or +/− zoom. Held keys move smoothly, scaled to distance so it feels the same at any zoom.
+  const navKeys = new Set(); let navShift = false;
+  const NAV_CODES = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE',
+    'PageUp', 'PageDown', 'Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract']);
+  const navTyping = () => { const a = document.activeElement; return !!a && /INPUT|SELECT|TEXTAREA/.test(a.tagName); };
+  addEventListener('keydown', e => {
+    navShift = e.shiftKey;
+    if (obs || navTyping() || e.ctrlKey || e.metaKey || e.altKey || !NAV_CODES.has(e.code)) return;
+    navKeys.add(e.code); e.preventDefault();
+  });
+  addEventListener('keyup', e => { navShift = e.shiftKey; navKeys.delete(e.code); });
+  addEventListener('blur', () => { navKeys.clear(); navShift = false; });
+  const navOff = new THREE.Vector3(), navSph = new THREE.Spherical(), NAV_Y = new THREE.Vector3(0, 1, 0);
+  // pivot reticle (Google Earth style): marks the ground point the view turns around. Shown while Shift is held (the
+  // rotate modifier), while a rotate drag is moving (Shift+left or right button), and while Q/E or Shift+arrows turn the
+  // view; hidden otherwise. Styled inline so it never depends on a cached trainer.css.
+  const pivotRet = document.createElement('div'); pivotRet.id = 'pivot-reticle'; pivotRet.setAttribute('aria-hidden', 'true');
+  const RET_PATH = '<circle r="9"/><path d="M0-15v5M0 10v5M-15 0h5M10 0h5"/>';
+  pivotRet.innerHTML = '<svg viewBox="-16 -16 32 32" width="32" height="32">' +
+    '<g fill="none" stroke="rgba(0,0,0,.55)" stroke-width="3.5">' + RET_PATH + '</g>' +
+    '<g fill="none" stroke="#fff" stroke-width="1.6">' + RET_PATH + '</g>' +
+    '<circle r="1.8" fill="#fff" stroke="rgba(0,0,0,.55)" stroke-width="1"/></svg>';
+  Object.assign(pivotRet.style, { position: 'fixed', left: '0', top: '0', width: '32px', height: '32px', margin: '-16px 0 0 -16px',
+    pointerEvents: 'none', zIndex: '5', opacity: '0', visibility: 'hidden', transition: 'opacity .12s' });
+  document.body.appendChild(pivotRet);
+  let rotDrag = null, keyTurn = false, retOn = false;   // rotDrag: { x, y, moved } while a rotate drag is held
+  const retPos = new THREE.Vector3();
+  canvas.addEventListener('pointerdown', e => {
+    rotDrag = null;
+    if (obs || !controls.enabled || !controls.enableRotate) return;
+    let rot;
+    if (e.pointerType === 'touch') rot = e.isPrimary && controls.touches.ONE === THREE.TOUCH.ROTATE;
+    else {                              // OrbitControls swaps rotate and pan when Ctrl, Shift or Cmd is held
+      const act = [controls.mouseButtons.LEFT, controls.mouseButtons.MIDDLE, controls.mouseButtons.RIGHT][e.button];
+      const mod = e.ctrlKey || e.metaKey || e.shiftKey;
+      rot = (act === THREE.MOUSE.ROTATE && !mod) || (act === THREE.MOUSE.PAN && mod);
+    }
+    if (rot) rotDrag = { x: e.clientX, y: e.clientY, moved: false };
+  });
+  addEventListener('pointermove', e => {
+    if (!rotDrag) return;
+    if (e.pointerType === 'touch' && !e.isPrimary) { rotDrag = null; return; }   // second finger: pinch/pan, not orbit
+    if (!rotDrag.moved && Math.hypot(e.clientX - rotDrag.x, e.clientY - rotDrag.y) > 3) rotDrag.moved = true;
+  });
+  addEventListener('pointerup', () => { rotDrag = null; });
+  addEventListener('pointercancel', () => { rotDrag = null; });
+  function reticleTick() {
+    const on = !obs && controls.enabled && controls.enableRotate && ((navShift && !navTyping()) || (rotDrag && rotDrag.moved) || keyTurn);
+    if (on) {
+      camera.updateMatrixWorld(); retPos.copy(controls.target).project(camera);   // this frame's camera, not last frame's
+      const x = (retPos.x + 1) / 2 * canvas.clientWidth, y = (1 - retPos.y) / 2 * canvas.clientHeight;
+      pivotRet.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    }
+    if (on !== retOn) { retOn = on; pivotRet.style.opacity = on ? '1' : '0'; pivotRet.style.visibility = on ? 'visible' : 'hidden'; }
+  }
+
+  function navTick(dt) {
+    const t = controls.target; keyTurn = false;
+    if (navKeys.size && controls.enabled) {
+      const k = c => (navKeys.has(c) ? 1 : 0);
+      const up = k('ArrowUp') | k('KeyW'), dn = k('ArrowDown') | k('KeyS'), lf = k('ArrowLeft') | k('KeyA'), rt = k('ArrowRight') | k('KeyD');
+      let fwd = 0, side = 0, tilt = 0, spin = k('KeyE') - k('KeyQ');
+      if (navShift) { spin += rt - lf; tilt = up - dn; } else { fwd = up - dn; side = rt - lf; }
+      keyTurn = !!(spin || tilt) && controls.enableRotate;
+      const zoom = (k('PageDown') | k('Minus') | k('NumpadSubtract')) - (k('PageUp') | k('Equal') | k('NumpadAdd'));
+      navOff.subVectors(camera.position, t);
+      const dist = navOff.length();
+      if (fwd || side) {                // along the ground, in the direction the camera faces (north-up in map mode)
+        let fx = -navOff.x, fz = -navOff.z; const L = Math.hypot(fx, fz) || 1; fx /= L; fz /= L;
+        const s = 0.5 * dist * dt;
+        const dx = (fx * fwd - fz * side) * s, dz = (fz * fwd + fx * side) * s;
+        t.x += dx; t.z += dz; camera.position.x += dx; camera.position.z += dz;
+        navOff.subVectors(camera.position, t);
+      }
+      if (spin) navOff.applyAxisAngle(NAV_Y, spin * 1.2 * dt);   // map mode: update() clamps the azimuth back to north-up
+      if (tilt || zoom) {
+        navSph.setFromVector3(navOff);
+        navSph.phi = Math.max(controls.minPolarAngle, Math.min(controls.maxPolarAngle, navSph.phi + tilt * 0.8 * dt));
+        navSph.radius = Math.max(controls.minDistance, Math.min(controls.maxDistance, navSph.radius * Math.exp(zoom * 1.2 * dt)));
+        navSph.makeSafe(); navOff.setFromSpherical(navSph);
+      }
+      camera.position.copy(t).add(navOff);
+    }
+    // the pivot stays on the ground (mouse or key pans used to leave it floating in the air or buried); the camera
+    // keeps its height, so panning over a ridge does not bob the view. Never let the camera sink into the terrain.
+    const g = heightAt(t.x, t.z) * ex;
+    if (isFinite(g) && t.y !== g) t.y = g;
+    const cg = heightAt(camera.position.x, camera.position.z) * ex + 30;
+    if (camera.position.y < cg) camera.position.y = cg;
+  }
   function lookAt(o) {                  // stand off the position, looking at it and past it toward the area centre
     const p = toLocal(o.e, o.n), g = heightAt(p.x, p.z) * ex;
     const away = new THREE.Vector3(p.x, 0, p.z).normalize();
@@ -1323,11 +1425,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (on) {
         const t = controls.target.clone(), h = Math.max(1500, camera.position.distanceTo(t));
         controls.minPolarAngle = controls.maxPolarAngle = 0.0001; controls.minAzimuthAngle = controls.maxAzimuthAngle = 0;
-        controls.enableRotate = false; controls.mouseButtons.LEFT = THREE.MOUSE.PAN; controls.touches.ONE = THREE.TOUCH.PAN; controls.screenSpacePanning = true;
+        controls.enableRotate = false; setButtons(true); controls.screenSpacePanning = true;
         camera.position.set(t.x, h, t.z + 0.01);
       } else {
         controls.minPolarAngle = 0; controls.maxPolarAngle = Math.PI * 0.49; controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity;
-        controls.enableRotate = true; controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE; controls.touches.ONE = THREE.TOUCH.ROTATE;
+        controls.enableRotate = true; setButtons(false); controls.screenSpacePanning = false;
         const t = controls.target; camera.position.set(t.x + 2500, 4200, t.z + 5200);
       }
       controls.update();
@@ -2645,7 +2747,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     FIRES.tick(dt);
     OPFOR.tick();
     UAS.tick();
-    if (!obs) controls.update(); sky.position.copy(camera.position); WATER.time.value = now / 1000; UAS.renderFeeds(); renderer.render(scene, camera);
+    if (!obs) { navTick(dt); controls.update(); } reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000; UAS.renderFeeds(); renderer.render(scene, camera);
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
       for (const t of tags) {
