@@ -31,7 +31,7 @@
     <span class="seg" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
     <nav class="tb-tools" id="tools" aria-label="Control panels">
       <button data-win="w-display" aria-pressed="false">Display</button>
-      <button data-win="w-ops" aria-pressed="false">OPs &amp; Viewshed</button>
+      <button data-win="w-ops" aria-pressed="false" title="OPs and viewshed">OPs</button>
       <button data-win="w-fires" aria-pressed="false">Fires</button>
       <button data-win="w-opfor" aria-pressed="false">OPFOR</button>
       <button data-win="w-uas" aria-pressed="false">UAS</button>
@@ -42,22 +42,21 @@
 <section class="win" id="w-display" aria-label="Display settings" hidden>
   <header class="win-h"><h2>Display</h2><button class="win-x" aria-label="Close Display">×</button></header>
   <div class="win-b">
-    <div class="key">
-      <span><i class="sw" style="background:var(--friend)"></i>Friendly position</span>
-      <span><i class="sw" style="background:var(--enemy)"></i>OPFOR route</span>
-    </div>
     <div class="row"><span class="lbl">Ground</span><button id="gr-hybrid" aria-pressed="true">Hybrid</button><button id="gr-photo" aria-pressed="false">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
     <div class="row"><span class="lbl">Exaggeration</span>
       <button id="ex1" aria-pressed="true">1×</button><button id="ex2" aria-pressed="false">2×</button><button id="ex3" aria-pressed="false">3×</button></div>
     <div class="row"><span class="lbl">Layers</span>
-      <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true">Friendly</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
+      <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
     <div class="row"><span class="lbl">City</span><button id="tg-bldg" aria-pressed="true">Buildings</button><button id="tg-trees" aria-pressed="true">Trees</button></div>
     <div class="row"><span class="lbl">Roofs</span><button id="rf-plain" aria-pressed="true">Plain</button><button id="rf-photo" aria-pressed="false">Photo</button></div>
     <div class="row"><span class="lbl">Enemy</span><button id="tg-enemy" aria-pressed="true">Enemy</button><button id="tg-eroutes" aria-pressed="true">Enemy routes</button></div>
     <div class="row"><span class="lbl">Artillery</span><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
+    <div class="row"><span class="lbl">UAS</span><button id="tg-u-sym" aria-pressed="true">Symbols</button><button id="tg-u-marks" aria-pressed="true">Marks</button></div>
+    <div class="row"><span class="lbl">UAS paths</span><button id="tg-u-orbit" aria-pressed="true" title="Orbit circles and their centre drop lines">Orbits</button><button id="tg-u-route" aria-pressed="true" title="Waypoint routes, return-to-base and LUCAS flight paths">Routes</button></div>
+    <div class="row"><span class="lbl">UAS sensor</span><button id="tg-u-fov" aria-pressed="true" title="Camera footprint on the ground">FOV</button><button id="tg-u-spi" aria-pressed="true" title="Dashed line from the UAS to the point under its crosshair">Sensor line</button><button id="tg-u-scan" aria-pressed="true" title="Area a camera in Scan mode sweeps">Scan area</button></div>
     <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N.</p>
     <p class="meta" id="city-meta">Buildings and trees: loading…</p>
-    <p class="hint">3D: drag to orbit, right-drag to pan, scroll to zoom. Map: drag to pan, scroll to zoom.</p>
+    <p class="hint">3D: drag to pan; Shift-drag or right-drag to orbit and tilt; scroll to zoom. Keys: arrows or WASD pan, Q/E or Shift+arrows turn, PageUp/PageDown zoom. Map: drag to pan, scroll to zoom.</p>
   </div>
 </section>
 
@@ -122,7 +121,7 @@
 <section class="win" id="w-uas" aria-label="Friendly UAS" hidden>
   <header class="win-h"><h2>Friendly UAS</h2><button class="win-x" aria-label="Close">×</button></header>
   <div class="win-b">
-    <div class="fsec first"><h3>Launch points</h3>
+    <div class="fsec first"><h3>Launch UAS</h3>
       <div class="ulist" id="uas-lps"></div>
       <p class="msg" id="uas-lmsg"></p>
       <details class="custom-lp"><summary>Custom launch point</summary>
@@ -131,7 +130,7 @@
         <p class="msg" id="uas-msg"></p>
       </details>
     </div>
-    <div class="fsec"><h3>Drones</h3>
+    <div class="fsec"><h3>UAS in Flight</h3>
       <p class="msg" id="uas-dmsg"></p>
       <div class="ulist" id="uas-list"></div>
     </div>

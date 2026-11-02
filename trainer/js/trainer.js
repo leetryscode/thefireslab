@@ -268,11 +268,19 @@ vec3 gradeGround(vec3 base, vec3 lit){
       new THREE.LineBasicMaterial({ color: 0xd6b25a, transparent: true, opacity: 0.45 })));
   }
 
-  const opTex = (() => {
+  // map symbols share one look (Lee, 2026-11-02): friendly blue fill, dark outline; labels uppercase condensed in the
+  // side's colour with a dark halo, no box — the same as the HTML .tag labels. SYM_K = sprite scale per canvas pixel.
+  const SYM_K = 0.085 / 256, FRIEND = '#6fb4ff', SYM_FILL = 'rgba(111,180,255,0.92)', SYM_EDGE = '#0b1a2a';
+  function symLabel(g, text, x, y, maxW) {
+    let px = 46; text = String(text).toUpperCase(); g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
+    do { g.font = '700 ' + px + 'px "Barlow Condensed", "Arial Narrow", sans-serif'; } while (g.measureText(text).width > maxW && (px -= 2) > 22);
+    g.lineWidth = 9; g.strokeStyle = 'rgba(5,8,6,.9)'; g.strokeText(text, x, y); g.fillStyle = FRIEND; g.fillText(text, x, y);
+  }
+  const opTex = (() => {                // observation post: filled triangle with a dark centre dot
     const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
-    g.lineJoin = 'round'; g.beginPath(); g.moveTo(64, 14); g.lineTo(116, 106); g.lineTo(12, 106); g.closePath();
-    g.lineWidth = 18; g.strokeStyle = '#0b1a2a'; g.stroke(); g.lineWidth = 10; g.strokeStyle = '#6fb4ff'; g.stroke();
-    g.beginPath(); g.arc(64, 74, 10, 0, Math.PI * 2); g.fillStyle = '#6fb4ff'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#0b1a2a'; g.stroke();
+    g.lineJoin = 'round'; g.beginPath(); g.moveTo(64, 16); g.lineTo(114, 104); g.lineTo(14, 104); g.closePath();
+    g.fillStyle = SYM_FILL; g.fill(); g.lineWidth = 7; g.strokeStyle = SYM_EDGE; g.stroke();
+    g.beginPath(); g.arc(64, 74, 10, 0, Math.PI * 2); g.fillStyle = SYM_EDGE; g.fill();
     const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
   })();
   const tags = [];
@@ -1198,7 +1206,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   toggle('tg-grid', on => { groups.grid.visible = on; });
   toggle('tg-enemy', on => { if (window.__opfor) window.__opfor.showEnemy = on; });
   toggle('tg-eroutes', on => { if (window.__opfor) window.__opfor.showRoutes = on; });
-  toggle('tg-sketch', on => { groups.sketch.visible = on; labelBox.hidden = !(on && showLabels); if (window.__fires) window.__fires.unitGroup.visible = on; });
+  let friendlyOn = true;                // Display → Friendly: every friendly position — OPs, cameras, firing units, UAS launch points
+  toggle('tg-sketch', on => { friendlyOn = on; groups.sketch.visible = on; labelBox.hidden = !(on && showLabels); if (window.__fires) window.__fires.unitGroup.visible = on; });
   toggle('tg-labels', on => { showLabels = on; labelBox.hidden = !(on && groups.sketch.visible); });
 
   // ---- FIRES: instructor firing units, point-and-shoot, bursts and arcs, on one sim clock.
@@ -1249,13 +1258,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
     // ---- unit symbols: friendly frame with a filled dot (artillery) or a dot under a chevron (mortar). Not checked against APP-6.
     function symbolTexture(t, name) {
-      const c = document.createElement('canvas'); c.width = 256; c.height = 160; const g = c.getContext('2d');
-      g.fillStyle = 'rgba(111,180,255,0.92)'; g.strokeStyle = '#0b1a2a'; g.lineWidth = 6;
-      g.fillRect(58, 14, 140, 92); g.strokeRect(58, 14, 140, 92);
-      g.fillStyle = '#0b1a2a'; g.beginPath(); g.arc(128, 66, 14, 0, Math.PI * 2); g.fill();
-      if (t.angle === 'high') { g.beginPath(); g.moveTo(128, 26); g.lineTo(128, 52); g.stroke(); g.beginPath(); g.moveTo(116, 38); g.lineTo(128, 24); g.lineTo(140, 38); g.stroke(); }
-      g.font = '600 30px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign = 'center';
-      g.lineWidth = 6; g.strokeStyle = 'rgba(10,14,10,.85)'; g.strokeText(name, 128, 146); g.fillStyle = '#e6e9df'; g.fillText(name, 128, 146);
+      const c = document.createElement('canvas'); c.width = 384; c.height = 128; const g = c.getContext('2d');   // frame ~25 px on screen
+      g.fillStyle = SYM_FILL; g.strokeStyle = SYM_EDGE; g.lineWidth = 5;
+      g.fillRect(155, 10, 74, 50); g.strokeRect(155, 10, 74, 50);
+      g.fillStyle = SYM_EDGE; g.beginPath(); g.arc(192, 37, 8, 0, Math.PI * 2); g.fill();
+      if (t.angle === 'high') { g.lineWidth = 4; g.beginPath(); g.moveTo(192, 16); g.lineTo(192, 29); g.stroke(); g.beginPath(); g.moveTo(184, 23); g.lineTo(192, 15); g.lineTo(200, 23); g.stroke(); }
+      symLabel(g, name, 192, 104, 370);
       const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding; return tx;
     }
     const unitGroup = new THREE.Group(), fxGroup = new THREE.Group(), arcGroup = new THREE.Group();
@@ -1271,7 +1279,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const name = t.short + ' ' + 'ABCDEFGH'[count - 1];
       const u = { id: nextId++, type, name, e, n, alt: onMap(e, n) ? null : (alt || 0), rounds: t.rounds };
       u.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: symbolTexture(t, name), depthTest: false, transparent: true }));
-      u.sprite.scale.set(0.085, 0.053, 1); u.sprite.material.sizeAttenuation = false; u.sprite.renderOrder = 10;
+      u.sprite.scale.set(384 * SYM_K, 128 * SYM_K, 1); u.sprite.material.sizeAttenuation = false; u.sprite.renderOrder = 10;
       unitGroup.add(u.sprite); placeSprite(u); units.push(u);
       log('Placed ' + name + ' at ' + gridTxt(e, n) + (onMap(e, n) ? '' : ' (off map)'));
       drawUnits(); return u;
@@ -2079,21 +2087,21 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     };
     // Variants. Published where noted (see project doc claude/trainer-owa-uas.md); the rest are estimates.
     //  speed = transit m/s, loiter = speed once on station (max-endurance), dive m/s, endur s, alt m above ground,
-    //  r orbit radius m, turn deg/s, burst = blast size, rounds per launch point.
+    //  r orbit radius m, turn deg/s, burst = blast size. No limit on how many launch (Lee, 2026-11-02: the instructor limits them).
     //  Altius: Anduril publishes no speeds; transit 33 / loiter 22 m/s are estimates (the older Altius-600 is quoted at
     //  60 km/h cruise, 90 km/h max). Altius height 610 m = Lee's ~2,000 ft AGL assumption. Switchblade 200 m = its
     //  published 650 ft AGL operating height; its published loiter speed is 113 km/h (31 m/s).
     const S600 = [1.24, 0.6, 0.53];      // the model is an Altius-700; the 600s are ~1.0 m long, ~2.54 m span
     const TYPES = {
-      altius_isr:  { fam: 'altius', label: 'Altius ISR',  short: 'ISR',  model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 0,  endur: 3.5 * 3600, alt: 610, r: 1000, turn: 12, cam: 'isr',    burst: 0,    rounds: 4, recover: true },
-      altius_600m: { fam: 'altius', label: 'Altius 600M', short: '600M', model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 60, endur: 90 * 60,    alt: 610, r: 700,  turn: 12, cam: 'attack', burst: 0.45, rounds: 6 },
-      altius_700m: { fam: 'altius', label: 'Altius 700M', short: '700M', model: 'data/m08.bin', scale: null, speed: 33, loiter: 22, dive: 65, endur: 75 * 60,    alt: 610, r: 700,  turn: 10, cam: 'attack', burst: 0.85, rounds: 4 },
-      switchblade: { fam: 'switchblade', label: 'Switchblade', short: 'SB', model: 'data/m09.bin', scale: null, speed: 31, dive: 51, endur: 40 * 60, alt: 200, r: 350, turn: 18, cam: 'sb', burst: 0.6, rounds: 6, waveoff: true },
-      lucas:       { fam: 'lucas', label: 'LUCAS', short: 'LUCAS', model: 'data/m10.bin', scale: null, speed: 51, dive: 60, endur: 6 * 3600, alt: 1000, r: 0, turn: 8, cam: null, burst: 0.9, rounds: 4, gps: true }
+      altius_isr:  { fam: 'altius', label: 'Altius ISR',  short: 'ISR',  model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 0,  endur: 3.5 * 3600, alt: 610, r: 1000, turn: 12, cam: 'isr',    burst: 0,    recover: true },
+      altius_600m: { fam: 'altius', label: 'Altius 600M', short: '600M', model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 60, endur: 90 * 60,    alt: 610, r: 700,  turn: 12, cam: 'attack', burst: 0.45 },
+      altius_700m: { fam: 'altius', label: 'Altius 700M', short: '700M', model: 'data/m08.bin', scale: null, speed: 33, loiter: 22, dive: 65, endur: 75 * 60,    alt: 610, r: 700,  turn: 10, cam: 'attack', burst: 0.85 },
+      switchblade: { fam: 'switchblade', label: 'Switchblade', short: 'SB', model: 'data/m09.bin', scale: null, speed: 31, dive: 51, endur: 40 * 60, alt: 200, r: 350, turn: 18, cam: 'sb', burst: 0.6, waveoff: true },
+      lucas:       { fam: 'lucas', label: 'LUCAS', short: 'LUCAS', model: 'data/m10.bin', scale: null, speed: 51, dive: 60, endur: 6 * 3600, alt: 1000, r: 0, turn: 8, cam: null, burst: 0.9, gps: true }
     };
     const FAMS = { altius: 'Altius', switchblade: 'Switchblade', lucas: 'LUCAS' };
     const famTypes = f => Object.keys(TYPES).filter(k => TYPES[k].fam === f);
-    const TURNAROUND = 10 * 60;            // ISR recovered and ready again (placeholder)
+    const TURNAROUND = 10 * 60;            // a recovered ISR leaves the In Flight list after this long
     const FEED_W = 800, FEED_H = 500, MAX_FEEDS_PER_FRAME = 4;
     const lps = [], drones = [], marks = [];
     let nextId = 1, armed = null, routeDraft = null, rr = 0;
@@ -2115,17 +2123,38 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       for (const d of drones) if (TYPES[d.type].model === url && !d.obj.children.length) d.obj.add(body(d.type));
     }, undefined, e => console.warn('UAS model failed to load:', url, e));
     function symTex(label, lp) {           // friendly frame: a launcher square, or a small aircraft chevron
-      const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d');
-      g.fillStyle = 'rgba(111,180,255,0.92)'; g.strokeStyle = '#0b1a2a'; g.lineWidth = 5;
-      if (lp) { g.fillRect(98, 10, 60, 50); g.strokeRect(98, 10, 60, 50); g.beginPath(); g.moveTo(108, 50); g.lineTo(128, 22); g.lineTo(148, 50); g.stroke(); }
-      else { g.beginPath(); g.moveTo(128, 10); g.lineTo(158, 58); g.lineTo(128, 46); g.lineTo(98, 58); g.closePath(); g.fill(); g.stroke(); }
-      g.font = '700 38px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign = 'center';
-      g.lineWidth = 8; g.strokeStyle = 'rgba(10,14,10,.85)'; g.strokeText(label, 128, 104); g.fillStyle = '#e6e9df'; g.fillText(label, 128, 104);
+      const c = document.createElement('canvas'); c.width = 384; c.height = 128; const g = c.getContext('2d');
+      g.fillStyle = SYM_FILL; g.strokeStyle = SYM_EDGE; g.lineWidth = 5;
+      if (lp) { g.fillRect(162, 10, 60, 50); g.strokeRect(162, 10, 60, 50); g.beginPath(); g.moveTo(172, 50); g.lineTo(192, 22); g.lineTo(212, 50); g.stroke(); }
+      else { g.beginPath(); g.moveTo(192, 10); g.lineTo(222, 58); g.lineTo(192, 46); g.lineTo(162, 58); g.closePath(); g.fill(); g.stroke(); }
+      symLabel(g, label, 192, 104, 370);
       const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
     }
     function sprite(label, lp) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: symTex(label, lp), depthTest: false, transparent: true, sizeAttenuation: false }));
-      s.scale.set(lp ? 0.085 : 0.075, lp ? 0.0425 : 0.0375, 1); s.renderOrder = 12; ui.add(s); return s;
+      const k = lp ? SYM_K : SYM_K * 0.88; s.scale.set(384 * k, 128 * k, 1); s.renderOrder = 12; ui.add(s); return s;
+    }
+    // IDENT (Lee, 2026-11-02): pans the map to a UAS and flashes three expanding gold rings on its symbol, like a
+    // radar ident. Runs on the real clock, so it works while paused.
+    const identTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+      g.lineWidth = 14; g.strokeStyle = 'rgba(10,14,10,.7)'; g.beginPath(); g.arc(64, 64, 52, 0, 2 * Math.PI); g.stroke();
+      g.lineWidth = 7; g.strokeStyle = '#ffd25a'; g.stroke(); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; })();
+    function ident(d) {
+      const t = controls.target, nx = d.pos.x, nz = d.pos.z, ny = gy(nx, nz);
+      camera.position.x += nx - t.x; camera.position.z += nz - t.z; t.set(nx, ny, nz);   // pan: keep the view's angle and height
+      if (!d.identRing) { d.identRing = new THREE.Sprite(new THREE.SpriteMaterial({ map: identTex, depthTest: false, transparent: true, sizeAttenuation: false })); d.identRing.renderOrder = 13; ui.add(d.identRing); }
+      d.identT0 = performance.now();
+    }
+    function identTick() {
+      const now = performance.now();
+      for (const d of drones) {
+        const r = d.identRing; if (!r) continue;
+        const u = (now - d.identT0) / 1800;
+        if (u >= 1 || d.state !== 'fly') { ui.remove(r); r.material.dispose(); d.identRing = null; continue; }
+        const k = (u * 3) % 1, sz = 0.025 + 0.09 * k;                       // three pulses, each growing and fading
+        r.scale.set(sz, sz, 1); r.material.opacity = 1 - k; r.visible = !obs;
+        r.position.copy(d.sym.position);
+      }
     }
     // overlays: thick lines (friendly blue for flight paths, gold for the camera), all hidden from the feeds
     function polyline(pts, color, loop, width, o) { const l = fatLine(pts, fatMat(color, width || 3, o), loop); l.renderOrder = 11; ui.add(l); return l; }
@@ -2155,26 +2184,23 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return null;
     }
 
-    // ---- launch points: one per family; holds rounds of each variant in that family
-    function addLP(fam, x, z, name, rounds) {
+    // ---- launch points: one per family; any number of each variant can launch from it
+    function addLP(fam, x, z, name) {
       const n = lps.filter(l => l.fam === fam).length + 1;
-      const lp = { id: nextId++, fam, name: name || (FAMS[fam] + (n > 1 ? ' ' + n : '')), x, z, rounds: {} };
-      for (const k of famTypes(fam)) lp.rounds[k] = rounds && rounds[k] != null ? rounds[k] : TYPES[k].rounds;
+      const lp = { id: nextId++, fam, name: name || (FAMS[fam] + (n > 1 ? ' ' + n : '')), x, z };
       lp.sprite = sprite(lp.name, true); lp.sprite.position.set(x, gy(x, z) + 40, z);
       lps.push(lp); FIRES.log('Placed ' + lp.name + ' launch point at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); draw(); return lp;
     }
-    // Scenario file (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n, rounds? }] }
+    // Scenario file (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n }] } (an old rounds field is ignored)
     fetch('data/uas.json').then(r => r.ok ? r.json() : null).then(j => {
       if (!j || !Array.isArray(j.lps)) return;
-      for (const l of j.lps) if (FAMS[l.fam]) { const p = toLocal(l.e, l.n); addLP(l.fam, p.x, p.z, l.name, l.rounds); }
+      for (const l of j.lps) if (FAMS[l.fam]) { const p = toLocal(l.e, l.n); addLP(l.fam, p.x, p.z, l.name); }
     }).catch(() => {});
 
     // ---- drones
     function launch(lp, type, target) {
       const T = TYPES[type];
-      if (!(lp.rounds[type] > 0)) return msg('uas-lmsg', lp.name + ' has no ' + T.label + ' left.', 'bad');
       if (T.gps && !target) return msg('uas-lmsg', 'Enter a target grid for ' + T.label + '.', 'bad');
-      lp.rounds[type]--;
       const n = drones.filter(d => d.type === type).length + 1;
       const d = { id: nextId++, type, name: T.label + ' ' + n, lp, t0: simT(), state: 'fly', why: '',
         pos: new THREE.Vector3(lp.x, gy(lp.x, lp.z) + 3, lp.z), hdg: 0, pitch: 0, alt: T.alt,
@@ -2185,7 +2211,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       d.obj = new THREE.Group(); const b = body(type); if (b) d.obj.add(b); models.add(d.obj);
       d.sym = sprite(d.name, false); d.foot = null; d.spiLine = null; d.taskLine = null;
       drones.push(d);
-      FIRES.log(d.name + ' launched from ' + lp.name + (T.gps ? ' on ' + gridAt(target.x, target.z) + ', time of flight about ' + fmt(eta(d)) : '') + ' (' + lp.rounds[type] + ' ' + T.short + ' left)');
+      FIRES.log(d.name + ' launched from ' + lp.name + (T.gps ? ' on ' + gridAt(target.x, target.z) + ', time of flight about ' + fmt(eta(d)) : ''));
       drawTask(d); draw(); return d;
     }
     function eta(d) {          // seconds to impact for a GPS drone: cruise to the dive point, then the dive
@@ -2199,6 +2225,32 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const diveStart = d => Math.max(250, (d.pos.y - gy(d.pos.x, d.pos.z)) * 0.45);   // ~65 deg dive from cruise height
     function setTask(d, task) { if (d.state !== 'fly') return; d.task = task; drawTask(d); draw(); }
     // flight paths are drawn at flight height, with a thin drop line to the ground where it helps
+    // Display panel → UAS rows (Lee, 2026-11-02): what the god's-eye view draws for friendly UAS. Not saved between visits.
+    const show = { sym: true, marks: true, orbits: true, routes: true, fov: true, spi: true, scan: true };
+    for (const [id, key] of [['tg-u-sym', 'sym'], ['tg-u-marks', 'marks'], ['tg-u-orbit', 'orbits'], ['tg-u-route', 'routes'],
+      ['tg-u-fov', 'fov'], ['tg-u-spi', 'spi'], ['tg-u-scan', 'scan']]) if (document.getElementById(id)) toggle(id, on => { show[key] = on; });
+    function applyShow() {
+      for (const d of drones) {
+        if (d.taskLine) d.taskLine.visible = d.task.kind === 'orbit' ? show.orbits : show.routes;
+        if (d.dropLine) d.dropLine.visible = show.orbits;
+        if (d.foot) d.foot.visible = show.fov; if (d.footFill) d.footFill.visible = show.fov;
+        if (d.spiLine) d.spiLine.visible = show.spi;
+        if (d.state === 'fly' || d.state === 'falling') d.sym.visible = !obs && show.sym;
+      }
+      for (const lp of lps) if (lp.sprite) lp.sprite.visible = friendlyOn;     // launch points are friendly positions
+      for (const mk of marks) if (mk.sprite) mk.sprite.visible = show.marks;
+    }
+    function scanArea(d) {                  // dashed gold circle: the disc Scan mode sweeps (same centre and radius as aim())
+      if (!(show.scan && d.cam.mode === 'scan' && d.state === 'fly')) { if (d.scanLine) { dropObj(d.scanLine); d.scanLine = null; d.scanKey = null; } return; }
+      const k = d.task; let cx, cz, R;
+      if (k.kind === 'orbit') { cx = k.cx; cz = k.cz; R = k.r * 1.1; } else { cx = d.pos.x + Math.sin(d.hdg) * 700; cz = d.pos.z + Math.cos(d.hdg) * 700; R = 450; }
+      const key = k.kind === 'orbit' ? cx + ',' + cz + ',' + R : null;
+      if (d.scanLine && (key ? key === d.scanKey : uiTick % 10)) return;   // fixed area: once; area ahead of a transiting UAS: a few times a second
+      const pts = [];
+      for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2, x = cx + Math.cos(a) * R, z = cz + Math.sin(a) * R; pts.push(new THREE.Vector3(x, gy(x, z) + 5, z)); }
+      if (d.scanLine) setLine(d.scanLine, pts, true); else d.scanLine = polyline(pts, 0xd6b25a, true, 1.5, { dashed: true, dashSize: 40, gapSize: 30, opacity: 0.85 });
+      d.scanKey = key;
+    }
     function drawTask(d) {
       dropObj(d.taskLine); dropObj(d.dropLine); d.taskLine = d.dropLine = null; const k = d.task;
       if (d.state !== 'fly') return;
@@ -2215,11 +2267,33 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         d.taskLine = polyline([d.pos.clone(), turn, new THREE.Vector3(k.tx, gy(k.tx, k.tz), k.tz)], 0xd6b25a, false, 3);
       } else if (k.kind === 'recover') d.taskLine = polyline([d.pos.clone(), new THREE.Vector3(d.lp.x, gy(d.lp.x, d.lp.z) + 20, d.lp.z)], BLUE, false, 3, { dashed: true, dashSize: 60, gapSize: 40 });
     }
-    function clearOverlays(d) { dropObj(d.taskLine); dropObj(d.dropLine); dropObj(d.foot); dropObj(d.footFill); dropObj(d.spiLine); d.taskLine = d.dropLine = d.foot = d.footFill = d.spiLine = null; d.obj.visible = false; d.sym.visible = false; }
+    function clearOverlays(d) { dropObj(d.taskLine); dropObj(d.dropLine); dropObj(d.foot); dropObj(d.footFill); dropObj(d.spiLine); dropObj(d.scanLine); d.taskLine = d.dropLine = d.foot = d.footFill = d.spiLine = d.scanLine = null; d.obj.visible = false; d.sym.visible = false; }
     function kill(d, why) { d.state = 'dead'; d.why = why; clearOverlays(d); FIRES.log(d.name + ' ' + why); draw(); }
+    // out of endurance (Lee, 2026-11-02): power is lost and the airframe falls — gliding on briefly, then tumbling
+    // nose-down to the ground while its feed breaks up; at the ground the feed shows static and SIGNAL LOST.
+    // The warhead (600M/700M, Switchblade, LUCAS) is assumed safe — no detonation on the crash.
+    function startFall(d) {
+      const T = TYPES[d.type];
+      clearOverlays(d); d.obj.visible = true; d.sym.visible = !obs;
+      d.state = 'falling'; d.why = 'out of endurance, going down';
+      d.fall = { t0: simT(), vh: T.loiter || T.speed, vy: 0, spin: (d.id % 2 ? 1 : -1) * (0.5 + (d.id * 0.37) % 0.6), roll: 0 };
+      d.cam.mode = 'free'; d.cam.trk = null; d.cam.slew = null;    // the gimbal is dead: the view rides the airframe
+      FIRES.log(d.name + ' out of endurance at ' + gridAt(d.pos.x, d.pos.z) + ': power lost, going down.'); draw();
+    }
+    function fallStep(d, dt) {
+      const f = d.fall, c = d.cam;
+      f.vh *= Math.exp(-0.35 * dt); f.vy = Math.max(f.vy - 9.8 * dt, -55);        // drag-limited fall (~55 m/s)
+      const dh = f.spin * Math.min(1, (simT() - f.t0) / 4) * dt;                   // the spin builds over a few seconds
+      d.hdg = wrapPi(d.hdg + dh); f.roll += dh * 2.5;
+      d.pos.x += Math.sin(d.hdg) * f.vh * dt; d.pos.z += Math.cos(d.hdg) * f.vh * dt; d.pos.y += f.vy * dt;
+      d.pitch = Math.atan2(-f.vy, Math.max(1, f.vh));
+      c.az += dh; c.el += (-1.35 - c.el) * Math.min(1, 0.6 * dt);
+      const g = gy(d.pos.x, d.pos.z);
+      if (d.pos.y <= g) { d.pos.y = g; kill(d, 'out of endurance; crashed at ' + gridAt(d.pos.x, d.pos.z) + '.'); }
+    }
     function land(d) {
       d.state = 'landed'; d.why = 'recovered at ' + d.lp.name; d.landedAt = simT(); clearOverlays(d);
-      FIRES.log(d.name + ' recovered at ' + d.lp.name + '; ready again in about ' + fmt(TURNAROUND)); draw();
+      FIRES.log(d.name + ' recovered at ' + d.lp.name + '.'); draw();
     }
     function vehiclesNear(x, z, R) {          // OPFOR vehicles within R metres (ground distance), nearest first
       const out = [], v = new THREE.Vector3();
@@ -2267,9 +2341,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function step(d, dt) {
       const T = TYPES[d.type];
-      if (d.state === 'landed') { if (simT() - d.landedAt >= TURNAROUND) { d.state = 'ready'; d.lp.rounds[d.type]++; FIRES.log(d.name + ' turned around: +1 ' + T.short + ' at ' + d.lp.name); draw(); } return; }
+      if (d.state === 'landed') { if (simT() - d.landedAt >= TURNAROUND) { d.state = 'ready'; draw(); } return; }
+      if (d.state === 'falling') return fallStep(d, dt);
       if (d.state !== 'fly') return;
-      if (simT() - d.t0 > T.endur) return kill(d, 'out of endurance and lost.');
+      if (simT() - d.t0 > T.endur) return startFall(d);
+      if (!d.warned && T.endur - (simT() - d.t0) < 300) { d.warned = true; FIRES.log(d.name + ': 5 minutes of endurance left.'); }
       const k = d.task;
       if (k.kind === 'strike') {
         const p = strikePoint(d), dx = p.x - d.pos.x, dy = p.y - d.pos.y, dz = p.z - d.pos.z, L = Math.hypot(dx, dy, dz), s = T.dive * dt;
@@ -2376,6 +2452,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       let dt = t - lastSim; lastSim = t; if (dt < 0) dt = 0;
       while (dt > 1e-6) { const h = Math.min(0.25, dt); for (const d of drones) step(d, h); dt -= h; }
       for (const d of drones) {
+        if (d.state === 'falling') {
+          d.obj.position.copy(d.pos); d.obj.rotation.set(d.pitch, d.hdg, d.fall.roll, 'YXZ');
+          d.sym.position.set(d.pos.x, d.pos.y + 25, d.pos.z); d.sym.visible = !obs; continue;
+        }
         if (d.state !== 'fly') continue;
         d.obj.position.copy(d.pos); d.obj.rotation.set(d.pitch, d.hdg, 0, 'YXZ');
         d.sym.position.set(d.pos.x, d.pos.y + 25, d.pos.z); d.sym.visible = !obs;
@@ -2395,6 +2475,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const sp = [d.pos.clone(), d.spi ? d.spi.clone().setY(d.spi.y + 2) : d.pos.clone()];
         if (!d.spiLine) d.spiLine = polyline(sp, 0xd6b25a, false, 1.5, { dashed: true, dashSize: 30, gapSize: 20 }); else setLine(d.spiLine, sp, false);
       }
+      for (const d of drones) if (TYPES[d.type].cam) scanArea(d);
+      applyShow();
+      identTick();
       ui.visible = !obs;
       if (++uiTick % 15 === 0 && !$('w-uas').contains(document.activeElement)) draw();   // don't rebuild under a focused input or open select
     }
@@ -2410,6 +2493,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const noise = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), im = g.createImageData(256, 256);
       for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); return c; })();
     const small = document.createElement('canvas'), sctx = small.getContext('2d');
+    function snow(g, alpha, scale) {        // seamless TV snow: the noise tile as a repeating pattern at a random offset
+      if (!g.snowPat) g.snowPat = g.createPattern(noise, 'repeat');
+      g.save(); g.globalAlpha = alpha; g.setTransform(scale, 0, 0, scale, -Math.random() * 256 * scale, -Math.random() * 256 * scale);
+      g.fillStyle = g.snowPat; g.fillRect(0, 0, FEED_W / scale + 256, FEED_H / scale + 256); g.restore();
+    }
     function renderFeeds() {
       for (const d of drones) if (d.feed && d.feed.closed) d.feed = null;
       keySlew();
@@ -2421,10 +2509,17 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const n = Math.min(open.length, MAX_FEEDS_PER_FRAME);
       for (let j = 0; j < n; j++) {
         const d = open[(rr + j) % open.length], g = d.fctx, tier = CAM[TYPES[d.type].cam];
-        if (d.state !== 'fly') {
-          g.filter = 'none'; g.fillStyle = '#000'; g.fillRect(0, 0, FEED_W, FEED_H); g.fillStyle = '#d6b25a'; g.font = '600 28px monospace'; g.textAlign = 'center';
-          g.fillText(d.state === 'dead' ? 'LINK LOST' : 'RECOVERED', FEED_W / 2, FEED_H / 2 - 10); g.font = '16px monospace'; g.fillText(d.why.slice(0, 80), FEED_W / 2, FEED_H / 2 + 22); hud(d); continue;
+        if (d.state !== 'fly' && d.state !== 'falling') {
+          g.filter = 'none'; g.fillStyle = '#000'; g.fillRect(0, 0, FEED_W, FEED_H);
+          if (d.state === 'dead') {                 // snow: two layers of the noise tile at random offsets, then a dark band for the text
+            snow(g, 1, 2); snow(g, 0.35, 1);
+            g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, FEED_H / 2 - 44, FEED_W, 84);
+          }
+          g.fillStyle = '#d6b25a'; g.font = '600 28px monospace'; g.textAlign = 'center';
+          g.fillText(d.state === 'dead' ? 'SIGNAL LOST' : 'RECOVERED', FEED_W / 2, FEED_H / 2 - 10); g.font = '16px monospace'; g.fillText(d.why.slice(0, 80), FEED_W / 2, FEED_H / 2 + 22); hud(d); continue;
         }
+        const falling = d.state === 'falling', fu = falling ? Math.min(1, (simT() - d.fall.t0) / 12) : 0;   // how far the picture has broken up
+        if (falling && Math.random() < 0.05 + 0.3 * fu) { hud(d); continue; }        // dropped frames, more as it falls
         if (tier.drop && Math.random() < tier.drop) { hud(d); continue; }          // frozen frame
         updateCam(d, fw / fh); d.obj.visible = false;
         renderer.setViewport(0, 0, fw, fh); renderer.setScissor(0, 0, fw, fh); renderer.render(scene, d.cam3);
@@ -2437,6 +2532,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           g.drawImage(small, 0, 0, sw, sh, 0, 0, FEED_W, FEED_H); g.filter = 'none';
         } else g.drawImage(canvas, 0, canvas.height - fh * pr, fw * pr, fh * pr, 0, 0, FEED_W, FEED_H);
         if (tier.noise) { g.globalAlpha = tier.noise; g.drawImage(noise, -Math.random() * 200, -Math.random() * 200, 1024, 1024); g.globalAlpha = 1; }
+        if (falling) {
+          const jx = (Math.random() - 0.5) * 30 * fu, jy = (Math.random() - 0.5) * 20 * fu;      // shake and tearing
+          if (jx || jy) g.drawImage(g.canvas, jx, jy);
+          for (let b = Math.floor(1 + 4 * fu * Math.random()); b > 0; b--) {
+            const y = Math.random() * FEED_H, h = 4 + Math.random() * 30 * fu, sx = (Math.random() - 0.5) * 120 * fu;
+            g.drawImage(g.canvas, 0, y, FEED_W, h, sx, y, FEED_W, h);
+          }
+          snow(g, 0.05 + 0.75 * fu * fu, 2);           // light at first, near-total just before impact
+        }
         g.strokeStyle = 'rgba(230,233,223,.85)'; g.lineWidth = 1.5; const X = FEED_W / 2, Y = FEED_H / 2;
         g.beginPath(); g.moveTo(X - 30, Y); g.lineTo(X - 8, Y); g.moveTo(X + 8, Y); g.lineTo(X + 30, Y); g.moveTo(X, Y - 30); g.lineTo(X, Y - 8); g.moveTo(X, Y + 8); g.lineTo(X, Y + 30); g.stroke();
         hud(d);
@@ -2447,9 +2551,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function hud(d) {
       const w = d.feed; if (!w || w.closed) return; const doc = w.document, T = TYPES[d.type];
       if ((d.hudN = (d.hudN || 0) + 1) % 6) return;
-      const fly = d.state === 'fly', left = Math.max(0, T.endur - (simT() - d.t0)), spi = d.spi;
+      const fly = d.state === 'fly' || d.state === 'falling', left = Math.max(0, T.endur - (simT() - d.t0)), spi = d.state === 'fly' ? d.spi : null;
       doc.getElementById('h-name').textContent = d.name;
-      doc.getElementById('h-mode').textContent = !fly ? (d.state === 'dead' ? 'LOST' : 'RECOVERED') : d.task.kind === 'strike' ? 'TERMINAL' : d.task.kind === 'recover' ? 'RTB' : d.cam.mode.toUpperCase();
+      doc.getElementById('h-mode').textContent = d.state === 'falling' ? 'NO POWER' : !fly ? (d.state === 'dead' ? 'LOST' : 'RECOVERED') : d.task.kind === 'strike' ? 'TERMINAL' : d.task.kind === 'recover' ? 'RTB' : d.cam.mode.toUpperCase();
       const agl = d.pos.y - gy(d.pos.x, d.pos.z);       // true metres above ground (the scene may be height-exaggerated)
       doc.getElementById('h-pos').textContent = fly ? gridAt(d.pos.x, d.pos.z) : '—';
       doc.getElementById('h-alt').textContent = fly ? ftStr(agl) + ' AGL · ' + ftStr(heightAt(d.pos.x, d.pos.z) + agl) + ' MSL' : '—';
@@ -2457,6 +2561,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       doc.getElementById('h-rng').textContent = fly && spi ? (spi.distanceTo(d.pos) / 1000).toFixed(2) + ' km' : '—';
       doc.getElementById('h-fov').textContent = d.cam.fov.toFixed(1) + '°';
       doc.getElementById('h-end').textContent = fly ? fmt(left) : '—';
+      doc.getElementById('h-end').style.color = fly && left < 300 ? '#ff8a73' : '';   // last 5 minutes in red
       doc.getElementById('h-t').textContent = 'T+' + fmt(simT());
       for (const m of ['scan', 'stare', 'track']) doc.getElementById('m-' + m).setAttribute('aria-pressed', String(d.cam.mode === m));
       const sb = doc.getElementById('f-strike');
@@ -2635,12 +2740,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           const inp = document.createElement('input'); inp.className = 'grid-in'; inp.placeholder = 'target grid'; inp.value = lp.draft != null ? lp.draft : '4Q FJ ';
           inp.addEventListener('focus', () => { const n = inp.value.length; inp.setSelectionRange(n, n); }); inp.addEventListener('input', () => { lp.draft = inp.value; });
           bar.appendChild(inp);
-          bar.appendChild(btn('Launch (' + lp.rounds.lucas + ')', 'Fly to the grid and strike it. No camera.', () => {
+          bar.appendChild(btn('Launch', 'Fly to the grid and strike it. No camera.', () => {
             const g = FIRES.debug.parseGrid(inp.value); if (g.err) return msg('uas-lmsg', g.err, 'bad');
             const p = toLocal(g.e, g.n); if (!onMap(p.x, p.z)) return msg('uas-lmsg', 'Target must be on the map.', 'bad');
             lp.draft = null; msg('uas-lmsg', ''); launch(lp, 'lucas', p);
           }));
-        } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch') + ' (' + lp.rounds[k] + ')', 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
+        } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
         bar.appendChild(btn('Remove', '', () => { dropObj(lp.sprite); lps.splice(lps.indexOf(lp), 1); FIRES.log('Removed ' + lp.name); draw(); }));
         row.appendChild(bar); L.appendChild(row);
       }
@@ -2649,7 +2754,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (d.state === 'ready') continue;
         const T = TYPES[d.type], row = document.createElement('div'); row.className = 'drow' + (d.state !== 'fly' ? ' dead' : '');
         const k = d.task;
-        const st = d.state === 'dead' ? (d.why.startsWith('impact') ? 'Expended' : 'Lost') : d.state === 'landed' ? 'Recovered' :
+        const st = d.state === 'falling' ? 'Going down' : d.state === 'dead' ? (d.why.startsWith('impact') ? 'Expended' : 'Lost') : d.state === 'landed' ? 'Recovered' :
           k.kind === 'strike' ? 'Terminal' : k.kind === 'gps' ? 'Inbound' : k.kind === 'recover' ? 'Returning' : k.kind === 'route' ? 'Route ' + (k.i + 1) + '/' + k.pts.length : 'Orbit ' + k.r + ' m';
         const nm = document.createElement('div'); nm.className = 'dn';
         nm.innerHTML = '<span></span><span class="ug"></span>'; nm.firstChild.textContent = d.name + '  ' + st;
@@ -2664,13 +2769,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (armed && armed.kind === 'route' && armed.d === d) bar.appendChild(btn('Done', '', finishRoute));
           bar.appendChild(sel('Height above ground', [500, 1000, 2000, 3000, 5000, 8000], ft(d.alt), v => { d.alt = v * FT; drawTask(d); draw(); }, v => v.toLocaleString('en-US') + ' ft'));
           if (k.kind === 'orbit') bar.appendChild(sel('Orbit radius', [250, 400, 700, 1000, 1500, 2500], k.r, v => { k.r = v; drawTask(d); }, v => 'r ' + v));
-          if (T.recover && k.kind !== 'recover') bar.appendChild(btn('Recover', 'Fly back to the launch point and land; ready again after turnaround', () => recover(d)));
+          if (T.recover && k.kind !== 'recover') bar.appendChild(btn('Recover', 'Fly back to the launch point and land', () => recover(d)));
         }
         if (d.state === 'fly' && T.waveoff && k.kind === 'strike') bar.appendChild(btn('Wave off', 'Pull out of the dive', () => waveOff(d)));
-        if (d.state === 'fly') bar.appendChild(btn('Go', 'Look at this drone on the map', () => { controls.target.set(d.pos.x, gy(d.pos.x, d.pos.z), d.pos.z); }));
+        if (d.state === 'fly') bar.appendChild(btn('IDENT', 'Centre the map on this UAS and flash its symbol', () => ident(d)));
         if (T.cam) bar.appendChild(btn('View feed', 'Open this drone\'s camera in its own window', () => openFeed(d), 'feed-btn'));
         row.appendChild(bar); D.appendChild(row);
       }
+      if (!D.children.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Nothing in flight. Launch from Launch UAS above.'; D.appendChild(p); }
       const M = $('uas-marks'); M.textContent = '';
       if (!marks.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'No marks yet. Mark from a feed (grid under the crosshair).'; M.appendChild(p); }
       for (const mk of marks) {
