@@ -2305,7 +2305,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const wantY = gy(d.pos.x, d.pos.z) + d.alt; d.pos.y += clamp(wantY - d.pos.y, -8 * dt, 8 * dt);
     }
 
-    // ---- camera: scan (hands-off sweep), manual (student drags), stare (ground point), track (a vehicle)
+    // ---- camera: scan (hands-off sweep), stare (ground point; drags, arrows and prepoint slew it), track (a vehicle)
     const tv = new THREE.Vector3();
     function aim(d) {
       const c = d.cam;
@@ -2313,7 +2313,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (c.trk && c.trk.parent && c.trk.visible) { c.trk.getWorldPosition(tv); c.last = { x: tv.x, z: tv.z }; return tv.clone().setY(tv.y + 1); }
         c.mode = 'stare'; if (c.last) { c.sx = c.last.x; c.sz = c.last.z; } note(d, 'Track lost.');
       }
-      if (c.mode === 'stare') return new THREE.Vector3(c.sx, gy(c.sx, c.sz), c.sz);
+      if (c.mode === 'stare') {
+        const s = c.slew;                   // prepoint: swing smoothly from the old point to the new one, then hold it
+        if (s && s.tx === c.sx && s.tz === c.sz) {
+          const u = Math.min(1, (performance.now() - s.t0) / s.dur), k = u * u * (3 - 2 * u);
+          if (u < 1) { const x = s.fx + (c.sx - s.fx) * k, z = s.fz + (c.sz - s.fz) * k; return new THREE.Vector3(x, gy(x, z), z); }
+          c.slew = null;
+        }
+        return new THREE.Vector3(c.sx, gy(c.sx, c.sz), c.sz);
+      }
       if (c.mode === 'scan') {
         let cx, cz, R;
         if (d.task.kind === 'orbit') { cx = d.task.cx; cz = d.task.cz; R = d.task.r * 1.1; }
@@ -2336,6 +2344,30 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     const rc = new THREE.Raycaster(), nv = new THREE.Vector2();
     function groundThrough(d, nx, ny) { nv.set(nx, ny); rc.setFromCamera(nv, d.cam3); return rayGround(rc.ray.origin, rc.ray.direction); }
+    // ground-stabilised slew (Lee, 2026-11-02): a mouse drag or arrow key turns the view by an angle, then locks on the
+    // ground point now under the crosshair (stare), so the picture no longer drifts as the drone flies its orbit.
+    // Slewing breaks a track, as on a real sensor.
+    const sd = new THREE.Vector3();
+    function slewBy(d, daz, del) {
+      const c = d.cam; updateCam(d);
+      const az = c.az + daz, el = clamp(c.el + del, -1.55, -0.01);
+      sd.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
+      const p = rayGround(d.cam3.position, sd);
+      if (!p) return del ? slewBy(d, daz, 0) : false;   // only sky that way: keep the sideways part, drop the upward part
+      c.mode = 'stare'; c.sx = p.x; c.sz = p.z; c.trk = null; c.slew = null; return true;
+    }
+    let lastKeySlew = 0;
+    function keySlew() {                    // held arrow keys in a feed window: half a field of view per second, Shift x3
+      const now = performance.now(), dt = lastKeySlew ? Math.min(0.25, (now - lastKeySlew) / 1000) : 0; lastKeySlew = now;
+      for (const d of drones) {
+        const K = d.slewKeys;
+        if (!d.feed || !K || !K.size || d.state !== 'fly') continue;
+        const rate = d.cam.fov * Math.PI / 180 * (d.slewFast ? 1.5 : 0.5) * dt;
+        const daz = ((K.has('ArrowLeft') ? 1 : 0) - (K.has('ArrowRight') ? 1 : 0)) * rate;
+        const del = ((K.has('ArrowUp') ? 1 : 0) - (K.has('ArrowDown') ? 1 : 0)) * rate;
+        if (daz || del) slewBy(d, daz, del);
+      }
+    }
 
     // ---- per-frame: fly (sub-stepped so 10x stays stable), then overlays
     let lastSim = null, uiTick = 0;
@@ -2380,6 +2412,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const small = document.createElement('canvas'), sctx = small.getContext('2d');
     function renderFeeds() {
       for (const d of drones) if (d.feed && d.feed.closed) d.feed = null;
+      keySlew();
       const open = drones.filter(d => d.feed);
       if (!open.length) return;
       const pr = renderer.getPixelRatio(), cw = canvas.width / pr, ch = canvas.height / pr;
@@ -2425,7 +2458,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       doc.getElementById('h-fov').textContent = d.cam.fov.toFixed(1) + '°';
       doc.getElementById('h-end').textContent = fly ? fmt(left) : '—';
       doc.getElementById('h-t').textContent = 'T+' + fmt(simT());
-      for (const m of ['scan', 'manual', 'stare', 'track']) doc.getElementById('m-' + m).setAttribute('aria-pressed', String(d.cam.mode === m));
+      for (const m of ['scan', 'stare', 'track']) doc.getElementById('m-' + m).setAttribute('aria-pressed', String(d.cam.mode === m));
       const sb = doc.getElementById('f-strike');
       if (sb) { sb.disabled = !fly || d.task.kind === 'strike' || d.task.kind === 'recover';
         if (d.armedStrike && performance.now() > d.armedStrike) { d.armedStrike = 0; sb.textContent = 'Strike'; sb.classList.remove('armed'); } }
@@ -2454,15 +2487,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       <span><b>SPI</b><span id="h-spi"></span></span><span><b>RNG</b><span id="h-rng"></span></span><span><b>FOV</b><span id="h-fov"></span></span>
       <span><b>END</b><span id="h-end"></span></span><span id="h-t"></span></div></div>
       <div id="bar">
-        <button id="m-scan" title="Hands-off sweep of the orbit area">Scan</button><button id="m-manual" title="Drag the video to slew">Manual</button>
+        <button id="m-scan" title="Hands-off sweep of the orbit area">Scan</button>
         <button id="m-stare" title="Click the video: lock on that ground point">Stare</button><button id="m-track" title="Shift-click a vehicle in the video to follow it">Track</button>
         <span class="sep"></span><button id="z-in" title="Zoom in (or mouse wheel)">Zoom +</button><button id="z-out" title="Zoom out">Zoom −</button>
         <button id="f-orbit" title="Move the orbit to the point under the crosshair">Orbit here</button>
+        ${T.fam === 'altius' ? '<span class="sep"></span><input id="f-pp" value="4Q FJ " size="17" spellcheck="false" aria-label="Prepoint grid" title="Grid to slew the camera to (Enter)"><button id="f-ppgo" title="Slew the camera to this grid and hold it">Prepoint</button>' : ''}
         <span class="sep"></span><input id="f-note" placeholder="note for the mark (what you see)"><button id="f-mark" title="Mark the grid under the crosshair">Mark</button>
         ${T.burst ? '<button id="f-strike" title="Dive on the stare point or tracked vehicle (click twice)">Strike</button>' : ''}
         ${T.waveoff ? '<button id="f-abort" hidden title="Pull out of the dive and climb back to orbit">Wave off</button>' : ''}
         ${T.recover ? '<button id="f-recover" title="Fly back to the launch point and land">Recover</button>' : ''}
-        <div id="f-msg">Click: stare at a point. Shift-click: track a vehicle. Drag: slew. Wheel: zoom.</div>
+        <div id="f-msg">Click: stare at a point. Shift-click: track a vehicle. Drag or arrow keys: slew (Shift: faster). Wheel or +/−: zoom.</div>
       </div></div></body></html>`;
     // reminder before the first feed (and again if the browser blocks one): feeds open as pop-up windows
     let modal = null, skipModal = false;
@@ -2505,8 +2539,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       cv.addEventListener('pointermove', e => {
         if (!drag || d.state !== 'fly') return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         if (!drag.moved && Math.hypot(dx, dy) < 4) return; drag.moved = true; drag.x = e.clientX; drag.y = e.clientY;
-        const k = d.cam.fov * Math.PI / 180 / cv.getBoundingClientRect().height; d.cam.mode = 'manual';
-        d.cam.az -= dx * k; d.cam.el = clamp(d.cam.el + dy * k, -1.55, 0.2);
+        const k = d.cam.fov * Math.PI / 180 / cv.getBoundingClientRect().height;
+        slewBy(d, dx * k, dy * k);           // the picture follows the hand on both axes (sideways used to run backwards)
       });
       cv.addEventListener('pointerup', e => {
         const was = drag; drag = null; if (!was || was.moved || d.state !== 'fly') return;
@@ -2521,7 +2555,6 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       cv.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
       const B = id => doc.getElementById(id);
       B('m-scan').addEventListener('click', () => { d.cam.mode = 'scan'; d.cam.trk = null; });
-      B('m-manual').addEventListener('click', () => { d.cam.mode = 'manual'; d.cam.trk = null; });
       B('m-stare').addEventListener('click', () => { if (d.spi) { d.cam.mode = 'stare'; d.cam.sx = d.spi.x; d.cam.sz = d.spi.z; d.cam.trk = null; } });
       B('m-track').addEventListener('click', () => note(d, 'Shift-click a vehicle in the video to track it.'));
       B('z-in').addEventListener('click', () => zoom(1 / 1.5));
@@ -2534,7 +2567,30 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       });
       if (B('f-abort')) B('f-abort').addEventListener('click', () => waveOff(d));
       if (B('f-recover')) B('f-recover').addEventListener('click', () => recover(d));
-      w.addEventListener('keydown', e => { if (e.key === '+' || e.key === '=') zoom(1 / 1.25); if (e.key === '-') zoom(1.25); });
+      // prepoint (Altius): type a grid, the camera slews there (about 60 deg/s) and stares at it
+      const prepoint = () => {
+        if (d.state !== 'fly') return note(d, 'The drone is not flying.');
+        const g = FIRES.debug.parseGrid(B('f-pp').value); if (g.err) return note(d, g.err);
+        const p = toLocal(g.e, g.n); if (!onMap(p.x, p.z)) return note(d, 'That grid is off the map.');
+        const c = d.cam; updateCam(d);
+        const f = d.spi || new THREE.Vector3(c.sx, gy(c.sx, c.sz), c.sz), o = d.cam3.position;
+        const ang = f.clone().sub(o).angleTo(new THREE.Vector3(p.x, gy(p.x, p.z), p.z).sub(o));
+        c.mode = 'stare'; c.trk = null; c.sx = p.x; c.sz = p.z;
+        c.slew = { fx: f.x, fz: f.z, tx: p.x, tz: p.z, t0: performance.now(), dur: clamp(ang / (Math.PI / 3) * 1000, 300, 2000) };
+        const tg = new THREE.Vector3(p.x, gy(p.x, p.z), p.z), dir = tg.clone().sub(o), L = dir.length(), hit = rayGround(o, dir.normalize());
+        note(d, 'Prepoint ' + gridAt(p.x, p.z) + (hit && hit.distanceTo(o) < L - 30 ? ' — masked by terrain from here; the SPI shows the near slope.' : '.'));
+      };
+      if (B('f-ppgo')) B('f-ppgo').addEventListener('click', prepoint);
+      // keys: arrows slew (held), +/- zoom; ignored while typing in the note or grid box (Enter there runs the prepoint)
+      d.slewKeys = new Set();
+      const typing = () => { const a = doc.activeElement; return !!a && /INPUT|TEXTAREA|SELECT/.test(a.tagName); };
+      w.addEventListener('keydown', e => {
+        if (typing()) { if (e.key === 'Enter' && doc.activeElement.id === 'f-pp') prepoint(); return; }
+        if (e.key === '+' || e.key === '=') zoom(1 / 1.25); else if (e.key === '-') zoom(1.25);
+        else if (/^Arrow(Up|Down|Left|Right)$/.test(e.key)) { d.slewKeys.add(e.key); d.slewFast = e.shiftKey; e.preventDefault(); }
+      });
+      w.addEventListener('keyup', e => { d.slewKeys.delete(e.key); d.slewFast = e.shiftKey; });
+      w.addEventListener('blur', () => d.slewKeys.clear());
     }
 
     // ---- marks: a grid, a time and the student's own note (no prediction, no truth)
