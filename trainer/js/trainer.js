@@ -35,8 +35,20 @@
 
   // ---- scene
   const canvas = document.getElementById('view');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // ---- LITE (demo) mode for phones and tablets (Lee, 2026-11-03): phone browsers kill tabs that use too much memory.
+  //      Lite = 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes (no car models), distant trees simplified.
+  //      ?lite=1 / ?lite=0 in the address forces it on or off (testing on a laptop, or a capable tablet).
+  const LITE = (() => { const q = new URLSearchParams(location.search).get('lite'); if (q === '1') return true; if (q === '0') return false;
+    return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); })();
+  window.__lite = LITE;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE });
+  renderer.setPixelRatio(LITE ? 1 : Math.min(devicePixelRatio, 2));
+  function liteNote() {                      // shown once the scene is up (a slow phone could otherwise miss it during loading)
+    if (!LITE) return;
+    const n = document.createElement('div'); n.id = 'lite-note'; n.setAttribute('role', 'status');
+    n.innerHTML = '<b>Mobile device detected — demo mode.</b><br>Graphics are simplified for mobile viewing. For full detail and the instructor tools, open the trainer on a laptop or desktop.<span class="x">Tap to close</span>';
+    n.addEventListener('click', () => n.remove()); document.body.appendChild(n); setTimeout(() => n.remove(), 15000);
+  }
   const scene = new THREE.Scene();
   // sky: a gradient dome that follows the camera; fog fades everything to the horizon colour, so land and sea
   // melt into the sky instead of ending at an edge (both the map view and standing at an OP)
@@ -853,8 +865,8 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       st.groundMs = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
     }
     // ---- tree culling (perf, 2026-11-03): trees are drawn only in 250 m cells some camera (main view or an open UAS feed)
-    //      can see. TREE_SIMPLIFY (off, Lee: no visual change) would also swap distant crowns for 20-triangle ones.
-    const TREE_SIMPLIFY = false, TREE_CELL = 250, TREE_NEAR = TREE_SIMPLIFY ? 1200 : Infinity, TREE_FAR = 8000;
+    //      can see. TREE_SIMPLIFY (lite/phone mode only; Lee: no visual change on laptops) swaps distant crowns for 20-triangle ones.
+    const TREE_SIMPLIFY = LITE, TREE_CELL = 250, TREE_NEAR = TREE_SIMPLIFY ? 1200 : Infinity, TREE_FAR = 8000;
     let treeLOD = null;
     function makeTreeLOD(cats) {
       const NCX = Math.ceil(2 * HW / TREE_CELL), NCZ = Math.ceil(2 * HH / TREE_CELL), cellOf = (x, z) => Math.min(NCX - 1, Math.max(0, Math.floor((x + HW) / TREE_CELL))) + NCX * Math.min(NCZ - 1, Math.max(0, Math.floor((z + HH) / TREE_CELL)));
@@ -1956,10 +1968,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const o = tmpl[t].clone(); o.position.y = -VT[t].H / 2; o.rotation.y = MODELS[t].yaw || 0; return o;   // container sits at H/2; model pivot on the ground
     }
     function makeVeh(t) { const c = new THREE.Group(); c.userData.t = t; c.add(makeBody(t)); return c; }
-    if (THREE.GLTFLoader) for (const t of Object.keys(MODELS)) new THREE.GLTFLoader().load(MODELS[t].url, gl => {
-      tmpl[t] = gl.scene;
-      for (const [, v] of view.g) for (const c of v.meshes) if (c.userData.t === t) { c.clear(); c.add(makeBody(t)); }
-    }, undefined, e => console.warn('Vehicle model failed to load; keeping boxes:', t, e));
+    // models load on first use (perf/memory, 2026-11-03): a type's file is fetched when a group first contains it
+    const asked = new Set();
+    function needModel(t) {
+      if (asked.has(t) || !MODELS[t] || !THREE.GLTFLoader) return; asked.add(t);
+      new THREE.GLTFLoader().load(MODELS[t].url, gl => {
+        tmpl[t] = gl.scene;
+        for (const [, v] of view.g) for (const c of v.meshes) if (c.userData.t === t) { c.clear(); c.add(makeBody(t)); }
+      }, undefined, e => console.warn('Vehicle model failed to load; keeping boxes:', t, e));
+    }
     const diamondTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
       x.translate(32, 32); x.rotate(Math.PI / 4); x.fillStyle = 'rgba(255,106,85,.9)'; x.strokeStyle = '#2a0b07'; x.lineWidth = 4;
       x.fillRect(-17, -17, 34, 34); x.strokeRect(-17, -17, 34, 34); return new THREE.CanvasTexture(c); })();
@@ -2057,6 +2074,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const struckCount = g => vehicles(g).filter((_, i) => struckAt(g, i, simT())).length;
 
     function rebuildViews() {
+      for (const g of groups) for (const u of g.units) needModel(u.type);
       for (const [, v] of view.g) { for (const m of v.meshes) root.remove(m); root.remove(v.sym); v.label.remove(); }
       view.g.clear();
       for (const g of groups) {
@@ -2547,7 +2565,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const FAR_R = 3500, NEAR_CAP = 220;           // boxes out to FAR_R from a camera; at most NEAR_CAP full models
     const COLOURS = { white: 0xe8e8e4, silver: 0xa9adb0, black: 0x1d1e20, 'dark blue': 0x1f2c48, red: 0x9e2222, 'dark green': 0x24402c, brown: 0x5a3f2a,
       grey: 0x6f7274, navy: 0x1d2640, cream: 0xd9d2b8, 'dark grey': 0x46484a, maroon: 0x5c1d22, rust: 0x8a4a2a, olive: 0x5e5f33, taupe: 0x8a7f70, 'off-white': 0xdcd8cc, 'dark teal': 0x1f4a4c };
-    let level = 'normal', specs = null, N = 0, built = false; const cars = [];
+    let level = LITE ? 'sparse' : 'normal', specs = null, N = 0, built = false; const cars = [];
     const grp = new THREE.Group(); scene.add(grp);
     function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
@@ -2639,6 +2657,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       modelsStarted = true;
       if (!THREE.GLTFLoader) return;
       await loadBoat();
+      if (LITE) return;                          // lite: cars stay coloured boxes (30 textured models cost too much memory on a phone)
       // one at a time, in the background: 30 small files; cars show as boxes until their model arrives
       const loader = new THREE.GLTFLoader();
       for (let mi = 0; mi < specs.length; mi++) {
@@ -3615,12 +3634,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const KEY = 'fist-trainer-panels-v1', wins = [...document.querySelectorAll('.win')];
     const tools = [...document.querySelectorAll('#tools [data-win]')];
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { saved = {}; }
+    if (LITE) for (const k of Object.keys(saved)) saved[k].open = false;   // phones: start with the view clear; the toolbar opens panels
     const save = () => { try { const o = {}; for (const w of wins) o[w.id] = { x: w.offsetLeft, y: w.offsetTop, open: !w.hidden }; localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
     let z = 10;
     const tbH = () => topbar.offsetHeight;
     function defaults(w) {
       const W = innerWidth, gap = 16, top = tbH() + 12;
-      if (W < 700) return { x: gap, y: top, open: w.id === 'w-ops' };
+      if (W < 700) return { x: gap, y: top, open: !LITE && w.id === 'w-ops' };
       if (w.id === 'w-ops') return { x: gap, y: top, open: true };
       if (w.id === 'w-fires') return { x: W - 336 - gap, y: top, open: true };
       return { x: gap + 336 + 12, y: top, open: false };   // Display, OPFOR and later panels open beside OPs
@@ -3800,6 +3820,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ['Buildings and trees', '2020 NOAA lidar; block sight on a 10 m grid; trees block completely'],
           ['OP inside a building', 'observer stands on the roof'],
           ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground'],
+          ['Phones and tablets', (LITE ? 'THIS DEVICE: ' : '') + 'demo (lite) mode — 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes, distant trees simplified. ?lite=1 / ?lite=0 forces it.'],
           ['Trees drawn (display only)', 'only those in 250 m cells inside some camera\'s view (main view or an open UAS feed), all at full detail. Sight lines still use every tree.'],
           ['Terrain drawn (display only)', 'in ~1.5 km tiles; tiles outside the view are skipped. Same ground, same detail.'],
           ['Traffic updates', 'civilian positions are redrawn at half the frame rate (every frame while a UAS feed is open)']])}`]);
@@ -3819,7 +3840,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
   // ---- render loop with label projection
   const v = new THREE.Vector3();
-  document.getElementById('loading').hidden = true;
+  document.getElementById('loading').hidden = true; liteNote();
   let lastT = performance.now();
   // ---- performance readout (Display → Diagnostics → Performance; Lee, 2026-11-03): what each frame costs, so a
   //      feature's weight can be seen by switching it on and off. Frame time, fps, JS time per module, GPU work.
