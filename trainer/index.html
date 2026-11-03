@@ -95,8 +95,9 @@
     <div class="fsec">
       <h3>Fire mission</h3>
       <div class="row"><select id="fm-unit" aria-label="Firing unit"></select>
-        <select id="fm-rds" aria-label="Rounds per tube"><option value="1">1 rd/tube</option><option value="2" selected>2 rds/tube</option><option value="3">3 rds/tube</option><option value="4">4 rds/tube</option><option value="6">6 rds/tube</option></select></div>
+        <select id="fm-rds" aria-label="Rounds per tube"><option value="1">1 rd/tube</option><option value="2" selected>2 rds/tube</option><option value="3">3 rds/tube</option><option value="4">4 rds/tube</option><option value="6">6 rds/tube</option><option value="8">8 rds/tube</option><option value="12">12 rds/tube</option></select></div>
       <div class="row"><input id="fm-grid" class="grid-in" placeholder="target grid" aria-label="Target grid"><button id="fm-pick">Pick on map</button></div>
+      <div class="row"><span class="lbl">Angle</span><button id="fm-high" aria-pressed="true" title="High angle: steep, clears buildings, longer time of flight">High</button><button id="fm-low" aria-pressed="false">Low</button></div>
       <div class="row"><button id="fm-fire" class="fire-btn">Fire</button></div>
       <p class="msg" id="fm-msg"></p>
     </div>

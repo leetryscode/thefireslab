@@ -947,7 +947,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       blockers(); if (VS.op) runViewshed();
     }
     init();
-    return { set, setRoofs, roofAt, solidAt: (x, z) => roofAt(x, z, true) !== null, get ready() { return st.ready; }, debug: { st, P, get HB() { return HB; }, bGrp, tGrp } };
+    return { set, setRoofs, roofAt, solidAt: (x, z) => roofAt(x, z, true) !== null, get ready() { return st.ready; }, debug: { st, P, roofAt, idx, get HB() { return HB; }, bGrp, tGrp } };
   })();
   window.__city = CITY.debug;
 
@@ -1280,14 +1280,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   const FIRES = (() => {
     // Placeholder figures, all in one place. Replace with real values when supplied.
     const TYPES = {
-      m777: { label: 'M777 155 mm battery', short: 'M777', tubes: 6, rounds: 300, min: 2500, max: 22000, angle: 'low',
-              tof: R => 8 + R / 350, interval: 15, sheaf: 100, sR: R => 10 + 0.0035 * R, sD: R => 5 + 0.0015 * R, burst: 1.0 },
-      m119: { label: 'M119 105 mm battery', short: 'M119', tubes: 6, rounds: 360, min: 1500, max: 11500, angle: 'low',
-              tof: R => 6 + R / 280, interval: 10, sheaf: 80, sR: R => 8 + 0.004 * R, sD: R => 4 + 0.002 * R, burst: 0.75 },
-      m120: { label: '120 mm mortar section', short: '120mm', tubes: 4, rounds: 200, min: 200, max: 7200, angle: 'high',
-              tof: R => 15 + R / 300, interval: 8, sheaf: 60, sR: R => 10 + 0.008 * R, sD: R => 6 + 0.004 * R, burst: 0.8 },
-      m252: { label: '81 mm mortar section', short: '81mm', tubes: 4, rounds: 240, min: 80, max: 5600, angle: 'high',
-              tof: R => 12 + R / 300, interval: 5, sheaf: 40, sR: R => 8 + 0.01 * R, sD: R => 5 + 0.005 * R, burst: 0.55 }
+      m777: { label: 'M777 155 mm battery', short: 'M777', tubes: 6, min: 2500, max: 22000, angle: 'low',
+              interval: 15, sheaf: 100, sR: R => 10 + 0.0035 * R, sD: R => 5 + 0.0015 * R, burst: 1.0 },
+      m119: { label: 'M119 105 mm battery', short: 'M119', tubes: 6, min: 1500, max: 11500, angle: 'low',
+              interval: 10, sheaf: 80, sR: R => 8 + 0.004 * R, sD: R => 4 + 0.002 * R, burst: 0.75 },
+      m120: { label: '120 mm mortar section', short: '120mm', tubes: 4, min: 200, max: 7200, angle: 'high',
+              interval: 8, sheaf: 60, sR: R => 10 + 0.008 * R, sD: R => 6 + 0.004 * R, burst: 0.8 },
+      m252: { label: '81 mm mortar section', short: '81mm', tubes: 4, min: 80, max: 5600, angle: 'high',
+              interval: 5, sheaf: 40, sR: R => 8 + 0.01 * R, sD: R => 5 + 0.005 * R, burst: 0.55 }
     };
     let simT = 0, speed = 1, nextId = 1, mapMode = false, arcsOn = true;
     const units = [], missions = [], fx = [], impactFns = [];   // impactFns: damage listens here (registered by DAMAGE)
@@ -1342,7 +1342,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function addUnit(type, e, n, alt) {
       const t = TYPES[type], count = units.filter(u => u.type === type).length + 1;
       const name = t.short + ' ' + 'ABCDEFGH'[count - 1];
-      const u = { id: nextId++, type, name, e, n, alt: onMap(e, n) ? null : (alt || 0), rounds: t.rounds };
+      const u = { id: nextId++, type, name, e, n, alt: onMap(e, n) ? null : (alt || 0) };
       u.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: symbolTexture(t, name), depthTest: false, transparent: true }));
       u.sprite.scale.set(384 * SYM_K, 128 * SYM_K, 1); u.sprite.material.sizeAttenuation = false; u.sprite.renderOrder = 10;
       unitGroup.add(u.sprite); placeSprite(u); units.push(u);
@@ -1377,7 +1377,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const L = $('ulist'); L.textContent = '';
       for (const u of units) {
         const row = document.createElement('div'); row.className = 'urow';
-        const nm = document.createElement('span'); nm.className = 'un'; nm.textContent = u.name + '  ' + u.rounds + ' rds';
+        const nm = document.createElement('span'); nm.className = 'un'; nm.textContent = u.name;
         const gr = document.createElement('span'); gr.className = 'ug'; gr.textContent = gridTxt(u.e, u.n) + (onMap(u.e, u.n) ? '' : '  off map'); nm.appendChild(gr);
         const mv = document.createElement('button'); mv.textContent = 'Move'; mv.addEventListener('click', () => { moving = u; placing = null; msg(placeMsg, 'Click the map, or type a grid and press Place, to move ' + u.name + '.', 'arm'); });
         const rm = document.createElement('button'); rm.textContent = 'Remove'; rm.addEventListener('click', () => { unitGroup.remove(u.sprite); units.splice(units.indexOf(u), 1); log('Removed ' + u.name); drawUnits(); });
@@ -1385,10 +1385,77 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
       const sel = $('fm-unit'), keep = sel.value; sel.textContent = '';
       if (!units.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Place a unit first'; sel.appendChild(o); }
-      for (const u of units) { const o = document.createElement('option'); o.value = String(u.id); o.textContent = u.name + ' (' + u.rounds + ')'; sel.appendChild(o); }
+      for (const u of units) { const o = document.createElement('option'); o.value = String(u.id); o.textContent = u.name; sel.appendChild(o); }
       if (units.some(u => String(u.id) === keep)) sel.value = keep;
+      if (typeof syncAngle === 'function') syncAngle();
     }
 
+    // ---- BALLISTICS (Lee, 2026-11-02): a point-mass shell with gravity and quadratic drag (a = −k|v|v), constant air
+    //      density, stepped at 0.05 s. Notional, not firing tables: top muzzle velocity per weapon is a public round figure,
+    //      charges are fractions of it, and k was fitted (once, offline) so the top charge's maximum range = the unit's
+    //      max range. Every value here is a placeholder. The path drives the drawn arc, the shells, time of flight and masking.
+    const BAL = (() => {
+      const G = 9.81, DT = 0.05, MIL = 6400 / (2 * Math.PI);
+      const W = {                      // v: top muzzle velocity m/s; ch: charges as fractions of v; k: fitted drag constant
+        m777: { v: 827, ch: [0.35, 0.5, 0.65, 0.8, 1],        k: 5.362e-5 },
+        m119: { v: 494, ch: [0.35, 0.5, 0.65, 0.8, 1],        k: 7.284e-5 },
+        m120: { v: 318, ch: [0.2, 0.35, 0.5, 0.7, 0.85, 1],   k: 5.849e-5 },
+        m252: { v: 264, ch: [0.15, 0.3, 0.45, 0.6, 0.8, 1],   k: 5.117e-5 }
+      };
+      const LOW_MAX = 600, HIGH_BEST = 1150, HIGH_MIN = 800, HIGH_MAX = 1350;   // charge choice, mils
+      function fly(v, th, k, dh, keep) {   // until the shell comes down through height dh (target minus gun); x along the line, y up, t s
+        let x = 0, y = 0, vx = v * Math.cos(th), vy = v * Math.sin(th), t = 0; const pts = keep ? [{ x: 0, y: 0, t: 0 }] : null;
+        for (let i = 0; i < 20000; i++) {
+          const s = Math.hypot(vx, vy), nvx = vx - k * s * vx * DT, nvy = vy + (-G - k * s * vy) * DT;
+          const nx = x + (vx + nvx) / 2 * DT, ny = y + (vy + nvy) / 2 * DT;
+          if (nvy < 0 && ny <= dh) { const f = (y - dh) / ((y - ny) || 1); x += (nx - x) * f; t += DT * f; if (keep) pts.push({ x, y: dh, t }); return { R: x, tof: t, pts }; }
+          x = nx; y = ny; vx = nvx; vy = nvy; t += DT; if (keep) pts.push({ x, y, t });
+        }
+        return { R: x, tof: t, pts };
+      }
+      const maxCache = new Map();
+      function maxR(v, k, dh) {
+        const key = v + '|' + Math.round(dh / 20); if (maxCache.has(key)) return maxCache.get(key);
+        let a = 0.2, b = 1.2; for (let i = 0; i < 30; i++) { const m1 = a + (b - a) / 3, m2 = b - (b - a) / 3; if (fly(v, m1, k, dh).R < fly(v, m2, k, dh).R) a = m1; else b = m2; }
+        const th = (a + b) / 2, r = { th, R: fly(v, th, k, dh).R }; maxCache.set(key, r); return r;
+      }
+      function solveCharge(v, k, R, dh, high) {
+        const m = maxR(v, k, dh); if (m.R < R) return null;
+        let a = high ? m.th : 0.005, b = high ? 1.48 : m.th;
+        if (high && fly(v, b, k, dh).R > R) return null;          // too close for this charge at high angle
+        for (let i = 0; i < 36; i++) { const c = (a + b) / 2, r = fly(v, c, k, dh).R; if ((r < R) !== high) a = c; else b = c; }
+        const th = (a + b) / 2; return { th, qe: th * MIL, ...fly(v, th, k, dh, true) };
+      }
+      // the FDC's pick: low angle = lowest charge that reaches below LOW_MAX mils (else the lowest that reaches);
+      // high angle = the charge whose QE is closest to HIGH_BEST within HIGH_MIN..HIGH_MAX (else any high-angle solution)
+      function solve(type, R, dh, high) {
+        const w = W[type], sols = w.ch.map((c, i) => { const s = solveCharge(w.v * c, w.k, R, dh, high); return s && Object.assign(s, { ch: i + 1, v: w.v * c }); }).filter(Boolean);
+        if (!sols.length) return { err: high ? 'No charge reaches at high angle' : 'No charge reaches' };
+        let s;
+        if (!high) s = sols.find(o => o.qe <= LOW_MAX) || sols[0];
+        else { const band = sols.filter(o => o.qe >= HIGH_MIN && o.qe <= HIGH_MAX); s = (band.length ? band : sols).reduce((a, o) => Math.abs(o.qe - HIGH_BEST) < Math.abs(a.qe - HIGH_BEST) ? o : a); }
+        s.high = high; return s;
+      }
+      return { solve, W, MIL, LOW_MAX, HIGH_BEST, HIGH_MIN, HIGH_MAX, fly };
+    })();
+    // walk one round's path (the mission path stretched to the round's own range and bearing): the first building or
+    // terrain crest below it is where it bursts. Off-map stretches are not checked; the first 30 m from the guns are skipped.
+    const MASK_TOP = 1200;             // only test where the shell is below this height (m) — buildings and hills are lower
+    function maskRound(sol, G, gH, ux, uz, Rr) {
+      const P = sol.pts, sc = Rr / (sol.R || 1);
+      for (let i = 1; i < P.length; i++) {
+        const a = P[i - 1], b = P[i]; if (Math.min(a.y, b.y) + gH > MASK_TOP) continue;
+        const L = (b.x - a.x) * sc, n = Math.max(1, Math.ceil(L / 5));
+        for (let j = 1; j <= n; j++) {
+          const f = j / n, x = (a.x + (b.x - a.x) * f) * sc; if (x < 30 || x > Rr - 1) continue;
+          const px = G.x + ux * x, pz = G.z + uz * x; if (Math.abs(px) > HW || Math.abs(pz) > HH) continue;
+          const h = gH + a.y + (b.y - a.y) * f, gr = heightAt(px, pz), roof = CITY.roofAt(px, pz, true);
+          if (roof !== null && h < roof) { const y = h > roof - 6 ? roof : h; return { x: px, z: pz, y, t: a.t + (b.t - a.t) * f, what: 'building', above: y - gr }; }   // through the roof: burst on it
+          if (h < gr - 0.5) return { x: px, z: pz, y: gr, t: a.t + (b.t - a.t) * f, what: 'terrain', above: 0 };
+        }
+      }
+      return null;
+    }
     // ---- fire missions
     $('fm-pick').addEventListener('click', () => { picking = true; placing = null; moving = null; msg(fmMsg, 'Click the target on the map. Esc cancels.', 'arm'); });
     $('fm-fire').addEventListener('click', fire);
@@ -1400,32 +1467,51 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const t = TYPES[u.type], R = Math.hypot(g.e - u.e, g.n - u.n);
       if (R > t.max) return msg(fmMsg, `Out of range: ${(R / 1000).toFixed(1)} km, ${t.short} max ${(t.max / 1000).toFixed(1)} km.`, 'bad');
       if (R < t.min) return msg(fmMsg, `Inside minimum range: ${Math.round(R)} m, ${t.short} min ${t.min} m.`, 'bad');
-      const per = Number($('fm-rds').value), total = per * t.tubes;
-      if (total > u.rounds) return msg(fmMsg, `${u.name} has only ${u.rounds} rounds; this mission needs ${total}.`, 'bad');
-      u.rounds -= total; drawUnits();
-      const id = missions.length + 1, r = rng(id * 2654435761 + u.id * 97), tof = t.tof(R);
+      const per = Number($('fm-rds').value);     // no ammunition count or limit (Lee, 2026-11-02): the instructor decides
+      const high = t.angle === 'high' || angle === 'high';
+      const G = toLocal(u.e, u.n), gH = onMap(u.e, u.n) ? heightAt(G.x, G.z) : (u.alt || 0), tl = toLocal(g.e, g.n), tH = heightAt(tl.x, tl.z);
+      const sol = BAL.solve(u.type, R, tH - gH, high);
+      if (sol.err) return msg(fmMsg, `${sol.err}: ${(R / 1000).toFixed(1)} km${high && t.angle !== 'high' ? '. Try Low.' : '.'}`, 'bad');
+      const id = missions.length + 1, r = rng(id * 2654435761 + u.id * 97), tof = sol.tof;
       const ux = (g.e - u.e) / R, uy = (g.n - u.n) / R;       // gun-target line, east/north components
-      const impacts = [];
+      const impacts = [], volEnd = [];
       for (let k = 0; k < per; k++) for (let j = 0; j < t.tubes; j++) {
         const lat = t.tubes > 1 ? (j / (t.tubes - 1) - 0.5) * t.sheaf : 0;  // parallel sheaf across the gun-target line
         const dr = gauss(r) * t.sR(R), dd = gauss(r) * t.sD(R) + lat;
-        impacts.push({ t: simT + k * t.interval + tof + r() * 1.5, e: g.e + ux * dr - uy * dd, n: g.n + uy * dr + ux * dd, done: false });
+        const e = g.e + ux * dr - uy * dd, n = g.n + uy * dr + ux * dd, fired = simT + k * t.interval + r() * 1.5;
+        const Rr = Math.hypot(e - u.e, n - u.n), hit = maskRound(sol, G, gH, (e - u.e) / Rr, -(n - u.n) / Rr, Rr);
+        const imp = hit ? { t: fired + hit.t, e: CE + hit.x, n: CN - hit.z, y: hit.y, what: hit.what, above: hit.above, done: false }
+                        : { t: fired + tof, e, n, done: false };
+        impacts.push(imp); volEnd[k] = Math.max(volEnd[k] || 0, imp.t);
       }
-      const m = { id, u, t, g, R, tof, per, t0: simT, impacts, splash: false, endT: Math.max(...impacts.map(i => i.t)), arc: null, shells: [] };
+      const m = { id, u, t, g, R, tof, per, t0: simT, impacts, splash: false, endT: Math.max(...impacts.map(i => i.t)), arc: null, shells: [], sol, G, gH, volEnd };
       missions.push(m); buildArc(m);
-      log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${per} rd × ${t.tubes}, range ${(R / 1000).toFixed(1)} km, ToF ${Math.round(tof)} s — SHOT`);
-      msg(fmMsg, `Mission ${id} away. Splash in ${Math.round(tof)} s.`);
+      const masked = impacts.filter(i => i.what).length;
+      log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${per} rd × ${t.tubes}, range ${(R / 1000).toFixed(1)} km, ${high ? 'HIGH' : 'LOW'} ch ${sol.ch} QE ${Math.round(sol.qe)} mils, ToF ${Math.round(tof)} s — SHOT`);
+      msg(fmMsg, `Mission ${id} away (${high ? 'high' : 'low'} angle, charge ${sol.ch}, QE ${Math.round(sol.qe)} mils). Splash in ${Math.round(tof)} s.` + (masked ? ` ${masked} of ${impacts.length} rounds will hit a building or crest first.` : ''));
     }
+    // Low / High angle (Lee, 2026-11-02: High is the default — most of this terrain needs it). Mortars are always high.
+    let angle = 'high';
+    function syncAngle() {
+      const u = units.find(x => String(x.id) === $('fm-unit').value), mortar = !!u && TYPES[u.type].angle === 'high';
+      $('fm-low').disabled = mortar; $('fm-low').title = mortar ? 'Mortars fire high angle only' : 'Low angle: flatter, faster, masked by buildings';
+      const a = mortar ? 'high' : angle; $('fm-high').setAttribute('aria-pressed', String(a === 'high')); $('fm-low').setAttribute('aria-pressed', String(a === 'low'));
+    }
+    $('fm-high').addEventListener('click', () => { angle = 'high'; syncAngle(); });
+    $('fm-low').addEventListener('click', () => { angle = 'low'; syncAngle(); });
+    $('fm-unit').addEventListener('change', syncAngle);
 
-    // ---- arcs: a gun-to-target curve shaped for the eye (apex grows with range; high angle for mortars)
+    // ---- arcs: the mission's computed trajectory (true heights × terrain exaggeration), gun to aim point
     function arcPoint(m, f, out) {
-      const G = gunPos(m.u), tp = toLocal(m.g.e, m.g.n), T = new THREE.Vector3(tp.x, heightAt(tp.x, tp.z) * ex, tp.z);
-      const apex = m.R * (m.t.angle === 'high' ? 0.43 : 0.117) * Math.min(1, ex);
-      return out.copy(G).lerp(T, f).setY(G.y + (T.y - G.y) * f + 4 * apex * f * (1 - f));
+      const P = m.sol.pts, T = f * m.tof; let lo = 0, hi = P.length - 1;
+      while (hi - lo > 1) { const c = (lo + hi) >> 1; if (P[c].t <= T) lo = c; else hi = c; }
+      const a = P[lo], b = P[hi], k = Math.max(0, Math.min(1, (T - a.t) / ((b.t - a.t) || 1))), x = a.x + (b.x - a.x) * k, y = a.y + (b.y - a.y) * k;
+      const tp = toLocal(m.g.e, m.g.n), L = Math.hypot(tp.x - m.G.x, tp.z - m.G.z) || 1, s = x / (m.sol.R || 1) * L;
+      return out.set(m.G.x + (tp.x - m.G.x) / L * s, (m.gH + y) * ex + 3, m.G.z + (tp.z - m.G.z) / L * s);
     }
     function buildArc(m) {
       const pts = []; const tmp = new THREE.Vector3();
-      for (let i = 0; i <= 64; i++) pts.push(arcPoint(m, i / 64, tmp).clone());
+      for (let i = 0; i <= 128; i++) pts.push(arcPoint(m, i / 128, tmp).clone());
       m.arc = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0.7, depthTest: false }));
       m.arc.renderOrder = 9; m.arc.visible = arcsOn; arcGroup.add(m.arc);
       for (let k = 0; k < m.per; k++) {
@@ -1440,13 +1526,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
     const scorchGeo = new THREE.PlaneGeometry(1, 1);
     function burst(i, m) {
-      const p = toLocal(i.e, i.n), y = heightAt(p.x, p.z) * ex, s = m.t.burst;
+      const p = toLocal(i.e, i.n), y = (i.y !== undefined ? i.y : heightAt(p.x, p.z)) * ex, s = m.t.burst;
       const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: 0xffd27a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
       flash.position.set(p.x, y + 4, p.z); fxGroup.add(flash);
       const smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: 0x3e3a36, transparent: true, depthWrite: false }));
       smoke.position.set(p.x, y + 6, p.z); fxGroup.add(smoke);
       const scorch = new THREE.Mesh(scorchGeo, new THREE.MeshBasicMaterial({ map: smokeTex, color: 0x000000, transparent: true, opacity: 0.55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
-      scorch.rotation.x = -Math.PI / 2; scorch.position.set(p.x, y + 0.5, p.z); scorch.scale.setScalar(14 * s); fxGroup.add(scorch);
+      scorch.rotation.x = -Math.PI / 2; scorch.position.set(p.x, y + 0.5, p.z); scorch.scale.setScalar(14 * s); fxGroup.add(scorch); scorch.userData.off = i.what === 'building';
       fx.push({ flash, smoke, scorch, t0: i.t, y, s });
       if (fx.length > 600) { const o = fx.shift(); fxGroup.remove(o.flash, o.smoke, o.scorch); }
     }
@@ -1456,7 +1542,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         f.flash.visible = a >= 0 && a < 0.8; if (f.flash.visible) { const k = 25 + 70 * f.s * (a / 0.8); f.flash.scale.set(k, k, 1); f.flash.material.opacity = 1 - a / 0.8; }
         const life = 60; f.smoke.visible = a >= 0 && a < life;
         if (f.smoke.visible) { const k = (18 + 60 * Math.sqrt(a / life)) * f.s; f.smoke.scale.set(k, k * 1.25, 1); f.smoke.position.y = f.y + k * 0.45 + a * 0.8; f.smoke.material.opacity = 0.9 * Math.pow(1 - a / life, 1.5); }
-        f.scorch.visible = a >= 0 && a < 600; if (f.scorch.visible) f.scorch.material.opacity = 0.55 * (1 - a / 600);
+        f.scorch.visible = a >= 0 && a < 600 && !f.scorch.userData.off; if (f.scorch.visible) f.scorch.material.opacity = 0.55 * (1 - a / 600);
       }
     }
 
@@ -1469,10 +1555,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         m.impacts.forEach((i, k) => { if (!i.done && simT >= i.t) { i.done = true; burst(i, m); for (const f of impactFns) f(i, m, k); } });
         for (let k = 0; k < m.per; k++) {
           const f = (simT - (m.t0 + k * m.t.interval)) / m.tof, s = m.shells[k];
-          s.visible = arcsOn && f > 0 && f < 1;
+          s.visible = arcsOn && f > 0 && f < 1 && simT < m.volEnd[k];
           if (s.visible) { arcPoint(m, f, tmpV); s.position.copy(tmpV); const d = camera.position.distanceTo(tmpV) * 0.004; s.scale.setScalar(Math.max(2, d)); }
         }
-        if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck`); }
+        if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; const nb = m.impacts.filter(i => i.what === 'building').length, nt = m.impacts.filter(i => i.what === 'terrain').length;
+          log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck` + (nb ? `, ${nb} hit buildings` : '') + (nt ? `, ${nt} hit terrain` : '')); }
       }
       animateFx();
     }
@@ -1525,7 +1612,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     drawUnits();
-    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -2321,21 +2408,35 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return pdh * Math.exp(-(d / r) * (d / r));
     }
     // one burst at local (x, z), time t. Returns { hits: [{v, d, p}], near: {v, d} | null }
-    function burstAt(id, mun, x, z, t) {
-      const O = OPFOR.debug, out = { hits: [], near: null }, wetB = O.waterAt(x, z);
+    // y (m, absolute) given = the burst was on a building or crest above the ground: distance is then 3D to the vehicle's
+    // centre. Ground bursts keep the sim's ground distance. Either way a building between burst and vehicle shields it.
+    function shielded(x, z, yb, vx, vz, vy) {
+      const L = Math.hypot(vx - x, vz - z), n = Math.floor(L / 3);
+      for (let k = 1; k < n; k++) {
+        const f = k / n, d0 = f * L; if (d0 < 3 || L - d0 < 4) continue;          // not the burst's own wall, not the vehicle's own spot
+        const px = x + (vx - x) * f, pz = z + (vz - z) * f, roof = CITY.roofAt(px, pz, true);
+        if (roof !== null && roof > yb + (vy - yb) * f) return true;
+      }
+      return false;
+    }
+    function burstAt(id, mun, x, z, t, y) {
+      const O = OPFOR.debug, out = { hits: [], near: null, shielded: 0 }, wetB = O.waterAt(x, z), up = y !== undefined;
+      const yb = up ? y : (wetB ? 0 : heightAt(x, z)) + 1;
       for (const v of O.vehiclesAt(t)) {
-        const d = Math.hypot(v.x - x, v.z - z);
+        const vy = (O.waterAt(v.x, v.z) ? 0 : heightAt(v.x, v.z)) + 1.5;
+        const d = up ? Math.hypot(v.x - x, v.z - z, vy - y) : Math.hypot(v.x - x, v.z - z);
         if (!out.near || d < out.near.d) out.near = { v, d };
         if (v.struck || d > 320) continue;
         let p = pStrike(mun, v.type, d);
         if (p > 0 && TUBES[mun] && (wetB || O.waterAt(v.x, v.z))) p = 0;
+        if (p > 0 && CITY.ready && shielded(x, z, yb, v.x, v.z, vy)) { p = 0; out.shielded++; }
         if (p > 0 && u01(id + '|' + v.key) < p && O.strike(v.g, v.i, t, id)) out.hits.push({ v, d, p });
       }
       return out;
     }
     // artillery: every round that lands
     FIRES.onImpact((imp, m, k) => {
-      const p = toLocal(imp.e, imp.n), r = burstAt('M' + m.id + '|' + k, m.u.type, p.x, p.z, imp.t);
+      const p = toLocal(imp.e, imp.n), r = burstAt('M' + m.id + '|' + k, m.u.type, p.x, p.z, imp.t, imp.what ? imp.y : undefined);
       for (const h of r.hits) { m.struck = (m.struck || 0) + 1; FIRES.log(`M${m.id} STRUCK ${OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
     });
     // UAS: aim point plus a little keyed guidance scatter
@@ -2344,7 +2445,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const px = x + g('mx') * UAS_MISS, pz = z + g('mz') * UAS_MISS;
       return Object.assign(burstAt(id, type, px, pz, t), { x: px, z: pz });
     }
-    return { burstAt, uasImpact, pStrike, R, PDH, CLASS, UAS_MISS };
+    return { burstAt, uasImpact, pStrike, shielded, R, PDH, CLASS, UAS_MISS };
   })();
   window.__damage = DAMAGE;
 
@@ -3222,7 +3323,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           'Ships (LCU, RoRo) cannot be struck; nor can cargo still aboard.',
           'A struck vehicle is not rolled again. The rest of its column drives on past it (no bypass logic yet).',
           'UAS impacts get ' + D.UAS_MISS + ' m (1σ, each axis) guidance scatter around the aim point.',
-          'Buildings do not stop rounds or drones yet.'])}
+          'Artillery rounds burst on the first building or terrain crest in their path (see Artillery); a burst on a building uses 3D distance.',
+          'A building between a burst and a vehicle shields the vehicle completely (artillery and UAS).',
+          'Drone flight paths ignore buildings (the operator steers to the end).'])}
         <h4>R and Pdh</h4>
         ${tbl(['Munition', ...cls.map(c => CLS[c] + '<br>R m · Pdh'), 'Source'],
           MUN.map(k => [munName(k), ...cls.map(c => { const r = D.R[k][c], p = D.PDH[k] && typeof D.PDH[k][c] === 'number' ? D.PDH[k][c] : 1; return r + ' · ' + (p === 1 ? '1' : p.toFixed(2)); }), src(k)]), 'num')}
@@ -3231,15 +3334,23 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           MUN.flatMap(k => cls.map((c, j) => [j ? '' : munName(k), CLS[c].split(' ')[0], ...MISS.map(m => pct(D.pStrike(k, c === 'soft' ? 'fuel' : c === 'eng' ? 'eng' : 'zbd', m)))])), 'num')}`]);
 
       sec.push(['arty', 'Artillery', `
-        ${tbl(['Unit', 'Tubes', 'Rounds', 'Range m', 'Angle', 'ToF s', 'Volley every', 'Sheaf m', 'Range σ m', 'Deflection σ m'],
-          Object.values(FT).map(t => [t.label, t.tubes, t.rounds, t.min + '–' + t.max, t.angle, f(t.tof), t.interval + ' s', t.sheaf, f(t.sR), f(t.sD)]), 'num')}
+        ${tbl(['Unit', 'Tubes', 'Range m', 'Angle', 'Top MV m/s', 'Charges (% of top MV)', 'Volley every', 'Sheaf m', 'Range σ m', 'Deflection σ m'],
+          Object.entries(FT).map(([k, t]) => { const w = FIRES.debug.BAL.W[k]; return [t.label, t.tubes, t.min + '–' + t.max, t.angle === 'high' ? 'high only' : 'high (default) / low', w.v, w.ch.map(c => Math.round(c * 100)).join(' / '), t.interval + ' s', t.sheaf, f(t.sR), f(t.sD)]; }), 'num')}
+        <p class="fm">a = g + (−k·|v|·v) &nbsp; — gravity plus quadratic drag, constant air density, 0.05 s steps</p>
         ${list([
-          'R = range gun to target, m. All unit figures are unclassified placeholders ' + PH + '.',
-          'Parallel sheaf: tubes spread evenly across the gun-target line over the sheaf width, then gaussian scatter (σ above) in range and deflection.',
-          'Each round lands up to 1.5 s after its volley time (random, keyed per mission).',
-          'Rounds per tube chosen per mission; the unit\'s round count goes down by rounds × tubes.',
-          'Off-map firing units allowed. Trajectories are drawn for the eye, not ballistic. No terrain or building masking of the arc yet.',
-          'Adjust fire, fuzes, shell types and mean-point-of-impact error not modelled yet.'])}`]);
+          'R = range gun to target, m. Muzzle velocities, charges and drag are notional — not firing tables ' + PH + '.',
+          'k fitted so the top charge\'s maximum range = the unit\'s max range (M777 ' + FIRES.debug.BAL.W.m777.k.toExponential(2) + ', M119 ' + FIRES.debug.BAL.W.m119.k.toExponential(2) + ', 120 mm ' + FIRES.debug.BAL.W.m120.k.toExponential(2) + ', 81 mm ' + FIRES.debug.BAL.W.m252.k.toExponential(2) + ' per m).',
+          'Charge choice — Low: lowest charge that reaches at ≤ ' + FIRES.debug.BAL.LOW_MAX + ' mils. High: charge with QE closest to ' + FIRES.debug.BAL.HIGH_BEST + ' mils (within ' + FIRES.debug.BAL.HIGH_MIN + '–' + FIRES.debug.BAL.HIGH_MAX + ').',
+          'Time of flight, the drawn arc and the shells all come from the computed trajectory. Height difference gun → target is included.',
+          'No ammunition count or limit: the instructor sets rounds per tube each mission. Parallel sheaf: tubes spread evenly across the gun-target line over the sheaf width, then gaussian scatter (σ above). Each round fires up to 1.5 s after its volley time.',
+          'Each round flies the mission path stretched to its own impact point. It bursts on the first <b>building</b> or <b>terrain crest</b> below its path (first 30 m from the guns and off-map stretches not checked).',
+          'A burst on a building rolls damage by 3D distance to the vehicle. A building between any burst and a vehicle shields it completely.',
+          'Not modelled: air density with height, wind, drift, fuzes, shell types, mean-point-of-impact error, different dispersion at high angle.'])}
+        <h4>Examples — same height gun and target</h4>
+        ${tbl(['Unit', 'Range', 'Low: charge · QE · ToF', 'High: charge · QE · ToF'],
+          Object.entries(FT).flatMap(([k, t]) => [1000, 3000, 5000, 10000, 15000, 20000].filter(R => R >= t.min && R <= t.max).map((R, j) => {
+            const c = s => s.err ? '—' : 'ch ' + s.ch + ' · ' + Math.round(s.qe) + ' mils · ' + Math.round(s.tof) + ' s';
+            return [j ? '' : t.short, R / 1000 + ' km', t.angle === 'high' ? 'n/a' : c(FIRES.debug.BAL.solve(k, R, 0, false)), c(FIRES.debug.BAL.solve(k, R, 0, true))]; })), 'num')}`]);
 
       sec.push(['uas', 'UAS', `
         ${tbl(['Type', 'Transit', 'Loiter', 'Dive', 'Endurance', 'Cruise AGL', 'Orbit r', 'Turn', 'Camera', 'Notes'],
@@ -3300,7 +3411,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         sec.map(s => `<section id="r-${s[0]}"><h3>${s[1]}</h3>${s[2]}</section>`).join('');
       for (const a of body.querySelectorAll('.rnav a')) a.addEventListener('click', e => { e.preventDefault(); body.querySelector(a.getAttribute('href')).scrollIntoView({ block: 'start' }); });
     }
-    function open(on) { if (on) build(); dlg.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) document.getElementById('rules-x').focus(); else btn.focus(); }
+    let built = false;   // built once per page load: the example table runs ~50 trajectory solutions
+    function open(on) { if (on && !built) { build(); built = true; } dlg.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) document.getElementById('rules-x').focus(); else btn.focus(); }
     btn.addEventListener('click', () => open(dlg.hidden));
     document.getElementById('rules-x').addEventListener('click', () => open(false));
     dlg.addEventListener('click', e => { if (e.target === dlg) open(false); });
