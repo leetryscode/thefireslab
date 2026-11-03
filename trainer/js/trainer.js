@@ -527,7 +527,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
   function coverage() {
     covEl.textContent = '';
     if (!VS.op) return;
-    const enemy = (window.__opfor ? window.__opfor.groups : []).map(g => ({ name: g.name, pts: window.__opfor.fullRoute(g).map(q => [q.e, q.n]) })).filter(r => r.pts.length >= 2);
+    const enemy = (window.__opfor ? window.__opfor.groups : []).map(g => ({ name: g.name, pts: window.__opfor.pathEN(g).map(q => [q.e, q.n]) })).filter(r => r.pts.length >= 2);
     if (!enemy.length) { const p0 = document.createElement('p'); p0.className = 'hint'; p0.textContent = 'No enemy routes yet: draw OPFOR groups to see how much of each route ' + VS.op.name + ' can see.'; covEl.appendChild(p0); return; }
     for (const rt of enemy) {
       let seen = 0, total = 0;
@@ -599,8 +599,8 @@ vec3 gradeGround(vec3 base, vec3 lit){
       }
       return inside;
     }
-    function roofAt(x, z) {             // highest building roof over a point (local metres), or null
-      if (!st.ready || !st.buildings) return null;
+    function roofAt(x, z, any) {        // highest building roof over a point (local metres), or null; any = even if Buildings are switched off
+      if (!st.ready || (!st.buildings && !any)) return null;
       const list = idx.get(Math.floor(x / IDX) + ',' + Math.floor(z / IDX)); if (!list) return null;
       const X = x * 10, Z = z * 10; let best = null;
       for (const k of list) {
@@ -934,7 +934,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       buildBuildings(d.b); cleanGround(); buildTrees(d.t);
       st.parts = d.b.length; st.trees_n = d.t.length / 4; st.ms = Math.round(performance.now() - t0);
       grp.scale.y = ex; grp.visible = true; bGrp.visible = st.buildings; tGrp.visible = st.trees;
-      st.ready = true; blockers(); if (VS.op) runViewshed();
+      st.ready = true; blockers(); if (VS.op) runViewshed(); if (onCityReady) onCityReady();
       if (metaEl) metaEl.textContent = 'Buildings and trees: lidar 2020 (NOAA, ~15 pts/m²), roof colour from NAIP; roads and bridges © OpenStreetMap contributors (ODbL). Sight is blocked on a 10 m grid.';
     }
     function setRoofs(style) {
@@ -947,13 +947,76 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       blockers(); if (VS.op) runViewshed();
     }
     init();
-    return { set, setRoofs, roofAt, debug: { st, P, get HB() { return HB; }, bGrp, tGrp } };
+    return { set, setRoofs, roofAt, solidAt: (x, z) => roofAt(x, z, true) !== null, get ready() { return st.ready; }, debug: { st, P, get HB() { return HB; }, bGrp, tGrp } };
   })();
   window.__city = CITY.debug;
 
   // ---- ROADS: OpenStreetMap roads (data/roads.json, pack_roads.py) as flat ribbons draped on the terrain - shapes,
   //      not pixels, so they stay crisp at any zoom with no texture. Asphalt with light kerb strips on streets and
   //      arterials; service lanes plain. Shown with Ground: Hybrid.
+  // ---- ROADNET: the OSM roads as a graph, for road-snapped enemy routes (Lee, 2026-11-02: snapping is the default).
+  //      Nodes = road vertices (shared vertices join roads at junctions). Edge cost = length × class weight, so columns
+  //      prefer bigger roads a little. No one-way streets (OSM direction not kept) — military traffic, accepted.
+  let ROADNET = null, onRoadNet = null, onCityReady = null;
+  const ROAD_W = [1.0, 1.1, 1.3];       // cost per metre by road class (0 major, 1 mid, 2 minor) — placeholder
+  const ROAD_REACH = 300;               // a clicked point snaps to a road only if one is within this many metres
+  function buildRoadNet(R) {
+    const key = new Map(), X = [], Z = [], E = [];           // E: [a, b, cls]
+    const node = (x, z) => { const k = x * 262144 + z; let i = key.get(k); if (i === undefined) { i = X.length; key.set(k, i); X.push(x / 10); Z.push(z / 10); } return i; };
+    for (const [, cls, f] of R) { let p = node(f[0], f[1]); for (let i = 2; i < f.length; i += 2) { const q = node(f[i], f[i + 1]); if (q !== p) E.push(p, q, cls); p = q; } }
+    const n = X.length, deg = new Int32Array(n + 1);
+    for (let e = 0; e < E.length; e += 3) { deg[E[e] + 1]++; deg[E[e + 1] + 1]++; }
+    for (let i = 0; i < n; i++) deg[i + 1] += deg[i];
+    const to = new Int32Array(deg[n]), w = new Float32Array(deg[n]), fill = deg.slice(0, n);
+    const SEG = 100, seg = new Map();                          // 100 m buckets of edge ids
+    for (let e = 0; e < E.length; e += 3) {
+      const a = E[e], b = E[e + 1], c = ROAD_W[E[e + 2]] * Math.hypot(X[b] - X[a], Z[b] - Z[a]);
+      to[fill[a]] = b; w[fill[a]++] = c; to[fill[b]] = a; w[fill[b]++] = c;
+      const x0 = Math.floor(Math.min(X[a], X[b]) / SEG), x1 = Math.floor(Math.max(X[a], X[b]) / SEG), z0 = Math.floor(Math.min(Z[a], Z[b]) / SEG), z1 = Math.floor(Math.max(Z[a], Z[b]) / SEG);
+      for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i + ',' + j; let l = seg.get(k); if (!l) seg.set(k, l = []); l.push(e / 3); }
+    }
+    function nearest(x, z) {                                    // closest point on any road within ROAD_REACH
+      const ci = Math.floor(x / SEG), cj = Math.floor(z / SEG), r = Math.ceil(ROAD_REACH / SEG); let best = null;
+      for (let i = ci - r; i <= ci + r; i++) for (let j = cj - r; j <= cj + r; j++) {
+        const l = seg.get(i + ',' + j); if (!l) continue;
+        for (const s of l) {
+          const a = E[s * 3], b = E[s * 3 + 1], dx = X[b] - X[a], dz = Z[b] - Z[a], L2 = dx * dx + dz * dz || 1;
+          const t = Math.max(0, Math.min(1, ((x - X[a]) * dx + (z - Z[a]) * dz) / L2)), px = X[a] + dx * t, pz = Z[a] + dz * t, d = Math.hypot(x - px, z - pz);
+          if (d <= ROAD_REACH && (!best || d < best.d)) best = { s, a, b, t, x: px, z: pz, d, cls: E[s * 3 + 2] };
+        }
+      }
+      return best;
+    }
+    // shortest road path between two points; null if either is more than ROAD_REACH from a road or no road path joins them
+    function path(ax, az, bx, bz) {
+      const A = nearest(ax, az), B = nearest(bx, bz); if (!A || !B) return null;
+      const P = [{ x: ax, z: az }, { x: A.x, z: A.z }];
+      if (A.s === B.s) { P.push({ x: B.x, z: B.z }, { x: bx, z: bz }); return P; }
+      const segLen = s => Math.hypot(X[E[s * 3 + 1]] - X[E[s * 3]], Z[E[s * 3 + 1]] - Z[E[s * 3]]) * ROAD_W[E[s * 3 + 2]];
+      const g = new Map(), prev = new Map(), heap = [];
+      const push = (i, c, p) => { if (g.has(i) && g.get(i) <= c) return; g.set(i, c); prev.set(i, p);
+        heap.push([c + Math.hypot(X[i] - B.x, Z[i] - B.z), i]); let k = heap.length - 1;
+        while (k) { const q = (k - 1) >> 1; if (heap[q][0] <= heap[k][0]) break; [heap[q], heap[k]] = [heap[k], heap[q]]; k = q; } };
+      const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0;
+        for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; [heap[m], heap[k]] = [heap[k], heap[m]]; k = m; } } return top; };
+      const la = segLen(A.s);
+      push(A.a, la * A.t, -1); push(A.b, la * (1 - A.t), -1);
+      const lb = segLen(B.s), endCost = i => i === B.a ? lb * B.t : i === B.b ? lb * (1 - B.t) : null;
+      let best = Infinity, bestEnd = -1, done = new Set();
+      while (heap.length) {
+        const [f, i] = pop(); if (f >= best) break; if (done.has(i)) continue; done.add(i);
+        const gi = g.get(i), ec = endCost(i); if (ec !== null && gi + ec < best) { best = gi + ec; bestEnd = i; }
+        for (let k = deg[i]; k < deg[i + 1]; k++) push(to[k], gi + w[k], i);
+        if (done.size > 60000) break;
+      }
+      if (bestEnd < 0) return null;
+      const mid = []; for (let i = bestEnd; i !== -1; i = prev.get(i)) mid.push({ x: X[i], z: Z[i] });
+      P.push(...mid.reverse(), { x: B.x, z: B.z }, { x: bx, z: bz });
+      return P.filter((p, k) => !k || Math.hypot(p.x - P[k - 1].x, p.z - P[k - 1].z) > 0.5);
+    }
+    return { path, nearest, nodes: n, edges: E.length / 3 };
+  }
+
   const ROADS = (() => {
     const grp = new THREE.Group(); scene.add(grp); window.__roads = grp;
     const prevEx = onExCity; onExCity = () => { if (prevEx) prevEx(); grp.scale.y = ex; };
@@ -1032,6 +1095,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const mesh = new THREE.Mesh(g, mat); grp.add(mesh); grp.scale.y = ex;
       grp.visible = URBAN.on.value === 1;
       window.__roadsStat = { roads: d.r.length, verts: v, tris: I.length / 3 };
+      ROADNET = buildRoadNet(d.r);
+      if (onRoadNet) onRoadNet();
     })();
     return { grp };
   })();
@@ -1225,7 +1290,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
               tof: R => 12 + R / 300, interval: 5, sheaf: 40, sR: R => 8 + 0.01 * R, sD: R => 5 + 0.005 * R, burst: 0.55 }
     };
     let simT = 0, speed = 1, nextId = 1, mapMode = false, arcsOn = true;
-    const units = [], missions = [], fx = [];
+    const units = [], missions = [], fx = [], impactFns = [];   // impactFns: damage listens here (registered by DAMAGE)
     const $ = id => document.getElementById(id);
     const fmt = t => { const s = Math.max(0, Math.floor(t)); return 'T+' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
     const gridTxt = (e, n) => { const g = toGrid(e, n); return g ? g : Math.round(e) + 'E ' + Math.round(n) + 'N'; };
@@ -1401,13 +1466,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       simT += dt * speed; $('clock').textContent = fmt(simT);
       for (const m of missions) {
         if (!m.splash && simT >= m.t0 + m.tof - 5) { m.splash = true; log(`M${m.id} SPLASH`); }
-        for (const i of m.impacts) if (!i.done && simT >= i.t) { i.done = true; burst(i, m); }
+        m.impacts.forEach((i, k) => { if (!i.done && simT >= i.t) { i.done = true; burst(i, m); for (const f of impactFns) f(i, m, k); } });
         for (let k = 0; k < m.per; k++) {
           const f = (simT - (m.t0 + k * m.t.interval)) / m.tof, s = m.shells[k];
           s.visible = arcsOn && f > 0 && f < 1;
           if (s.visible) { arcPoint(m, f, tmpV); s.position.copy(tmpV); const d = camera.position.distanceTo(tmpV) * 0.004; s.scale.setScalar(Math.max(2, d)); }
         }
-        if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; log(`M${m.id} rounds complete, ${m.impacts.length} rds`); }
+        if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck`); }
       }
       animateFx();
     }
@@ -1460,7 +1525,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     drawUnits();
-    return { tick, onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -1481,7 +1546,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       roro: { name: 'RoRo',        L: 150, W: 25,  H: 22,  ship: true,  land: 0,  water: 25, gap: 500, draft: 6,   unload: 600 }
     };
     const LAND = ['zbd', 'ztd', 'eng', 'fuel', 'plz'], SHIPS = ['lcu', 'roro'];
-    const KEY = 'fist-trainer-opfor-v1';
+    const KEY = 'fist-trainer-opfor-v2';                   // v1 (straight-line test routes) dropped 2026-11-02
+    try { localStorage.removeItem('fist-trainer-opfor-v1'); } catch (e) {}
     let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true;
     const simT = () => FIRES.debug.simT;
     const fmt = s => { s = Math.max(0, Math.round(s)); return 'T+' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
@@ -1495,7 +1561,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser only; scenario files come later)
-    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null })) })); } catch (e) {} }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false })) })); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
     // ---- motion profile: arc length vs time along the route, speed by land or water
@@ -1504,20 +1570,55 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const tg = groups.find(o => o.id === g.join.group); if (!tg) return g.route;
       return g.route.concat(fullRoute(tg, d + 1).slice(g.join.at + 1));
     }
+    // ---- road snapping (Lee, 2026-11-02): land groups follow the roads between clicked points by default.
+    //      A leg stays a straight line when the group is a ship, the group has Follow roads off, either end is in the
+    //      water (beach landings, swims), or no road lies within ROAD_REACH of an end. Straight legs (and the short
+    //      off-road links from a clicked point to its road) are checked against building footprints and warned.
+    const legCache = new Map();
+    const snapOn = g => !isShip(g) && g.roads !== false;
+    function leg(g, a, b) {                    // a, b local points -> { pts: [a ... b], road, why }
+      const on = snapOn(g), k = (on ? 1 : 0) + '|' + Math.round(a.x) + ',' + Math.round(a.z) + '|' + Math.round(b.x) + ',' + Math.round(b.z);
+      let r = legCache.get(k); if (r) return r;
+      let why = !on ? '' : waterAt(a.x, a.z) || waterAt(b.x, b.z) ? 'water' : !ROADNET ? 'loading' : '';
+      let pts = null;
+      if (on && !why) { pts = ROADNET.path(a.x, a.z, b.x, b.z); if (!pts) why = 'noroad'; }
+      r = { pts: pts || [{ x: a.x, z: a.z }, { x: b.x, z: b.z }], road: !!pts, why };
+      r.cross = crossings(r);
+      if (why !== 'loading' && (CITY.ready || !r.cross.length)) legCache.set(k, r);
+      return r;
+    }
+    function crossings(r) {                    // straight pieces that pass through a building: [{x0,z0,x1,z1}]
+      if (!CITY.ready) return [];
+      const out = [], P = r.pts, pieces = r.road ? [[0, 1], [P.length - 2, P.length - 1]] : P.slice(1).map((_, i) => [i, i + 1]);
+      for (const [i, j] of pieces) {
+        const a = P[i], b = P[j], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(L / 4);
+        let hit = false; for (let s = 1; s < n && !hit; s++) hit = CITY.solidAt(a.x + (b.x - a.x) * s / n, a.z + (b.z - a.z) * s / n);
+        if (hit) out.push({ x0: a.x, z0: a.z, x1: b.x, z1: b.z });
+      }
+      return out;
+    }
+    function routePath(g, R) {                 // the driven path for a list of route points, plus where each point falls in it
+      const pts = R.map(p => toLocal(p.e, p.n)), out = pts.length ? [pts[0]] : [], at = [0], legs = [];
+      for (let k = 1; k < pts.length; k++) { const l = leg(g, pts[k - 1], pts[k]); legs.push(l); out.push(...l.pts.slice(1)); at.push(out.length - 1); }
+      return { pts: out, at, legs };
+    }
+    onRoadNet = () => { legCache.clear(); refresh(); };
+    onCityReady = () => { legCache.clear(); refresh(); };
+
     function profile(g) {
-      const R = fullRoute(g), pts = R.map(p => toLocal(p.e, p.n));
+      const R = fullRoute(g), rp = routePath(g, R), pts = rp.pts;
       const S = [0], T = [0], X = [], Z = [];
-      if (pts.length < 2) { g.prof = null; return; }
+      if (R.length < 2) { g.prof = null; return; }
       const ship = isShip(g), step = 5, stops = [];
       let s = 0, t = 0;
       X.push(pts[0].x); Z.push(pts[0].z);
       const hold = k => {                      // scripted wait at route point k: time passes, distance does not
-        const w = +R[k].hold || 0; if (w <= 0 || k === pts.length - 1) return;
+        const w = +R[k].hold || 0; if (w <= 0 || k === R.length - 1) return;
         stops.push({ k, s, t0: t, t1: t + w }); t += w; S.push(s); T.push(t); X.push(X[X.length - 1]); Z.push(Z[Z.length - 1]);
       };
       const wpS = [0];
       hold(0);
-      for (let k = 1; k < pts.length; k++) {
+      for (let k = 1, wp = 1; k < pts.length; k++) {
         const a = pts[k - 1], b = pts[k], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(L / step));
         for (let j = 1; j <= n; j++) {
           const x = a.x + (b.x - a.x) * j / n, z = a.z + (b.z - a.z) * j / n, ds = L / n;
@@ -1525,10 +1626,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           s += ds; t += ds / Math.max(0.5, kmh / 3.6);
           S.push(s); T.push(t); X.push(x); Z.push(z);
         }
-        wpS[k] = s;
-        hold(k);
+        while (wp < rp.at.length && rp.at[wp] === k) { wpS[wp] = s; hold(wp); wp++; }   // a clicked route point: holds and split points key on these
       }
-      g.prof = { S, T, X, Z, len: s, dur: t, stops, wpS };
+      g.prof = { S, T, X, Z, len: s, dur: t, stops, wpS, legs: rp.legs };
     }
     // ---- branches: a group that rides at the rear of its parent's column and peels off at a split point
     const parentOf = g => g.parent ? groups.find(o => o.id === g.parent) : null;
@@ -1647,7 +1747,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const ship = isShip(g);
         const v = view.g.get(g.id); if (!v) continue;
         v.meshes.forEach((m, i) => {
-          if (!m.visible) return;
+          if (!m.visible || struckAt(g, i, t)) return;                     // a struck vehicle has stopped: no wake
           const T = VT[m.userData.t], pts = [];
           if (!ship && !(T.amph && waterAt(m.position.x, m.position.z))) return;   // land vehicles: only while swimming
           for (let k = 0; k * WAKE_STEP <= WAKE_AGE; k++) {
@@ -1706,6 +1806,85 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const labelLayer = document.createElement('div'); labelLayer.id = 'oplabels'; document.body.insertBefore(labelLayer, document.getElementById('labels'));
     const view = { g: new Map() };            // group id -> { meshes, sym, label }
 
+    // ---- struck vehicles (Lee, 2026-11-02): one outcome — struck or not struck. A struck vehicle stops where it was
+    //      hit, for good, and burns: model charred, fire on it, a smoke column drifting downwind. The rest of its column
+    //      drives on past it (the Fire Mission Sim's rule: wrecks block nobody) until bypass logic arrives with
+    //      buildings-as-solid. State is keyed group id : slot in the column, and lives outside the meshes, so route
+    //      edits and model loads don't lose it. Everything animates on sim time (pause freezes the fire too).
+    const struck = new Map();                  // 'gid:i' -> { t, x, z, hd, cause, fx }
+    const skey = (g, i) => g.id + ':' + i;
+    const struckAt = (g, i, t) => { const w = struck.get(skey(g, i)); return w && t >= w.t ? w : null; };
+    const vName = (g, i) => VT[vehicles(g)[i]].name + ' ' + (i + 1) + ' of ' + g.name;
+    function vehiclesAt(t) {                   // every vehicle on the ground at time t (not aboard a ship), struck ones where they stopped
+      const out = [];
+      for (const g of groups) {
+        const st0 = startOf(g); if (g.carrier && (st0 === null || t < st0)) continue;
+        const s0 = sAt(g, t); if (s0 === null) continue;
+        vehicles(g).forEach((type, i) => {
+          const w = struckAt(g, i, t);
+          if (w) { out.push({ g, i, type, key: skey(g, i), x: w.x, z: w.z, hd: w.hd, struck: true }); return; }
+          const r = resolve(g, s0 - i * g.gap); if (!r || !r.g.prof) return;
+          const p = posAt(r.g, r.s); out.push({ g, i, type, key: skey(g, i), x: p.x, z: p.z, hd: p.hd, struck: false });
+        });
+      }
+      return out;
+    }
+    const fxRoot = new THREE.Group(); scene.add(fxRoot);   // world effects: seen whatever the Enemy switch says
+    const puffTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+      const gr = x.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+    const flameTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 128; const x = c.getContext('2d');
+      const gr = x.createRadialGradient(32, 92, 2, 32, 80, 60); gr.addColorStop(0, 'rgba(255,255,230,1)'); gr.addColorStop(0.25, 'rgba(255,200,90,.95)'); gr.addColorStop(0.6, 'rgba(255,110,20,.6)'); gr.addColorStop(1, 'rgba(255,60,0,0)');
+      x.fillStyle = gr; x.beginPath(); x.moveTo(32, 2); x.bezierCurveTo(62, 60, 62, 124, 32, 124); x.bezierCurveTo(2, 124, 2, 60, 32, 2); x.fill(); return new THREE.CanvasTexture(c); })();
+    // Smoke drifts WSW on the trade winds (from about 070); placeholder, one wind for every fire.
+    const WIND_FROM = 70, WIND = { x: -Math.sin(WIND_FROM * Math.PI / 180), z: Math.cos(WIND_FROM * Math.PI / 180) };   // local x = east, z = south
+    const PUFFS = 14, PUFF_LIFE = 50, BURN_FULL = 180;   // a puff rises ~50 s; the fire is full for 3 min, then settles to 60 %
+    function makeFx(type) {
+      const T = VT[type], big = type === 'fuel' ? 1.8 : 1, g = new THREE.Group();
+      const flames = [0xff8a30, 0xffcf70].map((c, k) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.renderOrder = 6; g.add(s); return s; });
+      const puffs = []; for (let k = 0; k < PUFFS; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, color: 0x111010, transparent: true, depthWrite: false })); s.renderOrder = 5; g.add(s); puffs.push(s); }
+      fxRoot.add(g); return { g, flames, puffs, big, T };
+    }
+    function dropFx(w) { if (!w.fx) return; fxRoot.remove(w.fx.g); for (const o of w.fx.g.children) o.material.dispose(); w.fx = null; }
+    function strike(g, i, t, cause) {
+      const k = skey(g, i); if (struck.has(k)) return false;
+      const v = vehiclesAt(t).find(o => o.key === k); if (!v) return false;
+      const w = { t, x: v.x, z: v.z, hd: v.hd, cause, type: v.type }; w.fx = makeFx(v.type); struck.set(k, w); return true;
+    }
+    function animFx(t) {
+      for (const [, w] of struck) {
+        const f = w.fx; if (!f) continue;
+        const a = t - w.t; f.g.visible = a >= 0; if (a < 0) continue;
+        const wet = waterAt(w.x, w.z), top = (wet ? 0 : heightAt(w.x, w.z) * ex) + f.T.H * (wet && f.T.amph ? 0.4 : 1);
+        const ph = (w.x * 0.37 + w.z * 0.11) % 6.28, burn = (a < BURN_FULL ? 1 : 0.6) * Math.min(1, 0.4 + a / 3) * f.big;
+        f.flames.forEach((s, k) => {
+          const fl = 0.85 + 0.12 * Math.sin(t * 11 + ph + k * 2) + 0.08 * Math.sin(t * 27 + ph * 3 + k);
+          const wdt = f.T.W * (k ? 1.2 : 2.0) * burn * fl, hgt = wdt * (k ? 1.7 : 1.5) * (0.9 + 0.1 * Math.sin(t * 7 + k + ph));
+          s.scale.set(wdt, hgt, 1); s.position.set(w.x + (k ? 0.6 : -0.4), top + hgt * 0.4 - 0.8, w.z); s.material.opacity = k ? 0.9 : 0.85;
+        });
+        f.puffs.forEach((s, k) => {
+          const age = ((a + k * PUFF_LIFE / PUFFS) % PUFF_LIFE);
+          const born = a >= age; s.visible = born; if (!born) return;          // the column builds up after the hit, not all at once
+          const u = age / PUFF_LIFE, rise = age * 2.8, drift = rise * 0.55 + age * 1.2;
+          const sz = (f.T.W * 2 + 46 * Math.sqrt(u)) * f.big * (a < BURN_FULL ? 1 : 0.8);
+          s.scale.set(sz, sz, 1); s.position.set(w.x + WIND.x * drift, top + 1 + rise + sz * 0.25, w.z + WIND.z * drift);
+          s.material.opacity = Math.min(1, age / 1.5) * Math.pow(1 - u, 0.9);
+          s.material.color.setRGB(0.07 + 0.30 * u, 0.065 + 0.29 * u, 0.06 + 0.28 * u);   // black at the fire, greying as it thins
+        });
+      }
+    }
+    function charred(m, on) {                  // dark, burnt-out look on a struck vehicle's own copy of its materials
+      if (!!m.userData.charred === on) return; m.userData.charred = on;
+      m.traverse(o => { if (!o.isMesh) return;
+        if (on) { o.userData.mat = o.material; o.material = (Array.isArray(o.material) ? o.material : [o.material]).map(x => { const c = x.clone(); if (c.color) c.color.multiplyScalar(0.18); return c; }); if (o.material.length === 1) o.material = o.material[0]; }
+        else if (o.userData.mat) { for (const c of [].concat(o.material)) c.dispose(); o.material = o.userData.mat; delete o.userData.mat; } });
+    }
+    function pruneStruck() {                   // a deleted group or a shortened column drops its wrecks
+      for (const [k, w] of struck) { const [gid, i] = k.split(':').map(Number), g = groups.find(o => o.id === gid);
+        if (!g || i >= vehicles(g).length || vehicles(g)[i] !== w.type) { dropFx(w); struck.delete(k); } }
+    }
+    const struckCount = g => vehicles(g).filter((_, i) => struckAt(g, i, simT())).length;
+
     function rebuildViews() {
       for (const [, v] of view.g) { for (const m of v.meshes) root.remove(m); root.remove(v.sym); v.label.remove(); }
       view.g.clear();
@@ -1741,7 +1920,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           const el = document.createElement('div'); el.className = 'tag holdtag'; el.textContent = 'Hold ' + fmt(p.hold).slice(2); labelLayer.appendChild(el);
           holdTags.push({ el, pos: s.position });
         });
-        const pts = drape(g.route.map(p => toLocal(p.e, p.n)), 4);
+        const rp = routePath(g, g.route), pts = drape(rp.pts, 4);
+        for (const l of rp.legs) for (const c of l.cross) {           // a straight piece through a building: solid amber over the dashes
+          const x = fatLine(drape([{ x: c.x0, z: c.z0 }, { x: c.x1, z: c.z1 }], 6), fatMat(0xffb020, on ? 6 : 5, { opacity: 1 })); x.renderOrder = 16; lines.add(x);
+        }
         const l = fatLine(pts, fatMat(on ? 0xd6b25a : 0xff6a55, on ? 4 : 3, { dashed: true, dashSize: 60, gapSize: 40, opacity: on ? 1 : 0.9 }));
         l.renderOrder = 15; lines.add(l);
       }
@@ -1752,9 +1934,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           for (const o of groups) if (o !== sel && inFamily(o, sel)) o.route.forEach((q, i) => addHandle(toLocal(q.e, q.n), hTexFam, { gid: o.id, i, fam: true }));
           const pts = sel.route.map(p => toLocal(p.e, p.n));
           pts.forEach((p, i) => addHandle(p, i === selPt ? hTexSel : hTexPt, { gid: sel.id, i }));
-          for (let i = 1; i < pts.length; i++) addHandle({ x: (pts[i - 1].x + pts[i].x) / 2, z: (pts[i - 1].z + pts[i].z) / 2 }, hTexMid, { i: i - 1, mid: true });
+          const rp = routePath(sel, sel.route);
+          rp.legs.forEach((l, i) => addHandle(halfway(l.pts), hTexMid, { i, mid: true }));   // on the driven path, not the chord
         }
       }
+    }
+    function halfway(P) {                      // the point half way along a polyline
+      let L = 0; for (let k = 1; k < P.length; k++) L += Math.hypot(P[k].x - P[k - 1].x, P[k].z - P[k - 1].z);
+      let h = L / 2; for (let k = 1; k < P.length; k++) { const d = Math.hypot(P[k].x - P[k - 1].x, P[k].z - P[k - 1].z);
+        if (d >= h) { const f = h / (d || 1); return { x: P[k - 1].x + (P[k].x - P[k - 1].x) * f, z: P[k - 1].z + (P[k].z - P[k - 1].z) * f }; } h -= d; }
+      return P[P.length - 1];
     }
     function addHandle(p, tex, data) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true, sizeAttenuation: false }));
@@ -1786,11 +1975,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function detach(b) { const st = b.parent ? startOf(b) : b.start; b.parent = null; delete b.splitAt; b.start = st === null || !isFinite(st) ? 0 : Math.round(st); }
     let note = '';
-    function refresh() { syncBranches(); for (const g of groups) profile(g); rebuildViews(); rebuildLines(); renderList(); renderEditor(); save(); }
+    function refresh() { syncBranches(); for (const g of groups) profile(g); pruneStruck(); rebuildViews(); rebuildLines(); renderList(); renderEditor(); save(); }
 
     // ---- per-frame placement
     const pv = new THREE.Vector3();
     function status(g) {
+      const n = struckCount(g), all = vehicles(g).length;
+      if (n && n === all) return 'All ' + all + ' struck';
+      return statusMove(g) + (n ? ' · ' + n + ' of ' + all + ' struck' : '');
+    }
+    function statusMove(g) {
       if (g.parent) {
         const p = parentOf(g), st0 = startOf(g);
         if (st0 === null) return p && p.prof ? 'Never reaches point ' + (g.splitAt + 1) : 'Waiting for main route';
@@ -1816,16 +2010,21 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const cargo = !!g.carrier, st0 = startOf(g), aboard = cargo && (st0 === null || t < st0);
         const s0 = aboard ? null : sAt(g, t);
         let leadPos = null, gap = g.gap;
+        let anyPos = null;
         v.meshes.forEach((m, i) => {
           if (s0 === null) { m.visible = false; return; }
-          const r = resolve(g, s0 - i * gap);
-          if (!r || !r.g.prof) { m.visible = false; return; }       // aboard, or no route to stand on
-          const p = posAt(r.g, r.s), T = VT[m.userData.t];
+          const w = struckAt(g, i, t);
+          const r = w ? null : resolve(g, s0 - i * gap);
+          if (!w && (!r || !r.g.prof)) { m.visible = false; return; }       // aboard, or no route to stand on
+          const p = w || posAt(r.g, r.s), T = VT[m.userData.t];
+          charred(m, !!w);
           const wet = waterAt(p.x, p.z), ground = wet ? 0 : heightAt(p.x, p.z) * ex;
           const draft = T.draft || (wet && T.amph ? T.H * 0.6 : 0);          // swimming IFVs ride low, about 1 m showing
           m.position.set(p.x, ground + T.H / 2 - draft, p.z); m.rotation.y = p.hd; m.visible = true;
-          if (!leadPos && (!g.parent || s0 >= 0)) leadPos = m.position;
+          if (!leadPos && !w && (!g.parent || s0 >= 0)) leadPos = m.position;   // the symbol rides the first vehicle still running
+          if (!anyPos && (!g.parent || s0 >= 0)) anyPos = m.position;
         });
+        if (!leadPos) leadPos = anyPos;          // all struck: the symbol stays on the wrecks
         const showSym = !!leadPos && !obs && showEnemy;
         v.sym.visible = showSym;
         if (showSym) v.sym.position.set(leadPos.x, leadPos.y + 30, leadPos.z);
@@ -1834,7 +2033,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (showLab) { v.label.style.left = ((pv.x + 1) / 2 * w) + 'px'; v.label.style.top = ((1 - pv.y) / 2 * h - 14) + 'px'; } }
         v.label.style.display = showLab ? '' : 'none';
       }
-      updateWakes(t);
+      updateWakes(t); animFx(t);
       root.visible = showEnemy; lines.visible = !obs && showRoutes; handles.visible = !obs;
       const hideTags = obs || labelHidden() || !showRoutes;
       for (const h of holdTags) {
@@ -1917,7 +2116,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function newGroup(opts) {
       const type = (opts && opts.type) || 'zbd', T = VT[type];
       const g = { id: nextId++, name: (opts && opts.name) || (T.name + ' ' + (groups.filter(o => o.units[0] && o.units[0].type === type).length + 1)),
-        units: [{ type, n: T.ship ? 1 : 6 }], route: [], start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
+        units: [{ type, n: T.ship ? 1 : 6 }], route: [], roads: true, start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
       if (opts && opts.carrier) { const c = groups.find(o => o.id === opts.carrier); g.carrier = c.id; if (c.route.length) g.route = [{ ...c.route[c.route.length - 1] }]; }
       groups.push(g); sel = g; refresh(); setEditing(true); return g;
     }
@@ -1986,6 +2185,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (ship && dry > 3) out.push('Route crosses land: ships stay on water.');
         const swimmers = g.units.every(u => VT[u.type].amph);
         if (!ship && wet > 3 && !swimmers) out.push('Route crosses water: ' + g.units.filter(u => !VT[u.type].amph).map(u => VT[u.type].name).join(', ') + ' cannot swim.');
+        const legs = routePath(g, g.route).legs, pr = ks => ks.map(k => (k + 1) + '–' + (k + 2)).join(', ');
+        const far = legs.map((l, k) => l.why === 'noroad' ? k : -1).filter(k => k >= 0), thru = legs.map((l, k) => l.cross.length ? k : -1).filter(k => k >= 0);
+        if (far.length) out.push(`No road within ${ROAD_REACH} m (points ${pr(far)}): straight line.`);
+        if (thru.length) out.push(`Points ${pr(thru)} cross a building (amber): move a point or add one.`);
       }
       return out;
     }
@@ -2006,6 +2209,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ${ship ? '' : '<label class="mini">land <input id="op-land" style="width:50px"></label>'}
           <label class="mini">water <input id="op-water" style="width:50px"></label></div>
         <div class="row"><span class="lbl">Spacing m</span><input id="op-gap" style="width:60px" aria-label="Spacing in metres"></div>
+        ${ship ? '' : `<div class="row"><span class="lbl">Roads</span><button id="op-roads" aria-pressed="${g.roads !== false}">Follow roads</button><span class="hint">${g.roads !== false ? 'between your points' : 'straight lines'}</span></div>`}
         ${ship ? `<div class="row"><span class="lbl">Unload s</span><input id="op-unload" style="width:60px" aria-label="Unloading time in seconds"></div>` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
         <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
@@ -2034,6 +2238,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if ($('op-start')) $('op-start').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(g.start).slice(2); return; } g.start = v; refresh(); });
       if ($('op-land')) { $('op-land').value = g.land; $('op-land').addEventListener('change', e => { g.land = Math.max(1, +e.target.value || g.land); refresh(); }); }
       $('op-water').value = g.water; $('op-water').addEventListener('change', e => { g.water = Math.max(0, +e.target.value || 0); refresh(); });
+      if ($('op-roads')) $('op-roads').addEventListener('click', () => { g.roads = g.roads === false; refresh(); });
       $('op-gap').value = g.gap; $('op-gap').addEventListener('change', e => { g.gap = Math.max(5, +e.target.value || g.gap); refresh(); });
       if ($('op-unload')) { $('op-unload').value = g.unload; $('op-unload').addEventListener('change', e => { g.unload = Math.max(0, +e.target.value || 0); refresh(); }); }
       if ($('op-hold')) { const p = g.route[selPt]; $('op-hold').value = fmt(+p.hold || 0).slice(2);
@@ -2065,14 +2270,88 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
+
+  // ---- DAMAGE: does a burst strike a vehicle. Ported from the Fire Mission Sim (js/sim-damage.js,
+  //      claude/sim-damage-model.md): each burst rolls separately against each vehicle,
+  //          P(struck) = Pdh * exp( -(d / R)^2 )
+  //      d = ground distance from the burst to the vehicle at the moment it lands, R = radius for that
+  //      munition against that class (Carleton damage function, circular form). Pdh = chance a burst right
+  //      on the vehicle strikes it: 1 for artillery (as in the sim); below 1 for the smaller UAS warheads, so a
+  //      tracked drone strike is not a sure thing. The dice are keyed (seed | burst id | vehicle), never drawn
+  //      in order, so 1x and 10x give the same result and a replay is identical.
+  //      EVERY NUMBER HERE IS A PLACEHOLDER. Artillery 155/105 rows are the sim's (accepted by Lee 2026-09-27);
+  //      mortar and UAS rows are new guesses by Claude, unsourced. Tune them here.
+  const DAMAGE = (() => {
+    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', eng: 'eng', fuel: 'soft' };   // ships (LCU, RoRo) absent = immune
+    const R = {
+      m777:        { soft: 35, eng: 15, armor: 10 },             // = sim M109 155 mm
+      m119:        { soft: 25, eng: 10, armor: 6 },              // = sim M101 105 mm
+      m120:        { soft: 25, eng: 10, armor: 6 },              // guess: like 105
+      m252:        { soft: 15, eng: 5,  armor: 3 },              // guess
+      altius_600m: { soft: 10, eng: 3,  armor: 2 },              // guesses from here down
+      altius_700m: { soft: 15, eng: 5,  armor: 4 },
+      switchblade: { soft: 12, eng: 4,  armor: 3 },
+      lucas:       { soft: 30, eng: 12, armor: 8 }
+    };
+    const PDH = {                                                 // chance a burst ON the vehicle strikes it (missing = 1)
+      altius_600m: { eng: 0.6, armor: 0.35 },
+      altius_700m: { eng: 0.9, armor: 0.85 },
+      switchblade: { eng: 0.9, armor: 0.8 },
+      lucas:       { armor: 0.9 }
+    };
+    const TUBES = { m777: true, m119: true, m120: true, m252: true };   // tube rounds do nothing in the water (sim rule)
+    const UAS_MISS = 1.0;                                         // guidance scatter, metres (1 sigma each axis), placeholder
+    const SEED = 0xB1A57;
+    function hash(str) {
+      let h = 0x811c9dc5 ^ SEED;
+      for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+      h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+      return h >>> 0;
+    }
+    function u01(key) {
+      const a = (hash(key) + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    function pStrike(mun, type, d) {
+      const c = CLASS[type], r = R[mun] && R[mun][c]; if (!(r > 0)) return 0;
+      const pdh = PDH[mun] && typeof PDH[mun][c] === 'number' ? PDH[mun][c] : 1;
+      return pdh * Math.exp(-(d / r) * (d / r));
+    }
+    // one burst at local (x, z), time t. Returns { hits: [{v, d, p}], near: {v, d} | null }
+    function burstAt(id, mun, x, z, t) {
+      const O = OPFOR.debug, out = { hits: [], near: null }, wetB = O.waterAt(x, z);
+      for (const v of O.vehiclesAt(t)) {
+        const d = Math.hypot(v.x - x, v.z - z);
+        if (!out.near || d < out.near.d) out.near = { v, d };
+        if (v.struck || d > 320) continue;
+        let p = pStrike(mun, v.type, d);
+        if (p > 0 && TUBES[mun] && (wetB || O.waterAt(v.x, v.z))) p = 0;
+        if (p > 0 && u01(id + '|' + v.key) < p && O.strike(v.g, v.i, t, id)) out.hits.push({ v, d, p });
+      }
+      return out;
+    }
+    // artillery: every round that lands
+    FIRES.onImpact((imp, m, k) => {
+      const p = toLocal(imp.e, imp.n), r = burstAt('M' + m.id + '|' + k, m.u.type, p.x, p.z, imp.t);
+      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; FIRES.log(`M${m.id} STRUCK ${OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
+    });
+    // UAS: aim point plus a little keyed guidance scatter
+    function uasImpact(id, type, x, z, t) {
+      const g = k => { const u = Math.max(1e-9, u01(id + '|' + k)), w = u01(id + '|' + k + 'b'); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * w); };
+      const px = x + g('mx') * UAS_MISS, pz = z + g('mz') * UAS_MISS;
+      return Object.assign(burstAt(id, type, px, pz, t), { x: px, z: pz });
+    }
+    return { burstAt, uasImpact, pStrike, R, PDH, CLASS, UAS_MISS };
+  })();
+  window.__damage = DAMAGE;
 
   // ---- UAS: friendly loitering munitions / one-way-attack drones.
   //      Launch points come from the scenario file (data/uas.json); the instructor can add more.
   //      Drones fly themselves (orbit or waypoints); students run the camera in pop-out feed windows.
-  //      Flight is stepped from the sim clock. No handoff and no damage yet: impacts are logged.
+  //      Flight is stepped from the sim clock. No handoff. Impacts roll damage in the DAMAGE module.
   //      Rule (Lee): give students nothing they would not have outside the sim. The trainer never flags
   //      targets; marks are a grid, a time and the student's own note.
   const UAS = (function () {
@@ -2301,9 +2580,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return out.sort((a, b) => a.dd - b.dd);
     }
     function impact(d, p) {
-      FIRES.blast(CE + p.x, CN - p.z, TYPES[d.type].burst);
-      const near = vehiclesNear(p.x, p.z, 15)[0];
-      kill(d, 'impact at ' + gridAt(p.x, p.z) + (near ? ' (' + Math.round(near.dd) + ' m from a ' + OPFOR.debug.VT[near.m.userData.t].name + ')' : '') + '. Damage not modelled yet.');
+      const r = DAMAGE.uasImpact('U' + d.id, d.type, p.x, p.z, simT());
+      FIRES.blast(CE + r.x, CN - r.z, TYPES[d.type].burst);
+      const O = OPFOR.debug, nm = v => O.vName(v.g, v.i);
+      const res = r.hits.length ? 'STRUCK ' + r.hits.map(h => nm(h.v) + ' (' + Math.round(h.d) + ' m)').join(', ')
+        : r.near && r.near.d <= 30 ? Math.round(r.near.d) + ' m from ' + nm(r.near.v) + (r.near.v.struck ? ' (already struck)' : '') + ', not struck'
+        : 'no vehicle within 30 m';
+      kill(d, 'impact at ' + gridAt(r.x, r.z) + ': ' + res + '.');
     }
     function strikePoint(d) {
       const k = d.task;
@@ -2894,10 +3177,135 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     let before = null;
     const right = document.querySelector('.tb-right');
     function observer(on) {
+      document.getElementById('rules-btn').hidden = on;
       if (on) { before = wins.filter(w => !w.hidden); for (const w of wins) w.hidden = true; right.hidden = true; }
       else { for (const w of before || []) w.hidden = false; before = null; right.hidden = false; sync(); }
     }
     return { observer, show: (id, on) => show(document.getElementById(id), on) };
+  })();
+
+  // ---- RULES & ASSUMPTIONS (Lee, 2026-11-02): a bottom-right tab that opens a page of every design choice and number.
+  //      Built from the live tables (FIRES, UAS, OPFOR, DAMAGE), so it cannot drift from what the sim does.
+  //      Rename the tab here: RULES_TITLE.
+  (function rules() {
+    const RULES_TITLE = 'Rules and Assumptions';
+    const btn = document.getElementById('rules-btn'), dlg = document.getElementById('rules'), body = document.getElementById('rules-b');
+    btn.textContent = RULES_TITLE; document.getElementById('rules-title').textContent = RULES_TITLE;
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const tbl = (head, rows, cls) => '<table class="rt' + (cls ? ' ' + cls : '') + '"><thead><tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' +
+      rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+    const list = items => '<ul class="rl">' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+    const f = fn => esc(String(fn).replace(/^\s*\w+\s*=>\s*/, ''));               // "R => 8 + R / 350" -> "8 + R / 350"
+    const kmh = ms => Math.round(ms * 3.6);
+    const mmss = s => s >= 3600 ? (s / 3600).toFixed(1).replace(/\.0$/, '') + ' h' : Math.round(s / 60) + ' min';
+    const pct = p => p >= 0.995 ? '100' : p < 0.005 ? '0' : Math.round(p * 100) + '';
+    const PH = '<span class="ph">placeholder</span>';
+
+    function build() {
+      const FT = FIRES.debug.TYPES, UT = UAS.debug.TYPES, CAM = UAS.debug.CAM, VT = OPFOR.debug.VT, FX = OPFOR.debug.fxRules, D = DAMAGE;
+      const CLS = { soft: 'Soft (fuel truck)', eng: 'Engineering', armor: 'Armour (ZBD, ZTD, PLZ)' }, cls = Object.keys(CLS);
+      const MUN = Object.keys(D.R), munName = k => FT[k] ? FT[k].short : UT[k].label, src = k => k === 'm777' || k === 'm119' ? 'Fire Mission Sim' : PH;
+      const MISS = [0, 5, 10, 15, 20, 30, 50];
+      const sec = [];
+
+      sec.push(['dmg', 'Damage', `
+        <p class="fm">P(struck, one burst) = Pdh × exp( −(d / R)² )</p>
+        ${tbl(['Term', 'Meaning'], [
+          ['d', 'ground distance, burst to vehicle, at the moment that burst lands (m)'],
+          ['R', 'radius for that munition vs that class (m) — at d = R, P ≈ 37 % of Pdh'],
+          ['Pdh', 'chance a burst right on the vehicle strikes it'],
+          ['Mission', 'P(struck) = 1 − Π(1 − p<sub>i</sub>) — every round rolls separately; one success is enough']])}
+        ${list([
+          'One outcome: <b>struck or not struck</b>. Struck = stops for good, burns. No M/K/F-kill.',
+          'Dice are keyed (seed | burst | vehicle), not drawn in order: 1×, 5×, 10× give the same result.',
+          'Tube rounds (artillery, mortars) do nothing if the round <b>or</b> the vehicle is in the water.',
+          'Ships (LCU, RoRo) cannot be struck; nor can cargo still aboard.',
+          'A struck vehicle is not rolled again. The rest of its column drives on past it (no bypass logic yet).',
+          'UAS impacts get ' + D.UAS_MISS + ' m (1σ, each axis) guidance scatter around the aim point.',
+          'Buildings do not stop rounds or drones yet.'])}
+        <h4>R and Pdh</h4>
+        ${tbl(['Munition', ...cls.map(c => CLS[c] + '<br>R m · Pdh'), 'Source'],
+          MUN.map(k => [munName(k), ...cls.map(c => { const r = D.R[k][c], p = D.PDH[k] && typeof D.PDH[k][c] === 'number' ? D.PDH[k][c] : 1; return r + ' · ' + (p === 1 ? '1' : p.toFixed(2)); }), src(k)]), 'num')}
+        <h4>Chance one burst strikes, by miss distance (%)</h4>
+        ${tbl(['Munition', 'Class', ...MISS.map(m => m + ' m')],
+          MUN.flatMap(k => cls.map((c, j) => [j ? '' : munName(k), CLS[c].split(' ')[0], ...MISS.map(m => pct(D.pStrike(k, c === 'soft' ? 'fuel' : c === 'eng' ? 'eng' : 'zbd', m)))])), 'num')}`]);
+
+      sec.push(['arty', 'Artillery', `
+        ${tbl(['Unit', 'Tubes', 'Rounds', 'Range m', 'Angle', 'ToF s', 'Volley every', 'Sheaf m', 'Range σ m', 'Deflection σ m'],
+          Object.values(FT).map(t => [t.label, t.tubes, t.rounds, t.min + '–' + t.max, t.angle, f(t.tof), t.interval + ' s', t.sheaf, f(t.sR), f(t.sD)]), 'num')}
+        ${list([
+          'R = range gun to target, m. All unit figures are unclassified placeholders ' + PH + '.',
+          'Parallel sheaf: tubes spread evenly across the gun-target line over the sheaf width, then gaussian scatter (σ above) in range and deflection.',
+          'Each round lands up to 1.5 s after its volley time (random, keyed per mission).',
+          'Rounds per tube chosen per mission; the unit\'s round count goes down by rounds × tubes.',
+          'Off-map firing units allowed. Trajectories are drawn for the eye, not ballistic. No terrain or building masking of the arc yet.',
+          'Adjust fire, fuzes, shell types and mean-point-of-impact error not modelled yet.'])}`]);
+
+      sec.push(['uas', 'UAS', `
+        ${tbl(['Type', 'Transit', 'Loiter', 'Dive', 'Endurance', 'Cruise AGL', 'Orbit r', 'Turn', 'Camera', 'Notes'],
+          Object.values(UT).map(t => [t.label, t.speed + ' m/s (' + kmh(t.speed) + ' km/h)', t.loiter ? t.loiter + ' m/s' : '—', t.dive ? t.dive + ' m/s' : '—', mmss(t.endur), t.alt + ' m', t.r ? t.r + ' m' : '—', t.turn + '°/s', t.cam || 'none',
+            [t.recover ? 'recoverable' : '', t.waveoff ? 'can wave off' : '', t.gps ? 'GPS target only' : '', !t.burst ? 'no warhead' : ''].filter(Boolean).join(', ') || '—']), 'num')}
+        <h4>Camera tiers</h4>
+        ${tbl(['Tier', 'Resolution', 'Noise', 'Blur', 'Zoom (FOV)', 'Frame drop'],
+          Object.entries(CAM).map(([k, c]) => [k, Math.round(c.res * 100) + ' %', c.noise, c.blur, c.fovMin + '–' + c.fovMax + '°', Math.round(c.drop * 100) + ' %']), 'num')}
+        ${list([
+          'Speeds, endurance and heights: published where available, otherwise estimates — see the UAS project doc. Treat as ' + PH + '.',
+          'Terminal dive starts at max(250 m, 0.45 × height) out — about a 65° dive.',
+          'Out of endurance: power lost, airframe falls; the warhead does <b>not</b> detonate.',
+          'No launch limits (the instructor limits them). Recovered ISR leaves the list after 10 min.',
+          'Flight is automatic (orbit, route, scan); no manual flying. No drone-to-drone handoff.'])}`]);
+
+      sec.push(['opfor', 'Enemy vehicles', `
+        ${tbl(['Type', 'L × W × H m', 'Land', 'Water', 'Gap', 'Damage class', 'Notes'],
+          Object.entries(VT).map(([k, t]) => [t.name, t.L + ' × ' + t.W + ' × ' + t.H, t.land ? t.land + ' km/h' : '—', t.water ? t.water + ' km/h' : '—', t.gap + ' m',
+            D.CLASS[k] ? CLS[D.CLASS[k]].split(' ')[0] : 'cannot be struck',
+            [t.amph ? 'amphibious' : '', t.ship ? 'draft ' + t.draft + ' m, unloads in ' + mmss(t.unload) : ''].filter(Boolean).join(', ') || '—']), 'num')}
+        ${list([
+          'Sizes and speeds are approximate public figures ' + PH + '; speed and gap are set per group in the editor.',
+          'Water = no terrain data or ground below 0.3 m.',
+          'Swimming amphibians ride low (0.6 × height under water).',
+          'Movement is a fixed function of the clock: column in file at the set gap, scripted holds, instructor halt/resume.',
+          'No vehicle-to-vehicle avoidance. Struck vehicles do not block the road.'])}
+        <h4>Routes and roads</h4>
+        ${tbl(['Rule', 'Value'], [
+          ['Follow roads', 'on by default for land groups; shortest road path between each pair of clicked points'],
+          ['Road preference', 'cost per metre × ' + OPFOR.debug.roadRules.ROAD_W.join(' / ') + ' (major / mid / minor road) — ' + PH],
+          ['Snap reach', 'a clicked point joins the nearest road by a straight link if one is within ' + OPFOR.debug.roadRules.ROAD_REACH + ' m'],
+          ['Straight legs', 'ships; Follow roads off; either end in the water (landings, swims); no road within reach'],
+          ['Buildings', 'straight legs and links through a building footprint are flagged amber in the editor, not prevented'],
+          ['Road data', 'OpenStreetMap drivable roads; no one-way streets, lanes, width or traffic'],
+          ['Column behind its start point', 'lined up straight back from the first stretch of road']])}`]);
+
+      sec.push(['fx', 'Effects', `
+        ${tbl(['Effect', 'Rule'], [
+          ['Shell burst', 'flash 0.8 s; smoke 60 s; scorch fades over 10 min'],
+          ['Struck vehicle', 'model darkened, stops where hit'],
+          ['Fire', 'full for ' + mmss(FX.BURN_FULL) + ', then 60 %; fuel truck 1.8× bigger; burns to end of exercise'],
+          ['Smoke', FX.PUFFS + ' puffs, each rises ' + FX.PUFF_LIFE + ' s (~2.8 m/s, ~140 m), black → grey'],
+          ['Wind', 'from ' + String(FX.WIND_FROM).padStart(3, '0') + '° (trade wind), one wind for all fires — ' + PH],
+          ['Clock', 'all effects run on sim time: pause freezes them']])}`]);
+
+      sec.push(['obs', 'Observation', `
+        ${tbl(['Item', 'Value'], [
+          ['Eye height', '1.8 m standing, 0.5 m prone'],
+          ['Target height (viewshed)', '2.5 m vehicle, 0 m bare ground'],
+          ['Viewshed range', '5 or 10 km'],
+          ['Naked-eye field of view', '55°'],
+          ['Binoculars', 'Steiner M30r 8×30, mil reticle (6400 mils); true field 7.5° — ' + PH + ', not from the spec'],
+          ['Terrain', 'USGS 3DEP 1 m DEM, thinned to 10 m'],
+          ['Buildings and trees', '2020 NOAA lidar; block sight on a 10 m grid; trees block completely'],
+          ['OP inside a building', 'observer stands on the roof']])}`]);
+
+      body.innerHTML = '<nav class="rnav">' + sec.map(s => `<a href="#r-${s[0]}">${s[1]}</a>`).join('') + '</nav>' +
+        sec.map(s => `<section id="r-${s[0]}"><h3>${s[1]}</h3>${s[2]}</section>`).join('');
+      for (const a of body.querySelectorAll('.rnav a')) a.addEventListener('click', e => { e.preventDefault(); body.querySelector(a.getAttribute('href')).scrollIntoView({ block: 'start' }); });
+    }
+    function open(on) { if (on) build(); dlg.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) document.getElementById('rules-x').focus(); else btn.focus(); }
+    btn.addEventListener('click', () => open(dlg.hidden));
+    document.getElementById('rules-x').addEventListener('click', () => open(false));
+    dlg.addEventListener('click', e => { if (e.target === dlg) open(false); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.hidden) { e.stopPropagation(); open(false); } }, true);
+    window.__rules = { open };
   })();
 
   // ---- render loop with label projection

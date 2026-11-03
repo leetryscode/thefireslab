@@ -148,6 +148,13 @@
   <span id="dirbox" hidden><b>DIR</b><span id="dir">—</span></span>
 </div>
 
+<button id="rules-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="rules">Rules and Assumptions</button>
+<div id="rules" hidden role="dialog" aria-modal="true" aria-labelledby="rules-title">
+  <div class="rules-card">
+    <div class="rules-h"><h2 id="rules-title">Rules and Assumptions</h2><button id="rules-x" type="button" aria-label="Close">×</button></div>
+    <div id="rules-b" class="rules-b"></div>
+  </div>
+</div>
 <script src="vendor/three.min.js"></script>
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>

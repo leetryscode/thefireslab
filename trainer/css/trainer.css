@@ -236,3 +236,33 @@ a.tb-name:hover { color: var(--brass); }
 .umodal-b .umodal-x { padding: 6px 14px; }
 .tag.op { margin-top: -16px; }
 .umodal-b .umodal-x { background: transparent; border: 1px solid #3a4a3d; color: #e6e9df; border-radius: 4px; cursor: pointer; font: inherit; }
+
+/* Rules and Assumptions (2026-11-02): see-through tab bottom right; opens a page of every rule and number, built from the live tables */
+#rules-btn { position: fixed; z-index: 12; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  font: 700 13px var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--ink);
+  background: rgba(18, 22, 16, 0.45); border: 1px solid rgba(214, 178, 90, 0.45); border-radius: 4px; padding: 5px 11px;
+  backdrop-filter: blur(3px); opacity: .8; transition: opacity .15s, background .15s; }
+#rules-btn:hover, #rules-btn[aria-expanded="true"] { opacity: 1; background: rgba(18, 22, 16, 0.8); color: var(--brass); }
+#rules { position: fixed; inset: 0; z-index: 40; background: rgba(6, 8, 5, 0.55); display: grid; place-items: center; padding: 24px; }
+#rules[hidden] { display: none; }
+.rules-card { width: min(1080px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+.rules-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.rules-h h2 { margin: 0; font: 700 20px var(--font-head); letter-spacing: .06em; text-transform: uppercase; }
+#rules-x { font-size: 18px; line-height: 1; padding: 2px 9px; }
+.rules-b { overflow-y: auto; padding: 4px 16px 18px; scroll-padding-top: 46px; }
+.rnav { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 0; background: rgb(18, 22, 16); border-bottom: 1px solid var(--line); }
+.rnav a { font: 600 12px var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--brass); text-decoration: none; border: 1px solid var(--line); border-radius: 4px; padding: 3px 9px; }
+.rnav a:hover { border-color: var(--brass); }
+.rules-b section { padding-top: 6px; }
+.rules-b h3 { margin: 16px 0 8px; font: 700 17px var(--font-head); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.rules-b h4 { margin: 14px 0 6px; font: 600 13px var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.rules-b .fm { margin: 4px 0 10px; font: 600 15px var(--font-mono); color: var(--brass); }
+.rt { width: 100%; border-collapse: collapse; font: 500 12px var(--font-mono); font-variant-numeric: tabular-nums; margin: 4px 0 8px; }
+.rt th { text-align: left; font: 600 12px var(--font-head); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+.rt td { padding: 4px 8px; border-bottom: 1px solid rgba(58, 66, 50, .5); vertical-align: top; }
+.rt tbody tr:hover td { background: rgba(214, 178, 90, .06); }
+.rt.num td:not(:first-child):not(:last-child) { white-space: nowrap; }
+.rl { margin: 6px 0 4px; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--ink); }
+.rl li { margin: 2px 0; }
+.ph { color: #e3a35c; font-size: 11px; letter-spacing: .04em; }
