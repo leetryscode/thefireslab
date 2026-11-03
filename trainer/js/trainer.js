@@ -1231,13 +1231,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     m.set(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(m, camera);
     const o = ray.ray.origin, d = ray.ray.direction;
+    // the click lands on what you see: a roof or wall if buildings are shown, else the ground
+    const surf = (x, z) => { const g = heightAt(x, z), r = typeof CITY !== 'undefined' ? CITY.roofAt(x, z) : null; return (r !== null && r > g ? r : g) * ex; };
     let prev = 0;
     for (let t = 0; t < 70000; t += 8) {
       const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
       if (Math.abs(x) > HW || Math.abs(z) > HH) { prev = t; continue; }
-      if (y <= heightAt(x, z) * ex) {
+      if (y <= surf(x, z)) {
         let lo = prev, hi = t;
-        for (let k = 0; k < 20; k++) { const mid = (lo + hi) / 2; if (o.y + d.y * mid <= heightAt(o.x + d.x * mid, o.z + d.z * mid) * ex) hi = mid; else lo = mid; }
+        for (let k = 0; k < 20; k++) { const mid = (lo + hi) / 2; if (o.y + d.y * mid <= surf(o.x + d.x * mid, o.z + d.z * mid)) hi = mid; else lo = mid; }
         return { x: o.x + d.x * hi, z: o.z + d.z * hi };
       }
       prev = t;
@@ -2357,7 +2359,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -2488,6 +2490,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const simT = () => FIRES.debug.simT;
     const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
     const gy = (x, z) => heightAt(x, z) * ex;
+    // gs: the top surface a sensor sees — roof if there is a building, else ground (buildings count even when hidden in Display)
+    const gs = (x, z) => { const g = heightAt(x, z), r = CITY.roofAt(x, z, true); return (r !== null && r > g ? r : g) * ex; };
+    function los(o, p) {                       // clear line from o to p (world), blocked by buildings or terrain; last 3 m ignored
+      const dx = p.x - o.x, dy = p.y - o.y, dz = p.z - o.z, L = Math.hypot(dx, dy, dz), n = Math.ceil(L / 5);
+      for (let k = 1; k < n; k++) { const f = k / n; if (L * (1 - f) < 3) break; const x = o.x + dx * f, z = o.z + dz * f; if (o.y + dy * f < gs(x, z) - 0.5) return false; }
+      return true;
+    }
+    const MASK_LOSE = 2;                       // seconds a tracked vehicle can be masked before the track drops
     const gridAt = (x, z) => FIRES.debug.toGrid(CE + x, CN - z) || '—';
     const onMap = (x, z) => Math.abs(x) <= HW && Math.abs(z) <= HH;
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2553,9 +2563,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       let prev = 0;
       for (let t = step; t < maxT; t += step) {
         const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
-        if (y <= gy(x, z)) {
+        if (y <= gs(x, z)) {                     // roofs and walls stop the ray, not just the ground
           let lo = prev, hi = t;
-          for (let k = 0; k < 18; k++) { const mid = (lo + hi) / 2; if (o.y + d.y * mid <= gy(o.x + d.x * mid, o.z + d.z * mid)) hi = mid; else lo = mid; }
+          for (let k = 0; k < 18; k++) { const mid = (lo + hi) / 2; if (o.y + d.y * mid <= gs(o.x + d.x * mid, o.z + d.z * mid)) hi = mid; else lo = mid; }
           return new THREE.Vector3(o.x + d.x * hi, o.y + d.y * hi, o.z + d.z * hi);
         }
         prev = t;
@@ -2770,17 +2780,22 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function aim(d) {
       const c = d.cam;
       if (c.mode === 'track') {
-        if (c.trk && c.trk.parent && c.trk.visible) { c.trk.getWorldPosition(tv); c.last = { x: tv.x, z: tv.z }; return tv.clone().setY(tv.y + 1); }
-        c.mode = 'stare'; if (c.last) { c.sx = c.last.x; c.sz = c.last.z; } note(d, 'Track lost.');
+        if (c.trk && c.trk.parent && c.trk.visible) {
+          c.trk.getWorldPosition(tv);
+          const seen = los(d.cam3.position, tv.clone().setY(tv.y + 1.5));          // a building or crest between camera and vehicle
+          if (seen) c.maskT = null; else if (c.maskT == null) c.maskT = simT();
+          if (seen || simT() - c.maskT < MASK_LOSE) { c.last = { x: tv.x, z: tv.z }; return tv.clone().setY(tv.y + 1); }
+          c.maskT = null; c.mode = 'stare'; c.sx = c.last.x; c.sz = c.last.z; note(d, 'Track lost: target masked.');
+        } else { c.mode = 'stare'; if (c.last) { c.sx = c.last.x; c.sz = c.last.z; } note(d, 'Track lost.'); }
       }
       if (c.mode === 'stare') {
         const s = c.slew;                   // prepoint: swing smoothly from the old point to the new one, then hold it
         if (s && s.tx === c.sx && s.tz === c.sz) {
           const u = Math.min(1, (performance.now() - s.t0) / s.dur), k = u * u * (3 - 2 * u);
-          if (u < 1) { const x = s.fx + (c.sx - s.fx) * k, z = s.fz + (c.sz - s.fz) * k; return new THREE.Vector3(x, gy(x, z), z); }
+          if (u < 1) { const x = s.fx + (c.sx - s.fx) * k, z = s.fz + (c.sz - s.fz) * k; return new THREE.Vector3(x, gs(x, z), z); }
           c.slew = null;
         }
-        return new THREE.Vector3(c.sx, gy(c.sx, c.sz), c.sz);
+        return new THREE.Vector3(c.sx, gs(c.sx, c.sz), c.sz);   // a stare on a roof holds the roof
       }
       if (c.mode === 'scan') {
         let cx, cz, R;
@@ -2872,6 +2887,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (on) { keep.length = 0; for (const o of list) { keep.push(o.visible); o.visible = false; }
         for (const [, g] of OPFOR.debug.view.g) { keep.push(g.sym.visible); g.sym.visible = false; } }
       else { let i = 0; for (const o of list) o.visible = keep[i++]; for (const [, g] of OPFOR.debug.view.g) g.sym.visible = keep[i++]; }
+      // the sensor sees the real world: buildings, trees and the enemy show in the feed even if the instructor hid them
+      const real = [window.__city.bGrp, window.__city.tGrp, OPFOR.debug.root];
+      if (on) { keep.realV = real.map(o => o.visible); for (const o of real) o.visible = true; }
+      else if (keep.realV) real.forEach((o, i) => { o.visible = keep.realV[i]; });
     }
     const kept = [];
     const noise = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), im = g.createImageData(256, 256);
@@ -3035,7 +3054,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const was = drag; drag = null; if (!was || was.moved || d.state !== 'fly') return;
         const [nx, ny] = ndc(e); updateCam(d); const p = groundThrough(d, nx, ny); if (!p) return note(d, 'No ground there.');
         if (e.shiftKey) {
-          const v = vehiclesNear(p.x, p.z, 40)[0];
+          const v = vehiclesNear(p.x, p.z, 40).find(o => { const w = new THREE.Vector3(); o.m.getWorldPosition(w); return los(d.cam3.position, w.setY(w.y + 1.5)); });
           if (v) { d.cam.mode = 'track'; d.cam.trk = v.m; d.cam.last = { x: p.x, z: p.z }; note(d, 'Tracking.'); return; }
           note(d, 'No vehicle there to track; staring at the point instead.');
         }
@@ -3067,7 +3086,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         c.mode = 'stare'; c.trk = null; c.sx = p.x; c.sz = p.z;
         c.slew = { fx: f.x, fz: f.z, tx: p.x, tz: p.z, t0: performance.now(), dur: clamp(ang / (Math.PI / 3) * 1000, 300, 2000) };
         const tg = new THREE.Vector3(p.x, gy(p.x, p.z), p.z), dir = tg.clone().sub(o), L = dir.length(), hit = rayGround(o, dir.normalize());
-        note(d, 'Prepoint ' + gridAt(p.x, p.z) + (hit && hit.distanceTo(o) < L - 30 ? ' — masked by terrain from here; the SPI shows the near slope.' : '.'));
+        note(d, 'Prepoint ' + gridAt(p.x, p.z) + (hit && hit.distanceTo(o) < L - 30 ? ' — masked from here by a building or terrain; the SPI shows what is in the way.' : '.'));
       };
       if (B('f-ppgo')) B('f-ppgo').addEventListener('click', prepoint);
       // keys: arrows slew (held), +/- zoom; ignored while typing in the note or grid box (Enter there runs the prepoint)
@@ -3201,7 +3220,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
     addEventListener('beforeunload', () => { for (const d of drones) if (d.feed && !d.feed.closed) d.feed.close(); });
     draw();
-    return { tick, renderFeeds, debug: { TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough } };
+    return { tick, renderFeeds, debug: { TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
   })();
   window.__uas = UAS.debug;
 
@@ -3364,7 +3383,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           'Terminal dive starts at max(250 m, 0.45 × height) out — about a 65° dive.',
           'Out of endurance: power lost, airframe falls; the warhead does <b>not</b> detonate.',
           'No launch limits (the instructor limits them). Recovered ISR leaves the list after 10 min.',
-          'Flight is automatic (orbit, route, scan); no manual flying. No drone-to-drone handoff.'])}`]);
+          'Flight is automatic (orbit, route, scan); no manual flying. No drone-to-drone handoff.',
+          'Camera sight lines stop at buildings and terrain: stare, SPI, marks and prepoint land on the first roof, wall or slope.',
+          'Track holds through up to 2 s of masking, then drops ("Track lost: target masked"). Shift-click locks only a vehicle the camera can see.',
+          'Feeds always show buildings, trees and the enemy, whatever the instructor\'s Display switches say.'])}`]);
 
       sec.push(['opfor', 'Enemy vehicles', `
         ${tbl(['Type', 'L × W × H m', 'Land', 'Water', 'Gap', 'Damage class', 'Notes'],
@@ -3405,7 +3427,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ['Binoculars', 'Steiner M30r 8×30, mil reticle (6400 mils); true field 7.5° — ' + PH + ', not from the spec'],
           ['Terrain', 'USGS 3DEP 1 m DEM, thinned to 10 m'],
           ['Buildings and trees', '2020 NOAA lidar; block sight on a 10 m grid; trees block completely'],
-          ['OP inside a building', 'observer stands on the roof']])}`]);
+          ['OP inside a building', 'observer stands on the roof'],
+          ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground']])}`]);
 
       body.innerHTML = '<nav class="rnav">' + sec.map(s => `<a href="#r-${s[0]}">${s[1]}</a>`).join('') + '</nav>' +
         sec.map(s => `<section id="r-${s[0]}"><h3>${s[1]}</h3>${s[2]}</section>`).join('');
