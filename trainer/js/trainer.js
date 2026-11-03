@@ -216,8 +216,34 @@ vec3 gradeGround(vec3 base, vec3 lit){
       '    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.24, 0.235, 0.22), vec3(lum), 0.2), u * 0.92); }')
       .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n  { vec4 wm = texture2D(waterMap, vUv); if (wm.r > 0.004) outgoingLight = mix(outgoingLight, waterShade(outgoingLight, vWW, wm.g), wm.r); }\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
   };
-  const ground = new THREE.Mesh(geo, photoMat);
-  scene.add(ground);
+  // Terrain in tiles (perf, 2026-11-03): the same one grid and the same shared vertex data, split into ~1.5 km tiles so
+  // the renderer skips tiles outside the view. Nothing changes on screen. Each tile's bounds are set by hand
+  // (three's own bounds would cover the whole grid) and refreshed when the exaggeration changes.
+  const TILE = 150;                                         // quads per tile side (10 m cells)
+  const ground = new THREE.Group(); ground.material = photoMat; scene.add(ground);
+  const tiles = [];
+  for (let ty = 0; ty < NY - 1; ty += TILE) for (let tx = 0; tx < NX - 1; tx += TILE) {
+    const x1 = Math.min(NX - 1, tx + TILE), y1 = Math.min(NY - 1, ty + TILE), idx = new Uint32Array((x1 - tx) * (y1 - ty) * 6);
+    let k = 0;
+    for (let iy = ty; iy < y1; iy++) for (let ix = tx; ix < x1; ix++) {
+      const a = iy * NX + ix, b = (iy + 1) * NX + ix, c = (iy + 1) * NX + ix + 1, d = iy * NX + ix + 1;
+      idx[k++] = a; idx[k++] = b; idx[k++] = d; idx[k++] = b; idx[k++] = c; idx[k++] = d;   // PlaneGeometry's own winding
+    }
+    const g = new THREE.BufferGeometry();
+    for (const name of Object.keys(geo.attributes)) g.setAttribute(name, geo.attributes[name]);
+    g.setIndex(new THREE.BufferAttribute(idx, 1)); g.boundingSphere = new THREE.Sphere();
+    const m = new THREE.Mesh(g, photoMat); m.userData.tile = { tx, ty, x1, y1 }; ground.add(m); tiles.push(m);
+  }
+  function tileBounds() {
+    const P = geo.attributes.position;
+    for (const m of tiles) {
+      const { tx, ty, x1, y1 } = m.userData.tile; let lo = Infinity, hi = -Infinity;
+      for (let iy = ty; iy <= y1; iy += 2) for (let ix = tx; ix <= x1; ix += 2) { const y = P.getY(iy * NX + ix); if (y < lo) lo = y; if (y > hi) hi = y; }
+      const a = iy0 => iy0 * NX, p0 = new THREE.Vector3(P.getX(a(ty) + tx), lo, P.getZ(a(ty) + tx)), p1 = new THREE.Vector3(P.getX(a(y1) + x1), hi, P.getZ(a(y1) + x1));
+      m.geometry.boundingSphere.center.copy(p0).add(p1).multiplyScalar(0.5); m.geometry.boundingSphere.radius = p0.distanceTo(p1) / 2 + 30;
+    }
+  }
+  Object.defineProperty(ground, 'material', { get() { return tiles[0].material; }, set(v) { for (const m of tiles) m.material = v; } });
   // open ocean beyond the data, in the photo's deep-water colour, so the horizon is sea rather than void
   scene.add(sky);
   const seaMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(OCEAN).convertSRGBToLinear() });
@@ -302,7 +328,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
   function rebuild() {
     if (window.__firesHook) window.__firesHook();
     for (let i = 0; i < NX * NY; i++) pos.setY(i, H[i] * ex);
-    pos.needsUpdate = true; geo.computeVertexNormals();
+    pos.needsUpdate = true; geo.computeVertexNormals(); tileBounds();
     buildGrid(); buildSketch();
     if (onExCity) onExCity();
   }
@@ -826,6 +852,49 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       photoMat.map = groundTex; photoMat.needsUpdate = true;
       st.groundMs = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
     }
+    // ---- tree culling (perf, 2026-11-03): trees are drawn only in 250 m cells some camera (main view or an open UAS feed)
+    //      can see. TREE_SIMPLIFY (off, Lee: no visual change) would also swap distant crowns for 20-triangle ones.
+    const TREE_SIMPLIFY = false, TREE_CELL = 250, TREE_NEAR = TREE_SIMPLIFY ? 1200 : Infinity, TREE_FAR = 8000;
+    let treeLOD = null;
+    function makeTreeLOD(cats) {
+      const NCX = Math.ceil(2 * HW / TREE_CELL), NCZ = Math.ceil(2 * HH / TREE_CELL), cellOf = (x, z) => Math.min(NCX - 1, Math.max(0, Math.floor((x + HW) / TREE_CELL))) + NCX * Math.min(NCZ - 1, Math.max(0, Math.floor((z + HH) / TREE_CELL)));
+      const cellTop = new Float32Array(NCX * NCZ).fill(-1e9);
+      for (const c of cats) {                        // master copy, grouped by cell
+        const m = c.src, n = m.count, M = m.instanceMatrix.array, C = m.instanceColor ? m.instanceColor.array : null, cell = new Int32Array(n), ord = [];
+        for (let i = 0; i < n; i++) { const x = M[i * 16 + 12], y = M[i * 16 + 13], z = M[i * 16 + 14]; cell[i] = cellOf(x, z); cellTop[cell[i]] = Math.max(cellTop[cell[i]], y + 40); ord.push(i); }
+        ord.sort((a, b) => cell[a] - cell[b]);
+        c.M = new Float32Array(n * 16); c.C = C ? new Float32Array(n * 3) : null; c.start = new Int32Array(NCX * NCZ + 1);
+        ord.forEach((i, j) => { c.M.set(M.subarray(i * 16, i * 16 + 16), j * 16); if (C) c.C.set(C.subarray(i * 3, i * 3 + 3), j * 3); c.start[cell[i] + 1]++; });
+        for (let k = 0; k < NCX * NCZ; k++) c.start[k + 1] += c.start[k];
+      }
+      const cells = []; for (let k = 0; k < NCX * NCZ; k++) if (cellTop[k] > -1e9) cells.push(k);
+      const sph = new THREE.Sphere(), fr = new THREE.Frustum(), pm = new THREE.Matrix4(), last = { key: '' };
+      function update(cams, force) {
+        const key = cams.map(c => [c.position.x, c.position.y, c.position.z].map(v => Math.round(v / 20)).join(',') + ':' + c.quaternion.toArray().map(v => v.toFixed(2)).join(',') + ':' + Math.round(c.fov)).join('|');
+        if (!force && key === last.key) return; last.key = key;
+        const frs = cams.map(c => { c.updateMatrixWorld(); const f = new THREE.Frustum(); f.setFromProjectionMatrix(pm.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse)); return { c, f, k: Math.min(1, c.fov / 55) }; });
+        for (const c of cats) { c.n = 0; if (c.far) c.far._n = 0; }
+        for (const k of cells) {
+          const cx = (k % NCX + 0.5) * TREE_CELL - HW, cz = (Math.floor(k / NCX) + 0.5) * TREE_CELL - HH;
+          sph.center.set(cx, cellTop[k] * ex * 0.5, cz); sph.radius = TREE_CELL * 0.75 + Math.max(0, cellTop[k]) * ex * 0.5;
+          let d = Infinity;
+          for (const q of frs) if (q.f.intersectsSphere(sph)) d = Math.min(d, Math.max(0, q.c.position.distanceTo(sph.center) - sph.radius) * q.k);
+          if (d === Infinity) continue;
+          for (const c of cats) {
+            const a = c.start[k], b = c.start[k + 1]; if (a === b) continue;
+            const near = d < (c.nearTo || TREE_NEAR), dst = near ? c.near : d < (c.farTo || 0) ? c.far : null; if (!dst) continue;
+            const o = near ? c.n : dst._n;
+            dst.instanceMatrix.array.set(c.M.subarray(a * 16, b * 16), o * 16); if (c.C) dst.instanceColor.array.set(c.C.subarray(a * 3, b * 3), o * 3);
+            if (near) c.n += b - a; else dst._n += b - a;
+          }
+        }
+        for (const c of cats) {
+          c.near.count = c.n; c.near.instanceMatrix.needsUpdate = true; if (c.near.instanceColor) c.near.instanceColor.needsUpdate = true;
+          if (c.far) { c.far.count = c.far._n; c.far.instanceMatrix.needsUpdate = true; if (c.far.instanceColor) c.far.instanceColor.needsUpdate = true; }
+        }
+      }
+      return { update, cells: cells.length };
+    }
     function buildTrees(T) {
       // Lumpy crowns (4 shapes, darker underneath) on trunks, coloured from the photo under each tree;
       // tall narrow trees (palms, mostly) get a thin leaning trunk and a star of drooping fronds.
@@ -851,8 +920,8 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const lum = 0.3 * R + 0.59 * G + 0.11 * B, k = Math.min(1.15, Math.max(0.75, 92 / Math.max(1, lum)));
         return out.setRGB(Math.min(1, R * k / 255), Math.min(1, G * k / 255), Math.min(1, B * k / 255)).convertSRGBToLinear();
       }
-      function crownGeo(seed) {
-        const g = new THREE.IcosahedronGeometry(1, 1), p = g.attributes.position, c = new Float32Array(p.count * 3);
+      function crownGeo(seed, detail = 1) {
+        const g = new THREE.IcosahedronGeometry(1, detail), p = g.attributes.position, c = new Float32Array(p.count * 3);
         const a = 3.1 + seed, b = 2.7 + seed * 0.7, d = 3.3 + seed * 1.3;
         for (let i = 0; i < p.count; i++) {
           let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -886,6 +955,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       for (let i = 0; i < n; i++) { if (isPalm(i)) nPalm++; else counts[hash(i) % VAR]++; }
       const leafMat = new THREE.MeshLambertMaterial({ vertexColors: true });
       const crowns = counts.map((c, k) => new THREE.InstancedMesh(crownGeo(k * 1.7 + 0.4), leafMat, Math.max(1, c)));
+      const crownsFar = !TREE_SIMPLIFY ? counts.map(() => null) : counts.map((c, k) => { const m = new THREE.InstancedMesh(crownGeo(k * 1.7 + 0.4, 0), leafMat, Math.max(1, c)); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, c) * 3), 3); m.count = 0; return m; });   // 20-tri crowns for distance
       const palms = new THREE.InstancedMesh(palmGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), Math.max(1, nPalm));
       const tg = new THREE.CylinderGeometry(0.5, 0.75, 1, 6, 1, true); tg.translate(0, 0.5, 0);
       const trunks = new THREE.InstancedMesh(tg, new THREE.MeshLambertMaterial({ color: 0xffffff }), n);
@@ -918,10 +988,15 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         }
       }
       trunks.count = ti; palms.count = pi; crowns.forEach((m, k) => { m.count = used[k]; });
-      for (const m of [...crowns, palms, trunks]) {
-        m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
-        m.frustumCulled = false; tGrp.add(m);
-      }
+      for (const m of [...crowns, ...crownsFar.filter(Boolean), palms, trunks]) { m.frustumCulled = false; tGrp.add(m); }
+      // ---- tree culling (2026-11-03, perf): the instance lists above become the master copy, sorted by 250 m cell.
+      //      Each update copies only the cells some camera can see into the live lists: near cells full detail,
+      //      far cells the 20-tri crown and no trunk, beyond TREE_FAR nothing. Distances shrink with zoom (binoculars, feeds).
+      treeLOD = makeTreeLOD([
+        ...crowns.map((m, k) => ({ src: m, near: m, far: crownsFar[k], farTo: TREE_FAR })),
+        { src: palms, near: palms, far: null, nearTo: TREE_SIMPLIFY ? 3000 : Infinity },
+        { src: trunks, near: trunks, far: null }
+      ]);
       st.palms = pi;
     }
     const metaEl = document.getElementById('city-meta');
@@ -947,7 +1022,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       blockers(); if (VS.op) runViewshed();
     }
     init();
-    return { set, setRoofs, roofAt, solidAt: (x, z) => roofAt(x, z, true) !== null, get ready() { return st.ready; }, debug: { st, P, roofAt, idx, get HB() { return HB; }, bGrp, tGrp } };
+    return { set, setRoofs, roofAt, treeTick: (cams, force) => { if (treeLOD) treeLOD.update(cams, force); }, solidAt: (x, z) => roofAt(x, z, true) !== null, get ready() { return st.ready; }, debug: { st, P, roofAt, idx, get HB() { return HB; }, bGrp, tGrp } };
   })();
   window.__city = CITY.debug;
 
@@ -961,17 +1036,17 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   const ROAD_W = [1.0, 1.1, 1.3];       // cost per metre by road class (0 major, 1 mid, 2 minor) — placeholder
   const ROAD_REACH = 300;               // a clicked point snaps to a road only if one is within this many metres
   function buildRoadNet(R) {
-    const key = new Map(), X = [], Z = [], E = [];           // E: [a, b, cls]
+    const key = new Map(), X = [], Z = [], E = [], WD = [];  // E: [a, b, cls]; WD: road width m per edge
     const node = (x, z) => { const k = x * 262144 + z; let i = key.get(k); if (i === undefined) { i = X.length; key.set(k, i); X.push(x / 10); Z.push(z / 10); } return i; };
-    for (const [, cls, f] of R) { let p = node(f[0], f[1]); for (let i = 2; i < f.length; i += 2) { const q = node(f[i], f[i + 1]); if (q !== p) E.push(p, q, cls); p = q; } }
+    for (const [wd, cls, f] of R) { let p = node(f[0], f[1]); for (let i = 2; i < f.length; i += 2) { const q = node(f[i], f[i + 1]); if (q !== p) { E.push(p, q, cls); WD.push(wd / 10); } p = q; } }
     const n = X.length, deg = new Int32Array(n + 1);
     for (let e = 0; e < E.length; e += 3) { deg[E[e] + 1]++; deg[E[e + 1] + 1]++; }
     for (let i = 0; i < n; i++) deg[i + 1] += deg[i];
-    const to = new Int32Array(deg[n]), w = new Float32Array(deg[n]), fill = deg.slice(0, n);
+    const to = new Int32Array(deg[n]), w = new Float32Array(deg[n]), eid = new Int32Array(deg[n]), fill = deg.slice(0, n);
     const SEG = 100, seg = new Map();                          // 100 m buckets of edge ids
     for (let e = 0; e < E.length; e += 3) {
       const a = E[e], b = E[e + 1], c = ROAD_W[E[e + 2]] * Math.hypot(X[b] - X[a], Z[b] - Z[a]);
-      to[fill[a]] = b; w[fill[a]++] = c; to[fill[b]] = a; w[fill[b]++] = c;
+      eid[fill[a]] = e / 3; eid[fill[b]] = e / 3; to[fill[a]] = b; w[fill[a]++] = c; to[fill[b]] = a; w[fill[b]++] = c;
       const x0 = Math.floor(Math.min(X[a], X[b]) / SEG), x1 = Math.floor(Math.max(X[a], X[b]) / SEG), z0 = Math.floor(Math.min(Z[a], Z[b]) / SEG), z1 = Math.floor(Math.max(Z[a], Z[b]) / SEG);
       for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i + ',' + j; let l = seg.get(k); if (!l) seg.set(k, l = []); l.push(e / 3); }
     }
@@ -1014,7 +1089,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       P.push(...mid.reverse(), { x: B.x, z: B.z }, { x: bx, z: bz });
       return P.filter((p, k) => !k || Math.hypot(p.x - P[k - 1].x, p.z - P[k - 1].z) > 0.5);
     }
-    return { path, nearest, nodes: n, edges: E.length / 3 };
+    return { path, nearest, nodes: n, edges: E.length / 3, X, Z, E, WD, deg, to, eid };
   }
 
   const ROADS = (() => {
@@ -1561,7 +1636,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (s.visible) { arcPoint(m, f, tmpV); s.position.copy(tmpV); const d = camera.position.distanceTo(tmpV) * 0.004; s.scale.setScalar(Math.max(2, d)); }
         }
         if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; const nb = m.impacts.filter(i => i.what === 'building').length, nt = m.impacts.filter(i => i.what === 'terrain').length;
-          log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck` + (nb ? `, ${nb} hit buildings` : '') + (nt ? `, ${nt} hit terrain` : '')); }
+          log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck` + (m.civ ? ` (${m.civ} civilian)` : '') + (nb ? `, ${nb} hit buildings` : '') + (nt ? `, ${nt} hit terrain` : '')); }
       }
       animateFx();
     }
@@ -1928,8 +2003,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // Smoke drifts WSW on the trade winds (from about 070); placeholder, one wind for every fire.
     const WIND_FROM = 70, WIND = { x: -Math.sin(WIND_FROM * Math.PI / 180), z: Math.cos(WIND_FROM * Math.PI / 180) };   // local x = east, z = south
     const PUFFS = 14, PUFF_LIFE = 50, BURN_FULL = 180;   // a puff rises ~50 s; the fire is full for 3 min, then settles to 60 %
-    function makeFx(type) {
-      const T = VT[type], big = type === 'fuel' ? 1.8 : 1, g = new THREE.Group();
+    function makeFx(type, dims) {               // dims: { W, H } for a non-OPFOR vehicle (civilians)
+      const T = dims || VT[type], big = type === 'fuel' ? 1.8 : 1, g = new THREE.Group();
       const flames = [0xff8a30, 0xffcf70].map((c, k) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.renderOrder = 6; g.add(s); return s; });
       const puffs = []; for (let k = 0; k < PUFFS; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, color: 0x111010, transparent: true, depthWrite: false })); s.renderOrder = 5; g.add(s); puffs.push(s); }
       fxRoot.add(g); return { g, flames, puffs, big, T };
@@ -1940,9 +2015,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const v = vehiclesAt(t).find(o => o.key === k); if (!v) return false;
       const w = { t, x: v.x, z: v.z, hd: v.hd, cause, type: v.type }; w.fx = makeFx(v.type); struck.set(k, w); return true;
     }
+    const otherWrecks = new Map();             // civilian wrecks: key -> { t, x, z, fx, hidden }
+    const burn = {
+      add(key, x, z, t, dims) { if (otherWrecks.has(key)) return; otherWrecks.set(key, { t, x, z, fx: makeFx('civ', dims) }); },
+      hide(key, on) { const w = otherWrecks.get(key); if (w) w.hidden = on; },
+      clear() { for (const [, w] of otherWrecks) dropFx(w); otherWrecks.clear(); }
+    };
     function animFx(t) {
-      for (const [, w] of struck) {
+      for (const [, w] of [...struck, ...otherWrecks]) {
         const f = w.fx; if (!f) continue;
+        if (w.hidden) { f.g.visible = false; continue; }
         const a = t - w.t; f.g.visible = a >= 0; if (a < 0) continue;
         const wet = waterAt(w.x, w.z), top = (wet ? 0 : heightAt(w.x, w.z) * ex) + f.T.H * (wet && f.T.amph ? 0.4 : 1);
         const ph = (w.x * 0.37 + w.z * 0.11) % 6.28, burn = (a < BURN_FULL ? 1 : 0.6) * Math.min(1, 0.4 + a / 3) * f.big;
@@ -2359,7 +2441,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -2374,7 +2456,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      EVERY NUMBER HERE IS A PLACEHOLDER. Artillery 155/105 rows are the sim's (accepted by Lee 2026-09-27);
   //      mortar and UAS rows are new guesses by Claude, unsourced. Tune them here.
   const DAMAGE = (() => {
-    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', eng: 'eng', fuel: 'soft' };   // ships (LCU, RoRo) absent = immune
+    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
     const R = {
       m777:        { soft: 35, eng: 15, armor: 10 },             // = sim M109 155 mm
       m119:        { soft: 25, eng: 10, armor: 6 },              // = sim M101 105 mm
@@ -2424,7 +2506,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function burstAt(id, mun, x, z, t, y) {
       const O = OPFOR.debug, out = { hits: [], near: null, shielded: 0 }, wetB = O.waterAt(x, z), up = y !== undefined;
       const yb = up ? y : (wetB ? 0 : heightAt(x, z)) + 1;
-      for (const v of O.vehiclesAt(t)) {
+      for (const v of [...O.vehiclesAt(t), ...CIV.vehiclesAt(t)]) {
         const vy = (O.waterAt(v.x, v.z) ? 0 : heightAt(v.x, v.z)) + 1.5;
         const d = up ? Math.hypot(v.x - x, v.z - z, vy - y) : Math.hypot(v.x - x, v.z - z);
         if (!out.near || d < out.near.d) out.near = { v, d };
@@ -2432,14 +2514,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         let p = pStrike(mun, v.type, d);
         if (p > 0 && TUBES[mun] && (wetB || O.waterAt(v.x, v.z))) p = 0;
         if (p > 0 && CITY.ready && shielded(x, z, yb, v.x, v.z, vy)) { p = 0; out.shielded++; }
-        if (p > 0 && u01(id + '|' + v.key) < p && O.strike(v.g, v.i, t, id)) out.hits.push({ v, d, p });
+        if (p > 0 && u01(id + '|' + v.key) < p && (v.civ ? CIV.strike(v.i, t, !!v.civ.boat) : O.strike(v.g, v.i, t, id))) out.hits.push({ v, d, p });
       }
       return out;
     }
     // artillery: every round that lands
     FIRES.onImpact((imp, m, k) => {
       const p = toLocal(imp.e, imp.n), r = burstAt('M' + m.id + '|' + k, m.u.type, p.x, p.z, imp.t, imp.what ? imp.y : undefined);
-      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; FIRES.log(`M${m.id} STRUCK ${OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
+      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; if (h.v.civ) m.civ = (m.civ || 0) + 1; FIRES.log(`M${m.id} STRUCK ${h.v.civ ? h.v.name.toUpperCase() : OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
     });
     // UAS: aim point plus a little keyed guidance scatter
     function uasImpact(id, type, x, z, t) {
@@ -2450,6 +2532,279 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     return { burstAt, uasImpact, pStrike, shielded, R, PDH, CLASS, UAS_MISS };
   })();
   window.__damage = DAMAGE;
+
+  // ---- CIVILIANS (Lee, 2026-11-02): background traffic on the OSM roads — false targets and clutter.
+  //      Display → Civilians picks the density. Cars are seeded (same streets every run, and in multiplayer later);
+  //      a bigger setting adds cars, it never reshuffles the smaller one. About half are parked at the kerb, the rest
+  //      drive a random walk over the road graph at a road-class speed, on the right-hand side. A moving car's place is a
+  //      fixed function of the clock (pause, 10x and replays agree). No traffic rules, lights or collisions.
+  //      Drawing is kept light: full models only near where someone is looking (the main view's centre and each open
+  //      UAS feed's aim point), coloured boxes elsewhere out to FAR_R, nothing beyond. Civilians can be struck exactly like
+    //      enemy vehicles (soft class): a struck car stops where it is and burns (Lee, 2026-11-02).
+  const CIV = (() => {
+    const LEVELS = [['off', 'Off', 0], ['sparse', 'Sparse', 700], ['normal', 'Normal', 1800], ['rush', 'Rush hour', 3600]];   // cars across the whole map — placeholders
+    const PARKED = 0.5, KMH = [50, 40, 30];       // share parked; driving speed by road class (major / mid / minor) — placeholders
+    const FAR_R = 3500, NEAR_CAP = 220;           // boxes out to FAR_R from a camera; at most NEAR_CAP full models
+    const COLOURS = { white: 0xe8e8e4, silver: 0xa9adb0, black: 0x1d1e20, 'dark blue': 0x1f2c48, red: 0x9e2222, 'dark green': 0x24402c, brown: 0x5a3f2a,
+      grey: 0x6f7274, navy: 0x1d2640, cream: 0xd9d2b8, 'dark grey': 0x46484a, maroon: 0x5c1d22, rust: 0x8a4a2a, olive: 0x5e5f33, taupe: 0x8a7f70, 'off-white': 0xdcd8cc, 'dark teal': 0x1f4a4c };
+    let level = 'normal', specs = null, N = 0, built = false; const cars = [];
+    const grp = new THREE.Group(); scene.add(grp);
+    function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+    // ---- placement: weighted pick of a road edge, then a spot on it
+    function build() {
+      const R = ROADNET, E = R.E, X = R.X, Z = R.Z, nE = E.length / 3, max = LEVELS[LEVELS.length - 1][2];
+      const wPark = [0, 0.6, 1], wDrive = [2, 1.5, 1], cumP = new Float64Array(nE), cumD = new Float64Array(nE);
+      let sp = 0, sd = 0;
+      for (let e = 0; e < nE; e++) {
+        const a = E[e * 3], b = E[e * 3 + 1], c = E[e * 3 + 2], L = Math.hypot(X[b] - X[a], Z[b] - Z[a]);
+        const on = Math.abs(X[a]) < HW && Math.abs(Z[a]) < HH && L > 4;
+        sp += on && L > 24 ? L * wPark[c] : 0; sd += on ? L * wDrive[c] : 0; cumP[e] = sp; cumD[e] = sd;
+      }
+      const pickEdge = (cum, u) => { const v = u * cum[cum.length - 1]; let lo = 0, hi = cum.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (cum[m] < v) lo = m + 1; else hi = m; } return lo; };
+      const r = rng(0xC1F1A);
+      cars.length = 0;
+      for (let i = 0; i < max; i++) {
+        const parked = r() < PARKED, e = pickEdge(parked ? cumP : cumD, r()), mi = Math.floor(r() * specs.length), dir = r() < 0.5 ? 1 : -1, t = parked ? 0.15 + 0.7 * r() : r();
+        const c = { i, mi, parked, seed: (0xC1F1A + i * 7919) >>> 0 };
+        const a = E[e * 3], b = E[e * 3 + 1], hw = R.WD[e] / 2;
+        const [ax, az, bx, bz] = dir > 0 ? [X[a], Z[a], X[b], Z[b]] : [X[b], Z[b], X[a], Z[a]];
+        const L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L;
+        if (parked) {                            // at the kerb on the right, nose along the road
+          const off = Math.max(1.2, hw - 1.1);
+          c.x = ax + ux * L * t - uz * off; c.z = az + uz * L * t + ux * off; c.hd = Math.atan2(ux, uz);
+        } else {
+          c.e0 = e; c.from = dir > 0 ? a : b; c.to = dir > 0 ? b : a; c.s0 = t * L;
+          c.v = KMH[E[e * 3 + 2]] / 3.6 * (0.85 + 0.3 * r());
+          resetPath(c);
+        }
+        cars.push(c);
+      }
+      buildBoats();
+      built = true;
+      if (!modelsStarted) setTimeout(loadModels, 1500);   // models load in the background once traffic exists; boxes until then
+    }
+    // ---- a driving car's path: edges chosen by its own dice, generated as far as needed; lane offset to the right
+    function resetPath(c) { c.r = rng(c.seed); c.seg = []; c.base = 0; c.prevN = c.from; c.curN = c.to; addSeg(c, c.e0, c.from, c.to); }
+    function addSeg(c, e, a, b) {
+      const R = ROADNET, L = Math.hypot(R.X[b] - R.X[a], R.Z[b] - R.Z[a]) || 0.1, s = c.seg.length ? c.seg[c.seg.length - 1].s1 : 0;
+      c.seg.push({ ax: R.X[a], az: R.Z[a], bx: R.X[b], bz: R.Z[b], s0: s, s1: s + L, off: Math.min(1.8, Math.max(1, R.WD[e] / 4)) });
+    }
+    function extend(c) {                         // next edge from the current node: never straight back unless it is a dead end
+      const R = ROADNET, n = c.curN, opts = [];
+      for (let k = R.deg[n]; k < R.deg[n + 1]; k++) if (R.to[k] !== c.prevN) opts.push(k);
+      const k = opts.length ? opts[Math.floor(c.r() * opts.length)] : R.deg[n];
+      const nb = R.to[k]; addSeg(c, R.eid[k], n, nb); c.prevN = n; c.curN = nb;
+    }
+    function drivePos(c, t) {
+      let s = c.s0 + c.v * t;
+      if (c.seg.length && s < c.seg[0].s0) resetPath(c);                    // the clock went back: replay from the start
+      while (c.seg[c.seg.length - 1].s1 < s) extend(c);
+      while (c.seg.length > 6 && c.seg[1].s1 < s) c.seg.shift();            // forget road far behind
+      let g = c.seg[0]; for (const q of c.seg) if (q.s1 >= s) { g = q; break; }
+      const L = g.s1 - g.s0, f = Math.min(1, Math.max(0, (s - g.s0) / L)), ux = (g.bx - g.ax) / L, uz = (g.bz - g.az) / L;
+      return { x: g.ax + ux * L * f - uz * g.off, z: g.az + uz * L * f + ux * g.off, hd: Math.atan2(ux, uz) };
+    }
+    const posOf = (c, t) => c.st && t >= c.st.t ? c.st : c.parked ? c : drivePos(c, t);
+    const TYPE = { hatch: 'hatchback', pickup: 'pickup', van: 'panel van', minivan: 'minivan', smallvan: 'small van', sedan: 'sedan' };
+    const civName = c => 'civilian ' + specs[c.mi].colour + ' ' + (TYPE[specs[c.mi].type] || 'car');
+    const hit = [];                              // struck cars, for the fire's visibility when the setting changes
+    function vehiclesAt(t) {                     // for DAMAGE: the civilians on the map at time t
+      const out = [];
+      for (let i = 0; i < N; i++) { const c = cars[i], p = posOf(c, t); out.push({ civ: c, i, type: 'civ', key: 'civ:' + i, x: p.x, z: p.z, hd: p.hd, struck: !!(c.st && t >= c.st.t), name: civName(c) }); }
+      for (let i = 0; i < NBt; i++) { const b = boats[i], p = boatPos(b, t); out.push({ civ: b, i, type: 'civ', key: 'boat:' + i, x: p.x, z: p.z, hd: p.hd, struck: !!(b.st && t >= b.st.t), name: 'civilian fishing boat' }); }
+      return out;
+    }
+    function strike(i, t, boat) {
+      if (boat) { const b = boats[i]; if (!b || b.st) return false; const p = boatPos(b, t); b.st = { t, x: p.x, z: p.z, hd: p.hd }; hit.push(b);
+        OPFOR.debug.burn.add('boat:' + i, p.x, p.z, t, { W: 5, H: 2.5, amph: false }); return true; }
+      const c = cars[i]; if (!c || c.st) return false;
+      const p = posOf(c, t), sp = specs[c.mi]; c.st = { t, x: p.x, z: p.z, hd: p.hd }; hit.push(c);
+      OPFOR.debug.burn.add('civ:' + i, p.x, p.z, t, { W: sp.W, H: sp.H, amph: false }); return true;
+    }
+
+    // ---- drawing: one InstancedMesh per model part (full models) + one instanced box set (far)
+    let parts = [];                              // per model: [{ mesh: InstancedMesh, local: Matrix4 }]
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1); boxGeo.translate(0, 0.5, 0);
+    let boxes = null;
+    function initBoxes() {
+      boxes = new THREE.InstancedMesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), LEVELS[LEVELS.length - 1][2]);
+      boxes.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(boxes.instanceMatrix.count * 3).fill(1), 3);   // sized to capacity, not count
+      boxes.instanceMatrix.setUsage(THREE.DynamicDrawUsage); boxes.count = 0; boxes.frustumCulled = false; grp.add(boxes);
+      const col = new THREE.Color(); for (let i = 0; i < boxes.instanceMatrix.count; i++) boxes.setColorAt(i, col.setHex(0x888888));
+      parts = specs.map(() => []);
+    }
+    let modelsStarted = false;
+    async function loadModels() {
+      modelsStarted = true;
+      if (!THREE.GLTFLoader) return;
+      await loadBoat();
+      // one at a time, in the background: 30 small files; cars show as boxes until their model arrives
+      const loader = new THREE.GLTFLoader();
+      for (let mi = 0; mi < specs.length; mi++) {
+        try {
+          const gl = await new Promise((res, rej) => loader.load('data/civ/' + specs[mi].file, res, undefined, rej));
+          gl.scene.updateMatrixWorld(true);
+          gl.scene.traverse(o => { if (!o.isMesh) return;
+            const m = new THREE.InstancedMesh(o.geometry, o.material, NEAR_CAP); m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            for (let k = 0; k < NEAR_CAP; k++) m.setColorAt(k, WHITE);   // before count = 0: three sizes the colour buffer from count
+            m.count = 0; m.frustumCulled = false;
+            grp.add(m); parts[mi].push({ mesh: m, local: o.matrixWorld.clone() }); });
+        } catch (e) { console.warn('Civilian model failed to load:', specs[mi].file, e); }
+      }
+    }
+    const WHITE = new THREE.Color(1, 1, 1), BURNT = new THREE.Color(0.17, 0.16, 0.15);
+    const M = new THREE.Matrix4(), M2 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), C = new THREE.Color();
+    let focus = [], cams = [], frame = 0;
+    function tick(t, extraFocus) {
+      if (!built || !N) { grp.visible = false; if (frame++ % 30 === 0) for (const c of hit) OPFOR.debug.burn.hide((c.boat ? 'boat:' : 'civ:') + c.i, true); for (const q of boatParts) q.mesh.visible = false; wakes.visible = false; return; }
+      grp.visible = true;
+      if ((frame++ & 1) && !extraFocus.length) return;    // perf: traffic is updated at half the frame rate (every frame while a feed is open)
+      if (frame % 10 < 2) {                  // where people are looking: main view centre (+ open feeds' aim points)
+        const r = canvas.getBoundingClientRect(), p = pick(r.left + r.width / 2, r.top + r.height / 2);
+        const dist = p ? Math.hypot(camera.position.x - p.x, camera.position.z - p.z, camera.position.y - heightAt(p.x, p.z) * ex) : 3000;
+        focus = (p ? [{ x: p.x, z: p.z, r: Math.min(900, Math.max(250, dist * 0.6)) }] : []).concat(extraFocus || []);
+        cams = [camera.position].concat((extraFocus || []).map(f => f.cam).filter(Boolean));
+      }
+      const near = [];
+      let nb = 0;
+      for (const m of parts) for (const q of m) q.mesh.count = 0;
+      for (let i = 0; i < N; i++) {
+        const c = cars[i], p = posOf(c, t);
+        let best = Infinity; for (const f of focus) { const d = Math.hypot(p.x - f.x, p.z - f.z) / f.r; if (d < best) best = d; }
+        c.cx = p.x; c.cz = p.z; c.chd = p.hd;
+        if (best <= 1) { near.push([best, c]); continue; }
+        let far = true; for (const k of cams) if (Math.hypot(p.x - k.x, p.z - k.z) < FAR_R) { far = false; break; }
+        if (far) continue;
+        drawBox(nb++, c, t);
+      }
+      near.sort((a, b) => a[0] - b[0]);
+      near.forEach(([, c], j) => {
+        const pp = parts[c.mi];
+        if (j >= NEAR_CAP || !pp.length || pp[0].mesh.count >= NEAR_CAP) { drawBox(nb++, c, t); return; }
+        place(c); const burnt = c.st && t >= c.st.t;
+        for (const q of pp) { M2.multiplyMatrices(M, q.local); q.mesh.setColorAt(q.mesh.count, burnt ? BURNT : WHITE); q.mesh.setMatrixAt(q.mesh.count++, M2); }
+      });
+      for (const m of parts) for (const q of m) { q.mesh.visible = q.mesh.count > 0; if (q.mesh.count) { q.mesh.instanceMatrix.needsUpdate = true; if (q.mesh.instanceColor) q.mesh.instanceColor.needsUpdate = true; } }
+      if (frame % 30 === 0) for (const c of hit) OPFOR.debug.burn.hide((c.boat ? 'boat:' : 'civ:') + c.i, c.i >= (c.boat ? NBt : N));   // a lower setting hides its wrecks' fires too
+      drawBoats(t);
+      boxes.count = nb; boxes.visible = nb > 0; boxes.instanceMatrix.needsUpdate = true; if (boxes.instanceColor) boxes.instanceColor.needsUpdate = true;
+    }
+    function place(c) { P.set(c.cx, heightAt(c.cx, c.cz) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(1, 1, 1); M.compose(P, Q, S); }
+    function drawBox(k, c, t) {
+      const sp = specs[c.mi]; P.set(c.cx, heightAt(c.cx, c.cz) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(sp.W * 0.85, sp.H, sp.L);
+      M.compose(P, Q, S); boxes.setMatrixAt(k, M); boxes.setColorAt(k, c.st && t >= c.st.t ? BURNT : C.setHex(COLOURS[sp.colour] || 0x888888));
+    }
+    // ---- boats (Lee, 2026-11-03): fishing boats offshore, under the same Civilians setting. About half lie at anchor
+    //      (gently swinging), the rest motor between random offshore points. Kept 150 m+ off the shore; paths stay on water.
+    //      Same rules as cars: seeded, a fixed function of the clock, trackable, and they can be struck (soft) and burn.
+    const BOATS = { off: 0, sparse: 6, normal: 14, rush: 28 }, BOAT_KN = [4, 8], BOAT_DRAFT = 1.4, BOAT_YAW = Math.PI;   // bow is -Z in the file
+    const boats = []; let NBt = 0, boatParts = [];
+    const wet = (x, z) => Math.abs(x) < HW - 50 && Math.abs(z) < HH - 50 && OPFOR.debug.waterAt(x, z);
+    const offshore = (x, z) => { if (!wet(x, z)) return false; for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; if (!wet(x + Math.cos(a) * 150, z + Math.sin(a) * 150)) return false; } return true; };
+    const clearRun = (ax, az, bx, bz) => { const L = Math.hypot(bx - ax, bz - az), n = Math.ceil(L / 40); for (let k = 1; k < n; k++) if (!offshore(ax + (bx - ax) * k / n, az + (bz - az) * k / n)) return false; return true; };
+    function buildBoats() {
+      const r = rng(0xB0A75); boats.length = 0;
+      for (let i = 0, tries = 0; boats.length < BOATS.rush && tries < 20000; tries++) {
+        const x = (r() * 2 - 1) * HW, z = (r() * 2 - 1) * HH; if (!offshore(x, z)) continue;
+        const b = { i: boats.length, boat: true, x, z, hd: r() * Math.PI * 2, anchored: r() < 0.5, seed: (0xB0A75 + boats.length * 104729) >>> 0 };
+        if (!b.anchored) { b.v = (BOAT_KN[0] + r() * (BOAT_KN[1] - BOAT_KN[0])) * 0.5144; boatPath(b); }
+        boats.push(b);
+      }
+    }
+    function boatPath(b) { b.r = rng(b.seed); b.wp = [{ x: b.x, z: b.z, s: 0 }]; }
+    function boatNext(b) {                       // next waypoint: 0.8–3 km away, straight run over open water
+      const p = b.wp[b.wp.length - 1];
+      for (let k = 0; k < 40; k++) {
+        const a = b.r() * Math.PI * 2, d = 800 + b.r() * 2200, x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d;
+        if (offshore(x, z) && clearRun(p.x, p.z, x, z)) { b.wp.push({ x, z, s: p.s + d }); return; }
+      }
+      b.wp.push({ x: p.x + 1, z: p.z, s: p.s + 1 });                       // boxed in: idle in place
+    }
+    function boatPos(b, t) {
+      if (b.st && t >= b.st.t) return b.st;
+      if (b.anchored) return { x: b.x, z: b.z, hd: b.hd + 0.25 * Math.sin(t / 47 + b.i) };   // swinging at anchor
+      const s = b.v * t;
+      if (s < b.wp[0].s) boatPath(b);
+      while (b.wp.length < 2 || b.wp[b.wp.length - 1].s < s) boatNext(b);
+      while (b.wp.length > 3 && b.wp[1].s < s) b.wp.shift();
+      let k = 1; while (k < b.wp.length - 1 && b.wp[k].s < s) k++;
+      const A = b.wp[k - 1], B = b.wp[k], f = (s - A.s) / ((B.s - A.s) || 1);
+      return { x: A.x + (B.x - A.x) * f, z: A.z + (B.z - A.z) * f, hd: Math.atan2(B.x - A.x, B.z - A.z) };
+    }
+    async function loadBoat() {
+      try {
+        const gl = await new Promise((res, rej) => new THREE.GLTFLoader().load('data/m11.bin', res, undefined, rej));
+        gl.scene.updateMatrixWorld(true);
+        gl.scene.traverse(o => { if (!o.isMesh) return;
+          const m = new THREE.InstancedMesh(o.geometry, o.material, BOATS.rush); m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+          for (let k = 0; k < BOATS.rush; k++) m.setColorAt(k, WHITE);   // before count = 0 (see the cars)
+          m.count = 0; m.frustumCulled = false;
+          grp.add(m); boatParts.push({ mesh: m, local: o.matrixWorld.clone() }); });
+      } catch (e) { console.warn('Boat model failed to load:', e); }
+    }
+    // V wake: one flat textured quad per moving boat (Kelvin arms ~19 deg + a foam centre line), all in one draw call
+    const WAKE_L = 80, WAKE_W = 2 * WAKE_L * Math.tan(19.5 * Math.PI / 180);
+    const wakeTex = (() => { const c = document.createElement('canvas'); c.width = 128; c.height = 256; const g = c.getContext('2d');
+      const fade = g.createLinearGradient(0, 0, 0, 256); fade.addColorStop(0, 'rgba(240,246,248,0.95)'); fade.addColorStop(1, 'rgba(240,246,248,0)');
+      g.strokeStyle = fade; g.lineCap = 'round';
+      g.lineWidth = 7; g.beginPath(); g.moveTo(64, 4); g.lineTo(6, 252); g.moveTo(64, 4); g.lineTo(122, 252); g.stroke();   // arms
+      g.lineWidth = 16; g.globalAlpha = 0.7; g.beginPath(); g.moveTo(64, 4); g.lineTo(64, 200); g.stroke();                // churned centre
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; })();
+    const wakeGeo = new THREE.PlaneGeometry(WAKE_W, WAKE_L); wakeGeo.rotateX(-Math.PI / 2); wakeGeo.translate(0, 0, WAKE_L / 2);   // apex at the origin, trailing +Z
+    const wakes = new THREE.InstancedMesh(wakeGeo, new THREE.MeshBasicMaterial({ map: wakeTex, transparent: true, depthWrite: false }), BOATS.rush);
+    wakes.count = 0; wakes.frustumCulled = false; wakes.renderOrder = 2; grp.add(wakes);
+    function drawBoats(t) {
+      for (const q of boatParts) q.mesh.count = 0;
+      wakes.count = 0;
+      for (let i = 0; i < NBt; i++) {
+        const b = boats[i], p = boatPos(b, t);
+        let far = true; for (const k of cams) if (Math.hypot(p.x - k.x, p.z - k.z) < FAR_R * 1.7) { far = false; break; }
+        if (far) continue;
+        P.set(p.x, -BOAT_DRAFT, p.z); Q.setFromAxisAngle(Y, p.hd + BOAT_YAW); S.set(1, 1, 1); M.compose(P, Q, S);
+        const burnt = b.st && t >= b.st.t;
+        for (const q of boatParts) { M2.multiplyMatrices(M, q.local); q.mesh.setColorAt(q.mesh.count, burnt ? BURNT : WHITE); q.mesh.setMatrixAt(q.mesh.count++, M2); }
+        if (!b.anchored && !burnt) {               // wake from the stern, pointing back along the track
+          const fx = Math.sin(p.hd), fz = Math.cos(p.hd);
+          P.set(p.x - fx * 7.5, 0.3, p.z - fz * 7.5); Q.setFromAxisAngle(Y, p.hd + Math.PI); M.compose(P, Q, S); wakes.setMatrixAt(wakes.count++, M);
+        }
+      }
+      wakes.visible = wakes.count > 0; wakes.instanceMatrix.needsUpdate = true;
+      for (const q of boatParts) { q.mesh.visible = q.mesh.count > 0; if (q.mesh.count) { q.mesh.instanceMatrix.needsUpdate = true; if (q.mesh.instanceColor) q.mesh.instanceColor.needsUpdate = true; } }
+    }
+
+    // ---- for UAS tracking: civilians near a point, as stand-ins the camera can follow like an enemy vehicle
+    const proxies = new Map();
+    function proxy(c) {
+      let o = proxies.get(c.i); if (o) return o;
+      o = { parent: grp, visible: true, userData: { t: 'civ', civ: c.i }, getWorldPosition: v => { const p = posOf(c, FIRES.debug.simT); return v.set(p.x, heightAt(p.x, p.z) * ex + 0.7, p.z); } };
+      proxies.set(c.i, o); return o;
+    }
+    function near(x, z, R) {
+      const out = [], t = FIRES.debug.simT;
+      for (let i = 0; i < N; i++) { const c = cars[i], p = posOf(c, t), dd = Math.hypot(p.x - x, p.z - z); if (dd <= R) out.push({ m: proxy(c), dd }); }
+      for (let i = 0; i < NBt; i++) { const b = boats[i], p = boatPos(b, t), dd = Math.hypot(p.x - x, p.z - z); if (dd <= R) out.push({ m: boatProxy(b), dd }); }
+      return out;
+    }
+    function boatProxy(b) {
+      let o = proxies.get('b' + b.i); if (o) return o;
+      o = { parent: grp, visible: true, userData: { t: 'civ', boat: b.i }, getWorldPosition: v => { const p = boatPos(b, FIRES.debug.simT); return v.set(p.x, 1.5, p.z); } };
+      proxies.set('b' + b.i, o); return o;
+    }
+
+    // ---- Display → Civilians
+    async function set(lv) {
+      level = lv; N = (LEVELS.find(l => l[0] === lv) || LEVELS[0])[2]; NBt = BOATS[lv] || 0;
+      for (const [k] of LEVELS) { const b = document.getElementById('cv-' + k); if (b) b.setAttribute('aria-pressed', String(k === lv)); }
+      if (N && !specs) { specs = (await load('civ/civ.json', 'json')).vehicles; initBoxes(); }
+      if (N && !built && ROADNET) build();
+    }
+    for (const [k] of LEVELS) { const b = document.getElementById('cv-' + k); if (b) b.addEventListener('click', () => set(k)); }
+    const prevRN = onRoadNet; onRoadNet = () => { if (prevRN) prevRN(); if (N && specs && !built) build(); };
+    set(level);
+    return { tick, near, set, vehiclesAt, strike, debug: { cars, boats, BOATS, boatPos, get NBt() { return NBt; }, LEVELS, PARKED, KMH, FAR_R, NEAR_CAP, get N() { return N; }, get level() { return level; }, posOf, grp, get parts() { return parts; } } };
+  })();
+  window.__civ = CIV.debug;
 
   // ---- UAS: friendly loitering munitions / one-way-attack drones.
   //      Launch points come from the scenario file (data/uas.json); the instructor can add more.
@@ -2688,12 +3043,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function vehiclesNear(x, z, R) {          // OPFOR vehicles within R metres (ground distance), nearest first
       const out = [], v = new THREE.Vector3();
       for (const [, g] of OPFOR.debug.view.g) for (const m of g.meshes) if (m.visible && m.parent) { m.getWorldPosition(v); const dd = Math.hypot(v.x - x, v.z - z); if (dd <= R) out.push({ m, dd }); }
+      out.push(...CIV.near(x, z, R));            // civilians can be tracked too: the camera cannot tell friend from foe
       return out.sort((a, b) => a.dd - b.dd);
     }
     function impact(d, p) {
       const r = DAMAGE.uasImpact('U' + d.id, d.type, p.x, p.z, simT());
       FIRES.blast(CE + r.x, CN - r.z, TYPES[d.type].burst);
-      const O = OPFOR.debug, nm = v => O.vName(v.g, v.i);
+      const O = OPFOR.debug, nm = v => v.civ ? v.name.toUpperCase() : O.vName(v.g, v.i);
       const res = r.hits.length ? 'STRUCK ' + r.hits.map(h => nm(h.v) + ' (' + Math.round(h.d) + ' m)').join(', ')
         : r.near && r.near.d <= 30 ? Math.round(r.near.d) + ' m from ' + nm(r.near.v) + (r.near.v.struck ? ' (already struck)' : '') + ', not struck'
         : 'no vehicle within 30 m';
@@ -3220,7 +3576,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
     addEventListener('beforeunload', () => { for (const d of drones) if (d.feed && !d.feed.closed) d.feed.close(); });
     draw();
-    return { tick, renderFeeds, debug: { TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
+    const feedCams = () => drones.filter(d => d.feed && (d.state === 'fly' || d.state === 'falling')).map(d => d.cam3);
+    const feedFocus = () => drones.filter(d => d.feed && d.spi && d.state === 'fly').map(d => ({ x: d.spi.x, z: d.spi.z, r: 350, cam: d.cam3.position }));
+    return { tick, renderFeeds, feedFocus, feedCams, debug: { TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
   })();
   window.__uas = UAS.debug;
 
@@ -3323,7 +3681,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
     function build() {
       const FT = FIRES.debug.TYPES, UT = UAS.debug.TYPES, CAM = UAS.debug.CAM, VT = OPFOR.debug.VT, FX = OPFOR.debug.fxRules, D = DAMAGE;
-      const CLS = { soft: 'Soft (fuel truck)', eng: 'Engineering', armor: 'Armour (ZBD, ZTD, PLZ)' }, cls = Object.keys(CLS);
+      const CLS = { soft: 'Soft (fuel truck, civilians)', eng: 'Engineering', armor: 'Armour (ZBD, ZTD, PLZ)' }, cls = Object.keys(CLS);
       const MUN = Object.keys(D.R), munName = k => FT[k] ? FT[k].short : UT[k].label, src = k => k === 'm777' || k === 'm119' ? 'Fire Mission Sim' : PH;
       const MISS = [0, 5, 10, 15, 20, 30, 50];
       const sec = [];
@@ -3409,6 +3767,19 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ['Road data', 'OpenStreetMap drivable roads; no one-way streets, lanes, width or traffic'],
           ['Column behind its start point', 'lined up straight back from the first stretch of road']])}`]);
 
+      { const CV = window.__civ;
+        sec.push(['civ', 'Civilians', `
+        ${tbl(['Setting', 'Cars on the map', 'Fishing boats'], CV.LEVELS.map(l => [l[1], l[2] ? l[2] + ' ' + PH : 'none', CV.BOATS[l[0]] || 'none']))}
+        ${list([
+          'Seeded: the same cars on the same streets every run. A higher setting adds cars; it never reshuffles the lower one.',
+          Math.round(CV.PARKED * 100) + ' % parked at the kerb on minor and mid roads (never on major roads); the rest drive.',
+          'Driving speed by road class: ' + CV.KMH.join(' / ') + ' km/h (major / mid / minor), ±15 % per car ' + PH + '. Right-hand traffic.',
+          'Drivers take a random turn at each junction (never straight back unless it is a dead end). No lights, rules or collisions — cars pass through each other.',
+          'A moving car\'s position is a fixed function of the clock: pause, 10× and replays agree.',
+          'Drawn as full models near where someone is looking (main view centre, open UAS feeds\' aim points; up to ' + CV.NEAR_CAP + '), coloured boxes elsewhere out to ' + CV.FAR_R / 1000 + ' km, nothing beyond.',
+          'UAS can track civilians exactly like enemy vehicles — the camera does not tell friend from foe.',
+          'Boats: about half at anchor (swinging slowly), the rest motor at 4–8 kn between random points 0.8–3 km apart, always 150 m+ offshore and on open water. Moving boats trail a simple V wake (one flat textured shape, ~80 m long, ~19.5° arms).',
+          'Civilians (cars and boats) can be struck exactly like enemy vehicles: soft class (same radii as a fuel truck), Pdh 1. A struck car stops where it is, darkens and burns; the fires log names it ("STRUCK CIVILIAN WHITE PICKUP").'])}`]); }
       sec.push(['fx', 'Effects', `
         ${tbl(['Effect', 'Rule'], [
           ['Shell burst', 'flash 0.8 s; smoke 60 s; scorch fades over 10 min'],
@@ -3428,7 +3799,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ['Terrain', 'USGS 3DEP 1 m DEM, thinned to 10 m'],
           ['Buildings and trees', '2020 NOAA lidar; block sight on a 10 m grid; trees block completely'],
           ['OP inside a building', 'observer stands on the roof'],
-          ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground']])}`]);
+          ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground'],
+          ['Trees drawn (display only)', 'only those in 250 m cells inside some camera\'s view (main view or an open UAS feed), all at full detail. Sight lines still use every tree.'],
+          ['Terrain drawn (display only)', 'in ~1.5 km tiles; tiles outside the view are skipped. Same ground, same detail.'],
+          ['Traffic updates', 'civilian positions are redrawn at half the frame rate (every frame while a UAS feed is open)']])}`]);
 
       body.innerHTML = '<nav class="rnav">' + sec.map(s => `<a href="#r-${s[0]}">${s[1]}</a>`).join('') + '</nav>' +
         sec.map(s => `<section id="r-${s[0]}"><h3>${s[1]}</h3>${s[2]}</section>`).join('');
@@ -3447,12 +3821,40 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   const v = new THREE.Vector3();
   document.getElementById('loading').hidden = true;
   let lastT = performance.now();
+  // ---- performance readout (Display → Diagnostics → Performance; Lee, 2026-11-03): what each frame costs, so a
+  //      feature's weight can be seen by switching it on and off. Frame time, fps, JS time per module, GPU work.
+  const PERF = (() => {
+    const el = document.getElementById('perf'), btn = document.getElementById('tg-perf');
+    let on = false, acc = {}, frames = 0, t0 = performance.now(), frameMs = 0, worst = 0;
+    renderer.info.autoReset = false;                       // count every render in a frame (main view + UAS feeds)
+    if (btn) btn.addEventListener('click', () => { on = !on; btn.setAttribute('aria-pressed', String(on)); el.hidden = !on; });
+    function time(name, fn) { if (!on) return fn(); const a = performance.now(); const r = fn(); acc[name] = (acc[name] || 0) + performance.now() - a; return r; }
+    function frame(ms) {
+      const inf = renderer.info.render, mem = renderer.info.memory;
+      if (on) { frameMs += ms; worst = Math.max(worst, ms); frames++; acc.calls = (acc.calls || 0) + inf.calls; acc.tris = (acc.tris || 0) + inf.triangles; }
+      renderer.info.reset();
+      const now = performance.now(); if (!on || now - t0 < 1000) return;
+      const n = frames || 1, f = k => ((acc[k] || 0) / n).toFixed(1);
+      const heap = performance.memory ? ' · JS heap ' + Math.round(performance.memory.usedJSHeapSize / 1e6) + ' MB' : '';
+      el.textContent = `${Math.round(n * 1000 / (now - t0))} fps · frame ${(frameMs / n).toFixed(1)} ms (worst ${worst.toFixed(0)})\n` +
+        `JS ms/frame: fires ${f('fires')} · enemy ${f('opfor')} · UAS ${f('uas')} · civilians ${f('civ')} · trees ${f('trees')} · feeds ${f('feeds')} · draw ${f('render')}\n` +
+        `GPU/frame: ${Math.round((acc.calls || 0) / n)} draw calls · ${((acc.tris || 0) / n / 1e6).toFixed(2)} M triangles · ${mem.geometries} geometries · ${mem.textures} textures${heap}`;
+      acc = {}; frames = 0; frameMs = 0; worst = 0; t0 = now;
+    }
+    return { time, frame };
+  })();
+  let lastFrameStart = performance.now();
   (function loop(now) {
     now = now || performance.now(); const dt = Math.min(0.25, (now - lastT) / 1000); lastT = now;
-    FIRES.tick(dt);
-    OPFOR.tick();
-    UAS.tick();
-    if (!obs) { navTick(dt); controls.update(); } reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000; UAS.renderFeeds(); renderer.render(scene, camera);
+    const fs = performance.now();
+    PERF.time('fires', () => FIRES.tick(dt));
+    PERF.time('opfor', () => OPFOR.tick());
+    PERF.time('uas', () => UAS.tick());
+    PERF.time('civ', () => CIV.tick(FIRES.debug.simT, UAS.feedFocus()));
+    if (!obs) { navTick(dt); controls.update(); } reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000;
+    PERF.time('trees', () => CITY.treeTick([camera, ...UAS.feedCams()]));
+    PERF.time('feeds', () => UAS.renderFeeds()); PERF.time('render', () => renderer.render(scene, camera));
+    PERF.frame(now - lastFrameStart); lastFrameStart = now;
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
       for (const t of tags) {

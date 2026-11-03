@@ -266,3 +266,8 @@ a.tb-name:hover { color: var(--brass); }
 .rl { margin: 6px 0 4px; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--ink); }
 .rl li { margin: 2px 0; }
 .ph { color: #e3a35c; font-size: 11px; letter-spacing: .04em; }
+
+/* performance readout (Display → Diagnostics → Performance) */
+#perf { position: fixed; z-index: 12; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(46px + env(safe-area-inset-bottom, 0px)); margin: 0;
+  font: 500 11.5px/1.5 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: pre;
+  background: rgba(18, 22, 16, 0.78); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; pointer-events: none; }
