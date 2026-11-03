@@ -36,7 +36,7 @@
   // ---- scene
   const canvas = document.getElementById('view');
   // ---- LITE (demo) mode for phones and tablets (Lee, 2026-11-03): phone browsers kill tabs that use too much memory.
-  //      Lite = 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes (no car models), distant trees simplified.
+  //      Lite = 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes (no car models), trees simplified at half the distance.
   //      ?lite=1 / ?lite=0 in the address forces it on or off (testing on a laptop, or a capable tablet).
   const LITE = (() => { const q = new URLSearchParams(location.search).get('lite'); if (q === '1') return true; if (q === '0') return false;
     return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); })();
@@ -865,8 +865,11 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       st.groundMs = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
     }
     // ---- tree culling (perf, 2026-11-03): trees are drawn only in 250 m cells some camera (main view or an open UAS feed)
-    //      can see. TREE_SIMPLIFY (lite/phone mode only; Lee: no visual change on laptops) swaps distant crowns for 20-triangle ones.
-    const TREE_SIMPLIFY = LITE, TREE_CELL = 250, TREE_NEAR = TREE_SIMPLIFY ? 1200 : Infinity, TREE_FAR = 8000;
+    //      can see, in three levels of detail by distance (all devices): full trees close in; past TREE_NEAR a 20-triangle
+    //      crown, a 20-triangle palm and no trunk (a trunk is under a pixel wide there); past TREE_MID an 8-triangle crown;
+    //      past TREE_FAR nothing. Distances are 'effective': they shrink with zoom and grow with screen height in pixels,
+    //      so a swap happens at the same size on screen (~10 px crown at TREE_NEAR on a 800 px view). Lite halves them.
+    const TREE_CELL = 250, TREE_Q = LITE ? 0.5 : 1, TREE_NEAR = 600 * TREE_Q, TREE_MID = 2000 * TREE_Q, TREE_FAR = 20000 * TREE_Q;
     let treeLOD = null;
     function makeTreeLOD(cats) {
       const NCX = Math.ceil(2 * HW / TREE_CELL), NCZ = Math.ceil(2 * HH / TREE_CELL), cellOf = (x, z) => Math.min(NCX - 1, Math.max(0, Math.floor((x + HW) / TREE_CELL))) + NCX * Math.min(NCZ - 1, Math.max(0, Math.floor((z + HH) / TREE_CELL)));
@@ -884,8 +887,9 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       function update(cams, force) {
         const key = cams.map(c => [c.position.x, c.position.y, c.position.z].map(v => Math.round(v / 20)).join(',') + ':' + c.quaternion.toArray().map(v => v.toFixed(2)).join(',') + ':' + Math.round(c.fov)).join('|');
         if (!force && key === last.key) return; last.key = key;
-        const frs = cams.map(c => { c.updateMatrixWorld(); const f = new THREE.Frustum(); f.setFromProjectionMatrix(pm.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse)); return { c, f, k: Math.min(1, c.fov / 55) }; });
-        for (const c of cats) { c.n = 0; if (c.far) c.far._n = 0; }
+        const px = 800 / Math.max(400, renderer.domElement.height), T45 = Math.tan(Math.PI / 8);
+        const frs = cams.map(c => { c.updateMatrixWorld(); const f = new THREE.Frustum(); f.setFromProjectionMatrix(pm.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse)); return { c, f, k: Math.tan(c.fov * Math.PI / 360) / T45 * px }; });
+        for (const c of cats) for (const t of c.tiers) if (t.mesh) t.mesh._n = 0;
         for (const k of cells) {
           const cx = (k % NCX + 0.5) * TREE_CELL - HW, cz = (Math.floor(k / NCX) + 0.5) * TREE_CELL - HH;
           sph.center.set(cx, cellTop[k] * ex * 0.5, cz); sph.radius = TREE_CELL * 0.75 + Math.max(0, cellTop[k]) * ex * 0.5;
@@ -894,15 +898,13 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (d === Infinity) continue;
           for (const c of cats) {
             const a = c.start[k], b = c.start[k + 1]; if (a === b) continue;
-            const near = d < (c.nearTo || TREE_NEAR), dst = near ? c.near : d < (c.farTo || 0) ? c.far : null; if (!dst) continue;
-            const o = near ? c.n : dst._n;
-            dst.instanceMatrix.array.set(c.M.subarray(a * 16, b * 16), o * 16); if (c.C) dst.instanceColor.array.set(c.C.subarray(a * 3, b * 3), o * 3);
-            if (near) c.n += b - a; else dst._n += b - a;
+            const t = c.tiers.find(t => d < t.to), dst = t && t.mesh; if (!dst) continue;
+            dst.instanceMatrix.array.set(c.M.subarray(a * 16, b * 16), dst._n * 16); if (c.C) dst.instanceColor.array.set(c.C.subarray(a * 3, b * 3), dst._n * 3);
+            dst._n += b - a;
           }
         }
-        for (const c of cats) {
-          c.near.count = c.n; c.near.instanceMatrix.needsUpdate = true; if (c.near.instanceColor) c.near.instanceColor.needsUpdate = true;
-          if (c.far) { c.far.count = c.far._n; c.far.instanceMatrix.needsUpdate = true; if (c.far.instanceColor) c.far.instanceColor.needsUpdate = true; }
+        for (const c of cats) for (const { mesh: m } of c.tiers) if (m) {
+          m.count = m._n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
         }
       }
       return { update, cells: cells.length };
@@ -932,8 +934,8 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const lum = 0.3 * R + 0.59 * G + 0.11 * B, k = Math.min(1.15, Math.max(0.75, 92 / Math.max(1, lum)));
         return out.setRGB(Math.min(1, R * k / 255), Math.min(1, G * k / 255), Math.min(1, B * k / 255)).convertSRGBToLinear();
       }
-      function crownGeo(seed, detail = 1) {
-        const g = new THREE.IcosahedronGeometry(1, detail), p = g.attributes.position, c = new Float32Array(p.count * 3);
+      function crownGeo(seed, detail = 1) {     // detail 1: 80 triangles, 0: 20, -1: an 8-triangle octahedron
+        const g = detail < 0 ? new THREE.OctahedronGeometry(1, 0) : new THREE.IcosahedronGeometry(1, detail), p = g.attributes.position, c = new Float32Array(p.count * 3);
         const a = 3.1 + seed, b = 2.7 + seed * 0.7, d = 3.3 + seed * 1.3;
         for (let i = 0; i < p.count; i++) {
           let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -945,8 +947,8 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         }
         g.setAttribute('color', new THREE.BufferAttribute(c, 3)); g.computeVertexNormals(); return g;
       }
-      function palmGeo() {
-        const P = [], C = [], F = 9, S = 4;
+      function palmGeo(F = 9, S = 4) {          // F fronds of S segments: 9 x 4 = 72 triangles, 5 x 2 = 20
+        const P = [], C = [];
         for (let f = 0; f < F; f++) {
           const ang = f / F * Math.PI * 2 + (f % 2) * 0.2, ca = Math.cos(ang), sa = Math.sin(ang), up = f % 3 === 0 ? 0.25 : 0;
           for (let s2 = 0; s2 < S; s2++) {
@@ -966,9 +968,11 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const hash = i => (Math.imul(i + 1, 2654435761) >>> 0);
       for (let i = 0; i < n; i++) { if (isPalm(i)) nPalm++; else counts[hash(i) % VAR]++; }
       const leafMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+      const lod = (geo, mat, c) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, c)); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, c) * 3), 3); m.count = 0; return m; };
       const crowns = counts.map((c, k) => new THREE.InstancedMesh(crownGeo(k * 1.7 + 0.4), leafMat, Math.max(1, c)));
-      const crownsFar = !TREE_SIMPLIFY ? counts.map(() => null) : counts.map((c, k) => { const m = new THREE.InstancedMesh(crownGeo(k * 1.7 + 0.4, 0), leafMat, Math.max(1, c)); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, c) * 3), 3); m.count = 0; return m; });   // 20-tri crowns for distance
-      const palms = new THREE.InstancedMesh(palmGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), Math.max(1, nPalm));
+      const crownsMid = counts.map((c, k) => lod(crownGeo(k * 1.7 + 0.4, 0), leafMat, c)), crownsFar = counts.map((c, k) => lod(crownGeo(k * 1.7 + 0.4, -1), leafMat, c));
+      const palmMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+      const palms = new THREE.InstancedMesh(palmGeo(), palmMat, Math.max(1, nPalm)), palmsFar = lod(palmGeo(5, 2), palmMat, nPalm);
       const tg = new THREE.CylinderGeometry(0.5, 0.75, 1, 6, 1, true); tg.translate(0, 0.5, 0);
       const trunks = new THREE.InstancedMesh(tg, new THREE.MeshLambertMaterial({ color: 0xffffff }), n);
       const mtx = new THREE.Matrix4(), col = new THREE.Color(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
@@ -1000,14 +1004,14 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         }
       }
       trunks.count = ti; palms.count = pi; crowns.forEach((m, k) => { m.count = used[k]; });
-      for (const m of [...crowns, ...crownsFar.filter(Boolean), palms, trunks]) { m.frustumCulled = false; tGrp.add(m); }
+      for (const m of [...crowns, ...crownsMid, ...crownsFar, palms, palmsFar, trunks]) { m.frustumCulled = false; tGrp.add(m); }
       // ---- tree culling (2026-11-03, perf): the instance lists above become the master copy, sorted by 250 m cell.
-      //      Each update copies only the cells some camera can see into the live lists: near cells full detail,
-      //      far cells the 20-tri crown and no trunk, beyond TREE_FAR nothing. Distances shrink with zoom (binoculars, feeds).
+      //      Each update copies only the cells some camera can see into the live list of the level of detail that
+      //      cell's distance calls for (see TREE_NEAR / TREE_MID / TREE_FAR).
       treeLOD = makeTreeLOD([
-        ...crowns.map((m, k) => ({ src: m, near: m, far: crownsFar[k], farTo: TREE_FAR })),
-        { src: palms, near: palms, far: null, nearTo: TREE_SIMPLIFY ? 3000 : Infinity },
-        { src: trunks, near: trunks, far: null }
+        ...crowns.map((m, k) => ({ src: m, tiers: [{ mesh: m, to: TREE_NEAR }, { mesh: crownsMid[k], to: TREE_MID }, { mesh: crownsFar[k], to: TREE_FAR }] })),
+        { src: palms, tiers: [{ mesh: palms, to: TREE_NEAR }, { mesh: palmsFar, to: TREE_FAR }] },
+        { src: trunks, tiers: [{ mesh: trunks, to: TREE_NEAR }] }
       ]);
       st.palms = pi;
     }
@@ -1036,7 +1040,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     init();
     return { set, setRoofs, roofAt, treeTick: (cams, force) => { if (treeLOD) treeLOD.update(cams, force); }, solidAt: (x, z) => roofAt(x, z, true) !== null, get ready() { return st.ready; }, debug: { st, P, roofAt, idx, get HB() { return HB; }, bGrp, tGrp } };
   })();
-  window.__city = CITY.debug;
+  window.__city = CITY.debug; window.__trees = CITY.treeTick;
 
   // ---- ROADS: OpenStreetMap roads (data/roads.json, pack_roads.py) as flat ribbons draped on the terrain - shapes,
   //      not pixels, so they stay crisp at any zoom with no texture. Asphalt with light kerb strips on streets and
@@ -1074,11 +1078,13 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
       return best;
     }
-    // shortest road path between two points; null if either is more than ROAD_REACH from a road or no road path joins them
-    function path(ax, az, bx, bz) {
+    // shortest road path between two points; null if either is more than ROAD_REACH from a road or no road path joins them.
+    // pen (optional): nodes a sibling already used; each is 50 % dearer, so a line spreads over parallel streets but never
+    // takes a detour much over 1.5x the direct way (it would race to keep up). The result carries .nodes, the junctions it passes.
+    function path(ax, az, bx, bz, pen) {
       const A = nearest(ax, az), B = nearest(bx, bz); if (!A || !B) return null;
       const P = [{ x: ax, z: az }, { x: A.x, z: A.z }];
-      if (A.s === B.s) { P.push({ x: B.x, z: B.z }, { x: bx, z: bz }); return P; }
+      if (A.s === B.s) { P.push({ x: B.x, z: B.z }, { x: bx, z: bz }); P.nodes = []; return P; }
       const segLen = s => Math.hypot(X[E[s * 3 + 1]] - X[E[s * 3]], Z[E[s * 3 + 1]] - Z[E[s * 3]]) * ROAD_W[E[s * 3 + 2]];
       const g = new Map(), prev = new Map(), heap = [];
       const push = (i, c, p) => { if (g.has(i) && g.get(i) <= c) return; g.set(i, c); prev.set(i, p);
@@ -1093,13 +1099,13 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       while (heap.length) {
         const [f, i] = pop(); if (f >= best) break; if (done.has(i)) continue; done.add(i);
         const gi = g.get(i), ec = endCost(i); if (ec !== null && gi + ec < best) { best = gi + ec; bestEnd = i; }
-        for (let k = deg[i]; k < deg[i + 1]; k++) push(to[k], gi + w[k], i);
+        for (let k = deg[i]; k < deg[i + 1]; k++) push(to[k], gi + w[k] * (pen && pen.has(to[k]) ? 1.5 : 1), i);
         if (done.size > 60000) break;
       }
       if (bestEnd < 0) return null;
-      const mid = []; for (let i = bestEnd; i !== -1; i = prev.get(i)) mid.push({ x: X[i], z: Z[i] });
+      const mid = [], ids = []; for (let i = bestEnd; i !== -1; i = prev.get(i)) { mid.push({ x: X[i], z: Z[i] }); ids.push(i); }
       P.push(...mid.reverse(), { x: B.x, z: B.z }, { x: bx, z: bz });
-      return P.filter((p, k) => !k || Math.hypot(p.x - P[k - 1].x, p.z - P[k - 1].z) > 0.5);
+      const out = P.filter((p, k) => !k || Math.hypot(p.x - P[k - 1].x, p.z - P[k - 1].z) > 0.5); out.nodes = ids; return out;
     }
     return { path, nearest, nodes: n, edges: E.length / 3, X, Z, E, WD, deg, to, eid };
   }
@@ -1703,7 +1709,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     drawUnits();
     return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
-  window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
+  window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
 
   // ---- OPFOR: enemy groups (convoys), drawn routes, ships that carry cargo groups.
@@ -1737,7 +1743,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser only; scenario files come later)
-    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false })) })); } catch (e) {} }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) })); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
     // ---- motion profile: arc length vs time along the route, speed by land or water
@@ -1752,8 +1758,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     //      off-road links from a clicked point to its road) are checked against building footprints and warned.
     const legCache = new Map();
     const snapOn = g => !isShip(g) && g.roads !== false;
-    function leg(g, a, b) {                    // a, b local points -> { pts: [a ... b], road, why }
-      const on = snapOn(g), k = (on ? 1 : 0) + '|' + Math.round(a.x) + ',' + Math.round(a.z) + '|' + Math.round(b.x) + ',' + Math.round(b.z);
+    function leg(g, a, b, straight) {          // a, b local points -> { pts: [a ... b], road, why }; straight: this leg ignores roads
+      const on = snapOn(g) && !straight, k = (on ? 1 : 0) + '|' + Math.round(a.x) + ',' + Math.round(a.z) + '|' + Math.round(b.x) + ',' + Math.round(b.z);
       let r = legCache.get(k); if (r) return r;
       let why = !on ? '' : waterAt(a.x, a.z) || waterAt(b.x, b.z) ? 'water' : !ROADNET ? 'loading' : '';
       let pts = null;
@@ -1775,13 +1781,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function routePath(g, R) {                 // the driven path for a list of route points, plus where each point falls in it
       const pts = R.map(p => toLocal(p.e, p.n)), out = pts.length ? [pts[0]] : [], at = [0], legs = [];
-      for (let k = 1; k < pts.length; k++) { const l = leg(g, pts[k - 1], pts[k]); legs.push(l); out.push(...l.pts.slice(1)); at.push(out.length - 1); }
+      for (let k = 1; k < pts.length; k++) { const l = leg(g, pts[k - 1], pts[k], R[k - 1].straight); legs.push(l); out.push(...l.pts.slice(1)); at.push(out.length - 1); }
       return { pts: out, at, legs };
     }
     onRoadNet = () => { legCache.clear(); refresh(); };
     onCityReady = () => { legCache.clear(); refresh(); };
 
-    function profile(g) {
+    function profile(g, quick) {               // quick: while dragging, line paths go straight (no road search)
       const R = fullRoute(g), rp = routePath(g, R), pts = rp.pts;
       const S = [0], T = [0], X = [], Z = [];
       if (R.length < 2) { g.prof = null; return; }
@@ -1798,13 +1804,142 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const a = pts[k - 1], b = pts[k], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(L / step));
         for (let j = 1; j <= n; j++) {
           const x = a.x + (b.x - a.x) * j / n, z = a.z + (b.z - a.z) * j / n, ds = L / n;
-          const wet = waterAt(x, z), kmh = ship ? g.water : (wet ? (g.water || g.land) : g.land);
+          const wet = waterAt(x, z), ov = +R[Math.min(wp, R.length - 1) - 1].kmh || 0;   // a route point can set the speed to the next one
+          const kmh = ov > 0 ? ov : ship ? g.water : (wet ? (g.water || g.land) : g.land);
           s += ds; t += ds / Math.max(0.5, kmh / 3.6);
           S.push(s); T.push(t); X.push(x); Z.push(z);
         }
         while (wp < rp.at.length && rp.at[wp] === k) { wpS[wp] = s; hold(wp); wp++; }   // a clicked route point: holds and split points key on these
       }
       g.prof = { S, T, X, Z, len: s, dur: t, stops, wpS, legs: rp.legs };
+      g.prof.lags = colLags(g, vehicles(g).length); g.prof.line = lineFor(g, R, wpS, quick);
+    }
+
+    // ---- formations (Lee, 2026-11-03). A route point can switch the group to Line or back to Column.
+    //      Line: from that point each vehicle drives its OWN path, to its slot on the front at each later point (the
+    //      front is a bar square to the route, frontage set on the point, ends draggable). On land the paths take
+    //      roads, with junctions a sibling already used made dearer, so a line flows down parallel streets; vehicles
+    //      that still share a street drive one behind the other. A Column point regroups them: every path ends on that
+    //      point and the rear falls back into column, centre first. Line, then Column at the next point = a swarm.
+    //      All of it is worked out on edit (cached); a frame is still one lookup per vehicle.
+    const FRONT_SPACING = 30;                  // metres between vehicles in a new line
+    const hash01 = k => { let h = k | 0; h = Math.imul(h ^ (h >>> 16), 0x45d9f3b); h = Math.imul(h ^ (h >>> 16), 0x45d9f3b); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+    const rnd = (g, i, k) => hash01(g.id * 7919 + i * 131 + k * 17);
+    const loose = g => !isShip(g) && g.loose !== false;
+    function colLags(g, n) {                   // how far behind the lead each vehicle drives in column; Loose: ±25 % of a gap, not cumulative
+      const L = []; for (let i = 0; i < n; i++) L.push(i * g.gap + (loose(g) && i > 0 ? (rnd(g, i, 1) - 0.5) * 0.5 * g.gap : 0)); return L;
+    }
+    function formAt(R, k) { for (let j = k; j >= 0; j--) if (R[j] && R[j].form) return R[j].form; return 'column'; }
+    function widthAt(R, k, n) { for (let j = k; j >= 0; j--) if (R[j] && +R[j].w > 0) return +R[j].w; return FRONT_SPACING * Math.max(1, n - 1); }
+    function frontDir(R, P, k) {               // unit vector along the front at point k: square to the route unless the bar was dragged
+      const a = P[Math.max(0, k - 1)], c = P[Math.min(P.length - 1, k + 1)];
+      let hx = c.x - a.x, hz = c.z - a.z; const L = Math.hypot(hx, hz) || 1; hx /= L; hz /= L;
+      const d = { x: hz, z: -hx };
+      if (R[k].ang === undefined) return d;
+      const e = { x: Math.sin(R[k].ang), z: Math.cos(R[k].ang) };
+      return e.x * d.x + e.z * d.z < 0 ? { x: -e.x, z: -e.z } : e;     // keep each vehicle on its own side of the route
+    }
+    function slotsFor(n) {                     // place across the front by place in the column: lead in the centre, then alternate sides
+      const u = []; for (let j = 0; j < n; j++) u.push(n > 1 ? -1 + 2 * j / (n - 1) : 0);
+      return u.sort((a, b) => Math.abs(a) - Math.abs(b) || b - a);
+    }
+    function lineRuns(g, R) {                  // [a, b]: legs a .. b-1 are in line; b is the Column point or the route's end
+      const out = [];
+      for (let k = 0; k < R.length - 1; k++) {
+        if (formAt(R, k) !== 'line') continue;
+        let b = k + 1; while (b < R.length - 1 && formAt(R, b) === 'line') b++;
+        out.push([k, b]); k = b - 1;
+      }
+      return out;
+    }
+    function poly(pts) { const S = [0]; for (let k = 1; k < pts.length; k++) S.push(S[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].z - pts[k - 1].z)); return { pts, S, len: S[S.length - 1] }; }
+    function along(pl, f) {                    // point and heading at fraction f of a polyline (f < 0 runs back off the start)
+      const P = pl.pts, S = pl.S, s = f * pl.len;
+      if (P.length < 2) return { x: P[0].x, z: P[0].z, hd: 0 };
+      let lo = 0, hi = P.length - 1;
+      if (s <= 0) hi = 1; else if (s >= pl.len) lo = hi - 1; else while (hi - lo > 1) { const m = (lo + hi) >> 1; if (S[m] <= s) lo = m; else hi = m; }
+      const t = (s - S[lo]) / (S[hi] - S[lo] || 1), dx = P[hi].x - P[lo].x, dz = P[hi].z - P[lo].z;
+      return { x: P[lo].x + dx * t, z: P[lo].z + dz * t, hd: Math.atan2(dx, dz) };
+    }
+    function lineFor(g, R, wpS, quick) {
+      if (isShip(g) || !R.some(p => p.form === 'line')) return [];
+      if (quick) return buildLine(g, R, wpS, true);
+      const key = JSON.stringify([vehicles(g).length, g.gap, loose(g), snapOn(g), !!ROADNET, R.map(p => [p.e, p.n, p.form || 0, +p.w || 0, p.ang === undefined ? 0 : +p.ang.toFixed(3), p.straight ? 1 : 0])]);
+      if (g._lk !== key || !g._line) { g._lk = key; g._line = buildLine(g, R, wpS, false); }
+      return g._line;
+    }
+    function buildLine(g, R, wpS, quick) {
+      const n = vehicles(g).length, runs = lineRuns(g, R), out = []; if (!n) return out;
+      const P = R.map(p => toLocal(p.e, p.n)), U = slotsFor(n), cl = colLags(g, n);
+      for (const [a, b] of runs) {
+        const last = b === R.length - 1;
+        const slot = (k, i) => { if (k === a || (k === b && !last)) return P[k];
+          const d = frontDir(R, P, k), h = widthAt(R, k, n) / 2 * U[i]; return { x: P[k].x + d.x * h, z: P[k].z + d.z * h }; };
+        const paths = [], LL = [];             // paths[i][j - a]: vehicle i's own polyline for leg j; LL[j - a][i]: its lag on that leg
+        for (let j = a; j < b; j++) {
+          const pen = new Map(), nodes = [];
+          for (let i = 0; i < n; i++) {
+            const A = slot(j, i), B = slot(j + 1, i);
+            const straight = quick || !snapOn(g) || R[j].straight || !ROADNET || waterAt(A.x, A.z) || waterAt(B.x, B.z);
+            const pts = (!straight && ROADNET.path(A.x, A.z, B.x, B.z, pen)) || [A, B];
+            (paths[i] || (paths[i] = [])).push(poly(pts));
+            nodes.push(pts.nodes ? new Set(pts.nodes) : null); if (pts.nodes) for (const v of pts.nodes) pen.set(v, 1);
+          }
+          // a vehicle sharing most of a leg's streets with one ahead drives a gap behind it, not on top of it. Each moves along
+          // its own path by fraction, so the lag has to allow for path lengths: checked half way and at the leg's end.
+          const L = wpS[j + 1] - wpS[j], lam = [], len = i => paths[i][j - a].len || 1;
+          for (let i = 0; i < n; i++) {
+            let v = 0; const si = nodes[i];
+            if (si && si.size && L > 0) for (let k = 0; k < i; k++) { const sk = nodes[k]; if (!sk) continue; let c = 0; for (const x of si) if (sk.has(x)) c++;
+              if (c > 0.4 * si.size) v = Math.max(v, lam[k] + g.gap, (g.gap * L + lam[k] * len(k)) / len(i), lam[k] + L * (0.5 * len(k) + g.gap) / len(i) - L / 2); }
+            lam.push(v);
+          }
+          LL.push(lam);
+        }
+        // lag against the lead's arc length, piecewise linear: column lag -> leg a's over E after the line starts; at each later
+        // point, a change of lag over the first stretch of the new leg (so a line is abreast AT each front, then files into a
+        // shared street); back to column lag over X before a Column point. Falling back stays under 1 m per m, so nobody reverses.
+        const S = wpS.slice(a, b + 1), legLen = j => S[j + 1] - S[j], ks = [], kv = [], nl = b - a;
+        for (let i = 0; i < n; i++) {           // knots per vehicle, each ramp as short as its own change allows
+          const K = [], V = [], knot = (s, v) => { if (K.length && s < K[K.length - 1]) s = K[K.length - 1]; K.push(s); V.push(v); };
+          const ramp = (from, to, room, catchUp) => Math.min(room, Math.max(catchUp ? room * 0.75 : 1, Math.abs(to - from) * (to > from ? 1.25 : 1.5)));   // catch-up: the wedge opens before they come level
+          knot(S[0], cl[i]); knot(S[0] + ramp(cl[i], LL[0][i], legLen(0) * (nl > 1 || last ? 0.8 : 0.45), true), LL[0][i]);
+          for (let j = 1; j < nl; j++) { knot(S[j], LL[j - 1][i]); knot(S[j] + ramp(LL[j - 1][i], LL[j][i], legLen(j) * (j === nl - 1 && !last ? 0.45 : 0.8)), LL[j][i]); }
+          if (!last) { const v = LL[nl - 1][i]; knot(S[nl] - ramp(v, cl[i], legLen(nl - 1) * 0.5), v); knot(S[nl], cl[i]); }
+          ks.push(K); kv.push(V);
+        }
+        const fronts = [];
+        for (let k = a + 1; k <= (last ? b : b - 1); k++) fronts.push({ k, c: P[k], d: frontDir(R, P, k), h: widthAt(R, k, n) / 2 });
+        out.push({ a, b, SA: S[0], SB: S[b - a], ks, kv, paths, S, fronts });
+      }
+      return out;
+    }
+    function linePt(run, i, q) {
+      const S = run.S; let j = 0; while (j < S.length - 2 && q >= S[j + 1]) j++;
+      const L = S[j + 1] - S[j];
+      return along(run.paths[i][j], L > 0 ? Math.min(1, (q - S[j]) / L) : 1);
+    }
+    function spot(g, i, q) {                   // vehicle i's own line path where one covers q, else the group's route
+      const P = g.prof, run = P && P.line && P.line.length && q >= 0 ? P.line.find(r => q >= r.SA && q <= r.SB) : null;
+      if (run && run.paths[i]) { const p = linePt(run, i, q); p.own = true; return p; }
+      const r = resolve(g, q); if (!r || !r.g.prof) return null;
+      return posAt(r.g, r.s);
+    }
+    // where vehicle i of g stands when its lead is at arc length s0: column spacing, its line path if a line is active,
+    // and (Loose) a little breathing in spacing and drift in lane. null if it has no route to stand on.
+    function vehAt(g, i, s0) {
+      const P = g.prof, lz = loose(g), base = P && P.lags[i] !== undefined ? P.lags[i] : i * g.gap;
+      const lr = P && P.line && P.line.length ? P.line.find(r => s0 >= r.SA && s0 <= r.SB) : null;
+      let lag = base;
+      if (lr && lr.ks[i]) { const K = lr.ks[i], V = lr.kv[i]; let k = 0; while (k < K.length - 1 && s0 > K[k + 1]) k++;
+        if (k >= K.length - 1) lag = V[K.length - 1];
+        else { const f = K[k + 1] > K[k] ? Math.min(1, Math.max(0, (s0 - K[k]) / (K[k + 1] - K[k]))) : 1; lag = V[k] + (V[k + 1] - V[k]) * f; } }
+      if (lz && i > 0) lag += Math.min(8, 0.15 * g.gap) * Math.sin(s0 / 80 + rnd(g, i, 2) * 6.283);
+      const q = s0 - lag, a = spot(g, i, q); if (!a) return null;
+      const b = spot(g, i, q + 1.5), dx = b ? b.x - a.x : 0, dz = b ? b.z - a.z : 0, hd = dx * dx + dz * dz > 0.04 ? Math.atan2(dx, dz) : a.hd;
+      if (!lz) return { x: a.x, z: a.z, hd };
+      const wv = (a.own ? 2.5 : 1) * Math.sin(s0 / 45 + rnd(g, i, 3) * 6.283);   // metres sideways
+      return { x: a.x + Math.cos(hd) * wv, z: a.z - Math.sin(hd) * wv, hd };
     }
     // ---- branches: a group that rides at the rear of its parent's column and peels off at a split point
     const parentOf = g => g.parent ? groups.find(o => o.id === g.parent) : null;
@@ -1928,8 +2063,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (!ship && !(T.amph && waterAt(m.position.x, m.position.z))) return;   // land vehicles: only while swimming
           for (let k = 0; k * WAKE_STEP <= WAKE_AGE; k++) {
             const sk = sAt(g, t - k * WAKE_STEP); if (sk === null) break;
-            const r = resolve(g, sk - i * g.gap); if (!r || !r.g.prof) break;
-            const p = posAt(r.g, r.s), fx = Math.sin(p.hd), fz = Math.cos(p.hd);
+            const p = vehAt(g, i, sk); if (!p) break;
+            const fx = Math.sin(p.hd), fz = Math.cos(p.hd);
             if (!ship && !waterAt(p.x, p.z)) break;                          // the wake starts where it entered the water
             pts.push({ x: p.x - fx * T.L / 2, z: p.z - fz * T.L / 2, px: fz, pz: -fx });   // stern, and the sideways direction
           }
@@ -2004,8 +2139,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         vehicles(g).forEach((type, i) => {
           const w = struckAt(g, i, t);
           if (w) { out.push({ g, i, type, key: skey(g, i), x: w.x, z: w.z, hd: w.hd, struck: true }); return; }
-          const r = resolve(g, s0 - i * g.gap); if (!r || !r.g.prof) return;
-          const p = posAt(r.g, r.s); out.push({ g, i, type, key: skey(g, i), x: p.x, z: p.z, hd: p.hd, struck: false });
+          const p = vehAt(g, i, s0); if (!p) return;
+          out.push({ g, i, type, key: skey(g, i), x: p.x, z: p.z, hd: p.hd, struck: false });
         });
       }
       return out;
@@ -2115,6 +2250,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         }
         const l = fatLine(pts, fatMat(on ? 0xd6b25a : 0xff6a55, on ? 4 : 3, { dashed: true, dashSize: 60, gapSize: 40, opacity: on ? 1 : 0.9 }));
         l.renderOrder = 15; lines.add(l);
+        if (g.prof && g.prof.line) for (const run of g.prof.line) {     // fronts as solid bars; the selected group's own vehicle paths faintly
+          for (const f of run.fronts) { const b = fatLine(drape([{ x: f.c.x - f.d.x * f.h, z: f.c.z - f.d.z * f.h }, { x: f.c.x + f.d.x * f.h, z: f.c.z + f.d.z * f.h }], 5), fatMat(on ? 0xd6b25a : 0xff6a55, on ? 4 : 3, { opacity: 1 })); b.renderOrder = 15; lines.add(b); }
+          if (on) for (const vp of run.paths) for (const pl of vp) { const o = fatLine(drape(pl.pts, 3), fatMat(0xd6b25a, 1.5, { opacity: 0.45 })); o.renderOrder = 14; lines.add(o); }
+        }
       }
       if (sel && editing) {
         if (joinPick) {
@@ -2123,6 +2262,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           for (const o of groups) if (o !== sel && inFamily(o, sel)) o.route.forEach((q, i) => addHandle(toLocal(q.e, q.n), hTexFam, { gid: o.id, i, fam: true }));
           const pts = sel.route.map(p => toLocal(p.e, p.n));
           pts.forEach((p, i) => addHandle(p, i === selPt ? hTexSel : hTexPt, { gid: sel.id, i }));
+          if (sel.prof && sel.prof.line) for (const run of sel.prof.line) for (const f of run.fronts) if (f.k < sel.route.length)
+            for (const side of [1, -1]) addHandle({ x: f.c.x + f.d.x * f.h * side, z: f.c.z + f.d.z * f.h * side }, hTexPt, { gid: sel.id, i: f.k, bar: side });
           const rp = routePath(sel, sel.route);
           rp.legs.forEach((l, i) => addHandle(halfway(l.pts), hTexMid, { i, mid: true }));   // on the driven path, not the chord
         }
@@ -2136,7 +2277,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function addHandle(p, tex, data) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true, sizeAttenuation: false }));
-      const k = data.mid ? 0.011 : data.fam ? 0.013 : 0.016; s.scale.set(k, k, 1);
+      const k = data.mid ? 0.011 : data.fam || data.bar ? 0.013 : 0.016; s.scale.set(k, k, 1);
       s.position.set(p.x, heightAt(p.x, p.z) * ex + 6, p.z); s.renderOrder = 25; s.userData = data; handles.add(s);
     }
     const refsAt = (g, i) => groups.filter(o => (o.parent === g.id && o.splitAt === i) || (o.join && o.join.group === g.id && o.join.at === i));
@@ -2152,13 +2293,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       for (const g of groups) if (g.join) {
         const tg = groups.find(o => o.id === g.join.group), q = tg && tg.route[g.join.at];
         if (!q || g.route.length < 1) { delete g.join; continue; }
-        const last = g.route.length - 1, keep = g.route[last] && g.route[last].hold;
-        g.route[last] = { e: q.e, n: q.n }; if (keep) g.route[last].hold = keep;
+        const last = g.route.length - 1;
+        g.route[last] = Object.assign({}, g.route[last], { e: q.e, n: q.n });   // keeps the point's hold and formation
       }
       for (const g of groups) if (g.parent) {
         const p = parentOf(g), q = p && p.route[g.splitAt];
         if (!q) { detach(g); continue; }
-        const first = { e: q.e, n: q.n }; if (g.route[0] && g.route[0].hold) first.hold = g.route[0].hold;
+        const first = Object.assign({}, g.route[0], { e: q.e, n: q.n });
         if (g.route.length) g.route[0] = first; else g.route.push(first);
       }
     }
@@ -2198,14 +2339,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const v = view.g.get(g.id); if (!v) continue;
         const cargo = !!g.carrier, st0 = startOf(g), aboard = cargo && (st0 === null || t < st0);
         const s0 = aboard ? null : sAt(g, t);
-        let leadPos = null, gap = g.gap;
-        let anyPos = null;
+        let leadPos = null, anyPos = null;
         v.meshes.forEach((m, i) => {
           if (s0 === null) { m.visible = false; return; }
-          const w = struckAt(g, i, t);
-          const r = w ? null : resolve(g, s0 - i * gap);
-          if (!w && (!r || !r.g.prof)) { m.visible = false; return; }       // aboard, or no route to stand on
-          const p = w || posAt(r.g, r.s), T = VT[m.userData.t];
+          const w = struckAt(g, i, t), p = w || vehAt(g, i, s0);
+          if (!p) { m.visible = false; return; }                             // aboard, or no route to stand on
+          const T = VT[m.userData.t];
           charred(m, !!w);
           const wet = waterAt(p.x, p.z), ground = wet ? 0 : heightAt(p.x, p.z) * ex;
           const draft = T.draft || (wet && T.amph ? T.H * 0.6 : 0);          // swimming IFVs ride low, about 1 m showing
@@ -2257,16 +2396,21 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (!h) return;
       e.stopPropagation(); e.preventDefault(); controls.enabled = false;
       if (h.mid) { drag = { mid: h.i }; return; }
+      if (h.bar) { drag = { bar: h.bar, i: h.i }; selPt = h.i; rebuildLines(); renderEditor(); return; }
       if (h.gid !== sel.id) { sel = groups.find(o => o.id === h.gid); renderList(); }
       drag = { i: h.i }; selPt = h.i; rebuildLines(); renderEditor();
     }, true);
     addEventListener('pointermove', e => {
       if (drag === null) return;
       const p = pick(e.clientX, e.clientY); if (!p) return;
+      if (drag.bar) {                          // a front's end: sets its frontage and angle, the point stays put
+        const q = sel.route[drag.i], c = toLocal(q.e, q.n), dx = (p.x - c.x) * drag.bar, dz = (p.z - c.z) * drag.bar;
+        q.w = Math.max(10, Math.round(2 * Math.hypot(dx, dz))); q.ang = Math.atan2(dx, dz); dragged = true; profile(sel, true); rebuildLines(); return;
+      }
       if (drag.mid !== undefined) { sel.route.splice(drag.mid + 1, 0, toEN(p)); shiftRefs(sel, drag.mid + 1, 1); drag = { i: drag.mid + 1 }; selPt = drag.i; }
       if (sel.parent && drag.i === 0) return;              // a branch starts where its parent splits
       if (sel.join && drag.i === sel.route.length - 1) return;   // and ends where it rejoins
-      sel.route[drag.i] = Object.assign({}, sel.route[drag.i], toEN(p)); dragged = true; profile(sel); rebuildLines();
+      sel.route[drag.i] = Object.assign({}, sel.route[drag.i], toEN(p)); dragged = true; profile(sel, true); rebuildLines();
     }, true);
     addEventListener('pointerup', e => {
       if (drag !== null) { drag = null; controls.enabled = !obs; refresh(); downAt = null; return; }
@@ -2284,15 +2428,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (!editing || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
       if (joinPick && e.key === 'Escape') { joinPick = false; rebuildLines(); renderEditor(); e.preventDefault(); return; }
       if (e.key === 'Enter' || e.key === 'Escape') { setEditing(false); e.preventDefault(); }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && sel && sel.route.length) {
-        const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1; e.preventDefault();
-        if (sel.parent && i === 0) { note = 'That point is the split from ' + parentOf(sel).name + '; it cannot be removed here.'; renderEditor(); return; }
-        if (sel.join && i === sel.route.length - 1) { note = 'That point is where it rejoins; press Unjoin first.'; renderEditor(); return; }
-        const used = refsAt(sel, i); if (used.length) { note = used.map(o => o.name).join(', ') + ' ' + (used.length > 1 ? 'use' : 'uses') + ' that point to split or rejoin. Change ' + (used.length > 1 ? 'them' : 'it') + ' first.'; renderEditor(); return; }
-        sel.route.splice(i, 1); shiftRefs(sel, i + 1, -1);
-        selPt = Math.min(i, sel.route.length - 1); refresh();
-      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && sel && sel.route.length) { e.preventDefault(); deletePoint(); }
     });
+    function deletePoint() {                   // the selected (white) point, or the last one if none is selected
+      const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1;
+      if (sel.parent && i === 0) { note = 'That point is the split from ' + parentOf(sel).name + '; it cannot be removed here.'; renderEditor(); return; }
+      if (sel.join && i === sel.route.length - 1) { note = 'That point is where it rejoins; press Unjoin first.'; renderEditor(); return; }
+      const used = refsAt(sel, i); if (used.length) { note = used.map(o => o.name).join(', ') + ' ' + (used.length > 1 ? 'use' : 'uses') + ' that point to split or rejoin. Change ' + (used.length > 1 ? 'them' : 'it') + ' first.'; renderEditor(); return; }
+      sel.route.splice(i, 1); shiftRefs(sel, i + 1, -1);
+      selPt = Math.min(i, sel.route.length - 1); refresh();
+    }
     function setEditing(on) { editing = on && !!sel; joinPick = false; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
     function doJoin(g, o, i) {
       if (!o || !canJoin(g, o)) return;
@@ -2398,6 +2543,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ${ship ? '' : '<label class="mini">land <input id="op-land" style="width:50px"></label>'}
           <label class="mini">water <input id="op-water" style="width:50px"></label></div>
         <div class="row"><span class="lbl">Spacing m</span><input id="op-gap" style="width:60px" aria-label="Spacing in metres"></div>
+        ${ship ? '' : `<div class="row"><span class="lbl">Movement</span><button id="op-loose" aria-pressed="${loose(g)}">Loose</button><span class="hint">${loose(g) ? 'uneven spacing, slight drift' : 'exact spacing'}</span></div>`}
         ${ship ? '' : `<div class="row"><span class="lbl">Roads</span><button id="op-roads" aria-pressed="${g.roads !== false}">Follow roads</button><span class="hint">${g.roads !== false ? 'between your points' : 'straight lines'}</span></div>`}
         ${ship ? `<div class="row"><span class="lbl">Unload s</span><input id="op-unload" style="width:60px" aria-label="Unloading time in seconds"></div>` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
@@ -2406,6 +2552,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           : editing && g.route.length >= 1 && groups.some(o => canJoin(g, o)) ? `<div class="row"><button id="op-join" aria-pressed="${joinPick}">${joinPick ? 'Cancel rejoin' : 'Rejoin a route'}</button><span class="hint">${joinPick ? 'Click a blue point on the route to rejoin.' : 'snap the end onto another route'}</span></div>` : ''}
         ${editing && selPt >= 0 && selPt < g.route.length ? `<div class="ptrow">
             ${selPt < g.route.length - 1 || g.join ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
+            ${ship ? '' : pointRows(g)}
+            <div class="row"><button id="op-delpt">Delete point ${selPt + 1}</button></div>
             <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || 'rear vehicles take a new road'}</span></div></div>` : ''}
         ${!editing && g.route.some((p, k) => +p.hold > 0 && k < g.route.length - 1) ? `<p class="hint">Holds: ${g.route.map((p, k) => +p.hold > 0 && k < g.route.length - 1 ? 'point ' + (k + 1) + ' for ' + fmt(p.hold).slice(2) : '').filter(Boolean).join(', ')}.</p>` : ''}
         ${ship ? `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
@@ -2433,6 +2581,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if ($('op-hold')) { const p = g.route[selPt]; $('op-hold').value = fmt(+p.hold || 0).slice(2);
         $('op-hold').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(+p.hold || 0).slice(2); return; }
           if (v > 0) p.hold = v; else delete p.hold; refresh(); }); }
+      if ($('op-delpt')) $('op-delpt').addEventListener('click', deletePoint);
+      const pt = g.route[selPt], nv = vehicles(g).length;
+      if ($('op-form')) { $('op-form').value = pt.form || ''; $('op-form').addEventListener('change', e => {
+        if (e.target.value) pt.form = e.target.value; else delete pt.form;
+        if (pt.form === 'line' && !(+pt.w > 0)) pt.w = widthAt(g.route, selPt, nv); refresh(); }); }
+      if ($('op-w')) { $('op-w').value = widthAt(g.route, selPt, nv); $('op-w').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v >= 10) pt.w = v; refresh(); }); }
+      if ($('op-ang')) $('op-ang').addEventListener('click', () => { delete pt.ang; refresh(); });
+      if ($('op-kmh')) { $('op-kmh').value = +pt.kmh > 0 ? pt.kmh : ''; $('op-kmh').addEventListener('change', e => { const v = +e.target.value; if (v > 0) pt.kmh = v; else delete pt.kmh; refresh(); }); }
+      if ($('op-straight')) $('op-straight').addEventListener('click', () => { if (pt.straight) delete pt.straight; else pt.straight = true; refresh(); });
+      if ($('op-loose')) $('op-loose').addEventListener('click', () => { g.loose = !loose(g); refresh(); });
       if ($('op-split')) $('op-split').addEventListener('click', () => splitHere(g, selPt));
       if ($('op-join')) $('op-join').addEventListener('click', () => { joinPick = !joinPick; rebuildLines(); renderEditor(); });
       if ($('op-unjoin')) $('op-unjoin').addEventListener('click', () => unjoin(g));
@@ -2446,11 +2604,23 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       $('op-del').addEventListener('click', e => { if (e.target.dataset.armed) removeGroup(g); else { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm delete'; } });
       const w = warnings(g), m = $('op-msg');
       const n0 = note; note = '';
-      m.textContent = (n0 ? n0 + ' ' : '') + (editing ? (joinPick ? 'Pick the point where this group rejoins: click a blue square. Esc cancels.' : 'Click the map to add points. Click a square to select it (white): set a hold or split there; drag it to move. Drag a faint square to add a bend. Red squares belong to the rest of the split: click one to edit that group. Delete removes the white point. Enter or Done to finish.') + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
+      m.textContent = (n0 ? n0 + ' ' : '') + (editing ? (joinPick ? 'Pick the point where this group rejoins: click a blue square. Esc cancels.' : 'Click the map to add points. Click a square to select it (white): set a hold, formation or split there; drag it to move. Drag the end of a front bar to widen or turn it. Drag a faint square to add a bend. Red squares belong to the rest of the split: click one to edit that group. Delete removes the white point. Enter or Done to finish.') + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
                               : w.join(' ') || (g.prof ? `Route ${(g.prof.len / 1000).toFixed(1)} km, about ${Math.round(g.prof.dur / 60)} min for the lead.` : ''));
       if (n0 || (!editing && w.length)) m.className = 'msg bad';
     }
     const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    function pointRows(g) {                    // the selected point's formation, frontage, speed and roads to the next point
+      const k = selPt, p = g.route[k], end = k === g.route.length - 1 && !g.join, R = g.route;
+      const inLine = formAt(R, k) === 'line' || (end && k > 0 && formAt(R, k - 1) === 'line' && p.form !== 'column');
+      let h = '';                              // Formation shows on the last point too: it applies to the points clicked after it
+      h += `<div class="row"><span class="lbl">Formation</span><select id="op-form" aria-label="Formation from this point">
+          <option value="">As before (${k ? (formAt(R, k - 1) === 'line' ? 'Line' : 'Column') : 'Column'})</option><option value="line">Line</option><option value="column">Column</option></select></div>`;
+      if (inLine) h += `<div class="row"><span class="lbl">Frontage m</span><input id="op-w" style="width:60px" aria-label="Frontage in metres">${p.ang !== undefined ? '<button id="op-ang">Square to route</button>' : '<span class="hint">or drag the bar ends</span>'}</div>`;
+      if (formAt(R, k) === 'line' && (!k || formAt(R, k - 1) !== 'line')) h += '<p class="hint">Spreads out from here, each vehicle on its own street, abreast at later points. A Column point regroups them.</p>';
+      if (!end) h += `<div class="row"><span class="lbl">Speed to next</span><input id="op-kmh" style="width:50px" placeholder="group" aria-label="Speed to the next point, km/h"><span class="hint">km/h</span></div>`;
+      if (!end && g.roads !== false) h += `<div class="row"><span class="lbl">To next point</span><button id="op-straight" aria-pressed="${!p.straight}">Follow roads</button><span class="hint">${p.straight ? 'straight line' : 'on the roads'}</span></div>`;
+      return h;
+    }
     $('op-new').addEventListener('click', () => newGroup({ type: $('op-newtype').value }));
     $('op-newtype').innerHTML = [...LAND, ...SHIPS].map(k => `<option value="${k}">${VT[k].name}${VT[k].ship ? ' (ship)' : ''}</option>`).join('');
     $('op-clearall').addEventListener('click', e => {
@@ -3820,8 +3990,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ['Buildings and trees', '2020 NOAA lidar; block sight on a 10 m grid; trees block completely'],
           ['OP inside a building', 'observer stands on the roof'],
           ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground'],
-          ['Phones and tablets', (LITE ? 'THIS DEVICE: ' : '') + 'demo (lite) mode — 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes, distant trees simplified. ?lite=1 / ?lite=0 forces it.'],
-          ['Trees drawn (display only)', 'only those in 250 m cells inside some camera\'s view (main view or an open UAS feed), all at full detail. Sight lines still use every tree.'],
+          ['Phones and tablets', (LITE ? 'THIS DEVICE: ' : '') + 'demo (lite) mode — 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes, trees simplified at half the distance. ?lite=1 / ?lite=0 forces it.'],
+          ['Trees drawn (display only)', 'only those in 250 m cells inside some camera\'s view (main view or an open UAS feed); simpler shapes and no trunks once a tree is a few pixels across, none past about 20 km. Sight lines still use every tree.'],
           ['Terrain drawn (display only)', 'in ~1.5 km tiles; tiles outside the view are skipped. Same ground, same detail.'],
           ['Traffic updates', 'civilian positions are redrawn at half the frame rate (every frame while a UAS feed is open)']])}`]);
 
