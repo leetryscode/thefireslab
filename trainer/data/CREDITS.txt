@@ -24,6 +24,11 @@ under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4
 Changes: hidden missile tubes removed, materials converted, geometry simplified, textures reduced to 1024 px,
 rescaled to 5.1 m tall, re-centred on the ground (2026-11-03).
 
+data/m13.bin (infantry soldier)
+"low poly soldier" (https://sketchfab.com/3d-models/low-poly-soldier-daf5de38902e458aa57ff5ba9460ca02) by Kolos Studios is
+licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+Changes: pose baked into a static mesh, materials converted to vertex colours, geometry simplified, rescaled to 1.8 m (2026-11-04).
+
 data/m08.bin (ALTIUS-700M loitering munition, friendly; not used by the trainer yet)
 "Anduril ALTIUS 700M" (https://sketchfab.com/3d-models/anduril-altius-700m-4e7fe35b0279418d85af34d33faa9db5)
 by KillCaptureDestroy is licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).

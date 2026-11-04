@@ -1,0 +1,5 @@
+{
+ "scenarios": [
+  { "name": "Amphibius Assault East", "file": "amphibius-assault-east.json" }
+ ]
+}

@@ -111,10 +111,11 @@ vec3 waveNormal(vec2 q, float px){
   WAVE(0.4, 0.92, 11.0, 0.07) WAVE(0.92, -0.15, 7.0, 0.06) WAVE(0.7, 0.72, 4.3, 0.05)
   return normalize(vec3(-g.x, 1.0, -g.y));
 }
+float wPx;   // metres of water per screen pixel; set first thing in main, outside the land/water branch
 vec3 waterShade(vec3 base, vec3 P, float foam){
   vec3 toCam = cameraPosition - P; float dist = length(toCam); vec3 V = toCam / dist;
-  vec2 q = P.xz; float px = max(length(fwidth(q)), 0.01);
-  vec3 n = waveNormal(q, px);
+  vec2 q = P.xz;
+  vec3 n = wPx > 24.0 ? vec3(0.0, 1.0, 0.0) : waveNormal(q, wPx);       // from 24 m a pixel every wave has faded to zero: skip them
   float l = dot(base, vec3(0.2126, 0.7152, 0.0722));
   base *= mix(1.0, 0.3 / max(l, 1e-3), smoothstep(0.3, 0.55, l));    // tone down only bright specks: frozen boats, whitecaps
   vec3 r = reflect(-V, n);
@@ -125,10 +126,12 @@ vec3 waterShade(vec3 base, vec3 P, float foam){
   vec3 c = mix(base, sky, clamp(F, 0.0, 1.0) * 0.24);
   float sp = max(dot(r, uSun), 0.0);
   c += vec3(1.0, 0.96, 0.88) * (pow(sp, 200.0) * 2.5 + pow(sp, 40.0) * 0.22);
+  if (foam < 0.004) return c;                                           // away from the shore: no foam, so no noise to work out
   float fb = foam * (0.55 + 0.45 * sin(uTime * 0.9 + wnoise(q * 0.05) * 9.0)) * (0.6 + 0.4 * wnoise(q * 0.3 + uTime * 0.2));
   return mix(c, vec3(0.86, 0.9, 0.92), clamp(fb, 0.0, 1.0) * 0.75);
 }
 `;
+  const WATER_MAIN = 'void main() {\n  wPx = max(length(fwidth(vWW.xz)), 0.01);';
   // water mask on the terrain grid: R = water, slightly softened; G = a shore band for the foam (water within ~25 m
   // of land). Water = sea no-data, or ground under 0.4 m (harbour, canal) where the photo also looks like water
   // (blue or turquoise, not the grey/white of piers, car parks and boats) - the marina flooded without that check.
@@ -222,7 +225,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
     sh.uniforms.fadeMap = { value: fadeTex }; sh.uniforms.waterMap = { value: waterTex }; waterUniforms(sh);
     sh.uniforms.urbanMap = URBAN.map; sh.uniforms.urbanOn = URBAN.on;
     sh.vertexShader = 'varying vec3 vWW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D waterMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + sh.fragmentShader.replace('#include <color_fragment>',
+    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D waterMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>',
       '#ifdef USE_COLOR\n  diffuseColor.rgb = mix(vColor, diffuseColor.rgb, texture2D(fadeMap, vUv).r);\n#endif\n' +
       '  { float u = texture2D(urbanMap, vUv).r * urbanOn; float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));\n' +
       '    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.24, 0.235, 0.22), vec3(lum), 0.2), u * 0.92); }')
@@ -263,7 +266,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
   seaMat.onBeforeCompile = sh => {
     waterUniforms(sh);
     sh.vertexShader = 'varying vec3 vWW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'varying vec3 vWW;\n' + WATER_GLSL + sh.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
+    sh.fragmentShader = 'varying vec3 vWW;\n' + WATER_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
       'outgoingLight = waterShade(outgoingLight, vWW, 0.0);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');
   };
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(160000, 160000, 1, 1), seaMat);
@@ -1372,6 +1375,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
   // ---- FIRES: instructor firing units, point-and-shoot, bursts and arcs, on one sim clock.
   // Everything that decides an outcome reads sim time and a per-mission seed, so a run can be replayed.
+  // The working scenario in this browser. A scenario file is these saved together; loading one writes them and reloads the page.
+  const STORE = { opfor: 'fist-trainer-opfor-v2', units: 'fist-trainer-units-v1', lps: 'fist-trainer-lps-v1', name: 'fist-trainer-scenario-name-v1' };
+
   const FIRES = (() => {
     // Placeholder figures, all in one place. Replace with real values when supplied.
     const TYPES = {
@@ -1468,7 +1474,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       u.e = e; u.n = n; u.alt = onMap(e, n) ? null : (alt || 0); placeSprite(u); moving = null;
       log('Moved ' + u.name + ' to ' + gridTxt(e, n) + (onMap(e, n) ? '' : ' (off map)')); msg(placeMsg, 'Moved.'); drawUnits();
     }
+    const unitList = () => units.map(u => ({ type: u.type, e: Math.round(u.e), n: Math.round(u.n), alt: u.alt }));
     function drawUnits() {
+      try { localStorage.setItem(STORE.units, JSON.stringify(unitList())); } catch (e) {}
       const L = $('ulist'); L.textContent = '';
       for (const u of units) {
         const row = document.createElement('div'); row.className = 'urow';
@@ -1706,8 +1714,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       else if (picking) { $('fm-grid').value = toGrid(E, N); picking = false; msg(fmMsg, 'Target set. Press Fire.'); }
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
+    let savedUnits = null; try { savedUnits = JSON.parse(localStorage.getItem(STORE.units)); } catch (e) {}
+    if (Array.isArray(savedUnits)) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt);
     drawUnits();
-    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { unitList, units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -1719,17 +1729,18 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const $ = id => document.getElementById(id);
     // L x W x H metres, approximate public figures; speeds km/h; all placeholders to tune
     const VT = {
-      zbd:  { name: 'ZBD',         L: 9.5, W: 3.4, H: 2.6, amph: true,  land: 40, water: 20, gap: 50 },
+      zbd:  { name: 'ZBD',         L: 9.5, W: 3.4, H: 2.6, amph: true,  land: 40, water: 20, gap: 50, dismount: true },   // a squad gets out when it comes ashore
       ztd:  { name: 'ZTD',         L: 9.5, W: 3.4, H: 2.8, amph: true,  land: 40, water: 20, gap: 50 },
       eng:  { name: 'Engineering', L: 8.0, W: 3.2, H: 3.2, amph: false, land: 30, water: 0,  gap: 50 },
       fuel: { name: 'Fuel Truck',  L: 9.0, W: 2.5, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },
       plz:  { name: 'PLZ-05 SPH',  L: 10.6, W: 3.3, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },   // 155 mm SP howitzer; model has 'turret' and 'gun' nodes for aiming
       hq17: { name: 'HQ-17 SAM',   L: 8.0, W: 3.1, H: 5.1, amph: false, land: 40, water: 0,  gap: 50 },   // tracked air defence, Tor-M1 family; H with the search radar up
-      lcu: { name: 'LCU',         L: 41,  W: 9,   H: 5,   ship: true,  land: 0,  water: 18, gap: 150, draft: 1.5, unload: 120 },
+      inf:  { name: 'Infantry',    L: 0.9, W: 0.9, H: 1.8, amph: false, land: 5,  water: 0,  gap: 5, foot: true, squad: 12 },   // count = soldiers; all drawn by one instanced mesh
+      lcu:{ name: 'LCU',         L: 41,  W: 9,   H: 5,   ship: true,  land: 0,  water: 18, gap: 150, draft: 1.5, unload: 120 },
       roro: { name: 'RoRo',        L: 150, W: 25,  H: 22,  ship: true,  land: 0,  water: 25, gap: 500, draft: 6,   unload: 600 }
     };
-    const LAND = ['zbd', 'ztd', 'eng', 'fuel', 'plz', 'hq17'], SHIPS = ['lcu', 'roro'];
-    const KEY = 'fist-trainer-opfor-v2';                   // v1 (straight-line test routes) dropped 2026-11-02
+    const LAND = ['zbd', 'ztd', 'eng', 'fuel', 'plz', 'hq17', 'inf'], SHIPS = ['lcu', 'roro'];
+    const KEY = STORE.opfor;                               // v1 (straight-line test routes) dropped 2026-11-02
     try { localStorage.removeItem('fist-trainer-opfor-v1'); } catch (e) {}
     let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true;
     const simT = () => FIRES.debug.simT;
@@ -1743,8 +1754,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const isShip = g => g.units.length > 0 && !!VT[g.units[0].type].ship;
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
-    // ---- persistence (this browser only; scenario files come later)
-    function save() { try { localStorage.setItem(KEY, JSON.stringify({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) })); } catch (e) {} }
+    // ---- persistence (this browser; the Scenario panel writes the same data to a file)
+    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
     // ---- motion profile: arc length vs time along the route, speed by land or water
@@ -1755,19 +1767,125 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     // ---- road snapping (Lee, 2026-11-02): land groups follow the roads between clicked points by default.
     //      A leg stays a straight line when the group is a ship, the group has Follow roads off, either end is in the
-    //      water (beach landings, swims), or no road lies within ROAD_REACH of an end. Straight legs (and the short
-    //      off-road links from a clicked point to its road) are checked against building footprints and warned.
+    //      water (beach landings, swims), or no road lies within ROAD_REACH of an end. Land legs off the roads steer around
+    //      buildings (below); whatever still crosses one, and the short links from a clicked point to its road, is warned.
+    //
+    // ---- building detours (Lee, 2026-11-04): off-road land paths go around building footprints, so a line can spread
+    //      across a built-up area. Worked out once on edit and stored as ordinary path points: no cost per frame.
+    //      A grid search over passable ground, then the path is pulled tight so it reads as straight runs with a jog.
+    //      lanes: ground a sibling in the line already took, made dearer so the line stays spread out instead of funnelling.
+    const D_CELL = 6, D_NX = Math.ceil(2 * HW / D_CELL), D_NY = Math.ceil(2 * HH / D_CELL), D_MAX = 100000, D_ROOM = 2.5, D_POCKET = 3000;
+    let dOcc = null;                           // per cell: 0 not looked at yet, 1 passable, 2 building or too close to one
+    const dIdx = (x, z) => { const c = Math.floor((x + HW) / D_CELL), r = Math.floor((z + HH) / D_CELL); return c < 0 || r < 0 || c >= D_NX || r >= D_NY ? -1 : r * D_NX + c; };
+    const dMid = i => ({ x: (i % D_NX + 0.5) * D_CELL - HW, z: (Math.floor(i / D_NX) + 0.5) * D_CELL - HH });
+    function dSolid(i) {
+      if (i < 0) return true;
+      if (!dOcc) dOcc = new Uint8Array(D_NX * D_NY);
+      if (!dOcc[i]) { const m = dMid(i), s = CITY.solidAt, R = D_ROOM;
+        dOcc[i] = s(m.x, m.z) || s(m.x - R, m.z - R) || s(m.x + R, m.z - R) || s(m.x - R, m.z + R) || s(m.x + R, m.z + R) ||
+          s(m.x - R, m.z) || s(m.x + R, m.z) || s(m.x, m.z - R) || s(m.x, m.z + R) ? 2 : 1; }
+      return dOcc[i] === 2;
+    }
+    function dOpen(i0) {                       // false for a courtyard or block sealed off by buildings, which is then treated as solid for good
+      if (dOcc[i0] === 3) return true;         // 3: passable and known to connect to the wider ground
+      const seen = new Set([i0]), todo = [i0];
+      while (todo.length && seen.size < D_POCKET) {
+        const i = todo.pop(), c = i % D_NX;
+        for (const n of [c > 0 ? i - 1 : -1, c < D_NX - 1 ? i + 1 : -1, i - D_NX, i + D_NX]) if (n >= 0 && n < D_NX * D_NY && !seen.has(n) && !dSolid(n)) { seen.add(n); todo.push(n); }
+      }
+      const open = seen.size >= D_POCKET;
+      for (const i of seen) dOcc[i] = open ? 3 : 2;
+      return open;
+    }
+    function dClear(a, b) {
+      const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 3);
+      for (let s = 0; s <= n; s++) if (dSolid(dIdx(a.x + (b.x - a.x) * s / (n || 1), a.z + (b.z - a.z) * s / (n || 1)))) return false;
+      return true;
+    }
+    function dFree(p) {                        // p itself if passable, else the nearest passable ground within about 70 m
+      const i0 = dIdx(p.x, p.z); if (i0 < 0) return null;
+      if (!dSolid(i0) && dOpen(i0)) return p;
+      const c0 = i0 % D_NX, r0 = (i0 - c0) / D_NX;
+      for (let R = 1; R <= 12; R++) {
+        let best = null, bd = Infinity;
+        for (let dr = -R; dr <= R; dr++) for (let dc = -R; dc <= R; dc++) {
+          if (Math.max(Math.abs(dr), Math.abs(dc)) !== R) continue;
+          const c = c0 + dc, r = r0 + dr; if (c < 0 || r < 0 || c >= D_NX || r >= D_NY) continue;
+          const i = r * D_NX + c; if (dSolid(i) || !dOpen(i)) continue;
+          const m = dMid(i), d = Math.hypot(m.x - p.x, m.z - p.z); if (d < bd) { bd = d; best = m; }
+        }
+        if (best) return best;
+      }
+      return null;
+    }
+    let dG = new Float32Array(0), dPrev = new Int32Array(0);
+    function dSearch(a, b, lanes) {            // cells from a to b around buildings, staying within about 900 m of the leg's box; null if none
+      const s = dIdx(a.x, a.z), t = dIdx(b.x, b.z); if (s === t) return [];
+      const tc = t % D_NX, tr = (t - tc) / D_NX, sc = s % D_NX, sr = (s - sc) / D_NX, PAD = 150;
+      const c0 = Math.max(0, Math.min(sc, tc) - PAD), c1 = Math.min(D_NX - 1, Math.max(sc, tc) + PAD), r0 = Math.max(0, Math.min(sr, tr) - PAD), r1 = Math.min(D_NY - 1, Math.max(sr, tr) + PAD);
+      const w = c1 - c0 + 1, size = w * (r1 - r0 + 1);
+      if (dG.length < size) { dG = new Float32Array(size); dPrev = new Int32Array(size); }
+      dG.fill(Infinity, 0, size);
+      const loc = (c, r) => (r - r0) * w + c - c0;
+      const h = i => { const c = i % D_NX, dc = Math.abs(c - tc), dr = Math.abs((i - c) / D_NX - tr); return 2 * (Math.max(dc, dr) + 0.414 * Math.min(dc, dr)); };   // 2: heads for the goal, far fewer cells searched; the pull below tidies the path
+      dG[loc(sc, sr)] = 0; const F = [h(s)], I = [s];
+      const push = (f, i) => { let k = F.length; F.push(f); I.push(i);
+        while (k) { const q = (k - 1) >> 1; if (F[q] <= f) break; F[k] = F[q]; I[k] = I[q]; k = q; } F[k] = f; I[k] = i; };
+      const pop = () => { const top = I[0], f = F.pop(), i = I.pop(), n = F.length;
+        if (n) { let k = 0; for (;;) { let m = 2 * k + 1; if (m >= n) break; if (m + 1 < n && F[m + 1] < F[m]) m++; if (F[m] >= f) break; F[k] = F[m]; I[k] = I[m]; k = m; } F[k] = f; I[k] = i; }
+        return top; };
+      for (let seen = 0; I.length && seen < D_MAX; seen++) {
+        const i = pop();
+        if (i === t) { const out = []; for (let k = t; k !== s; k = dPrev[loc(k % D_NX, (k - k % D_NX) / D_NX)]) out.push(k); return out.reverse(); }
+        const c = i % D_NX, r = (i - c) / D_NX, gi = dG[loc(c, r)];
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          if (!dr && !dc) continue;
+          const nc = c + dc, nr = r + dr; if (nc < c0 || nr < r0 || nc > c1 || nr > r1) continue;
+          const n = nr * D_NX + nc; if (dSolid(n)) continue;
+          if (dr && dc && (dSolid(r * D_NX + nc) || dSolid(nr * D_NX + c))) continue;   // no cutting a corner
+          const g2 = gi + (dr && dc ? 1.414 : 1) * (lanes && lanes.has(n) ? 1.5 : 1), ln = loc(nc, nr);
+          if (g2 < dG[ln]) { dG[ln] = g2; dPrev[ln] = i; push(g2 + h(n), n); }
+        }
+      }
+      return null;
+    }
+    function detour(a, b, lanes) {             // [a ... b] around buildings, or null: city not loaded, off the map, or no way round
+      if (!CITY.ready) return null;
+      if (dClear(a, b)) return [a, b];
+      const a1 = dFree(a), b1 = dFree(b); if (!a1 || !b1) return null;
+      const cells = dSearch(a1, b1, lanes); if (!cells) return null;
+      const core = [a1, ...cells.slice(0, -1).map(dMid), b1], out = [a1];
+      for (let i = 0; i < core.length - 1;) {
+        let j = i + 1; while (j < core.length - 1 && dClear(core[i], core[j + 1])) j++;
+        while (j > i + 1 && crossings({ pts: [core[i], core[j]], road: false }).length) j--;   // no nicking a corner the grid missed
+        out.push(core[j]); i = j;
+      }
+      if (a1 !== a) out.unshift(a);            // a point inside a building still has to be reached; crossings() flags it
+      if (b1 !== b) out.push(b);
+      return out;
+    }
+    function dLane(pts) {                      // the cells a path runs over, a cell either side: about 18 m wide
+      const out = new Set();
+      for (let k = 1; k < pts.length; k++) {
+        const a = pts[k - 1], b = pts[k], n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / (D_CELL / 2));
+        for (let s = 0; s <= n; s++) { const i = dIdx(a.x + (b.x - a.x) * s / (n || 1), a.z + (b.z - a.z) * s / (n || 1)); if (i < 0) continue;
+          const c = i % D_NX; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (c + dc >= 0 && c + dc < D_NX) out.add(i + dr * D_NX + dc); }
+      }
+      return out;
+    }
     const legCache = new Map();
     const snapOn = g => !isShip(g) && g.roads !== false;
     function leg(g, a, b, straight) {          // a, b local points -> { pts: [a ... b], road, why }; straight: this leg ignores roads
-      const on = snapOn(g) && !straight, k = (on ? 1 : 0) + '|' + Math.round(a.x) + ',' + Math.round(a.z) + '|' + Math.round(b.x) + ',' + Math.round(b.z);
+      const on = snapOn(g) && !straight, ship = isShip(g), k = (ship ? 's' : on ? 1 : 0) + '|' + Math.round(a.x) + ',' + Math.round(a.z) + '|' + Math.round(b.x) + ',' + Math.round(b.z);
       let r = legCache.get(k); if (r) return r;
       let why = !on ? '' : waterAt(a.x, a.z) || waterAt(b.x, b.z) ? 'water' : !ROADNET ? 'loading' : '';
       let pts = null;
       if (on && !why) { pts = ROADNET.path(a.x, a.z, b.x, b.z); if (!pts) why = 'noroad'; }
-      r = { pts: pts || [{ x: a.x, z: a.z }, { x: b.x, z: b.z }], road: !!pts, why };
+      const dragging = drag !== null;          // straight while a point is being dragged; the search runs when it is let go
+      const off = !pts && !ship && !dragging && why !== 'loading' ? detour({ x: a.x, z: a.z }, { x: b.x, z: b.z }) : null;
+      r = { pts: pts || off || [{ x: a.x, z: a.z }, { x: b.x, z: b.z }], road: !!pts, why };
       r.cross = crossings(r);
-      if (why !== 'loading' && (CITY.ready || !r.cross.length)) legCache.set(k, r);
+      if (!dragging && why !== 'loading' && (CITY.ready || !r.cross.length)) legCache.set(k, r);
       return r;
     }
     function crossings(r) {                    // straight pieces that pass through a building: [{x0,z0,x1,z1}]
@@ -1813,7 +1931,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         while (wp < rp.at.length && rp.at[wp] === k) { wpS[wp] = s; hold(wp); wp++; }   // a clicked route point: holds and split points key on these
       }
       g.prof = { S, T, X, Z, len: s, dur: t, stops, wpS, legs: rp.legs };
-      g.prof.lags = colLags(g, vehicles(g).length); g.prof.line = lineFor(g, R, wpS, quick);
+      const up = g._rides ? parentOf(g) : null;  // the loose drift carries on through a split without a jump
+      g.prof.ph = up && up.prof && up.prof.wpS[g.splitAt] !== undefined ? up.prof.ph + up.prof.wpS[g.splitAt] : 0;
+      g.prof.lags = colLags(g, famSize(g)); g.prof.line = lineFor(g, R, wpS, quick);
     }
 
     // ---- formations (Lee, 2026-11-03). A route point can switch the group to Line or back to Column.
@@ -1831,7 +1951,6 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const L = []; for (let i = 0; i < n; i++) L.push(i * g.gap + (loose(g) && i > 0 ? (rnd(g, i, 1) - 0.5) * 0.5 * g.gap : 0)); return L;
     }
     function formAt(R, k) { for (let j = k; j >= 0; j--) if (R[j] && R[j].form) return R[j].form; return 'column'; }
-    function widthAt(R, k, n) { for (let j = k; j >= 0; j--) if (R[j] && +R[j].w > 0) return +R[j].w; return FRONT_SPACING * Math.max(1, n - 1); }
     function frontDir(R, P, k) {               // unit vector along the front at point k: square to the route unless the bar was dragged
       const a = P[Math.max(0, k - 1)], c = P[Math.min(P.length - 1, k + 1)];
       let hx = c.x - a.x, hz = c.z - a.z; const L = Math.hypot(hx, hz) || 1; hx /= L; hz /= L;
@@ -1862,29 +1981,86 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const t = (s - S[lo]) / (S[hi] - S[lo] || 1), dx = P[hi].x - P[lo].x, dz = P[hi].z - P[lo].z;
       return { x: P[lo].x + dx * t, z: P[lo].z + dz * t, hd: Math.atan2(dx, dz) };
     }
+    // ---- splitting a line (Lee, 2026-11-04): a branch split from a front stays in its parent's line until that front, then
+    //      forms its own line from where its vehicles stand. Until then the parent's line holds the whole family: its own
+    //      vehicles at places 0 .. own-1, then each rider's (g._fam, set in syncBranches). Riders take the side of the front
+    //      their route heads for, so the two lines peel apart without crossing.
+    const famSize = g => g._fam ? g._fam.length : ownCount(g);
+    const leavesAt = (g, i) => g._fam && g._fam[i] ? g._fam[i].k : Infinity;
+    function buildFam(g, d = 0) {
+      const own = ownCount(g), fam = []; for (let i = 0; i < own; i++) fam.push({ g, i, k: Infinity });
+      g._riders = d > 6 ? [] : branchesOf(g).filter(b => b._rides).sort((x, y) => y.splitAt - x.splitAt || x.id - y.id);
+      for (const r of g._riders) { r._fi = fam.length; for (const f of buildFam(r, d + 1)) fam.push({ g: f.g, i: f.i, k: r.splitAt }); }
+      return g._fam = fam;
+    }
+    const onFront = (g, k) => (g._fam || []).reduce((a, f) => a + (f.k >= k ? 1 : 0), 0) || ownCount(g);
+    const lineGap = g => { if (!g._rides) return FRONT_SPACING; const p = parentOf(g), n = onFront(p, g.splitAt); return n > 1 ? frontage(p, p.route, g.splitAt) / (n - 1) : FRONT_SPACING; };
+    function frontage(g, R, k) {               // a frontage carried on from an earlier point narrows with the vehicles that have left
+      const n = onFront(g, k);
+      for (let j = k; j >= 0; j--) if (R[j] && +R[j].w > 0) { const m = onFront(g, j); return n > 1 && m > 1 ? +R[j].w * (n - 1) / (m - 1) : +R[j].w; }
+      return lineGap(g) * Math.max(1, n - 1);
+    }
+    function famOrder(g, R, P, d = 0) {        // the family across the front, one side to the other, as places in g's line
+      const own = ownCount(g), U = slotsFor(own), mine = U.map((_, i) => i).sort((x, y) => U[x] - U[y]), one = [], other = [];
+      const unit = (a, b) => { const x = b.x - a.x, z = b.z - a.z, L = Math.hypot(x, z) || 1; return { x: x / L, z: z / L }; };
+      for (const r of (d > 6 || !g._riders ? [] : g._riders)) {
+        const k = r.splitAt, f = frontDir(R, P, k), me = k < P.length - 1 ? unit(P[k], P[k + 1]) : { x: 0, z: 0 };
+        const to = r.route[1] ? unit(P[k], toLocal(r.route[1].e, r.route[1].n)) : null;
+        const side = to ? (to.x - me.x) * f.x + (to.z - me.z) * f.z : 1e-3, Rr = fullRoute(r);
+        (side < 0 ? one : other).push({ side, list: famOrder(r, Rr, Rr.map(p => toLocal(p.e, p.n)), d + 1).map(i => i + r._fi) });
+      }
+      const by = (x, y) => x.side - y.side;
+      return [...one.sort(by).flatMap(o => o.list), ...mine, ...other.sort(by).flatMap(o => o.list)];
+    }
+    function leaveLine(g) {                    // where a rider's vehicles stand on the parent's front when they leave, and their lag there
+      const p = g._rides ? parentOf(g) : null, run = p && p.prof && p.prof.line && p.prof.line.find(r => r.a < g.splitAt && g.splitAt <= r.b); if (!run) return null;
+      const out = [];
+      for (let i = 0; i < famSize(g); i++) { const vp = run.paths[g._fi + i], pl = vp && vp[vp.length - 1]; if (!pl) return null;
+        const V = run.kv[g._fi + i]; out.push({ x: pl.pts[pl.pts.length - 1].x, z: pl.pts[pl.pts.length - 1].z, lag: V[V.length - 1] }); }
+      return out;
+    }
+    const startsAbreast = g => !g.parent && !g.carrier;   // Line on the first point: already on a front at the start. Cargo and branches come out of one spot, so they fan out
     function lineFor(g, R, wpS, quick) {
       if (isShip(g) || !R.some(p => p.form === 'line')) return [];
-      if (quick) return buildLine(g, R, wpS, true);
-      const key = JSON.stringify([vehicles(g).length, g.gap, loose(g), snapOn(g), !!ROADNET, R.map(p => [p.e, p.n, p.form || 0, +p.w || 0, p.ang === undefined ? 0 : +p.ang.toFixed(3), p.straight ? 1 : 0])]);
-      if (g._lk !== key || !g._line) { g._lk = key; g._line = buildLine(g, R, wpS, false); }
+      const from = leaveLine(g);
+      if (quick) return buildLine(g, R, wpS, true, from);
+      const key = JSON.stringify([startsAbreast(g), famOrder(g, R, R.map(p => toLocal(p.e, p.n))),(g._fam || []).map(f => f.k === Infinity ? 0 : f.k), lineGap(g), from && from.map(f => [Math.round(f.x), Math.round(f.z), Math.round(f.lag)]), g.gap, loose(g), snapOn(g), !!ROADNET, !!CITY.ready, R.map(p => [p.e, p.n, p.form || 0, +p.w || 0, p.ang === undefined ? 0 : +p.ang.toFixed(3), p.straight ? 1 : 0])]);
+      if (g._lk !== key || !g._line) { g._lk = key; g._line = buildLine(g, R, wpS, false, from); }
       return g._line;
     }
-    function buildLine(g, R, wpS, quick) {
-      const n = vehicles(g).length, runs = lineRuns(g, R), out = []; if (!n) return out;
-      const P = R.map(p => toLocal(p.e, p.n)), U = slotsFor(n), cl = colLags(g, n);
+    function buildLine(g, R, wpS, quick, from) {
+      const n = famSize(g), runs = lineRuns(g, R), out = []; if (!n) return out;
+      const P = R.map(p => toLocal(p.e, p.n)), cl = colLags(g, n), order = famOrder(g, R, P), places = {};
+      const placeAt = (k, i) => {              // -1 .. 1 across the front at point k, among the vehicles still on it
+        if (!places[k]) { const on = order.filter(v => leavesAt(g, v) >= k), u = places[k] = []; on.forEach((v, r) => { u[v] = on.length > 1 ? -1 + 2 * r / (on.length - 1) : 0; }); }
+        return places[k][i];
+      };
+      const giveUp = performance.now() + 2000; // a huge line in dense city must not stall the editor: the rest stay straight and amber
       for (const [a, b] of runs) {
-        const last = b === R.length - 1;
-        const slot = (k, i) => { if (k === a || (k === b && !last)) return P[k];
-          const d = frontDir(R, P, k), h = widthAt(R, k, n) / 2 * U[i]; return { x: P[k].x + d.x * h, z: P[k].z + d.z * h }; };
+        const last = b === R.length - 1, start = a === 0 ? from : null, abreast = a === 0 && startsAbreast(g);
+        const slot = (k, i) => { if (k === a && !abreast) return start ? start[i] : P[k];
+          if (k === b && !last) return P[k];
+          const d = frontDir(R, P, k), h = frontage(g, R, k) / 2 * placeAt(k, i), q = { x: P[k].x + d.x * h, z: P[k].z + d.z * h };
+          return !quick && CITY.ready && dFree(q) || q; };   // a place on the front that lands in a building moves to open ground beside it
         const paths = [], LL = [];             // paths[i][j - a]: vehicle i's own polyline for leg j; LL[j - a][i]: its lag on that leg
+        for (let i = 0; i < n; i++) paths.push([]);
         for (let j = a; j < b; j++) {
-          const pen = new Map(), nodes = [];
+          const pen = new Map(), nodes = [], lanes = new Set();
           for (let i = 0; i < n; i++) {
+            if (leavesAt(g, i) <= j) { nodes.push(null); continue; }   // already gone down its own route
             const A = slot(j, i), B = slot(j + 1, i);
             const straight = quick || !snapOn(g) || R[j].straight || !ROADNET || waterAt(A.x, A.z) || waterAt(B.x, B.z);
-            const pts = (!straight && ROADNET.path(A.x, A.z, B.x, B.z, pen)) || [A, B];
-            (paths[i] || (paths[i] = [])).push(poly(pts));
-            nodes.push(pts.nodes ? new Set(pts.nodes) : null); if (pts.nodes) for (const v of pts.nodes) pen.set(v, 1);
+            const road = !straight && ROADNET.path(A.x, A.z, B.x, B.z, pen);
+            let pts = road, around = null;
+            if (!road) {
+              const off = quick || performance.now() > giveUp ? null : detour(A, B, lanes);
+              pts = off || [A, B];
+              if (!quick && CITY.ready) { const lane = dLane(pts); for (const c of lane) lanes.add(c); if (pts.length > 2) around = lane; }
+            }
+            const pl = poly(pts); if (!road && !quick && crossings({ pts, road: false }).length) pl.blocked = true;
+            paths[i].push(pl);
+            // vehicles squeezed along the same way round a building file through, like those sharing a street
+            nodes.push(pts.nodes ? new Set(pts.nodes) : around); if (pts.nodes) for (const v of pts.nodes) pen.set(v, 1);
           }
           // a vehicle sharing most of a leg's streets with one ahead drives a gap behind it, not on top of it. Each moves along
           // its own path by fraction, so the lag has to allow for path lengths: checked half way and at the leg's end.
@@ -1902,44 +2078,58 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         // shared street); back to column lag over X before a Column point. Falling back stays under 1 m per m, so nobody reverses.
         const S = wpS.slice(a, b + 1), legLen = j => S[j + 1] - S[j], ks = [], kv = [], nl = b - a;
         for (let i = 0; i < n; i++) {           // knots per vehicle, each ramp as short as its own change allows
+          const ln = Math.min(nl, leavesAt(g, i) - a), stays = ln === nl;   // ln: the legs of this run it drives; a rider stops being on the line at its split
+          if (ln <= 0) { ks.push(null); kv.push(null); continue; }
           const K = [], V = [], knot = (s, v) => { if (K.length && s < K[K.length - 1]) s = K[K.length - 1]; K.push(s); V.push(v); };
           const ramp = (from, to, room, catchUp) => Math.min(room, Math.max(catchUp ? room * 0.75 : 1, Math.abs(to - from) * (to > from ? 1.25 : 1.5)));   // catch-up: the wedge opens before they come level
-          knot(S[0], cl[i]); knot(S[0] + ramp(cl[i], LL[0][i], legLen(0) * (nl > 1 || last ? 0.8 : 0.45), true), LL[0][i]);
-          for (let j = 1; j < nl; j++) { knot(S[j], LL[j - 1][i]); knot(S[j] + ramp(LL[j - 1][i], LL[j][i], legLen(j) * (j === nl - 1 && !last ? 0.45 : 0.8)), LL[j][i]); }
-          if (!last) { const v = LL[nl - 1][i]; knot(S[nl] - ramp(v, cl[i], legLen(nl - 1) * 0.5), v); knot(S[nl], cl[i]); }
+          const v0 = start ? start[i].lag : abreast ? LL[0][i] : cl[i];
+          knot(S[0], v0); knot(S[0] + ramp(v0, LL[0][i], legLen(0) * (ln > 1 || last || !stays ? 0.8 : 0.45), true), LL[0][i]);
+          for (let j = 1; j < ln; j++) { knot(S[j], LL[j - 1][i]); knot(S[j] + ramp(LL[j - 1][i], LL[j][i], legLen(j) * (j === nl - 1 && !last && stays ? 0.45 : 0.8)), LL[j][i]); }
+          if (!last && stays) { const v = LL[nl - 1][i]; knot(S[nl] - ramp(v, cl[i], legLen(nl - 1) * 0.5), v); knot(S[nl], cl[i]); }
           ks.push(K); kv.push(V);
         }
         const fronts = [];
-        for (let k = a + 1; k <= (last ? b : b - 1); k++) fronts.push({ k, c: P[k], d: frontDir(R, P, k), h: widthAt(R, k, n) / 2 });
-        out.push({ a, b, SA: S[0], SB: S[b - a], ks, kv, paths, S, fronts });
+        for (let k = abreast ? a : a + 1; k <= (last ? b : b - 1); k++) fronts.push({ k, c: P[k], d: frontDir(R, P, k), h: frontage(g, R, k) / 2 });
+        out.push({ a, b, SA: S[0], SB: S[b - a], ks, kv, paths, S, fronts, abreast });
       }
       return out;
     }
     function linePt(run, i, q) {
-      const S = run.S; let j = 0; while (j < S.length - 2 && q >= S[j + 1]) j++;
+      const S = run.S, vp = run.paths[i]; let j = 0; while (j < S.length - 2 && q >= S[j + 1]) j++;
+      if (j >= vp.length) j = vp.length - 1;   // a rider, at the end of its time on the line
       const L = S[j + 1] - S[j];
-      return along(run.paths[i][j], L > 0 ? Math.min(1, (q - S[j]) / L) : 1);
+      return along(vp[j], L > 0 ? Math.min(1, (q - S[j]) / L) : 1);
     }
     function spot(g, i, q) {                   // vehicle i's own line path where one covers q, else the group's route
-      const P = g.prof, run = P && P.line && P.line.length && q >= 0 ? P.line.find(r => q >= r.SA && q <= r.SB) : null;
-      if (run && run.paths[i]) { const p = linePt(run, i, q); p.own = true; return p; }
+      const W = g._rides && q < 0 ? splitArc(g) : undefined;
+      if (W !== undefined) return spot(parentOf(g), g._fi + i, q + W);   // not yet at the split: still in the parent's line
+      const P = g.prof, end = g._fam && g._fam[i] && g._fam[i].k !== Infinity && P ? P.wpS[g._fam[i].k] : undefined;
+      if (end !== undefined && q > end) q = end;
+      if (P && q > P.len) q = P.len;           // the drift can carry a vehicle just past the end of its route: it stays on its own path
+      const run = !P || !P.line || !P.line.length ? null : q >= 0 ? P.line.find(r => q >= r.SA && q <= r.SB) : P.line[0].abreast ? P.line[0] : null;   // behind an abreast start: back along its own path
+      if (run && run.paths[i] && run.paths[i].length) { const p = linePt(run, i, q); p.own = true; return p; }
       const r = resolve(g, q); if (!r || !r.g.prof) return null;
       return posAt(r.g, r.s);
     }
+    const splitArc = b => { const p = parentOf(b); return p && p.prof ? p.prof.wpS[b.splitAt] : undefined; };
     // where vehicle i of g stands when its lead is at arc length s0: column spacing, its line path if a line is active,
     // and (Loose) a little breathing in spacing and drift in lane. null if it has no route to stand on.
     function vehAt(g, i, s0) {
+      if (g._rides && (s0 < 0 || !g.prof)) {   // not yet at the split (or no route of its own yet): a place in the parent's line
+        const W = splitArc(g); return W === undefined ? null : vehAt(parentOf(g), g._fi + i, Math.min(s0, 0) + W);
+      }
       const P = g.prof, lz = loose(g), base = P && P.lags[i] !== undefined ? P.lags[i] : i * g.gap;
+      const who = g._fam && g._fam[i] || { g, i }, ph = s0 + (P ? P.ph : 0);   // who: a rider keeps its own drift, in the parent's line and after
       const lr = P && P.line && P.line.length ? P.line.find(r => s0 >= r.SA && s0 <= r.SB) : null;
       let lag = base;
       if (lr && lr.ks[i]) { const K = lr.ks[i], V = lr.kv[i]; let k = 0; while (k < K.length - 1 && s0 > K[k + 1]) k++;
         if (k >= K.length - 1) lag = V[K.length - 1];
         else { const f = K[k + 1] > K[k] ? Math.min(1, Math.max(0, (s0 - K[k]) / (K[k + 1] - K[k]))) : 1; lag = V[k] + (V[k + 1] - V[k]) * f; } }
-      if (lz && i > 0) lag += Math.min(8, 0.15 * g.gap) * Math.sin(s0 / 80 + rnd(g, i, 2) * 6.283);
+      if (lz && (who.i > 0 || who.g._rides)) lag += Math.min(8, 0.15 * g.gap) * Math.sin(ph / 80 + rnd(who.g, who.i, 2) * 6.283);
       const q = s0 - lag, a = spot(g, i, q); if (!a) return null;
       const b = spot(g, i, q + 1.5), dx = b ? b.x - a.x : 0, dz = b ? b.z - a.z : 0, hd = dx * dx + dz * dz > 0.04 ? Math.atan2(dx, dz) : a.hd;
       if (!lz) return { x: a.x, z: a.z, hd };
-      const wv = (a.own ? 2.5 : 1) * Math.sin(s0 / 45 + rnd(g, i, 3) * 6.283);   // metres sideways
+      const wv = (a.own ? 2.5 : 1) * Math.sin(ph / 45 + rnd(who.g, who.i, 3) * 6.283);   // metres sideways
       return { x: a.x + Math.cos(hd) * wv, z: a.z - Math.sin(hd) * wv, hd };
     }
     // ---- branches: a group that rides at the rear of its parent's column and peels off at a split point
@@ -1959,7 +2149,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const f = (A - P.S[lo]) / (P.S[hi] - P.S[lo] || 1);
       return P.T[lo] + (P.T[hi] - P.T[lo]) * f;
     }
-    const splitNeed = b => { const p = parentOf(b); return p && p.prof && p.prof.wpS[b.splitAt] !== undefined ? p.prof.wpS[b.splitAt] + offsetOf(b) * p.gap : null; };
+    const trail = b => b._rides ? 0 : offsetOf(b) * parentOf(b).gap;   // how far the parent's lead is past the split when this branch's lead gets there
+    const splitNeed = b => { const p = parentOf(b); return p && p.prof && p.prof.wpS[b.splitAt] !== undefined ? p.prof.wpS[b.splitAt] + trail(b) : null; };
     function resolve(g, s) {                   // a point behind a branch's start lies on its parent's route
       let d = 0;
       while (s < 0 && g.parent && d++ < 8) { const p = parentOf(g); if (!p || !p.prof || p.prof.wpS[g.splitAt] === undefined) return null; s = p.prof.wpS[g.splitAt] + s; g = p; }
@@ -2006,9 +2197,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (g.parent) {
         const st = startOf(g);
         if (st === null || t < st) { const p = parentOf(g); if (!p || !p.prof || p.prof.wpS[g.splitAt] === undefined) return null;
-          const sp = sAt(p, t); return sp === null ? null : Math.min(0, sp - offsetOf(g) * p.gap - p.prof.wpS[g.splitAt]); }
+          const sp = sAt(p, t); return sp === null ? null : Math.min(0, sp - trail(g) - p.prof.wpS[g.splitAt]); }
       }
-      if (!g.prof) return null;
+      if (!g.prof) return g._rides ? 0 : null; // split from a line with no route drawn yet: waits on the front
       const dt = moveTime(g, t), P = g.prof; if (dt === null) return null;
       if (dt <= 0) return dt * 0;              // waiting at the start point
       if (dt >= P.dur) return P.len;
@@ -2036,7 +2227,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const root = new THREE.Group(); scene.add(root);
     // ---- wakes: each moving ship leaves a foam trail (widening, fading over a minute) and two Kelvin arms (~19 deg).
     //      Worked out from where the ship was over the last minute, so pause, 10x, halts and scrubbing just work.
-    const WAKE_MAX = 9000, WAKE_AGE = 60, WAKE_STEP = 3;
+    //      A swimming vehicle gets only a V (Lee, 2026-11-04): two fading wedges fixed to it, 6 vertices and no history, so
+    //      every swimmer has one and a big wave costs almost nothing. Ships go first, up to WAKE_SHIPS; the rest is for the Vs.
+    const WAKE_SHIPS = 9000, WAKE_MAX = 12000, WAKE_AGE = 60, WAKE_STEP = 3;
     const wakeGeo = new THREE.BufferGeometry(), wakePos = new Float32Array(WAKE_MAX * 3), wakeA = new Float32Array(WAKE_MAX);
     wakeGeo.setAttribute('position', new THREE.BufferAttribute(wakePos, 3).setUsage(THREE.DynamicDrawUsage));
     wakeGeo.setAttribute('a', new THREE.BufferAttribute(wakeA, 1).setUsage(THREE.DynamicDrawUsage));
@@ -2049,24 +2242,21 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function updateWakes(t) {
       let n = 0;
       const quad = (ax, az, bx, bz, cx, cz, dx, dz, a0, a1) => {      // a-b at one age, d-c at the next
-        if (n + 6 > WAKE_MAX) return;
+        if (n + 6 > WAKE_SHIPS) return;
         for (const [x, z, a] of [[ax, az, a0], [bx, bz, a0], [cx, cz, a1], [ax, az, a0], [cx, cz, a1], [dx, dz, a1]]) {
           wakePos[n * 3] = x; wakePos[n * 3 + 1] = 0.3; wakePos[n * 3 + 2] = z; wakeA[n] = a; n++;
         }
       };
       for (const g of groups) {
-        if (!g.prof) continue;
-        const ship = isShip(g);
+        if (!g.prof || !isShip(g)) continue;
         const v = view.g.get(g.id); if (!v) continue;
         v.meshes.forEach((m, i) => {
           if (!m.visible || struckAt(g, i, t)) return;                     // a struck vehicle has stopped: no wake
           const T = VT[m.userData.t], pts = [];
-          if (!ship && !(T.amph && waterAt(m.position.x, m.position.z))) return;   // land vehicles: only while swimming
           for (let k = 0; k * WAKE_STEP <= WAKE_AGE; k++) {
             const sk = sAt(g, t - k * WAKE_STEP); if (sk === null) break;
             const p = vehAt(g, i, sk); if (!p) break;
             const fx = Math.sin(p.hd), fz = Math.cos(p.hd);
-            if (!ship && !waterAt(p.x, p.z)) break;                          // the wake starts where it entered the water
             pts.push({ x: p.x - fx * T.L / 2, z: p.z - fz * T.L / 2, px: fz, pz: -fx });   // stern, and the sideways direction
           }
           if (pts.length < 3 || Math.hypot(pts[0].x - pts[2].x, pts[0].z - pts[2].z) < 4) return;   // not moving
@@ -2086,6 +2276,23 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           }
         });
       }
+      const vert = (x, z, a) => { wakePos[n * 3] = x; wakePos[n * 3 + 1] = 0.3; wakePos[n * 3 + 2] = z; wakeA[n] = a; n++; };
+      for (const g of groups) {                // swimming vehicles: a V from the bow
+        if (isShip(g)) continue;
+        const v = view.g.get(g.id); if (!v) continue;
+        let moving = null;                     // the same for the whole group; only asked once one of them is in the water
+        v.meshes.forEach((m, i) => {
+          const T = VT[m.userData.t];
+          if (!T.amph || !m.visible || n + 6 > WAKE_MAX || !m.userData.wet) return;
+          if (moving === null) { const a = sAt(g, t), b = sAt(g, t - 2); moving = a !== null && b !== null && Math.abs(a - b) > 1; }
+          if (!moving || struckAt(g, i, t)) return;
+          const fx = Math.sin(m.rotation.y), fz = Math.cos(m.rotation.y), len = T.L * 4, ax = m.position.x + fx * T.L / 2, az = m.position.z + fz * T.L / 2;
+          for (const side of [1, -1]) {        // each arm a wedge: a point at the bow, opening and fading to nothing behind it
+            const h = len * 0.34 * side, w = len * 0.05, tx = ax - fx * len + fz * h, tz = az - fz * len - fx * h;
+            vert(ax, az, 0.65); vert(tx + fz * w, tz - fx * w, 0); vert(tx - fz * w, tz + fx * w, 0);
+          }
+        });
+      }
       wakeGeo.setDrawRange(0, n); wakeGeo.attributes.position.needsUpdate = true; wakeGeo.attributes.a.needsUpdate = true;
     }
     const lines = new THREE.Group(); scene.add(lines);
@@ -2098,8 +2305,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // Real models replace a type's boxes once loaded; until then (or if loading fails) the box stays.
     // Files are glTF binaries (pivot at bottom centre, metres, nose toward +Z) under neutral names:
     // purchased models are licensed for use inside the trainer only and must not be offered as downloads.
-    const MODELS = { zbd: { url: 'data/m01.bin', yaw: -Math.PI / 2 }, fuel: { url: 'data/m02.bin', yaw: 0 }, lcu: { url: 'data/m03.bin', yaw: Math.PI }, roro: { url: 'data/m04.bin', yaw: 0 }, eng: { url: 'data/m05.bin', yaw: -Math.PI / 2 }, plz: { url: 'data/m06.bin', yaw: 0 }, ztd: { url: 'data/m07.bin', yaw: 0 }, hq17: { url: 'data/m12.bin', yaw: 0 } }, tmpl = {};   // yaw turns the model's nose onto +Z
+    const MODELS = { zbd: { url: 'data/m01.bin', yaw: -Math.PI / 2 }, fuel: { url: 'data/m02.bin', yaw: 0 }, lcu: { url: 'data/m03.bin', yaw: Math.PI }, roro: { url: 'data/m04.bin', yaw: 0 }, eng: { url: 'data/m05.bin', yaw: -Math.PI / 2 }, plz: { url: 'data/m06.bin', yaw: 0 }, ztd: { url: 'data/m07.bin', yaw: 0 }, hq17: { url: 'data/m12.bin', yaw: 0 }, inf: { url: 'data/m13.bin', yaw: 0 } }, tmpl = {};   // yaw turns the model's nose onto +Z
     function makeBody(t) {
+      if (VT[t].foot) return new THREE.Object3D();     // soldiers are drawn by footMesh; this is only their place in the column
       if (!tmpl[t]) return new THREE.Mesh(boxGeo[t], boxMat[t]);
       const o = tmpl[t].clone(); o.position.y = -VT[t].H / 2; o.rotation.y = MODELS[t].yaw || 0; return o;   // container sits at H/2; model pivot on the ground
     }
@@ -2109,10 +2317,31 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function needModel(t) {
       if (asked.has(t) || !MODELS[t] || !THREE.GLTFLoader) return; asked.add(t);
       new THREE.GLTFLoader().load(MODELS[t].url, gl => {
+        if (VT[t].foot) { gl.scene.traverse(o => { if (o.isMesh) foot.setModel(o.geometry); }); return; }
         tmpl[t] = gl.scene;
         for (const [, v] of view.g) for (const c of v.meshes) if (c.userData.t === t) { c.clear(); c.add(makeBody(t)); }
       }, undefined, e => console.warn('Vehicle model failed to load; keeping boxes:', t, e));
     }
+    // ---- soldiers (Lee, 2026-11-04): one instanced mesh for all of them, so hundreds cost one draw call. Rebuilt each tick.
+    const foot = (() => {
+      const box = boxGeo.inf.clone().translate(0, VT.inf.H / 2, 0), dummy = new THREE.Object3D();
+      let geo = box, mat = boxMat.inf, cap = 256, n = 0, mesh = null;
+      function make() {
+        const old = mesh; mesh = new THREE.InstancedMesh(geo, mat, cap); mesh.frustumCulled = false; mesh.count = n;
+        if (old) { mesh.instanceMatrix.array.set(old.instanceMatrix.array.subarray(0, n * 16)); root.remove(old); old.dispose(); }
+        root.add(mesh);
+      }
+      make();
+      return {
+        setModel(g) { geo = g; mat = new THREE.MeshLambertMaterial({ vertexColors: true }); make(); },
+        begin() { n = 0; },
+        add(x, y, z, hd, down) {               // down: struck, lying where he fell
+          if (n === cap) { cap *= 2; make(); }
+          dummy.position.set(x, y, z); dummy.rotation.set(down ? -Math.PI / 2 : 0, hd, 0, 'YXZ'); dummy.updateMatrix(); mesh.setMatrixAt(n++, dummy.matrix);
+        },
+        end() { mesh.count = n; if (n) mesh.instanceMatrix.needsUpdate = true; }
+      };
+    })();
     const diamondTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
       x.translate(32, 32); x.rotate(Math.PI / 4); x.fillStyle = 'rgba(255,106,85,.9)'; x.strokeStyle = '#2a0b07'; x.lineWidth = 4;
       x.fillRect(-17, -17, 34, 34); x.strokeRect(-17, -17, 34, 34); return new THREE.CanvasTexture(c); })();
@@ -2131,7 +2360,74 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const struck = new Map();                  // 'gid:i' -> { t, x, z, hd, cause, fx }
     const skey = (g, i) => g.id + ':' + i;
     const struckAt = (g, i, t) => { const w = struck.get(skey(g, i)); return w && t >= w.t ? w : null; };
-    const vName = (g, i) => VT[vehicles(g)[i]].name + ' ' + (i + 1) + ' of ' + g.name;
+    // ---- dismounts (Lee, 2026-11-04): each ZBD lets out a squad as it comes ashore, without stopping. They walk its route
+    //      and stay on the beach side of any later water. Like vehicles, a soldier is a pure function of the clock. Each has
+    //      his own slot number after the group's vehicles, so struck soldiers use the same state as struck vehicles.
+    const SQUAD = VT.inf.squad, EXIT_STEP = 3, SPREAD = 9;     // metres between exits along the route; metres out to each side
+    const dmSlot = (g, i) => { const V = vehicles(g), k = i - V.length, v = Math.floor(k / SQUAD); return k >= 0 && VT[V[v]] && VT[V[v]].dismount ? { v, j: k % SQUAD } : null; };
+    const slotType = (g, i) => { const V = vehicles(g); return i < V.length ? V[i] : dmSlot(g, i) ? 'inf' : undefined; };
+    const vName = (g, i) => { const d = i >= vehicles(g).length && dmSlot(g, i); return d ? 'Soldier ' + (d.j + 1) + ' of ' + VT[vehicles(g)[d.v]].name + ' ' + (d.v + 1) + ', ' + g.name : VT[vehicles(g)[i]].name + ' ' + (i + 1) + ' of ' + g.name; };
+    function ashore(g) {                       // per vehicle: { S, end } lead arc length where it comes ashore and where the dry ground ends; worked out once per route edit
+      const P = g.prof; if (!P) return []; if (P.ashore) return P.ashore;
+      const out = P.ashore = [], V = vehicles(g), p = parentOf(g);
+      if (!V.some(t => VT[t].dismount)) return out;
+      const from = p && p.prof && p.prof.wpS[g.splitAt] !== undefined ? -(p.prof.wpS[g.splitAt] + trail(g)) : 0;
+      V.forEach((t, i) => {
+        if (!VT[t].dismount) return;
+        const wetAt = s => { const q = vehAt(g, i, s); return !q || waterAt(q.x, q.z); };
+        let wet = !!g.carrier, S = null;       // off a ship counts as coming ashore
+        for (let s = from; s <= P.len && S === null; s += 10) {
+          if (wet && !wetAt(s) && !wetAt(s + 15) && !wetAt(s + 30)) S = s; else if (vehAt(g, i, s)) wet = wetAt(s);   // 30 m of land: a sandbar is not the beach
+        }
+        if (S === null) return;
+        let end = P.len; for (let s = S; s <= P.len; s += 10) if (wetAt(s) && wetAt(s + 30) && wetAt(s + 60)) { end = s; break; }   // 60 m of it: a low patch is not the next water
+        out[i] = { S: Math.min(S + 30, end), end };
+      });
+      return out;
+    }
+    function clockAtS(g, s, d = 0) {           // the clock time when the lead reaches arc length s (behind a branch's start: on its parent)
+      if (s < 0 && g.parent && d < 8) { const p = parentOf(g); return p && p.prof && p.prof.wpS[g.splitAt] !== undefined ? clockAtS(p, s + p.prof.wpS[g.splitAt] + trail(g), d + 1) : null; }
+      const e = g.prof ? timeAtS(g.prof, s) : null; return e === null ? null : realTimeAt(g, e);
+    }
+    function holdsFor(g) {                     // every scripted hold on the way, in this group's arc lengths: its own, and its parent's before the split
+      const P = g.prof; if (P.dHolds) return P.dHolds;
+      const out = P.stops.map(o => ({ s: o.s, g, t1: o.t1 })), p = parentOf(g);
+      if (p && p.prof && p.prof.wpS[g.splitAt] !== undefined) { const back = p.prof.wpS[g.splitAt] + trail(g);
+        for (const o of holdsFor(p)) if (o.s < back) out.push({ s: o.s - back, g: o.g, t1: o.t1 }); }
+      return P.dHolds = out.sort((x, y) => x.s - y.s);
+    }
+    // a soldier walks on at his own pace. He stops at a hold only if his vehicle is still there when he arrives, and walks on
+    // when it leaves; if it has already gone, he walks straight through. Still a pure function of the clock.
+    function soldierS(s0, w, t, tj, holds, rel, j) {
+      let at = s0, clock = tj;
+      for (let k = 0; k < holds.length; k++) {
+        if (holds[k].s < s0 - j * EXIT_STEP || rel[k] === null) continue;      // behind where this vehicle landed
+        const tgt = Math.max(at, holds[k].s - (SQUAD - 1 - j) * EXIT_STEP), arrive = clock + (tgt - at) / w;
+        if (arrive >= rel[k]) continue;
+        if (t <= arrive) break;
+        if (t < rel[k]) return tgt;
+        at = tgt; clock = rel[k];
+      }
+      return at + w * (t - clock);
+    }
+    function eachDismount(g, t, fn) {          // fn(slot, x, z, hd, struck) for every soldier out of his vehicle at time t
+      const A = ashore(g), first = vehicles(g).length, ride = Math.max(1, g.land) / 3.6, walk = VT.inf.land / 3.6;
+      if (!A.length) return;
+      const holds = holdsFor(g), rel = holds.map(o => realTimeAt(o.g, o.t1));
+      A.forEach((a, i) => {
+        const tc = clockAtS(g, a.S); if (tc === null || t < tc) return;
+        const hit = struckAt(g, i, t); if (hit && hit.t < tc) return;          // burnt out before it landed: nobody gets out
+        for (let j = 0; j < SQUAD; j++) {
+          const slot = first + i * SQUAD + j, w = struckAt(g, slot, t);
+          if (w) { fn(slot, w.x, w.z, w.hd, true); continue; }
+          const tj = tc + j * EXIT_STEP / ride; if (t < tj) break;             // he gets out where the vehicle is, as it passes
+          const id = i * SQUAD + j, s = Math.min(soldierS(a.S + j * EXIT_STEP, walk * (0.9 + 0.2 * rnd(g, id, 4)), t, tj, holds, rel, j), Math.max(a.end, a.S + SQUAD * EXIT_STEP) - (SQUAD - 1 - j) * EXIT_STEP);
+          const q = vehAt(g, i, s); if (!q) continue;
+          const side = (rnd(g, id, 5) - 0.5) * 2 * SPREAD * Math.min(1, (t - tj) / 5), x = q.x + Math.cos(q.hd) * side, z = q.z - Math.sin(q.hd) * side;
+          if (waterAt(x, z)) fn(slot, q.x, q.z, q.hd, false); else fn(slot, x, z, q.hd, false);
+        }
+      });
+    }
     function vehiclesAt(t) {                   // every vehicle on the ground at time t (not aboard a ship), struck ones where they stopped
       const out = [];
       for (const g of groups) {
@@ -2143,6 +2439,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           const p = vehAt(g, i, s0); if (!p) return;
           out.push({ g, i, type, key: skey(g, i), x: p.x, z: p.z, hd: p.hd, struck: false });
         });
+        eachDismount(g, t, (i, x, z, hd, down) => out.push({ g, i, type: 'inf', key: skey(g, i), x, z, hd, struck: down }));
       }
       return out;
     }
@@ -2166,7 +2463,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function strike(g, i, t, cause) {
       const k = skey(g, i); if (struck.has(k)) return false;
       const v = vehiclesAt(t).find(o => o.key === k); if (!v) return false;
-      const w = { t, x: v.x, z: v.z, hd: v.hd, cause, type: v.type }; w.fx = makeFx(v.type); struck.set(k, w); return true;
+      const w = { t, x: v.x, z: v.z, hd: v.hd, cause, type: v.type }; w.fx = VT[v.type].foot ? null : makeFx(v.type); struck.set(k, w); return true;   // soldiers fall; they don't burn
     }
     const otherWrecks = new Map();             // civilian wrecks: key -> { t, x, z, fx, hidden }
     const burn = {
@@ -2205,12 +2502,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function pruneStruck() {                   // a deleted group or a shortened column drops its wrecks
       for (const [k, w] of struck) { const [gid, i] = k.split(':').map(Number), g = groups.find(o => o.id === gid);
-        if (!g || i >= vehicles(g).length || vehicles(g)[i] !== w.type) { dropFx(w); struck.delete(k); } }
+        if (!g || slotType(g, i) !== w.type) { dropFx(w); struck.delete(k); } }
     }
     const struckCount = g => vehicles(g).filter((_, i) => struckAt(g, i, simT())).length;
 
     function rebuildViews() {
-      for (const g of groups) for (const u of g.units) needModel(u.type);
+      for (const g of groups) for (const u of g.units) { needModel(u.type); if (VT[u.type].dismount) needModel('inf'); }
       for (const [, v] of view.g) { for (const m of v.meshes) root.remove(m); root.remove(v.sym); v.label.remove(); }
       view.g.clear();
       for (const g of groups) {
@@ -2253,7 +2550,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         l.renderOrder = 15; lines.add(l);
         if (g.prof && g.prof.line) for (const run of g.prof.line) {     // fronts as solid bars; the selected group's own vehicle paths faintly
           for (const f of run.fronts) { const b = fatLine(drape([{ x: f.c.x - f.d.x * f.h, z: f.c.z - f.d.z * f.h }, { x: f.c.x + f.d.x * f.h, z: f.c.z + f.d.z * f.h }], 5), fatMat(on ? 0xd6b25a : 0xff6a55, on ? 4 : 3, { opacity: 1 })); b.renderOrder = 15; lines.add(b); }
-          if (on) for (const vp of run.paths) for (const pl of vp) { const o = fatLine(drape(pl.pts, 3), fatMat(0xd6b25a, 1.5, { opacity: 0.45 })); o.renderOrder = 14; lines.add(o); }
+          if (on) for (const vp of run.paths) for (const pl of vp) { const o = fatLine(drape(pl.pts, 3), pl.blocked ? fatMat(0xffb020, 2.5, { opacity: 1 }) : fatMat(0xd6b25a, 1.5, { opacity: 0.45 })); o.renderOrder = 14; lines.add(o); }
         }
       }
       if (sel && editing) {
@@ -2302,7 +2599,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (!q) { detach(g); continue; }
         const first = Object.assign({}, g.route[0], { e: q.e, n: q.n });
         if (g.route.length) g.route[0] = first; else g.route.push(first);
+        g._rides = !isShip(p) && g.splitAt > 0 && formAt(p.route, g.splitAt - 1) === 'line' && formAt(p.route, g.splitAt) === 'line';
+        if (g._rides) { first.form = 'line'; first.ridesLine = true; }      // split from a front: it leaves in line. Set here, so it follows the parent's formation
+        else if (first.ridesLine) { delete first.form; delete first.ridesLine; }
       }
+      for (const g of groups) if (!g.parent) g._rides = false;
+      for (const g of groups) if (!g._rides) buildFam(g);
     }
     function detach(b) { const st = b.parent ? startOf(b) : b.start; b.parent = null; delete b.splitAt; b.start = st === null || !isFinite(st) ? 0 : Math.round(st); }
     let note = '';
@@ -2336,6 +2638,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function tick() {
       const t = simT(), w = canvas.clientWidth, h = canvas.clientHeight;
+      foot.begin();
       for (const g of groups) {
         const v = view.g.get(g.id); if (!v) continue;
         const cargo = !!g.carrier, st0 = startOf(g), aboard = cargo && (st0 === null || t < st0);
@@ -2347,12 +2650,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (!p) { m.visible = false; return; }                             // aboard, or no route to stand on
           const T = VT[m.userData.t];
           charred(m, !!w);
-          const wet = waterAt(p.x, p.z), ground = wet ? 0 : heightAt(p.x, p.z) * ex;
+          const wet = m.userData.wet = waterAt(p.x, p.z), ground = wet ? 0 : heightAt(p.x, p.z) * ex;
           const draft = T.draft || (wet && T.amph ? T.H * 0.6 : 0);          // swimming IFVs ride low, about 1 m showing
           m.position.set(p.x, ground + T.H / 2 - draft, p.z); m.rotation.y = p.hd; m.visible = true;
+          if (T.foot) foot.add(p.x, ground, p.z, p.hd, !!w);
           if (!leadPos && !w && (!g.parent || s0 >= 0)) leadPos = m.position;   // the symbol rides the first vehicle still running
           if (!anyPos && (!g.parent || s0 >= 0)) anyPos = m.position;
         });
+        if (s0 !== null) eachDismount(g, t, (i, x, z, hd, down) => foot.add(x, waterAt(x, z) ? 0 : heightAt(x, z) * ex, z, hd, down));
         if (!leadPos) leadPos = anyPos;          // all struck: the symbol stays on the wrecks
         const showSym = !!leadPos && !obs && showEnemy;
         v.sym.visible = showSym;
@@ -2362,8 +2667,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (showLab) { v.label.style.left = ((pv.x + 1) / 2 * w) + 'px'; v.label.style.top = ((1 - pv.y) / 2 * h - 14) + 'px'; } }
         v.label.style.display = showLab ? '' : 'none';
       }
-      updateWakes(t); animFx(t);
-      root.visible = showEnemy; lines.visible = !obs && showRoutes; handles.visible = !obs;
+      foot.end(); updateWakes(t); animFx(t);
+      root.visible = showEnemy; lines.visible = !obs && showRoutes; handles.visible = !obs && showRoutes;
       const hideTags = obs || labelHidden() || !showRoutes;
       for (const h of holdTags) {
         let show = !hideTags; if (show) { pv.copy(h.pos).project(camera); show = pv.z < 1 && Math.abs(pv.x) < 1.1 && Math.abs(pv.y) < 1.1; }
@@ -2390,7 +2695,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     const toEN = p => ({ e: Math.round(CE + p.x), n: Math.round(CN - p.z) });
     addEventListener('pointerdown', e => {
-      if (!editing || !sel || e.target !== canvas || e.button !== 0) return;
+      if (!editing || !sel || !showRoutes || e.target !== canvas || e.button !== 0) return;   // routes hidden: no moving or adding points you can't see
       downAt = { x: e.clientX, y: e.clientY }; dragged = false;
       const h = hitHandle(e);
       if (joinPick) { if (h && h.join) { e.stopPropagation(); e.preventDefault(); doJoin(sel, groups.find(o => o.id === h.gid), h.i); downAt = null; } return; }
@@ -2421,7 +2726,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const p = pick(e.clientX, e.clientY); if (!p) return;
       if (joinPick) return;
       if (sel.join) { sel.route.splice(sel.route.length - 1, 0, toEN(p)); selPt = sel.route.length - 2; }   // new points go before the rejoin
-      else { sel.route.push(toEN(p)); selPt = sel.route.length - 1; }
+      else {
+        const pt = toEN(p); if (!sel.route.length && !isShip(sel) && startsAbreast(sel)) pt.form = 'line';   // a new land group starts in line
+        sel.route.push(pt); selPt = sel.route.length - 1;
+      }
       refresh();
     }, true);
     canvas.addEventListener('dblclick', () => { if (editing) setEditing(false); });
@@ -2433,11 +2741,35 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
     function deletePoint() {                   // the selected (white) point, or the last one if none is selected
       const i = selPt >= 0 && selPt < sel.route.length ? selPt : sel.route.length - 1;
-      if (sel.parent && i === 0) { note = 'That point is the split from ' + parentOf(sel).name + '; it cannot be removed here.'; renderEditor(); return; }
+      if (sel.parent && i === 0) {             // nothing drawn on this branch yet: Delete simply backs out of the split
+        if (sel.route.length === 1) return undoSplit(sel);
+        note = 'That point is the split from ' + parentOf(sel).name + '. Press Undo split to take the branch back.'; renderEditor(); return;
+      }
       if (sel.join && i === sel.route.length - 1) { note = 'That point is where it rejoins; press Unjoin first.'; renderEditor(); return; }
-      const used = refsAt(sel, i); if (used.length) { note = used.map(o => o.name).join(', ') + ' ' + (used.length > 1 ? 'use' : 'uses') + ' that point to split or rejoin. Change ' + (used.length > 1 ? 'them' : 'it') + ' first.'; renderEditor(); return; }
+      const used = refsAt(sel, i), isUndrawn = o => o.parent === sel.id && o.splitAt === i && o.route.length === 1;
+      if (used.length && !used.every(isUndrawn)) {
+        const splits = used.filter(o => o.parent === sel.id && o.splitAt === i), joins = used.filter(o => !splits.includes(o)), say = [];
+        if (splits.length) say.push(splits.map(o => o.name).join(', ') + ' split off here: press Undo split below first.');
+        if (joins.length) say.push(joins.map(o => o.name).join(', ') + ' rejoin here: press Unjoin on ' + (joins.length > 1 ? 'them' : 'it') + ' first.');
+        note = say.join(' '); renderEditor(); return;
+      }
+      for (const b of used) mergeBack(b);
+      editing = true;                          // mergeBack ends editing; we are still on this route
       sel.route.splice(i, 1); shiftRefs(sel, i + 1, -1);
       selPt = Math.min(i, sel.route.length - 1); refresh();
+    }
+    function mergeBack(b) {                    // the branch's vehicles rejoin the rear of the parent's column, as they left it
+      const p = parentOf(b);
+      for (const u of b.units) { const last = p.units[p.units.length - 1]; if (last && last.type === u.type) last.n += u.n; else p.units.push({ type: u.type, n: u.n }); }
+      removeGroup(b);
+    }
+    function undoSplit(b) {
+      const p = parentOf(b), k = b.splitAt; if (!p) return;
+      mergeBack(b); sel = p; editing = true; selPt = Math.min(k, p.route.length - 1); refresh();
+    }
+    function undoSplitBtn(btn, b) {            // a drawn branch route is lost, so that takes a second press
+      if (b.route.length > 1 && !btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'Confirm: discard its route'; return; }
+      undoSplit(b);
     }
     function setEditing(on) { editing = on && !!sel; joinPick = false; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
     function doJoin(g, o, i) {
@@ -2451,7 +2783,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function newGroup(opts) {
       const type = (opts && opts.type) || 'zbd', T = VT[type];
       const g = { id: nextId++, name: (opts && opts.name) || (T.name + ' ' + (groups.filter(o => o.units[0] && o.units[0].type === type).length + 1)),
-        units: [{ type, n: T.ship ? 1 : 6 }], route: [], roads: true, start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
+        units: [{ type, n: T.ship ? 1 : T.squad || 6 }], route: [], roads: true, start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
       if (opts && opts.carrier) { const c = groups.find(o => o.id === opts.carrier); g.carrier = c.id; if (c.route.length) g.route = [{ ...c.route[c.route.length - 1] }]; }
       groups.push(g); sel = g; refresh(); setEditing(true); return g;
     }
@@ -2465,7 +2797,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
       g.units = g.units.filter(u => u.n > 0);
       const b = { id: nextId++, name: g.name + ' B' + (branchesOf(g).length + 1), units: units.length ? units : [{ type, n: 1 }],
-        route: [{ e: g.route[k].e, n: g.route[k].n }], start: 0, land: g.land, water: g.water, gap: g.gap, carrier: null, unload: 0, parent: g.id, splitAt: k };
+        route: [{ e: g.route[k].e, n: g.route[k].n }], start: 0, land: g.land, water: g.water, gap: g.gap, carrier: null, unload: 0, parent: g.id, splitAt: k, roads: g.roads !== false, loose: g.loose };
       groups.push(b); sel = b; refresh(); setEditing(true); return b;
     }
     function removeGroup(g) {
@@ -2524,6 +2856,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const far = legs.map((l, k) => l.why === 'noroad' ? k : -1).filter(k => k >= 0), thru = legs.map((l, k) => l.cross.length ? k : -1).filter(k => k >= 0);
         if (far.length) out.push(`No road within ${ROAD_REACH} m (points ${pr(far)}): straight line.`);
         if (thru.length) out.push(`Points ${pr(thru)} cross a building (amber): move a point or add one.`);
+        const stuck = (P.line || []).reduce((a, run) => a + run.paths.filter(vp => vp.some(pl => pl.blocked)).length, 0);
+        if (stuck) out.push(`${stuck} ${stuck > 1 ? 'vehicles' : 'vehicle'} in the line still ${stuck > 1 ? 'cross' : 'crosses'} a building (amber): no way round, or a route point inside one. Move the point or front.`);
       }
       return out;
     }
@@ -2536,7 +2870,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         <div class="row"><span class="lbl">Name</span><input id="op-name" class="grid-in" aria-label="Group name"></div>
         <div class="units" id="op-units"></div>
         <div class="row"><button id="op-addunit">+ ${ship ? 'Ship' : 'Vehicle type'}</button></div>
-        ${g.parent ? `<p class="hint">Rides at the rear of <b>${esc(parentOf(g).name)}</b> and turns off at its point ${g.splitAt + 1}.</p>`
+        ${g.parent ? `<p class="hint">${g._rides ? `Stays in <b>${esc(parentOf(g).name)}</b>'s line until its point ${g.splitAt + 1}, then forms its own line.` : `Rides at the rear of <b>${esc(parentOf(g).name)}</b> and turns off at its point ${g.splitAt + 1}.`}</p>
+               <div class="row"><button id="op-unsplit">Undo split</button><span class="hint">vehicles go back to ${esc(parentOf(g).name)}</span></div>`
           : c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Drives off after it arrives and unloads.</p>
                <div class="row"><span class="lbl">Delay after unload</span><input id="op-start" style="width:70px" aria-label="Delay after unloading, mm:ss"></div>`
             : `<div class="row"><span class="lbl">Start</span><input id="op-start" style="width:70px" aria-label="Start time, mm:ss"><span class="hint">mm:ss</span></div>`}
@@ -2555,7 +2890,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
             ${selPt < g.route.length - 1 || g.join ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
             ${ship ? '' : pointRows(g)}
             <div class="row"><button id="op-delpt">Delete point ${selPt + 1}</button></div>
-            <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || 'rear vehicles take a new road'}</span></div></div>` : ''}
+            <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || (formAt(g.route, selPt) === 'line' && selPt > 0 && formAt(g.route, selPt - 1) === 'line' ? 'half the line forms its own line here' : 'rear vehicles take a new road')}</span></div>
+            ${branchesOf(g).filter(b => b.splitAt === selPt).map(b => `<div class="row"><button class="op-unsplit-b" data-id="${b.id}">Undo split</button><span class="hint">${esc(b.name)}</span></div>`).join('')}</div>` : ''}
         ${!editing && g.route.some((p, k) => +p.hold > 0 && k < g.route.length - 1) ? `<p class="hint">Holds: ${g.route.map((p, k) => +p.hold > 0 && k < g.route.length - 1 ? 'point ' + (k + 1) + ' for ' + fmt(p.hold).slice(2) : '').filter(Boolean).join(', ')}.</p>` : ''}
         ${ship ? `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
                   <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '.' : 'Nothing aboard yet.'}</p>` : ''}
@@ -2583,16 +2919,18 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         $('op-hold').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(+p.hold || 0).slice(2); return; }
           if (v > 0) p.hold = v; else delete p.hold; refresh(); }); }
       if ($('op-delpt')) $('op-delpt').addEventListener('click', deletePoint);
-      const pt = g.route[selPt], nv = vehicles(g).length;
+      const pt = g.route[selPt];
       if ($('op-form')) { $('op-form').value = pt.form || ''; $('op-form').addEventListener('change', e => {
         if (e.target.value) pt.form = e.target.value; else delete pt.form;
-        if (pt.form === 'line' && !(+pt.w > 0)) pt.w = widthAt(g.route, selPt, nv); refresh(); }); }
-      if ($('op-w')) { $('op-w').value = widthAt(g.route, selPt, nv); $('op-w').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v >= 10) pt.w = v; refresh(); }); }
+        if (pt.form === 'line' && !(+pt.w > 0)) pt.w = Math.round(frontage(g, g.route, selPt)); refresh(); }); }
+      if ($('op-w')) { $('op-w').value = Math.round(frontage(g, g.route, selPt)); $('op-w').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v >= 10) pt.w = v; refresh(); }); }
       if ($('op-ang')) $('op-ang').addEventListener('click', () => { delete pt.ang; refresh(); });
       if ($('op-kmh')) { $('op-kmh').value = +pt.kmh > 0 ? pt.kmh : ''; $('op-kmh').addEventListener('change', e => { const v = +e.target.value; if (v > 0) pt.kmh = v; else delete pt.kmh; refresh(); }); }
       if ($('op-straight')) $('op-straight').addEventListener('click', () => { if (pt.straight) delete pt.straight; else pt.straight = true; refresh(); });
       if ($('op-loose')) $('op-loose').addEventListener('click', () => { g.loose = !loose(g); refresh(); });
       if ($('op-split')) $('op-split').addEventListener('click', () => splitHere(g, selPt));
+      if ($('op-unsplit')) $('op-unsplit').addEventListener('click', e => undoSplitBtn(e.target, g));
+      for (const u of ed.querySelectorAll('.op-unsplit-b')) u.addEventListener('click', e => undoSplitBtn(e.target, groups.find(o => o.id === +u.dataset.id)));
       if ($('op-join')) $('op-join').addEventListener('click', () => { joinPick = !joinPick; rebuildLines(); renderEditor(); });
       if ($('op-unjoin')) $('op-unjoin').addEventListener('click', () => unjoin(g));
       $('op-edit').addEventListener('click', () => setEditing(!editing));
@@ -2614,10 +2952,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const k = selPt, p = g.route[k], end = k === g.route.length - 1 && !g.join, R = g.route;
       const inLine = formAt(R, k) === 'line' || (end && k > 0 && formAt(R, k - 1) === 'line' && p.form !== 'column');
       let h = '';                              // Formation shows on the last point too: it applies to the points clicked after it
-      h += `<div class="row"><span class="lbl">Formation</span><select id="op-form" aria-label="Formation from this point">
+      if (g._rides && k === 0) h += `<p class="hint">Leaves ${esc(parentOf(g).name)}'s front here in line. Set a Column point further on to regroup.</p>`;
+      else h += `<div class="row"><span class="lbl">Formation</span><select id="op-form" aria-label="Formation from this point">
           <option value="">As before (${k ? (formAt(R, k - 1) === 'line' ? 'Line' : 'Column') : 'Column'})</option><option value="line">Line</option><option value="column">Column</option></select></div>`;
-      if (inLine) h += `<div class="row"><span class="lbl">Frontage m</span><input id="op-w" style="width:60px" aria-label="Frontage in metres">${p.ang !== undefined ? '<button id="op-ang">Square to route</button>' : '<span class="hint">or drag the bar ends</span>'}</div>`;
-      if (formAt(R, k) === 'line' && (!k || formAt(R, k - 1) !== 'line')) h += '<p class="hint">Spreads out from here, each vehicle on its own street, abreast at later points. A Column point regroups them.</p>';
+      if (inLine && !(g._rides && k === 0)) h += `<div class="row"><span class="lbl">Frontage m</span><input id="op-w" style="width:60px" aria-label="Frontage in metres">${p.ang !== undefined ? '<button id="op-ang">Square to route</button>' : '<span class="hint">or drag the bar ends</span>'}</div>`;
+      if (k === 0 && formAt(R, 0) === 'line' && startsAbreast(g)) h += '<p class="hint">Starts abreast on this front. Choose Column to start in column instead.</p>';
+      else if (formAt(R, k) === 'line' && (!k || formAt(R, k - 1) !== 'line') && !(g._rides && k === 0)) h += '<p class="hint">Spreads out from here, each vehicle on its own street, abreast at later points. A Column point regroups them.</p>';
       if (!end) h += `<div class="row"><span class="lbl">Speed to next</span><input id="op-kmh" style="width:50px" placeholder="group" aria-label="Speed to the next point, km/h"><span class="hint">km/h</span></div>`;
       if (!end && g.roads !== false) h += `<div class="row"><span class="lbl">To next point</span><button id="op-straight" aria-pressed="${!p.straight}">Follow roads</button><span class="hint">${p.straight ? 'straight line' : 'on the roads'}</span></div>`;
       return h;
@@ -2630,7 +2970,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -2645,7 +2985,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      EVERY NUMBER HERE IS A PLACEHOLDER. Artillery 155/105 rows are the sim's (accepted by Lee 2026-09-27);
   //      mortar and UAS rows are new guesses by Claude, unsourced. Tune them here.
   const DAMAGE = (() => {
-    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', hq17: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
+    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', hq17: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft', inf: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
     const R = {
       m777:        { soft: 35, eng: 15, armor: 10 },             // = sim M109 155 mm
       m119:        { soft: 25, eng: 10, armor: 6 },              // = sim M101 105 mm
@@ -3124,13 +3464,18 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const n = lps.filter(l => l.fam === fam).length + 1;
       const lp = { id: nextId++, fam, name: name || (FAMS[fam] + (n > 1 ? ' ' + n : '')), x, z };
       lp.sprite = sprite(lp.name, true); lp.sprite.position.set(x, gy(x, z) + 40, z);
-      lps.push(lp); FIRES.log('Placed ' + lp.name + ' launch point at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); draw(); return lp;
+      lps.push(lp); FIRES.log('Placed ' + lp.name + ' launch point at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); draw(); saveLPs(); return lp;
     }
-    // Scenario file (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n }] } (an old rounds field is ignored)
-    fetch('data/uas.json').then(r => r.ok ? r.json() : null).then(j => {
+    const lpList = () => lps.map(l => ({ fam: l.fam, name: l.name, e: Math.round(CE + l.x), n: Math.round(CN - l.z) }));
+    // Saved only once the start-up set is in, so a browser that never edits them keeps following data/uas.json
+    let lpsReady = false;
+    function saveLPs() { if (lpsReady) try { localStorage.setItem(STORE.lps, JSON.stringify(lpList())); } catch (e) {} }
+    // Default set (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n }] } (an old rounds field is ignored)
+    let savedLPs = null; try { savedLPs = JSON.parse(localStorage.getItem(STORE.lps)); } catch (e) {}
+    (Array.isArray(savedLPs) ? Promise.resolve({ lps: savedLPs }) : fetch('data/uas.json').then(r => r.ok ? r.json() : null)).then(j => {
       if (!j || !Array.isArray(j.lps)) return;
       for (const l of j.lps) if (FAMS[l.fam]) { const p = toLocal(l.e, l.n); addLP(l.fam, p.x, p.z, l.name); }
-    }).catch(() => {});
+    }).catch(() => {}).then(() => { lpsReady = true; });
 
     // ---- drones
     function launch(lp, type, target) {
@@ -3695,7 +4040,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
             lp.draft = null; msg('uas-lmsg', ''); launch(lp, 'lucas', p);
           }));
         } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
-        bar.appendChild(btn('Remove', '', () => { dropObj(lp.sprite); lps.splice(lps.indexOf(lp), 1); FIRES.log('Removed ' + lp.name); draw(); }));
+        bar.appendChild(btn('Remove', '', () => { dropObj(lp.sprite); lps.splice(lps.indexOf(lp), 1); FIRES.log('Removed ' + lp.name); draw(); saveLPs(); }));
         row.appendChild(bar); L.appendChild(row);
       }
       const D = $('uas-list'); D.textContent = '';
@@ -3768,9 +4113,73 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     draw();
     const feedCams = () => drones.filter(d => d.feed && (d.state === 'fly' || d.state === 'falling')).map(d => d.cam3);
     const feedFocus = () => drones.filter(d => d.feed && d.spi && d.state === 'fly').map(d => ({ x: d.spi.x, z: d.spi.z, r: 350, cam: d.cam3.position }));
-    return { tick, renderFeeds, feedFocus, feedCams, debug: { TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
+    return { tick, renderFeeds, feedFocus, feedCams, debug: { lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
   })();
   window.__uas = UAS.debug;
+
+  // ---- SCENARIO: export the working scenario to a file; load a built-in one (data/scenarios/index.json) or a file.
+  //      File: { format: 'fist-scenario', version: 1, name, opfor: { nextId, groups }, units: [...], lps: [...] }
+  (function scenario() {
+    const $ = id => document.getElementById(id), list = $('sc-list'), loadBtn = $('sc-load'), nameIn = $('sc-name'), fileIn = $('sc-filein');
+    const msg = (text, cls) => { $('sc-msg').textContent = text; $('sc-msg').className = 'msg' + (cls ? ' ' + cls : ''); };
+    let builtIn = [], fromFile = null;
+    try { nameIn.value = localStorage.getItem(STORE.name) || ''; } catch (e) {}
+    if (nameIn.value) msg('Current scenario: ' + nameIn.value);
+    nameIn.addEventListener('input', () => { try { localStorage.setItem(STORE.name, nameIn.value.trim()); } catch (e) {} });
+
+    function disarm() { delete loadBtn.dataset.armed; loadBtn.textContent = 'Load'; }
+    function fillList() {
+      list.textContent = '';
+      const add = (value, text) => { const o = document.createElement('option'); o.value = value; o.textContent = text; list.appendChild(o); };
+      builtIn.forEach((s, i) => add(String(i), s.name));
+      if (fromFile) add('file', 'File: ' + fromFile.name);
+      if (!list.options.length) add('', 'No built-in scenarios yet');
+      if (fromFile) list.value = 'file';
+      loadBtn.disabled = !list.value; disarm();
+    }
+    list.addEventListener('change', disarm);
+    load('scenarios/index.json', 'json').then(j => { if (j && Array.isArray(j.scenarios)) builtIn = j.scenarios; }).catch(() => {}).then(fillList);
+
+    function isValid(s) {
+      const VT = OPFOR.debug.VT;
+      return !!s && s.format === 'fist-scenario' && s.version === 1 && Array.isArray(s.units) && Array.isArray(s.lps) && !!s.opfor && Array.isArray(s.opfor.groups) &&
+        s.opfor.groups.every(g => Array.isArray(g.route) && Array.isArray(g.units) && g.units.every(u => VT[u.type]));
+    }
+    function apply(s) {       // the reload gives a clean start: clock at zero, no missions, drones or damage left over
+      if (!isValid(s)) return msg('That is not a usable scenario file.', 'bad');
+      try {
+        localStorage.setItem(STORE.opfor, JSON.stringify(s.opfor));
+        localStorage.setItem(STORE.units, JSON.stringify(s.units));
+        localStorage.setItem(STORE.lps, JSON.stringify(s.lps));
+        localStorage.setItem(STORE.name, s.name || '');
+      } catch (e) { return msg('This browser would not store the scenario.', 'bad'); }
+      location.reload();
+    }
+    loadBtn.addEventListener('click', async () => {
+      const hasWork = OPFOR.debug.groups.length > 0 || FIRES.debug.units.length > 0;
+      if (hasWork && !loadBtn.dataset.armed) { loadBtn.dataset.armed = '1'; loadBtn.textContent = 'Confirm: replace'; return msg('This replaces the enemy groups, firing units and launch points here. Export first to keep them.', 'arm'); }
+      disarm();
+      if (list.value === 'file') return apply(fromFile);
+      try { apply(await load('scenarios/' + builtIn[+list.value].file, 'json')); }
+      catch (e) { msg('Could not load that scenario.', 'bad'); }
+    });
+    $('sc-open').addEventListener('click', () => fileIn.click());
+    fileIn.addEventListener('change', async () => {
+      const f = fileIn.files[0]; fileIn.value = ''; if (!f) return;
+      let s = null; try { s = JSON.parse(await f.text()); } catch (e) {}
+      if (!isValid(s)) return msg('That is not a usable scenario file.', 'bad');
+      fromFile = s; if (!s.name) s.name = f.name.replace(/\.json$/i, '');
+      fillList(); msg('Press Load to open ' + s.name + '.', 'arm');
+    });
+    $('sc-export').addEventListener('click', () => {
+      const name = nameIn.value.trim() || 'Untitled scenario';
+      const body = JSON.stringify({ format: 'fist-scenario', version: 1, name, opfor: OPFOR.debug.snapshot(), units: FIRES.debug.unitList(), lps: UAS.debug.lpList() }, null, 1);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
+      a.download = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.json';
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      msg('Exported ' + a.download + '.');
+    });
+  })();
 
 
   // ---- banner: keep --tb-h in step with the banner so panels and the observer bar sit below it
@@ -3947,14 +4356,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           'Water = no terrain data or ground below 0.3 m.',
           'Swimming amphibians ride low (0.6 × height under water).',
           'Movement is a fixed function of the clock: column in file at the set gap, scripted holds, instructor halt/resume.',
-          'No vehicle-to-vehicle avoidance. Struck vehicles do not block the road.'])}
+          'No vehicle-to-vehicle avoidance. Struck vehicles do not block the road.',
+          'Each ZBD lets out ' + VT.inf.squad + ' soldiers 30 m after it comes ashore, without stopping. They walk its route at ' + VT.inf.land + ' km/h and stop at its end or the next water. Each can be struck; a ZBD struck before it lands lets out nobody.'])}
         <h4>Routes and roads</h4>
         ${tbl(['Rule', 'Value'], [
           ['Follow roads', 'on by default for land groups; shortest road path between each pair of clicked points'],
           ['Road preference', 'cost per metre × ' + OPFOR.debug.roadRules.ROAD_W.join(' / ') + ' (major / mid / minor road) — ' + PH],
           ['Snap reach', 'a clicked point joins the nearest road by a straight link if one is within ' + OPFOR.debug.roadRules.ROAD_REACH + ' m'],
           ['Straight legs', 'ships; Follow roads off; either end in the water (landings, swims); no road within reach'],
-          ['Buildings', 'straight legs and links through a building footprint are flagged amber in the editor, not prevented'],
+          ['Buildings', 'off-road legs and each vehicle of a line steer around building footprints, through gaps roughly 5 to 11 m wide or more; a vehicle on a longer way round speeds up to stay level. Amber where no way round was found, and on the short links to a road'],
           ['Road data', 'OpenStreetMap drivable roads; no one-way streets, lanes, width or traffic'],
           ['Column behind its start point', 'lined up straight back from the first stretch of road']])}`]);
 

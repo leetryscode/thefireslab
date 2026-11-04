@@ -1,0 +1,299 @@
+{
+ "format": "fist-scenario",
+ "version": 1,
+ "name": "Amphibius Assault East",
+ "opfor": {
+  "nextId": 11,
+  "groups": [
+   {
+    "id": 4,
+    "name": "South ZTDs",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 618935,
+      "n": 2350003,
+      "form": "line",
+      "w": 390
+     },
+     {
+      "e": 619093,
+      "n": 2350171,
+      "w": 737,
+      "ang": -2.4516032060201085
+     },
+     {
+      "e": 620744,
+      "n": 2351432,
+      "w": 724,
+      "ang": -2.802222551917386
+     },
+     {
+      "e": 622139,
+      "n": 2352285,
+      "w": 651,
+      "ang": -2.9950412008677536
+     },
+     {
+      "e": 622670,
+      "n": 2351964,
+      "w": 890,
+      "ang": 2.599898270905624
+     }
+    ],
+    "start": 0,
+    "land": 10,
+    "water": 25,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 6,
+    "name": "South ZBDs",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 618414,
+      "n": 2349999,
+      "form": "line",
+      "w": 390
+     },
+     {
+      "e": 619395,
+      "n": 2350500,
+      "w": 878,
+      "ang": -2.5110350404752553
+     },
+     {
+      "e": 620680,
+      "n": 2351398,
+      "w": 705,
+      "ang": -2.7837478565386515
+     },
+     {
+      "e": 622161,
+      "n": 2352298,
+      "w": 665,
+      "ang": -3.017747288891821
+     },
+     {
+      "e": 622809,
+      "n": 2352572,
+      "w": 511,
+      "ang": -2.769637040300802
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 25,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 7,
+    "name": "South ZBDs B1",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 622161,
+      "n": 2352298,
+      "form": "line",
+      "ridesLine": true
+     },
+     {
+      "e": 622609,
+      "n": 2351603,
+      "form": "line",
+      "w": 352,
+      "ang": 2.268381658151815
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 25,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": 6,
+    "splitAt": 3,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 8,
+    "name": "Waikīkī E ZTDs",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 620377,
+      "n": 2352035,
+      "form": "line",
+      "w": 643,
+      "ang": -2.4045561299106493
+     },
+     {
+      "e": 621690,
+      "n": 2352878,
+      "w": 789,
+      "ang": -2.2925891481044816
+     },
+     {
+      "e": 621986,
+      "n": 2352897,
+      "w": 565,
+      "ang": -2.610583937427096
+     },
+     {
+      "e": 622184,
+      "n": 2353061,
+      "w": 867
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 9,
+    "name": "Waikīkī ZBDs",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 620040,
+      "n": 2351604,
+      "form": "line",
+      "w": 526,
+      "ang": -2.3034207871887884
+     },
+     {
+      "e": 621592,
+      "n": 2352824,
+      "w": 740,
+      "ang": -2.3263565356565685
+     },
+     {
+      "e": 621603,
+      "n": 2353163,
+      "w": 367,
+      "ang": -1.8173955868425131
+     },
+     {
+      "e": 621556,
+      "n": 2353431,
+      "w": 735,
+      "ang": -2.3498154693817805
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 10,
+    "name": "Waikīkī ZBDs B1",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 621592,
+      "n": 2352824,
+      "form": "line",
+      "ridesLine": true
+     },
+     {
+      "e": 621969,
+      "n": 2352877,
+      "w": 553,
+      "ang": -2.5838179196378492
+     },
+     {
+      "e": 622621,
+      "n": 2352890,
+      "w": 268,
+      "ang": 3.0700914548642495
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 23,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": 9,
+    "splitAt": 1,
+    "join": null,
+    "roads": true
+   }
+  ]
+ },
+ "units": [],
+ "lps": [
+  {
+   "fam": "altius",
+   "name": "Altius",
+   "e": 623645,
+   "n": 2357348
+  },
+  {
+   "fam": "switchblade",
+   "name": "Switchblade",
+   "e": 620528,
+   "n": 2357346
+  },
+  {
+   "fam": "lucas",
+   "name": "LUCAS",
+   "e": 627893,
+   "n": 2372326
+  }
+ ]
+}

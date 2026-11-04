@@ -30,6 +30,7 @@
   <div class="tb-right">
     <span class="seg" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
     <nav class="tb-tools" id="tools" aria-label="Control panels">
+      <button data-win="w-scn" aria-pressed="false">Scenario</button>
       <button data-win="w-display" aria-pressed="false">Display</button>
       <button data-win="w-ops" aria-pressed="false" title="OPs and viewshed">OPs</button>
       <button data-win="w-fires" aria-pressed="false">Fires</button>
@@ -38,6 +39,23 @@
     </nav>
   </div>
 </header>
+
+<section class="win" id="w-scn" aria-label="Scenario" hidden>
+  <header class="win-h"><h2>Scenario</h2><button class="win-x" aria-label="Close Scenario">×</button></header>
+  <div class="win-b">
+    <div class="fsec first">
+      <h3>Load</h3>
+      <div class="row"><select id="sc-list" aria-label="Scenario to load"></select><button id="sc-load" disabled>Load</button></div>
+      <div class="row"><button id="sc-open">Open a file…</button><input type="file" id="sc-filein" accept=".json,application/json" hidden></div>
+    </div>
+    <div class="fsec">
+      <h3>Export</h3>
+      <div class="row"><input id="sc-name" placeholder="Scenario name" aria-label="Scenario name"><button id="sc-export">Export file</button></div>
+    </div>
+    <p class="msg" id="sc-msg"></p>
+    <p class="hint">A scenario holds enemy groups, firing units and launch points. Your work is saved in this browser until you load another.</p>
+  </div>
+</section>
 
 <section class="win" id="w-display" aria-label="Display settings" hidden>
   <header class="win-h"><h2>Display</h2><button class="win-x" aria-label="Close Display">×</button></header>
@@ -118,7 +136,7 @@
     <div class="glist" id="op-list"></div>
     <div class="oped" id="op-ed" hidden></div>
     <div class="row"><button id="op-clearall">Remove all</button></div>
-    <p class="hint">Vehicle sizes and speeds are rough placeholders. Saved in this browser only for now; scenario files come next. No damage yet.</p>
+    <p class="hint">Vehicle sizes and speeds are rough placeholders. Saved in this browser; the Scenario panel exports to a file. No damage yet.</p>
   </div>
 </section>
 <section class="win" id="w-uas" aria-label="Friendly UAS" hidden>
