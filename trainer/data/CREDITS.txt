@@ -18,6 +18,12 @@ data/m06.bin (PLZ-05 self-propelled howitzer)
 Changes: parts regrouped into hull, turret and gun so the gun can aim; geometry simplified; textures reduced
 to 1024 px JPEG; re-centred on the ground (2026-10-31).
 
+data/m12.bin (HQ-17 air defence vehicle)
+"Chinese HQ-17" (https://sketchfab.com/3d-models/chinese-hq-17-50e0f40db03444178598e336ae675fad) by 42manako is licensed
+under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+Changes: hidden missile tubes removed, materials converted, geometry simplified, textures reduced to 1024 px,
+rescaled to 5.1 m tall, re-centred on the ground (2026-11-03).
+
 data/m08.bin (ALTIUS-700M loitering munition, friendly; not used by the trainer yet)
 "Anduril ALTIUS 700M" (https://sketchfab.com/3d-models/anduril-altius-700m-4e7fe35b0279418d85af34d33faa9db5)
 by KillCaptureDestroy is licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).

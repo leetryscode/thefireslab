@@ -1724,10 +1724,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       eng:  { name: 'Engineering', L: 8.0, W: 3.2, H: 3.2, amph: false, land: 30, water: 0,  gap: 50 },
       fuel: { name: 'Fuel Truck',  L: 9.0, W: 2.5, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },
       plz:  { name: 'PLZ-05 SPH',  L: 10.6, W: 3.3, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },   // 155 mm SP howitzer; model has 'turret' and 'gun' nodes for aiming
-      lcu:  { name: 'LCU',         L: 41,  W: 9,   H: 5,   ship: true,  land: 0,  water: 18, gap: 150, draft: 1.5, unload: 120 },
+      hq17: { name: 'HQ-17 SAM',   L: 8.0, W: 3.1, H: 5.1, amph: false, land: 40, water: 0,  gap: 50 },   // tracked air defence, Tor-M1 family; H with the search radar up
+      lcu: { name: 'LCU',         L: 41,  W: 9,   H: 5,   ship: true,  land: 0,  water: 18, gap: 150, draft: 1.5, unload: 120 },
       roro: { name: 'RoRo',        L: 150, W: 25,  H: 22,  ship: true,  land: 0,  water: 25, gap: 500, draft: 6,   unload: 600 }
     };
-    const LAND = ['zbd', 'ztd', 'eng', 'fuel', 'plz'], SHIPS = ['lcu', 'roro'];
+    const LAND = ['zbd', 'ztd', 'eng', 'fuel', 'plz', 'hq17'], SHIPS = ['lcu', 'roro'];
     const KEY = 'fist-trainer-opfor-v2';                   // v1 (straight-line test routes) dropped 2026-11-02
     try { localStorage.removeItem('fist-trainer-opfor-v1'); } catch (e) {}
     let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true;
@@ -2097,7 +2098,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // Real models replace a type's boxes once loaded; until then (or if loading fails) the box stays.
     // Files are glTF binaries (pivot at bottom centre, metres, nose toward +Z) under neutral names:
     // purchased models are licensed for use inside the trainer only and must not be offered as downloads.
-    const MODELS = { zbd: { url: 'data/m01.bin', yaw: -Math.PI / 2 }, fuel: { url: 'data/m02.bin', yaw: 0 }, lcu: { url: 'data/m03.bin', yaw: Math.PI }, roro: { url: 'data/m04.bin', yaw: 0 }, eng: { url: 'data/m05.bin', yaw: -Math.PI / 2 }, plz: { url: 'data/m06.bin', yaw: 0 }, ztd: { url: 'data/m07.bin', yaw: 0 } }, tmpl = {};   // yaw turns the model's nose onto +Z
+    const MODELS = { zbd: { url: 'data/m01.bin', yaw: -Math.PI / 2 }, fuel: { url: 'data/m02.bin', yaw: 0 }, lcu: { url: 'data/m03.bin', yaw: Math.PI }, roro: { url: 'data/m04.bin', yaw: 0 }, eng: { url: 'data/m05.bin', yaw: -Math.PI / 2 }, plz: { url: 'data/m06.bin', yaw: 0 }, ztd: { url: 'data/m07.bin', yaw: 0 }, hq17: { url: 'data/m12.bin', yaw: 0 } }, tmpl = {};   // yaw turns the model's nose onto +Z
     function makeBody(t) {
       if (!tmpl[t]) return new THREE.Mesh(boxGeo[t], boxMat[t]);
       const o = tmpl[t].clone(); o.position.y = -VT[t].H / 2; o.rotation.y = MODELS[t].yaw || 0; return o;   // container sits at H/2; model pivot on the ground
@@ -2644,7 +2645,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      EVERY NUMBER HERE IS A PLACEHOLDER. Artillery 155/105 rows are the sim's (accepted by Lee 2026-09-27);
   //      mortar and UAS rows are new guesses by Claude, unsourced. Tune them here.
   const DAMAGE = (() => {
-    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
+    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', hq17: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
     const R = {
       m777:        { soft: 35, eng: 15, armor: 10 },             // = sim M109 155 mm
       m119:        { soft: 25, eng: 10, armor: 6 },              // = sim M101 105 mm
