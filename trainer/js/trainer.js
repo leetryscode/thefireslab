@@ -41,8 +41,48 @@
   const LITE = (() => { const q = new URLSearchParams(location.search).get('lite'); if (q === '1') return true; if (q === '0') return false;
     return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); })();
   window.__lite = LITE;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE });
+  // ---- edge smoothing (2026-11-04, under comparison): 'msaa' is the browser's 4x (default), 'fxaa' a cheaper pass over the
+  //      finished picture, 'off' none. ?aa=msaa / ?aa=fxaa / ?aa=off in the address. It must be chosen before the page's GPU
+  //      context exists, so changing it means a reload. Lite stays 'off' unless the address says otherwise.
+  const AA = (() => { const q = new URLSearchParams(location.search).get('aa'); return ['msaa', 'fxaa', 'off'].includes(q) ? q : LITE ? 'off' : 'msaa'; })();
+  window.__aa = AA;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: AA === 'msaa' });
   renderer.setPixelRatio(LITE ? 1 : Math.min(devicePixelRatio, 2));
+  // FXAA: the main view is drawn into a texture, already sRGB-encoded, and this pass smooths its edges onto the canvas.
+  // UAS feeds render straight to the canvas as before, so they are unsmoothed in this mode.
+  const FXAA = AA !== 'fxaa' ? null : (() => {
+    const rt = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false, encoding: THREE.sRGBEncoding });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
+    const mat = new THREE.ShaderMaterial({
+      depthTest: false, depthWrite: false, toneMapped: false,
+      uniforms: { t: { value: rt.texture }, px: { value: new THREE.Vector2(1, 1) } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: `
+uniform sampler2D t; uniform vec2 px; varying vec2 vUv;
+float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }
+void main(){
+  vec3 M = texture2D(t, vUv).rgb;
+  float nw = lum(texture2D(t, vUv + vec2(-1.0, -1.0) * px).rgb), ne = lum(texture2D(t, vUv + vec2(1.0, -1.0) * px).rgb);
+  float sw = lum(texture2D(t, vUv + vec2(-1.0, 1.0) * px).rgb), se = lum(texture2D(t, vUv + vec2(1.0, 1.0) * px).rgb), m = lum(M);
+  float lo = min(m, min(min(nw, ne), min(sw, se))), hi = max(m, max(max(nw, ne), max(sw, se)));
+  if (hi - lo < max(0.0312, hi * 0.125)) { gl_FragColor = vec4(M, 1.0); return; }   // no edge here: most pixels stop at 5 reads
+  vec2 dir = vec2(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
+  float reduce = max((nw + ne + sw + se) * 0.03125, 0.0078125);
+  dir = clamp(dir / (min(abs(dir.x), abs(dir.y)) + reduce), -8.0, 8.0) * px;
+  vec3 a = 0.5 * (texture2D(t, vUv + dir * (1.0 / 3.0 - 0.5)).rgb + texture2D(t, vUv + dir * (2.0 / 3.0 - 0.5)).rgb);
+  vec3 b = a * 0.5 + 0.25 * (texture2D(t, vUv - dir * 0.5).rgb + texture2D(t, vUv + dir * 0.5).rgb);
+  float l = lum(b);
+  gl_FragColor = vec4(l < lo || l > hi ? a : b, 1.0);
+}`
+    });
+    const tri = new THREE.Mesh(g, mat); tri.frustumCulled = false;
+    const sc = new THREE.Scene(); sc.add(tri);
+    const cam = new THREE.Camera(), size = new THREE.Vector2();
+    return {
+      resize() { renderer.getDrawingBufferSize(size); rt.setSize(size.x, size.y); mat.uniforms.px.value.set(1 / size.x, 1 / size.y); },
+      render(scene, camera) { renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null); renderer.render(sc, cam); }
+    };
+  })();
   function liteNote() {                      // shown once the scene is up (a slow phone could otherwise miss it during loading)
     if (!LITE) return;
     const n = document.createElement('div'); n.id = 'lite-note'; n.setAttribute('role', 'status');
@@ -62,7 +102,9 @@
     fragmentShader: 'uniform vec3 hz; uniform vec3 zn; varying vec3 vP; void main(){ float h = max(normalize(vP).y, 0.0);' +
       ' gl_FragColor = vec4(mix(hz, zn, pow(h, 0.55)), 1.0); }'
   }));
-  sky.renderOrder = -10; sky.frustumCulled = false;
+  // Draw order (2026-11-04, perf): the renderer draws solid things nearest-first only within one material, so give the costly
+  // full-screen surfaces a late turn and let them skip whatever is already in front: everything else, ground 1, sea 2, sky 3.
+  sky.renderOrder = 3; sky.frustumCulled = false;
   const camera = new THREE.PerspectiveCamera(45, 1, 10, 80000);
 
   const geo = new THREE.PlaneGeometry((NX - 1) * CELL, (NY - 1) * CELL, NX - 1, NY - 1);
@@ -238,17 +280,79 @@ vec3 gradeGround(vec3 base, vec3 lit){
   const ground = new THREE.Group(); ground.material = photoMat; scene.add(ground);
   const tiles = [];
   for (let ty = 0; ty < NY - 1; ty += TILE) for (let tx = 0; tx < NX - 1; tx += TILE) {
-    const x1 = Math.min(NX - 1, tx + TILE), y1 = Math.min(NY - 1, ty + TILE), idx = new Uint32Array((x1 - tx) * (y1 - ty) * 6);
-    let k = 0;
-    for (let iy = ty; iy < y1; iy++) for (let ix = tx; ix < x1; ix++) {
-      const a = iy * NX + ix, b = (iy + 1) * NX + ix, c = (iy + 1) * NX + ix + 1, d = iy * NX + ix + 1;
-      idx[k++] = a; idx[k++] = b; idx[k++] = d; idx[k++] = b; idx[k++] = c; idx[k++] = d;   // PlaneGeometry's own winding
-    }
+    const x1 = Math.min(NX - 1, tx + TILE), y1 = Math.min(NY - 1, ty + TILE);
     const g = new THREE.BufferGeometry();
     for (const name of Object.keys(geo.attributes)) g.setAttribute(name, geo.attributes[name]);
-    g.setIndex(new THREE.BufferAttribute(idx, 1)); g.boundingSphere = new THREE.Sphere();
-    const m = new THREE.Mesh(g, photoMat); m.userData.tile = { tx, ty, x1, y1 }; ground.add(m); tiles.push(m);
+    g.boundingSphere = new THREE.Sphere();
+    const m = new THREE.Mesh(g, photoMat); m.userData.tile = { tx, ty, x1, y1 }; m.renderOrder = 1; ground.add(m); tiles.push(m);
   }
+  // ---- ground detail by distance (2026-11-04, perf): at map range a 10 m cell is about a pixel, so past GROUND_MID a tile
+  //      uses every 2nd grid point and past GROUND_FAR every 4th. Display only: heights, sight lines and clicks still use the
+  //      10 m grid. Distances are 'effective', like the trees': they shrink with zoom and grow with screen height, so a change
+  //      happens at the same size on screen. Vertices are shared, so a level costs only its index list, made on first use.
+  //      Where a tile meets a coarser neighbour its outer ring is rebuilt to the neighbour's points, so no crack opens.
+  const GROUND = (() => {
+    const Q = LITE ? 0.5 : 1, GROUND_MID = 3500 * Q, GROUND_FAR = 8500 * Q, BAND = 1.1, T45 = Math.tan(Math.PI / 8);
+    const COLS = Math.ceil((NX - 1) / TILE), wanted = d => d < GROUND_MID ? 1 : d < GROUND_FAR ? 2 : 4;
+    const stops = (a, b, s) => { const o = []; for (let v = a; v < b; v += s) o.push(v); o.push(b); return o; };
+    function level(m, s) {                     // index list for stride s: the inner cells, then room for the outer ring
+      const L = m.userData.levels || (m.userData.levels = {}); if (L[s]) return L[s];
+      const { tx, ty, x1, y1 } = m.userData.tile, xs = stops(tx, x1, s), ys = stops(ty, y1, s), idx = new Uint32Array((xs.length - 1) * (ys.length - 1) * 6);
+      let k = 0;
+      for (let j = 1; j < ys.length - 2; j++) for (let i = 1; i < xs.length - 2; i++) {
+        const a = ys[j] * NX + xs[i], b = ys[j + 1] * NX + xs[i], c = ys[j + 1] * NX + xs[i + 1], d = ys[j] * NX + xs[i + 1];
+        idx[k++] = a; idx[k++] = b; idx[k++] = d; idx[k++] = b; idx[k++] = c; idx[k++] = d;   // PlaneGeometry's own winding
+      }
+      return L[s] = { attr: new THREE.BufferAttribute(idx, 1), ring: k, xs, ys, used: k };
+    }
+    function setLevel(m, s, N, E, S, W) {      // N, E, S, W: the stride each outer edge must use (this tile's, or a coarser neighbour's)
+      const Lv = level(m, s), { xs, ys, ring } = Lv, idx = Lv.attr.array, { tx, ty, x1, y1 } = m.userData.tile;
+      const nx = xs.length - 1, ny = ys.length - 1; let k = ring;
+      const tri = (ax, ay, bx, by, cx, cy) => {   // always the same facing as PlaneGeometry's triangles
+        const flip = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax) > 0;
+        idx[k++] = ay * NX + ax; idx[k++] = (flip ? cy : by) * NX + (flip ? cx : bx); idx[k++] = (flip ? by : cy) * NX + (flip ? bx : cx);
+      };
+      // one side of the ring: the outer edge's points against the first inner row's, always advancing the one that lags
+      const side = (outer, inner, outerAt, innerAt) => {
+        let i = 0, j = 0;
+        while (i < outer.length - 1 || j < inner.length - 1) {
+          const [ax, ay] = outerAt(outer[i]), [cx, cy] = innerAt(inner[j]);
+          if (j === inner.length - 1 || (i < outer.length - 1 && outer[i + 1] <= inner[j + 1])) { const [bx, by] = outerAt(outer[++i]); tri(ax, ay, bx, by, cx, cy); }
+          else { const [dx, dy] = innerAt(inner[++j]); tri(ax, ay, cx, cy, dx, dy); }
+        }
+      };
+      const ix = xs.slice(1, nx), iy = ys.slice(1, ny);
+      side(stops(tx, x1, N), ix, x => [x, ty], x => [x, ys[1]]);
+      side(stops(tx, x1, S), ix, x => [x, y1], x => [x, ys[ny - 1]]);
+      side(stops(ty, y1, W), iy, y => [tx, y], y => [xs[1], y]);
+      side(stops(ty, y1, E), iy, y => [x1, y], y => [xs[nx - 1], y]);
+      Lv.attr.updateRange.offset = ring; Lv.attr.updateRange.count = Math.max(k, Lv.used) - ring; Lv.attr.needsUpdate = true; Lv.used = k;
+      m.geometry.setIndex(Lv.attr); m.geometry.setDrawRange(0, k);
+    }
+    const near = (m, c) => Math.max(0, c.position.distanceTo(m.geometry.boundingSphere.center) - m.geometry.boundingSphere.radius);
+    const key = new Array(tiles.length).fill(''), now = new Array(tiles.length).fill(1);
+    function fit() {                           // apply the strides in 'now', with each edge matched to its neighbour
+      tiles.forEach((m, n) => {
+        const s = now[n], at = (dc, dr) => { const c = n % COLS + dc, q = n + dc + dr * COLS; return c < 0 || c >= COLS || q < 0 || q >= tiles.length ? s : Math.max(s, now[q]); };
+        const N = at(0, -1), E = at(1, 0), S = at(0, 1), W = at(-1, 0), k = s + ',' + N + ',' + E + ',' + S + ',' + W;
+        if (k !== key[n]) { key[n] = k; setLevel(m, s, N, E, S, W); }
+      });
+    }
+    fit();
+    function update(cams) {
+      const px = 800 / Math.max(400, renderer.domElement.height), vs = vsMesh.visible && VS.op ? toLocal(VS.op.e, VS.op.n) : null;
+      tiles.forEach((m, n) => {
+        let d = Infinity; for (const c of cams) d = Math.min(d, near(m, c) * Math.tan(c.fov * Math.PI / 360) / T45 * px);
+        // the viewshed overlay is drawn on the full 10 m grid, so the ground under it has to match or the overlay breaks up
+        if (vs) { const b = m.geometry.boundingSphere; if (Math.hypot(b.center.x - vs.x, b.center.z - vs.z) - b.radius < VS.range) { now[n] = 1; return; } }
+        const hi = wanted(d), lo = wanted(d / BAND);     // inside the band around a change, stay put so the level doesn't flicker
+        if (now[n] < lo || now[n] > hi) now[n] = hi;
+      });
+      fit();
+    }
+    return { update, debug: { now, wanted } };
+  })();
+  window.__ground = GROUND;
   function tileBounds() {
     const P = geo.attributes.position;
     for (const m of tiles) {
@@ -270,7 +374,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
       'outgoingLight = waterShade(outgoingLight, vWW, 0.0);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');
   };
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(160000, 160000, 1, 1), seaMat);
-  sea.rotation.x = -Math.PI / 2; sea.position.y = -2; scene.add(sea);
+  sea.rotation.x = -Math.PI / 2; sea.position.y = -2; sea.renderOrder = 2; scene.add(sea);
   scene.add(new THREE.HemisphereLight(0xdfe6d8, 0x2a2a22, 0.55));
   const sun = new THREE.DirectionalLight(0xffffff, 0.9);
   sun.position.set(-6000, 7000, -4000);
@@ -490,7 +594,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
     const l = new THREE.Line2(g, mat); l.computeLineDistances(); return l;
   }
   function dropFat(o) { if (!o) return; o.parent && o.parent.remove(o); o.geometry && o.geometry.dispose(); if (o.material) { fatMats.delete(o.material); o.material.dispose(); } }
-  function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); for (const m of fatMats) m.resolution.set(w, h); }
+  function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); if (FXAA) FXAA.resize(); camera.aspect = w / h; camera.updateProjectionMatrix(); for (const m of fatMats) m.resolution.set(w, h); }
   addEventListener('resize', resize); resize();
 
 
@@ -2312,6 +2416,51 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const o = tmpl[t].clone(); o.position.y = -VT[t].H / 2; o.rotation.y = MODELS[t].yaw || 0; return o;   // container sits at H/2; model pivot on the ground
     }
     function makeVeh(t) { const c = new THREE.Group(); c.userData.t = t; c.add(makeBody(t)); return c; }
+    // ---- far vehicles (2026-11-04, perf): a model costs 21-26k triangles and a draw per part even when it is under a pixel.
+    //      Once a vehicle is under FAR_IN pixels long in every camera it becomes one box of its model's average colour, all in
+    //      one instanced mesh. Its group stays visible and placed as usual, so strikes, UAS and wakes see no difference.
+    const FAR_IN = 3, FAR_OUT = 3.6, farCol = {}, farC = new THREE.Color(), farD = new THREE.Object3D();
+    let farCap = 256, farMesh = null;
+    function farMake() {
+      const old = farMesh;
+      farMesh = new THREE.InstancedMesh(old ? old.geometry : new THREE.BoxGeometry(1, 1, 1), old ? old.material : new THREE.MeshLambertMaterial({ color: 0xffffff }), farCap);
+      farMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(farCap * 3).fill(1), 3);
+      if (old) { farMesh.instanceMatrix.array.set(old.instanceMatrix.array); farMesh.instanceColor.array.set(old.instanceColor.array); root.remove(old); old.dispose(); }
+      farMesh.frustumCulled = false; farMesh.count = 0; root.add(farMesh);
+    }
+    function averageColour(o) {                // triangle-weighted average of a model's colours and textures, linear
+      const out = new THREE.Color(0, 0, 0), c2 = document.createElement('canvas'); c2.width = c2.height = 8;
+      const g = c2.getContext('2d', { willReadFrequently: true }), one = new THREE.Color(); let W = 0;
+      o.traverse(m => { if (!m.isMesh) return;
+        const mats = [].concat(m.material), n = (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3;
+        for (const x of mats) {
+          one.setRGB(1, 1, 1); if (x.color) one.copy(x.color);
+          if (x.map && x.map.image) { try { g.drawImage(x.map.image, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; let r = 0, gr = 0, b = 0; for (let i = 0; i < 256; i += 4) { r += d[i]; gr += d[i + 1]; b += d[i + 2]; }
+            const tx = new THREE.Color(r / 64 / 255, gr / 64 / 255, b / 64 / 255).convertSRGBToLinear(); one.multiply(tx); } catch (e) { /* unreadable texture: the material colour alone is fine */ } }
+          out.r += one.r * n / mats.length; out.g += one.g * n / mats.length; out.b += one.b * n / mats.length; W += n / mats.length;
+        } });
+      return W ? out.multiplyScalar(1 / W) : null;
+    }
+    function farColour(t) {
+      if (tmpl[t] && !farCol[t]) farCol[t] = averageColour(tmpl[t]) || boxMat[t].color;
+      return farCol[t] || boxMat[t].color;
+    }
+    function farTick(cams) {
+      if (!farMesh) farMake();
+      const hpx = renderer.domElement.height, ks = cams.map(c => hpx / (2 * Math.tan(c.fov * Math.PI / 360)));
+      let n = 0;
+      for (const [, v] of view.g) for (const m of v.meshes) {
+        const body = m.children[0], T = VT[m.userData.t]; if (!m.visible || !body || T.foot) continue;
+        let px = 0; const L = Math.max(T.L, T.W);
+        cams.forEach((c, i) => { px = Math.max(px, L * ks[i] / Math.max(1, c.position.distanceTo(m.position))); });
+        const far = px < (m.userData.far ? FAR_OUT : FAR_IN); m.userData.far = far; body.visible = !far;
+        if (!far) continue;
+        if (n === farCap) { farCap *= 2; farMake(); }
+        farD.position.copy(m.position); farD.rotation.set(0, m.rotation.y, 0); farD.scale.set(T.W, T.H, T.L); farD.updateMatrix(); farMesh.setMatrixAt(n, farD.matrix);
+        farC.copy(farColour(m.userData.t)); if (m.userData.charred) farC.multiplyScalar(0.18); farMesh.setColorAt(n, farC); n++;
+      }
+      farMesh.count = n; farMesh.instanceMatrix.needsUpdate = true; farMesh.instanceColor.needsUpdate = true;
+    }
     // models load on first use (perf/memory, 2026-11-03): a type's file is fetched when a group first contains it
     const asked = new Set();
     function needModel(t) {
@@ -2970,7 +3119,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -4403,7 +4552,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground'],
           ['Phones and tablets', (LITE ? 'THIS DEVICE: ' : '') + 'demo (lite) mode — 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes, trees simplified at half the distance. ?lite=1 / ?lite=0 forces it.'],
           ['Trees drawn (display only)', 'only those in 250 m cells inside some camera\'s view (main view or an open UAS feed); simpler shapes and no trunks once a tree is a few pixels across, none past about 20 km. Sight lines still use every tree.'],
-          ['Terrain drawn (display only)', 'in ~1.5 km tiles; tiles outside the view are skipped. Same ground, same detail.'],
+          ['Terrain drawn (display only)', 'in ~1.5 km tiles; tiles outside the view are skipped, and distant tiles use every 2nd or 4th grid point (full detail near a camera and under a viewshed). Sight lines, heights and clicks still use the 10 m grid.'],
+          ['Far enemy vehicles (display only)', 'drawn as a plain box of the model\'s colour once under about 3 pixels long in every camera.'],
           ['Traffic updates', 'civilian positions are redrawn at half the frame rate (every frame while a UAS feed is open)']])}`]);
 
       body.innerHTML = '<nav class="rnav">' + sec.map(s => `<a href="#r-${s[0]}">${s[1]}</a>`).join('') + '</nav>' +
@@ -4454,8 +4604,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     PERF.time('uas', () => UAS.tick());
     PERF.time('civ', () => CIV.tick(FIRES.debug.simT, UAS.feedFocus()));
     if (!obs) { navTick(dt); controls.update(); } reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000;
-    PERF.time('trees', () => CITY.treeTick([camera, ...UAS.feedCams()]));
-    PERF.time('feeds', () => UAS.renderFeeds()); PERF.time('render', () => renderer.render(scene, camera));
+    const cams = [camera, ...UAS.feedCams()];
+    PERF.time('trees', () => { CITY.treeTick(cams); GROUND.update(cams); OPFOR.farTick(cams); });
+    PERF.time('feeds', () => UAS.renderFeeds()); PERF.time('render', () => { if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera); });
     PERF.frame(now - lastFrameStart); lastFrameStart = now;
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
