@@ -16,12 +16,65 @@
   const NX = 1200, NY = 1000, CELL = 10, W = 615000, NTOP = 2360000;
   const CE = W + NX * CELL / 2, CN = NTOP - NY * CELL / 2;   // local origin at the centre
   const HW = NX * CELL / 2, HH = NY * CELL / 2;
+  // PLAY: the area you can click, route and fire into (Lee, 2026-11-10: room for maritime targets). The elevation grid
+  // plus open sea: SEA_PAD m to the west, south and east, none north (land). Outside the grid everything is sea level water.
+  const SEA_PAD = 8000, PLAY = { x0: -HW - SEA_PAD, x1: HW + SEA_PAD, z0: -HH, z1: HH + SEA_PAD };
+  const inPlay = (x, z) => x >= PLAY.x0 && x <= PLAY.x1 && z >= PLAY.z0 && z <= PLAY.z1;
   // some servers unzip a .gz on the way out and some don't: unpack only if the bytes are still gzip (1f 8b)
   const gz = new Uint8Array(demGz, 0, 2), packed = gz[0] === 0x1f && gz[1] === 0x8b;
   const buf = packed ? await new Response(new Blob([demGz]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer() : demGz;
   const dm = new Int16Array(buf);
   const H = new Float32Array(NX * NY);
   for (let i = 0; i < NX * NY; i++) H[i] = dm[i] < 0 ? 0 : dm[i] / 10;
+  // Clip the terrain to the NAIP imagery footprint (outside it the photo is only a painted relief fill, and the
+  // seam looked unprofessional). Polygon in photo pixels (4096 x 3412, top = north), traced from the photo's edges.
+  const IMG = [[1457, 0], [2531, 0], [4095, 679], [4095, 2300], [3392, 3411], [3030, 3411], [0, 1692], [0, 1668]];
+  { const cu = IMG.reduce((t, p) => t + p[0], 0) / IMG.length, cv = IMG.reduce((t, p) => t + p[1], 0) / IMG.length;   // pull in ~10 px so no fill shows at the seam
+    for (const p of IMG) { p[0] = cu + (p[0] - cu) * 0.995; p[1] = cv + (p[1] - cv) * 0.995; } }
+  const imgPoly = IMG.map(([u, v]) => ({ x: (u / 4096 - 0.5) * (NX - 1) * CELL, z: (v / 3412 - 0.5) * (NY - 1) * CELL }));
+  function inImagery(x, z) {
+    let inside = false;
+    for (let i = 0, j = imgPoly.length - 1; i < imgPoly.length; j = i++) {
+      const a = imgPoly[i], b = imgPoly[j];
+      if ((a.z > z) !== (b.z > z) && x < (b.x - a.x) * (z - a.z) / (b.z - a.z) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+  // ---- TRIM (Lee, 2026-11-10): the map's outer edge. Outside the photo (the NW corner, the far E and SE) the land is bare
+  //      relief. It stays land (sinking it into the sea drew a false coast and made Oahu look like a small island), but past
+  //      a ragged line just inside the photo's edge it is 'false land': darkened as if under cloud shadow (SHADE_*) with a
+  //      haze over the line (HAZE_*). Only the last ~1.5 km at the grid's own border slopes down to sea level, display only (BORDER), so
+  //      no cut wall stands at the rectangle's edge, and the shadow there deepens to the sea's colour.
+  //      EDGE: 1 = in play, 0 = deep in the false land. TRIM_IN: how far inside the photo's edge the line sits on average (m);
+  //      TRIM_BAND: width of the change; TRIM_NOISE: how ragged the line is (+- m).
+  const TRIM_IN = 120, TRIM_BAND = 650, TRIM_NOISE = 320, BORDER_BAND = 1200;
+  let trimNoise = null;               // the trim's ragged-edge noise, reused by the haze
+  const EDGE = new Float32Array(NX * NY).fill(1), HG = new Float32Array(NX * NY), LAND0 = new Uint8Array(NX * NY), BORDER = new Float32Array(NX * NY).fill(1);   // LAND0: land cells
+  {
+    const hash = (i, j) => { let h = Math.imul(i, 374761393) + Math.imul(j, 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+    const vn = (x, z) => { const i = Math.floor(x), j = Math.floor(z), fx = x - i, fz = z - j, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
+      const a = hash(i, j), b = hash(i + 1, j), c = hash(i, j + 1), d = hash(i + 1, j + 1); return (a + (b - a) * u) * (1 - v) + (c + (d - c) * u) * v; };
+    const noise = (x, z) => (vn(x / 2600, z / 2600) - 0.5) * 1.3 + (vn(x / 900 + 17, z / 900 + 31) - 0.5) * 0.55 + (vn(x / 320 + 5, z / 320 + 9) - 0.5) * 0.2;
+    trimNoise = (x, z) => vn(x / 1400 + 41, z / 1400 + 7) * 0.65 + vn(x / 500 + 3, z / 500 + 77) * 0.35;   // 0..1, patchy
+    const segs = imgPoly.map((a, k) => { const b = imgPoly[(k + 1) % imgPoly.length]; return [a.x, a.z, b.x - a.x, b.z - a.z, (b.x - a.x) ** 2 + (b.z - a.z) ** 2]; });
+    const reach = TRIM_IN + TRIM_BAND + TRIM_NOISE;
+    for (let r = 0; r < NY; r++) for (let c = 0; c < NX; c++) {
+      const i = r * NX + c, x = c * CELL - (NX - 1) * CELL / 2, z = r * CELL - (NY - 1) * CELL / 2;
+      let d = Math.min(HW - Math.abs(x), HH - Math.abs(z));
+      for (const [ax, az, dx, dz, L2] of segs) { const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2)); d = Math.min(d, Math.hypot(x - ax - dx * t, z - az - dz * t)); }
+      if (!inImagery(x, z)) d = -d;
+      if (d < reach) {
+        const e = Math.max(0, Math.min(1, (d - TRIM_IN + noise(x, z) * TRIM_NOISE) / TRIM_BAND));
+        EDGE[i] = e * e * (3 - 2 * e);
+      }
+      const bd = Math.min(HW - Math.abs(x), HH - Math.abs(z)) + noise(x * 0.7 + 900, z * 0.7 - 400) * 450, t = Math.max(0, Math.min(1, (bd - 100) / BORDER_BAND));   // ragged, so the rectangle doesn't show
+      BORDER[i] = t * t * (3 - 2 * t);
+      if (dm[i] < 0) continue;
+      LAND0[i] = 1;
+      HG[i] = H[i] * BORDER[i];                 // display only: H (rules, water mask) keeps the real height, or flat land there reads as water
+    }
+  }
+  const edgeAt = (x, z) => { const c = Math.round((x + HW) / CELL - 0.5), r = Math.round((z + HH) / CELL - 0.5); return c < 0 || r < 0 || c >= NX || r >= NY ? 0 : EDGE[r * NX + c]; };
   const toLocal = (e, n) => ({ x: e - CE, z: CN - n });
 
   function heightAt(x, z) {             // bilinear, local metres (x east, z south)
@@ -200,7 +253,54 @@ vec3 waterShade(vec3 base, vec3 P, float foam){
     g.putImageData(out, 0, 0);
     const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; return t;
   })();
-  function waterUniforms(sh) { sh.uniforms.uTime = WATER.time; sh.uniforms.uSun = WATER.sunDir; sh.uniforms.uHz = WATER.hz; sh.uniforms.uZn = WATER.zn; }
+  // ---- SHADOW + HAZE (Lee, 2026-11-10): how the false land looks. hazeTex R = haze, a soft patchy veil in the horizon
+  //      colour over the line where play ends (spreads onto the water beside it, thins inland, gone before the grid's edge);
+  //      G = shadow: land past the line darkened and greyed, and near the grid's border (land or water) the same open sea
+  //      as beyond it, so the rectangle never shows; B = land flag (only land is darkened). Display only.
+  const SHADE_CUT = 0.72, SHADE_BORDER = 0.96;   // shadow strength past the line, and at the grid's border (where it meets the sea)
+  const HAZE_MAX = 0.55, HAZE_SEA = 26, HAZE_LAND = 0.35;   // HAZE_SEA: spread off the cut, px of 10 m (blur); HAZE_LAND: how far it reaches inland (EDGE)
+  const hazeTex = (() => {
+    const c = document.createElement('canvas'); c.width = NX; c.height = NY; const g = c.getContext('2d');
+    const img = g.createImageData(NX, NY), d = img.data;
+    // seed: the line where play ends, not the false land beyond it
+    for (let i = 0; i < NX * NY; i++) { const v = LAND0[i] && EDGE[i] > 0.2 && EDGE[i] < 0.6 ? 255 : 0; d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; d[i * 4 + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    const b = document.createElement('canvas'); b.width = NX; b.height = NY; const bg = b.getContext('2d');
+    bg.fillStyle = '#000'; bg.fillRect(0, 0, NX, NY); bg.filter = 'blur(' + HAZE_SEA + 'px)'; bg.drawImage(c, 0, 0);
+    const B = bg.getImageData(0, 0, NX, NY), bd = B.data;
+    for (let r = 0; r < NY; r++) for (let col = 0; col < NX; col++) {
+      const i = r * NX + col, x = col * CELL - (NX - 1) * CELL / 2, z = r * CELL - (NY - 1) * CELL / 2;
+      const spread = Math.min(1, bd[i * 4] / 255 * 2.6), sea = spread * spread * (3 - 2 * spread);      // soft fall-off over the water
+      const t = Math.max(0, Math.min(1, (EDGE[i] - (1 - HAZE_LAND)) / HAZE_LAND)), land = 1 - t * t * (3 - 2 * t);   // thins out inland
+      const rim = Math.max(0, Math.min(1, (Math.min(HW - Math.abs(x), HH - Math.abs(z)) - 150) / 1100));   // gone before the grid's own edge
+      let v = sea * land * rim * rim * (3 - 2 * rim);
+      if (v > 0.003) v *= 0.55 + 0.75 * trimNoise(x, z);                                                // patchy, not a painted band
+      v = Math.min(1, v);
+      const sh = Math.max(LAND0[i] ? SHADE_CUT * (1 - EDGE[i]) : 0, SHADE_BORDER * (1 - BORDER[i]));   // shadow over the false land; open sea at the border (land or water)
+      bd[i * 4] = Math.round(255 * v); bd[i * 4 + 1] = Math.round(255 * sh); bd[i * 4 + 2] = LAND0[i] ? 255 : 0;   // B: land, so only land is darkened bd[i * 4 + 3] = 255;
+    }
+    bg.putImageData(B, 0, 0);
+    const t = new THREE.CanvasTexture(b); t.minFilter = THREE.LinearFilter; return t;
+  })();
+  const HAZE = { map: { value: hazeTex }, col: { value: new THREE.Color(HORIZON).convertSRGBToLinear().multiplyScalar(0.92) }, shade: { value: new THREE.Color(OCEAN).convertSRGBToLinear().multiplyScalar(1.05) } };   // shade: the open sea's lit base colour window.__haze = HAZE;
+  const HAZE_GLSL = `
+uniform sampler2D hazeMap; uniform vec3 uHazeCol; uniform vec3 uShadeCol;
+vec2 hazeUv(vec3 P){ return vec2(P.x / ${(NX - 1) * CELL}.0 + 0.5, 0.5 - P.z / ${(NY - 1) * CELL}.0); }
+vec3 shadeOver(vec3 c, vec3 P){      // the false land: land in deep shadow; at the grid's border it becomes the same open sea as beyond
+  vec4 m = texture2D(hazeMap, hazeUv(P)); float k = m.g;
+  vec3 dim = mix(c, vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), 0.6) * 0.42;
+  c = mix(c, dim, min(1.0, k / ${SHADE_CUT}) * m.b);
+  float kb = smoothstep(${SHADE_CUT}, ${SHADE_BORDER}, k);
+  return kb > 0.001 ? mix(c, waterShade(uShadeCol, P, 0.0), kb) : c;
+}
+vec3 hazeOver(vec3 c, vec3 P){       // world position -> haze grid; past the grid's edge it carries on and dies away over ~500 m
+  vec2 h = vec2(${(NX - 1) * CELL / 2}.0, ${(NY - 1) * CELL / 2}.0);
+  float k = texture2D(hazeMap, hazeUv(P)).r;
+  k *= exp(-length(max(abs(P.xz) - h, 0.0)) / 500.0);
+  return mix(c, uHazeCol, k * ${HAZE_MAX});
+}
+`;
+  function waterUniforms(sh) { sh.uniforms.uTime = WATER.time; sh.uniforms.uSun = WATER.sunDir; sh.uniforms.uHz = WATER.hz; sh.uniforms.uZn = WATER.zn; sh.uniforms.hazeMap = HAZE.map; sh.uniforms.uHazeCol = HAZE.col; sh.uniforms.uShadeCol = HAZE.shade; }
 
   // Colour grade for the photo ground: the photo already carries real sunlight and shadow, so show it at its own
   // brightness, keep only half of the 3D terrain shading (enough to read slopes, not the plastic sheen), then a
@@ -216,20 +316,6 @@ vec3 gradeGround(vec3 base, vec3 lit){
 }
 `;
   renderer.outputEncoding = THREE.sRGBEncoding;
-  // Clip the terrain to the NAIP imagery footprint (outside it the photo is only a painted relief fill, and the
-  // seam looked unprofessional). Polygon in photo pixels (4096 x 3412, top = north), traced from the photo's edges.
-  const IMG = [[1457, 0], [2531, 0], [4095, 679], [4095, 2300], [3392, 3411], [3030, 3411], [0, 1692], [0, 1668]];
-  { const cu = IMG.reduce((t, p) => t + p[0], 0) / IMG.length, cv = IMG.reduce((t, p) => t + p[1], 0) / IMG.length;   // pull in ~10 px so no fill shows at the seam
-    for (const p of IMG) { p[0] = cu + (p[0] - cu) * 0.995; p[1] = cv + (p[1] - cv) * 0.995; } }
-  const imgPoly = IMG.map(([u, v]) => ({ x: (u / 4096 - 0.5) * (NX - 1) * CELL, z: (v / 3412 - 0.5) * (NY - 1) * CELL }));
-  function inImagery(x, z) {
-    let inside = false;
-    for (let i = 0, j = imgPoly.length - 1; i < imgPoly.length; j = i++) {
-      const a = imgPoly[i], b = imgPoly[j];
-      if ((a.z > z) !== (b.z > z) && x < (b.x - a.x) * (z - a.z) / (b.z - a.z) + a.x) inside = !inside;
-    }
-    return inside;
-  }
   const clipTex = (() => {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 853; const g = c.getContext('2d');
     g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#fff'; g.beginPath();
@@ -251,9 +337,9 @@ vec3 gradeGround(vec3 base, vec3 lit){
       const v = !fill && inFp[i] > 127 ? 255 : 0; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
     }
     g.putImageData(px, 0, 0);
-    // shrink, then blur: the fade runs ~700 m and ends inside the real photo
+    // shrink, then blur: the fade runs ~300 m and ends inside the real photo
     const c = document.createElement('canvas'); c.width = w; c.height = h; const k = c.getContext('2d');
-    k.fillStyle = '#000'; k.fillRect(0, 0, w, h); k.filter = 'blur(30px)'; k.drawImage(a, 0, 0);
+    k.fillStyle = '#000'; k.fillRect(0, 0, w, h); k.filter = 'blur(12px)'; k.drawImage(a, 0, 0);   // ~300 m since the TRIM: the land now ends near the photo's edge
     const b = k.getImageData(0, 0, w, h), bd = b.data;   // keep only the inner part of the blurred edge
     for (let i = 0; i < bd.length; i += 4) { const v = Math.max(0, Math.min(255, (bd[i] - 128) * 2)); bd[i] = bd[i + 1] = bd[i + 2] = v; }
     k.putImageData(b, 0, 0);
@@ -267,11 +353,11 @@ vec3 gradeGround(vec3 base, vec3 lit){
     sh.uniforms.fadeMap = { value: fadeTex }; sh.uniforms.waterMap = { value: waterTex }; waterUniforms(sh);
     sh.uniforms.urbanMap = URBAN.map; sh.uniforms.urbanOn = URBAN.on;
     sh.vertexShader = 'varying vec3 vWW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D waterMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>',
+    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D waterMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + HAZE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>',
       '#ifdef USE_COLOR\n  diffuseColor.rgb = mix(vColor, diffuseColor.rgb, texture2D(fadeMap, vUv).r);\n#endif\n' +
       '  { float u = texture2D(urbanMap, vUv).r * urbanOn; float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));\n' +
       '    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.24, 0.235, 0.22), vec3(lum), 0.2), u * 0.92); }')
-      .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n  { vec4 wm = texture2D(waterMap, vUv); if (wm.r > 0.004) outgoingLight = mix(outgoingLight, waterShade(outgoingLight, vWW, wm.g), wm.r); }\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
+      .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n  { vec4 wm = texture2D(waterMap, vUv); if (wm.r > 0.004) outgoingLight = mix(outgoingLight, waterShade(outgoingLight, vWW, wm.g), wm.r); }\n  outgoingLight = hazeOver(shadeOver(outgoingLight, vWW), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
   };
   // Terrain in tiles (perf, 2026-11-03): the same one grid and the same shared vertex data, split into ~1.5 km tiles so
   // the renderer skips tiles outside the view. Nothing changes on screen. Each tile's bounds are set by hand
@@ -370,8 +456,8 @@ vec3 gradeGround(vec3 base, vec3 lit){
   seaMat.onBeforeCompile = sh => {
     waterUniforms(sh);
     sh.vertexShader = 'varying vec3 vWW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'varying vec3 vWW;\n' + WATER_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
-      'outgoingLight = waterShade(outgoingLight, vWW, 0.0);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');
+    sh.fragmentShader = 'varying vec3 vWW;\n' + WATER_GLSL + HAZE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
+      'outgoingLight = hazeOver(waterShade(outgoingLight, vWW, 0.0), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');
   };
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(160000, 160000, 1, 1), seaMat);
   sea.rotation.x = -Math.PI / 2; sea.position.y = -2; sea.renderOrder = 2; scene.add(sea);
@@ -398,19 +484,17 @@ vec3 gradeGround(vec3 base, vec3 lit){
   }
   function clear(g) { while (g.children.length) { const o = g.children.pop(); o.geometry && o.geometry.dispose(); } }
 
-  function buildGrid() {
+  function buildGrid() {                 // 1 km lines over the play area: land, sea and the open sea beyond the grid
     clear(groups.grid);
-    const pts = [];
-    for (let e = Math.ceil(W / 1000) * 1000; e <= W + NX * CELL; e += 1000) {
-      const v = drape([toLocal(e, NTOP - 5), toLocal(e, NTOP - NY * CELL + 5)], 4, CELL);
-      for (let k = 0; k < v.length - 1; k++) if (inImagery((v[k].x + v[k + 1].x) / 2, (v[k].z + v[k + 1].z) / 2)) pts.push(v[k], v[k + 1]);
-    }
-    for (let n = Math.ceil((NTOP - NY * CELL) / 1000) * 1000; n <= NTOP; n += 1000) {
-      const v = drape([toLocal(W + 5, n), toLocal(W + NX * CELL - 5, n)], 4, CELL);
-      for (let k = 0; k < v.length - 1; k++) if (inImagery((v[k].x + v[k + 1].x) / 2, (v[k].z + v[k + 1].z) / 2)) pts.push(v[k], v[k + 1]);
-    }
+    const pts = [], sea = [], keep = (x, z) => edgeAt(x, z) > 0.75 || heightAt(x, z) <= 0;   // not over the hazy edge band
+    const E0 = CE + PLAY.x0, E1 = CE + PLAY.x1, N0 = CN - PLAY.z1, N1 = CN - PLAY.z0;
+    const add = v => { for (let k = 0; k < v.length - 1; k++) { const x = (v[k].x + v[k + 1].x) / 2, z = (v[k].z + v[k + 1].z) / 2; if (keep(x, z)) (heightAt(x, z) > 0 ? pts : sea).push(v[k], v[k + 1]); } };
+    for (let e = Math.ceil(E0 / 1000) * 1000; e <= E1; e += 1000) add(drape([toLocal(e, N1 - 5), toLocal(e, N0 + 5)], 4, CELL));
+    for (let n = Math.ceil(N0 / 1000) * 1000; n <= N1; n += 1000) add(drape([toLocal(E0 + 5, n), toLocal(E1 - 5, n)], 4, CELL));
     groups.grid.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),
       new THREE.LineBasicMaterial({ color: 0xd6b25a, transparent: true, opacity: 0.45 })));
+    groups.grid.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(sea),      // fainter over water
+      new THREE.LineBasicMaterial({ color: 0xd6b25a, transparent: true, opacity: 0.2 })));
   }
 
   // map symbols share one look (Lee, 2026-11-02): friendly blue fill, dark outline; labels uppercase condensed in the
@@ -446,7 +530,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
   let showLabels = true;
   function rebuild() {
     if (window.__firesHook) window.__firesHook();
-    for (let i = 0; i < NX * NY; i++) pos.setY(i, H[i] * ex);
+    for (let i = 0; i < NX * NY; i++) pos.setY(i, HG[i] * ex);
     pos.needsUpdate = true; geo.computeVertexNormals(); tileBounds();
     buildGrid(); buildSketch();
     if (onExCity) onExCity();
@@ -1129,6 +1213,9 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       catch (e) { console.warn('city.json not loaded:', e.message); if (metaEl) metaEl.textContent = 'Buildings and trees: data not found.'; return; }
       const t0 = performance.now();
       [OB, OT] = await Promise.all([grid(d.ob), grid(d.ot)]);
+      { // trimmed edge (TRIM): drop buildings and trees out in the false land, where they would stand bright in the shadow
+        d.b = d.b.filter(b => edgeAt(b[3][0] / 10, b[3][1] / 10) > 0.75);
+        const t = []; for (let i = 0; i < d.t.length; i += 4) if (edgeAt(d.t[i] / 10, d.t[i + 1] / 10) > 0.75) t.push(d.t[i], d.t[i + 1], d.t[i + 2], d.t[i + 3]); d.t = t; }
       buildBuildings(d.b); cleanGround(); buildTrees(d.t);
       st.parts = d.b.length; st.trees_n = d.t.length / 4; st.ms = Math.round(performance.now() - t0);
       grp.scale.y = ex; grp.visible = true; bGrp.visible = st.buildings; tGrp.visible = st.trees;
@@ -1224,6 +1311,16 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const ASPH = [[86, 88, 92], [98, 99, 102], [116, 116, 114]].map(c => c.map(lin)), KERB = [184, 182, 174].map(lin);
     (async () => {
       let d; try { d = await load('roads.json', 'json'); } catch (e) { console.warn('roads.json not loaded:', e.message); return; }
+      // trimmed edge (TRIM): cut each road where the false land begins, keeping the pieces in play
+      d.r = d.r.flatMap(([wd, cls, f]) => {
+        const out = []; let run = [];
+        for (let i = 0; i < f.length; i += 2) {
+          if (edgeAt(f[i] / 10, f[i + 1] / 10) > 0.75) { run.push(f[i], f[i + 1]); continue; }
+          if (run.length >= 4) out.push([wd, cls, run]); run = [];
+        }
+        if (run.length >= 4) out.push([wd, cls, run]);
+        return out;
+      });
       const P = [], C = [], I = [], RA = [];   // RA: across (-1..1 asphalt, +-1.5 kerb), along (m), half-width (m)
       let v = 0;
       for (const [wd, cls, f] of d.r) {
@@ -1436,7 +1533,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     let prev = 0;
     for (let t = 0; t < 70000; t += 8) {
       const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
-      if (Math.abs(x) > HW || Math.abs(z) > HH) { prev = t; continue; }
+      if (!inPlay(x, z)) { prev = t; continue; }
       if (y <= surf(x, z)) {
         let lo = prev, hi = t;
         for (let k = 0; k < 20; k++) { const mid = (lo + hi) / 2; if (o.y + d.y * mid <= surf(o.x + d.x * mid, o.z + d.z * mid)) hi = mid; else lo = mid; }
@@ -1454,7 +1551,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const E = CE + p.x, N = CN - p.z;
     gEl.textContent = '4Q FJ ' + pad(E - 600000) + ' ' + pad(N - 2300000);
     const c = Math.max(0, Math.min(NX - 1, Math.round((p.x + HW) / CELL - 0.5))), rr = Math.max(0, Math.min(NY - 1, Math.round((p.z + HH) / CELL - 0.5)));
-    hEl.textContent = dm[rr * NX + c] < 0 ? 'sea (no data)' : heightAt(p.x, p.z).toFixed(0) + ' m';
+    hEl.textContent = Math.abs(p.x) > HW || Math.abs(p.z) > HH ? 'open sea' : dm[rr * NX + c] < 0 ? 'sea (no data)' : heightAt(p.x, p.z).toFixed(0) + ' m';
   });
 
   // ---- controls
@@ -1670,7 +1767,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const u = units.find(x => String(x.id) === $('fm-unit').value);
       if (!u) return msg(fmMsg, 'Place a firing unit first.', 'bad');
       const g = parseGrid($('fm-grid').value); if (g.err) return msg(fmMsg, g.err, 'bad');
-      if (!onMap(g.e, g.n)) return msg(fmMsg, 'That target is off the map.', 'bad');
+      { const q = toLocal(g.e, g.n); if (!inPlay(q.x, q.z)) return msg(fmMsg, 'That target is off the map.', 'bad'); }
       const t = TYPES[u.type], R = Math.hypot(g.e - u.e, g.n - u.n);
       if (R > t.max) return msg(fmMsg, `Out of range: ${(R / 1000).toFixed(1)} km, ${t.short} max ${(t.max / 1000).toFixed(1)} km.`, 'bad');
       if (R < t.min) return msg(fmMsg, `Inside minimum range: ${Math.round(R)} m, ${t.short} min ${t.min} m.`, 'bad');
@@ -1859,7 +1956,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser; the Scenario panel writes the same data to a file)
-    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
+    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, offShip: g.offShip, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
     function save() { try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
@@ -2098,7 +2195,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return g._fam = fam;
     }
     const onFront = (g, k) => (g._fam || []).reduce((a, f) => a + (f.k >= k ? 1 : 0), 0) || ownCount(g);
-    const lineGap = g => { if (!g._rides) return FRONT_SPACING; const p = parentOf(g), n = onFront(p, g.splitAt); return n > 1 ? frontage(p, p.route, g.splitAt) / (n - 1) : FRONT_SPACING; };
+    const lineGap = g => { if (!g._rides) return isShip(g) ? g.gap : FRONT_SPACING; const p = parentOf(g), n = onFront(p, g.splitAt); return n > 1 ? frontage(p, p.route, g.splitAt) / (n - 1) : FRONT_SPACING; };
     function frontage(g, R, k) {               // a frontage carried on from an earlier point narrows with the vehicles that have left
       const n = onFront(g, k);
       for (let j = k; j >= 0; j--) if (R[j] && +R[j].w > 0) { const m = onFront(g, j); return n > 1 && m > 1 ? +R[j].w * (n - 1) / (m - 1) : +R[j].w; }
@@ -2124,8 +2221,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return out;
     }
     const startsAbreast = g => !g.parent && !g.carrier;   // Line on the first point: already on a front at the start. Cargo and branches come out of one spot, so they fan out
+    // cargo off its own ship (Lee, 2026-11-04): each cargo group leaves from one ship's place on the landing front. offShip counts across
+    // the front from the left end, looking along the route. A landing in column, or by one ship, is one spot: the route's last point.
+    const shipsSpread = c => { const R = fullRoute(c), k = R.length - 1; return k > 0 && isShip(c) && ownCount(c) > 1 && formAt(R, k - 1) === 'line' ? ownCount(c) : 0; };
+    function offPoint(g, c) {
+      const R = fullRoute(c), k = R.length - 1, n = shipsSpread(c); if (!n) return { e: R[k].e, n: R[k].n };
+      const d = frontDir(R, R.map(p => toLocal(p.e, p.n)), k), h = frontage(c, R, k) / 2 * (1 - 2 * (g.offShip % n) / (n - 1));
+      return { e: Math.round(R[k].e + d.x * h), n: Math.round(R[k].n - d.z * h) };
+    }
     function lineFor(g, R, wpS, quick) {
-      if (isShip(g) || !R.some(p => p.form === 'line')) return [];
+      if (!R.some(p => p.form === 'line')) return [];
       const from = leaveLine(g);
       if (quick) return buildLine(g, R, wpS, true, from);
       const key = JSON.stringify([startsAbreast(g), famOrder(g, R, R.map(p => toLocal(p.e, p.n))),(g._fam || []).map(f => f.k === Infinity ? 0 : f.k), lineGap(g), from && from.map(f => [Math.round(f.x), Math.round(f.z), Math.round(f.lag)]), g.gap, loose(g), snapOn(g), !!ROADNET, !!CITY.ready, R.map(p => [p.e, p.n, p.form || 0, +p.w || 0, p.ang === undefined ? 0 : +p.ang.toFixed(3), p.straight ? 1 : 0])]);
@@ -2133,7 +2238,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return g._line;
     }
     function buildLine(g, R, wpS, quick, from) {
-      const n = famSize(g), runs = lineRuns(g, R), out = []; if (!n) return out;
+      const n = famSize(g), runs = lineRuns(g, R), out = [], ship = isShip(g); if (!n) return out;   // ships in line (Lee, 2026-11-04): straight, each to its place on the front; no roads or buildings
       const P = R.map(p => toLocal(p.e, p.n)), cl = colLags(g, n), order = famOrder(g, R, P), places = {};
       const placeAt = (k, i) => {              // -1 .. 1 across the front at point k, among the vehicles still on it
         if (!places[k]) { const on = order.filter(v => leavesAt(g, v) >= k), u = places[k] = []; on.forEach((v, r) => { u[v] = on.length > 1 ? -1 + 2 * r / (on.length - 1) : 0; }); }
@@ -2145,7 +2250,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const slot = (k, i) => { if (k === a && !abreast) return start ? start[i] : P[k];
           if (k === b && !last) return P[k];
           const d = frontDir(R, P, k), h = frontage(g, R, k) / 2 * placeAt(k, i), q = { x: P[k].x + d.x * h, z: P[k].z + d.z * h };
-          return !quick && CITY.ready && dFree(q) || q; };   // a place on the front that lands in a building moves to open ground beside it
+          return !ship && !quick && CITY.ready && dFree(q) || q; };   // a place on the front that lands in a building moves to open ground beside it
         const paths = [], LL = [];             // paths[i][j - a]: vehicle i's own polyline for leg j; LL[j - a][i]: its lag on that leg
         for (let i = 0; i < n; i++) paths.push([]);
         for (let j = a; j < b; j++) {
@@ -2157,11 +2262,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
             const road = !straight && ROADNET.path(A.x, A.z, B.x, B.z, pen);
             let pts = road, around = null;
             if (!road) {
-              const off = quick || performance.now() > giveUp ? null : detour(A, B, lanes);
+              const off = ship || quick || performance.now() > giveUp ? null : detour(A, B, lanes);
               pts = off || [A, B];
-              if (!quick && CITY.ready) { const lane = dLane(pts); for (const c of lane) lanes.add(c); if (pts.length > 2) around = lane; }
+              if (!ship && !quick && CITY.ready) { const lane = dLane(pts); for (const c of lane) lanes.add(c); if (pts.length > 2) around = lane; }
             }
-            const pl = poly(pts); if (!road && !quick && crossings({ pts, road: false }).length) pl.blocked = true;
+            const pl = poly(pts); if (!ship && !road && !quick && crossings({ pts, road: false }).length) pl.blocked = true;
             paths[i].push(pl);
             // vehicles squeezed along the same way round a building file through, like those sharing a street
             nodes.push(pts.nodes ? new Set(pts.nodes) : around); if (pts.nodes) for (const v of pts.nodes) pen.set(v, 1);
@@ -2491,6 +2596,46 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         end() { mesh.count = n; if (n) mesh.instanceMatrix.needsUpdate = true; }
       };
     })();
+    // ---- pips (Lee, 2026-11-04): a small screen-sized diamond on every enemy vehicle and soldier, so the instructor sees the
+    //      whole spread, not just one symbol per group. One Points object, one draw call, no texture; the positions are the
+    //      ones tick works out anyway. Size in CSS pixels: negative means struck (grey). They fade out close up, where the
+    //      model itself is plain to see. Same colours as the group diamond, which draws on top.
+    const PIP_VEH = 9, PIP_FOOT = 5;
+    const pips = (() => {
+      let cap = 1024, n = 0, pos, size;
+      const geo = new THREE.BufferGeometry();
+      const obj = new THREE.Points(geo, new THREE.ShaderMaterial({
+        depthTest: false, depthWrite: false, transparent: true,
+        uniforms: { uPR: { value: renderer.getPixelRatio() } },
+        vertexShader: `attribute float aS; uniform float uPR; varying float vDead, vFade, vPx;
+          void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
+            vDead = aS < 0.0 ? 1.0 : 0.0; vFade = clamp((-mv.z - 250.0) / 250.0, 0.0, 1.0); vPx = abs(aS) * uPR; gl_PointSize = vPx; }`,
+        fragmentShader: `varying float vDead, vFade, vPx;
+          void main() { vec2 q = abs(gl_PointCoord - 0.5); float d = (q.x + q.y) * vPx, r = vPx * 0.5;   // d, r: pixels from the centre
+            float a = clamp(r - d, 0.0, 1.0) * vFade; if (a <= 0.0) discard;
+            vec3 fill = mix(vec3(1.0, 0.416, 0.333), vec3(0.62, 0.62, 0.60), vDead);
+            gl_FragColor = vec4(mix(vec3(0.165, 0.043, 0.027), fill, clamp(r - 1.2 - d, 0.0, 1.0)), a);
+            #include <encodings_fragment>
+          }`
+      }));
+      function alloc() {
+        pos = new THREE.BufferAttribute(new Float32Array(cap * 3), 3).setUsage(THREE.DynamicDrawUsage);
+        size = new THREE.BufferAttribute(new Float32Array(cap), 1).setUsage(THREE.DynamicDrawUsage);
+        geo.dispose(); geo.setAttribute('position', pos); geo.setAttribute('aS', size);
+      }
+      alloc(); obj.frustumCulled = false; obj.renderOrder = 19; root.add(obj);
+      return { obj,
+        begin() { n = 0; },
+        add(x, y, z, px) {
+          if (n === cap) { const p = pos.array, s = size.array; cap *= 2; alloc(); pos.array.set(p); size.array.set(s); }
+          const a = pos.array, i = n * 3; a[i] = x; a[i + 1] = y; a[i + 2] = z; size.array[n++] = px;
+        },
+        end(show) {
+          obj.visible = show && n > 0; if (!obj.visible) return;
+          geo.setDrawRange(0, n); pos.updateRange.count = n * 3; size.updateRange.count = n; pos.needsUpdate = size.needsUpdate = true;
+        }
+      };
+    })();
     const diamondTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
       x.translate(32, 32); x.rotate(Math.PI / 4); x.fillStyle = 'rgba(255,106,85,.9)'; x.strokeStyle = '#2a0b07'; x.lineWidth = 4;
       x.fillRect(-17, -17, 34, 34); x.strokeRect(-17, -17, 34, 34); return new THREE.CanvasTexture(c); })();
@@ -2655,6 +2800,30 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     const struckCount = g => vehicles(g).filter((_, i) => struckAt(g, i, simT())).length;
 
+    // ident (Lee, 2026-11-07): the group's diamond blinks inside a pulsing gold ring, like the UAS IDENT but the map stays put.
+    //      Real clock, so it works while paused. Aboard cargo flashes its carrier.
+    const identTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+      x.lineWidth = 14; x.strokeStyle = 'rgba(10,14,10,.7)'; x.beginPath(); x.arc(64, 64, 52, 0, 2 * Math.PI); x.stroke();
+      x.lineWidth = 7; x.strokeStyle = '#ffd25a'; x.stroke(); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; })();
+    const idents = new Map();                  // group id -> { t0, ring }
+    function identGroup(g) {
+      let o = idents.get(g.id);
+      if (!o) { const ring = new THREE.Sprite(new THREE.SpriteMaterial({ map: identTex, depthTest: false, transparent: true, sizeAttenuation: false })); ring.renderOrder = 21; root.add(ring); idents.set(g.id, o = { ring }); }
+      o.t0 = performance.now();
+    }
+    function identTick() {
+      const now = performance.now();
+      for (const [gid, o] of idents) {
+        const g = groups.find(x => x.id === gid), u = (now - o.t0) / 1800;
+        const syms = [g && view.g.get(gid), g && g.carrier && view.g.get(g.carrier)].filter(Boolean).map(v => v.sym);
+        if (!g || u >= 1) { root.remove(o.ring); o.ring.material.dispose(); idents.delete(gid); for (const s of syms) s.material.opacity = 1; continue; }
+        const at = syms.find(s => s.visible), k = (u * 3) % 1, sz = 0.025 + 0.09 * k;   // three pulses, each growing and fading
+        o.ring.visible = !!at && !obs;
+        if (!at) continue;
+        o.ring.position.copy(at.position); o.ring.scale.set(sz, sz, 1); o.ring.material.opacity = 1 - k;
+        at.material.opacity = k < 0.5 ? 1 : 0.25;  // the diamond blinks with each pulse
+      }
+    }
     function rebuildViews() {
       for (const g of groups) for (const u of g.units) { needModel(u.type); if (VT[u.type].dismount) needModel('inf'); }
       for (const [, v] of view.g) { for (const m of v.meshes) root.remove(m); root.remove(v.sym); v.label.remove(); }
@@ -2743,6 +2912,17 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const last = g.route.length - 1;
         g.route[last] = Object.assign({}, g.route[last], { e: q.e, n: q.n });   // keeps the point's hold and formation
       }
+      for (const g of groups) if (g.carrier) {   // cargo starts at its ship's landing place and follows it, unless its first point was dragged away
+        const c = carrierOf(g); if (!c) continue;
+        const R = fullRoute(c), last = R[R.length - 1], f = g.route[0];
+        if (g.offShip === undefined) {           // saved before cargo had a ship: a start away from the landing point was placed by hand
+          g.offShip = groups.filter(o => o.carrier === c.id).indexOf(g);
+          if (f && (!last || Math.hypot(f.e - last.e, f.n - last.n) > 1)) f.moved = true;
+        }
+        if (!last || (f && f.moved) || (g.join && g.route.length === 1)) continue;
+        buildFam(c); const at = offPoint(g, c);
+        if (f) g.route[0] = Object.assign({}, f, at); else g.route.push(at);
+      }
       for (const g of groups) if (g.parent) {
         const p = parentOf(g), q = p && p.route[g.splitAt];
         if (!q) { detach(g); continue; }
@@ -2787,7 +2967,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function tick() {
       const t = simT(), w = canvas.clientWidth, h = canvas.clientHeight;
-      foot.begin();
+      foot.begin(); pips.begin();
       for (const g of groups) {
         const v = view.g.get(g.id); if (!v) continue;
         const cargo = !!g.carrier, st0 = startOf(g), aboard = cargo && (st0 === null || t < st0);
@@ -2803,10 +2983,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           const draft = T.draft || (wet && T.amph ? T.H * 0.6 : 0);          // swimming IFVs ride low, about 1 m showing
           m.position.set(p.x, ground + T.H / 2 - draft, p.z); m.rotation.y = p.hd; m.visible = true;
           if (T.foot) foot.add(p.x, ground, p.z, p.hd, !!w);
+          const px = T.foot ? PIP_FOOT : PIP_VEH; pips.add(p.x, m.position.y, p.z, w ? -px : px);
           if (!leadPos && !w && (!g.parent || s0 >= 0)) leadPos = m.position;   // the symbol rides the first vehicle still running
           if (!anyPos && (!g.parent || s0 >= 0)) anyPos = m.position;
         });
-        if (s0 !== null) eachDismount(g, t, (i, x, z, hd, down) => foot.add(x, waterAt(x, z) ? 0 : heightAt(x, z) * ex, z, hd, down));
+        if (s0 !== null) eachDismount(g, t, (i, x, z, hd, down) => { const y = waterAt(x, z) ? 0 : heightAt(x, z) * ex; foot.add(x, y, z, hd, down); pips.add(x, y + 1, z, down ? -PIP_FOOT : PIP_FOOT); });
         if (!leadPos) leadPos = anyPos;          // all struck: the symbol stays on the wrecks
         const showSym = !!leadPos && !obs && showEnemy;
         v.sym.visible = showSym;
@@ -2816,7 +2997,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (showLab) { v.label.style.left = ((pv.x + 1) / 2 * w) + 'px'; v.label.style.top = ((1 - pv.y) / 2 * h - 14) + 'px'; } }
         v.label.style.display = showLab ? '' : 'none';
       }
-      foot.end(); updateWakes(t); animFx(t);
+      foot.end(); pips.end(!obs && showEnemy); identTick(); updateWakes(t); animFx(t);
       root.visible = showEnemy; lines.visible = !obs && showRoutes; handles.visible = !obs && showRoutes;
       const hideTags = obs || labelHidden() || !showRoutes;
       for (const h of holdTags) {
@@ -2865,7 +3046,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (drag.mid !== undefined) { sel.route.splice(drag.mid + 1, 0, toEN(p)); shiftRefs(sel, drag.mid + 1, 1); drag = { i: drag.mid + 1 }; selPt = drag.i; }
       if (sel.parent && drag.i === 0) return;              // a branch starts where its parent splits
       if (sel.join && drag.i === sel.route.length - 1) return;   // and ends where it rejoins
-      sel.route[drag.i] = Object.assign({}, sel.route[drag.i], toEN(p)); dragged = true; profile(sel, true); rebuildLines();
+      const handMoved = sel.carrier && drag.i === 0;   // cargo's start stays with its ship until it is really dragged, not on a click's jitter
+      if (handMoved && !sel.route[0].moved && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) <= 5) return;
+      sel.route[drag.i] = Object.assign({}, sel.route[drag.i], toEN(p), handMoved ? { moved: true } : null); dragged = true; profile(sel, true); rebuildLines();
     }, true);
     addEventListener('pointerup', e => {
       if (drag !== null) { drag = null; controls.enabled = !obs; refresh(); downAt = null; return; }
@@ -2933,8 +3116,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const type = (opts && opts.type) || 'zbd', T = VT[type];
       const g = { id: nextId++, name: (opts && opts.name) || (T.name + ' ' + (groups.filter(o => o.units[0] && o.units[0].type === type).length + 1)),
         units: [{ type, n: T.ship ? 1 : T.squad || 6 }], route: [], roads: true, start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
-      if (opts && opts.carrier) { const c = groups.find(o => o.id === opts.carrier); g.carrier = c.id; if (c.route.length) g.route = [{ ...c.route[c.route.length - 1] }]; }
-      groups.push(g); sel = g; refresh(); setEditing(true); return g;
+      if (opts && opts.carrier) { g.carrier = opts.carrier; g.offShip = opts.offShip !== undefined ? opts.offShip : groups.filter(o => o.carrier === opts.carrier).length; }
+      groups.push(g);
+      if (opts && opts.stay) { refresh(); return g; }   // cargo (Lee, 2026-11-07): added as a subgroup in the list; the carrier's panel stays open
+      sel = g; refresh(); setEditing(true); return g;
     }
     function splitHere(g, k) {
       const own = ownCount(g), take = Math.floor(own / 2), type = g.units.length ? g.units[g.units.length - 1].type : 'zbd';
@@ -2975,7 +3160,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         b.addEventListener('click', () => { sel = g; editing = false; selPt = -1; rebuildLines(); renderList(); renderEditor(); });
         const hb = document.createElement('button'); hb.className = 'ghalt'; hb.dataset.halt = g.id;
         hb.addEventListener('click', () => { isHalted(g) ? resume(g) : halt(g); updateStatuses(); });
-        wrap.append(b, hb); list.appendChild(wrap);
+        const ib = document.createElement('button'); ib.className = 'ghalt'; ib.textContent = 'IDENT'; ib.title = 'Flash this group\'s symbol on the map'; ib.setAttribute('aria-label', 'Ident ' + g.name);
+        ib.addEventListener('click', () => identGroup(g));
+        const col = document.createElement('div'); col.className = 'gbtns'; col.append(hb, ib);   // Halt over IDENT, same size
+        wrap.append(b, col); list.appendChild(wrap);
         for (const c of groups.filter(o => o.carrier === g.id || o.parent === g.id)) row(c, depth + 1);
       };
       for (const g of top) row(g, 0);
@@ -2999,6 +3187,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const P = g.prof, ship = isShip(g); let wet = 0, dry = 0;
         for (let i = 0; i < P.X.length; i++) { if (P.S[i] < 40 || P.S[i] > P.len - 60) continue; if (waterAt(P.X[i], P.Z[i])) wet++; else dry++; }
         if (ship && dry > 3) out.push('Route crosses land: ships stay on water.');
+        const beached = ship ? (P.line || []).reduce((a, run) => a + run.paths.filter(vp => { const end = vp.length - 1; return vp.some((pl, j) => { for (let d = 40; d < pl.len - (j === end ? 60 : 0); d += 20) { const q = along(pl, d / pl.len); if (!waterAt(q.x, q.z)) return true; } return false; }); }).length, 0) : 0;
+        if (beached) out.push(`${beached} ${beached > 1 ? 'ships' : 'ship'} in the line ${beached > 1 ? 'cross' : 'crosses'} land: narrow or move the front.`);
         const swimmers = g.units.every(u => VT[u.type].amph);
         if (!ship && wet > 3 && !swimmers) out.push('Route crosses water: ' + g.units.filter(u => !VT[u.type].amph).map(u => VT[u.type].name).join(', ') + ' cannot swim.');
         const legs = routePath(g, g.route).legs, pr = ks => ks.map(k => (k + 1) + '–' + (k + 2)).join(', ');
@@ -3022,7 +3212,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         ${g.parent ? `<p class="hint">${g._rides ? `Stays in <b>${esc(parentOf(g).name)}</b>'s line until its point ${g.splitAt + 1}, then forms its own line.` : `Rides at the rear of <b>${esc(parentOf(g).name)}</b> and turns off at its point ${g.splitAt + 1}.`}</p>
                <div class="row"><button id="op-unsplit">Undo split</button><span class="hint">vehicles go back to ${esc(parentOf(g).name)}</span></div>`
           : c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Drives off after it arrives and unloads.</p>
-               <div class="row"><span class="lbl">Delay after unload</span><input id="op-start" style="width:70px" aria-label="Delay after unloading, mm:ss"></div>`
+               <div class="row"><span class="lbl">Delay after unload</span><input id="op-start" style="width:70px" aria-label="Delay after unloading, mm:ss"></div>${shipPick(g, c)}`
             : `<div class="row"><span class="lbl">Start</span><input id="op-start" style="width:70px" aria-label="Start time, mm:ss"><span class="hint">mm:ss</span></div>`}
         <div class="row"><span class="lbl">Speed km/h</span>
           ${ship ? '' : '<label class="mini">land <input id="op-land" style="width:50px"></label>'}
@@ -3037,17 +3227,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           : editing && g.route.length >= 1 && groups.some(o => canJoin(g, o)) ? `<div class="row"><button id="op-join" aria-pressed="${joinPick}">${joinPick ? 'Cancel rejoin' : 'Rejoin a route'}</button><span class="hint">${joinPick ? 'Click a blue point on the route to rejoin.' : 'snap the end onto another route'}</span></div>` : ''}
         ${editing && selPt >= 0 && selPt < g.route.length ? `<div class="ptrow">
             ${selPt < g.route.length - 1 || g.join ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
-            ${ship ? '' : pointRows(g)}
+            ${pointRows(g)}
             <div class="row"><button id="op-delpt">Delete point ${selPt + 1}</button></div>
-            <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || (formAt(g.route, selPt) === 'line' && selPt > 0 && formAt(g.route, selPt - 1) === 'line' ? 'half the line forms its own line here' : 'rear vehicles take a new road')}</span></div>
+            <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || (!ship && formAt(g.route, selPt) === 'line' && selPt > 0 && formAt(g.route, selPt - 1) === 'line' ? 'half the line forms its own line here' : 'rear vehicles take a new road')}</span></div>
             ${branchesOf(g).filter(b => b.splitAt === selPt).map(b => `<div class="row"><button class="op-unsplit-b" data-id="${b.id}">Undo split</button><span class="hint">${esc(b.name)}</span></div>`).join('')}</div>` : ''}
         ${!editing && g.route.some((p, k) => +p.hold > 0 && k < g.route.length - 1) ? `<p class="hint">Holds: ${g.route.map((p, k) => +p.hold > 0 && k < g.route.length - 1 ? 'point ' + (k + 1) + ' for ' + fmt(p.hold).slice(2) : '').filter(Boolean).join(', ')}.</p>` : ''}
-        ${ship ? `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
-                  <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '.' : 'Nothing aboard yet.'}</p>` : ''}
+        ${!ship ? '' : shipsSpread(g) ? cargoByShip(g, kids) : `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
+                  <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '. Select one in the list above to edit it.' : 'Nothing aboard yet.'}</p>`}
         <div class="row"><button id="op-del" class="fire-btn">Delete group</button></div>`;
       $('op-name').value = g.name;
-      $('op-name').addEventListener('change', e => { g.name = e.target.value.trim() || g.name; refresh(); });
-      const ub = $('op-units');
+      $('op-name').addEventListener('change', e => { g.name = e.target.value.trim() || g.name; refresh(); });      const ub = $('op-units');
       g.units.forEach((u, i) => {
         const r = document.createElement('div'); r.className = 'row';
         r.innerHTML = `<select aria-label="Type">${vtOptions(ship, u.type)}</select><input type="number" min="1" max="60" value="${u.n}" style="width:56px" aria-label="Count"><button aria-label="Remove">×</button>`;
@@ -3059,6 +3248,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       $('op-addunit').addEventListener('click', () => { g.units.push({ type: ship ? 'lcu' : (g.units[0] ? g.units[0].type : 'zbd'), n: ship ? 1 : 2 }); refresh(); });
       if ($('op-start')) $('op-start').value = fmt(g.start).slice(2);
       if ($('op-start')) $('op-start').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(g.start).slice(2); return; } g.start = v; refresh(); });
+      if ($('op-offship')) $('op-offship').addEventListener('change', e => { g.offShip = +e.target.value; delete g.route[0].moved; refresh(); });
       if ($('op-land')) { $('op-land').value = g.land; $('op-land').addEventListener('change', e => { g.land = Math.max(1, +e.target.value || g.land); refresh(); }); }
       $('op-water').value = g.water; $('op-water').addEventListener('change', e => { g.water = Math.max(0, +e.target.value || 0); refresh(); });
       if ($('op-roads')) $('op-roads').addEventListener('click', () => { g.roads = g.roads === false; refresh(); });
@@ -3087,16 +3277,30 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         for (const b of branchesOf(g)) detach(b);
         for (const o of groups) if (o.join && o.join.group === g.id) delete o.join;
         delete g.join;
-        g.route = g.parent ? g.route.slice(0, 1) : c && c.route.length ? [{ ...c.route[c.route.length - 1] }] : []; refresh(); setEditing(true); });
-      if ($('op-cargo')) $('op-cargo').addEventListener('click', () => newGroup({ type: 'fuel', carrier: g.id, name: g.name + ' cargo ' + (kids.length + 1) }));
+        g.route = g.parent ? g.route.slice(0, 1) : []; refresh(); setEditing(true); });
+      if ($('op-cargo')) $('op-cargo').addEventListener('click', () => newGroup({ type: 'fuel', carrier: g.id, stay: true, name: g.name + ' cargo ' + (kids.length + 1) }));
+      for (const b of ed.querySelectorAll('.op-shipcargo')) b.addEventListener('click', () => { const r = +b.dataset.ship;
+        newGroup({ type: 'fuel', carrier: g.id, offShip: r, stay: true, name: g.name + ' ship ' + (r + 1) + ' cargo ' + (kids.filter(k => k.offShip % shipsSpread(g) === r).length + 1) }); });
       $('op-del').addEventListener('click', e => { if (e.target.dataset.armed) removeGroup(g); else { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm delete'; } });
       const w = warnings(g), m = $('op-msg');
       const n0 = note; note = '';
-      m.textContent = (n0 ? n0 + ' ' : '') + (editing ? (joinPick ? 'Pick the point where this group rejoins: click a blue square. Esc cancels.' : 'Click the map to add points. Click a square to select it (white): set a hold, formation or split there; drag it to move. Drag the end of a front bar to widen or turn it. Drag a faint square to add a bend. Red squares belong to the rest of the split: click one to edit that group. Delete removes the white point. Enter or Done to finish.') + (w.length ? ' ' + w.filter(x => !/Click on the map/.test(x)).join(' ') : '')
+      m.textContent = (n0 ? n0 + ' ' : '') + (editing ? (joinPick ? 'Pick the point where this group rejoins: click a blue square. Esc cancels.' : '')   // no instructions or warnings while drawing (Lee, 2026-11-07); warnings show after Done
                               : w.join(' ') || (g.prof ? `Route ${(g.prof.len / 1000).toFixed(1)} km, about ${Math.round(g.prof.dur / 60)} min for the lead.` : ''));
       if (n0 || (!editing && w.length)) m.className = 'msg bad';
     }
     const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    function cargoByShip(g, kids) {            // ship first: each ship's row adds cargo off that ship and lists what it carries
+      const n = shipsSpread(g), mine = r => kids.filter(k => !(k.route[0] && k.route[0].moved) && k.offShip % n === r), placed = kids.filter(k => k.route[0] && k.route[0].moved);
+      const names = list => list.length ? `<span class="hint">${list.map(k => esc(k.name)).join(', ')}</span>` : '';   // names only: a cargo group is edited from the list above
+      return `<div class="lbl">Cargo, looking along the route</div>` + Array.from({ length: n }, (_, r) => `<div class="row"><span class="lbl">Ship ${r + 1}${r ? r === n - 1 ? ' (right)' : '' : ' (left)'}</span><button class="op-shipcargo" data-ship="${r}">+ Cargo group</button>${names(mine(r))}</div>`).join('')
+        + (placed.length ? `<div class="row"><span class="lbl">Placed by hand</span>${names(placed)}</div>` : '')
+        + (kids.length ? '<p class="hint">Select a cargo group in the list above to edit it.</p>' : '');
+    }
+    function shipPick(g, c) {                  // which ship in a Line landing this cargo rolls off
+      const n = shipsSpread(c), moved = g.route[0] && g.route[0].moved; if (!n) return '';
+      const opts = Array.from({ length: n }, (_, r) => `<option value="${r}"${!moved && g.offShip % n === r ? ' selected' : ''}>Ship ${r + 1}${r ? r === n - 1 ? ' (right end)' : '' : ' (left end)'}</option>`).join('');
+      return `<div class="row"><span class="lbl">Off ship</span><select id="op-offship" aria-label="Ship this cargo rolls off">${moved ? '<option selected disabled>Start moved by hand</option>' : ''}${opts}</select><span class="hint">looking along its route</span></div>`;
+    }
     function pointRows(g) {                    // the selected point's formation, frontage, speed and roads to the next point
       const k = selPt, p = g.route[k], end = k === g.route.length - 1 && !g.join, R = g.route;
       const inLine = formAt(R, k) === 'line' || (end && k > 0 && formAt(R, k - 1) === 'line' && p.form !== 'column');
@@ -3106,9 +3310,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           <option value="">As before (${k ? (formAt(R, k - 1) === 'line' ? 'Line' : 'Column') : 'Column'})</option><option value="line">Line</option><option value="column">Column</option></select></div>`;
       if (inLine && !(g._rides && k === 0)) h += `<div class="row"><span class="lbl">Frontage m</span><input id="op-w" style="width:60px" aria-label="Frontage in metres">${p.ang !== undefined ? '<button id="op-ang">Square to route</button>' : '<span class="hint">or drag the bar ends</span>'}</div>`;
       if (k === 0 && formAt(R, 0) === 'line' && startsAbreast(g)) h += '<p class="hint">Starts abreast on this front. Choose Column to start in column instead.</p>';
-      else if (formAt(R, k) === 'line' && (!k || formAt(R, k - 1) !== 'line') && !(g._rides && k === 0)) h += '<p class="hint">Spreads out from here, each vehicle on its own street, abreast at later points. A Column point regroups them.</p>';
+      else if (formAt(R, k) === 'line' && (!k || formAt(R, k - 1) !== 'line') && !(g._rides && k === 0)) h += `<p class="hint">Spreads out from here, ${isShip(g) ? 'each ship on its own track' : 'each vehicle on its own street'}, abreast at later points. A Column point regroups them.</p>`;
       if (!end) h += `<div class="row"><span class="lbl">Speed to next</span><input id="op-kmh" style="width:50px" placeholder="group" aria-label="Speed to the next point, km/h"><span class="hint">km/h</span></div>`;
-      if (!end && g.roads !== false) h += `<div class="row"><span class="lbl">To next point</span><button id="op-straight" aria-pressed="${!p.straight}">Follow roads</button><span class="hint">${p.straight ? 'straight line' : 'on the roads'}</span></div>`;
+      if (!end && !isShip(g) && g.roads !== false) h += `<div class="row"><span class="lbl">To next point</span><button id="op-straight" aria-pressed="${!p.straight}">Follow roads</button><span class="hint">${p.straight ? 'straight line' : 'on the roads'}</span></div>`;
       return h;
     }
     $('op-new').addEventListener('click', () => newGroup({ type: $('op-newtype').value }));
@@ -3119,7 +3323,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, pips: pips.obj, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -3923,7 +4127,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
     // ---- feeds: the main window renders every feed (terrain loaded once) and copies each into its pop-out
     function hideForFeed(on, keep) {
-      const list = [groups.grid, groups.sketch, ui, FIRES.debug.unitGroup, FIRES.debug.arcGroup, OPFOR.debug.lines, OPFOR.debug.handles];
+      const list = [groups.grid, groups.sketch, ui, FIRES.debug.unitGroup, FIRES.debug.arcGroup, OPFOR.debug.lines, OPFOR.debug.handles, OPFOR.debug.pips];
       if (on) { keep.length = 0; for (const o of list) { keep.push(o.visible); o.visible = false; }
         for (const [, g] of OPFOR.debug.view.g) { keep.push(g.sym.visible); g.sym.visible = false; } }
       else { let i = 0; for (const o of list) o.visible = keep[i++]; for (const [, g] of OPFOR.debug.view.g) g.sym.visible = keep[i++]; }
@@ -4119,7 +4323,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const prepoint = () => {
         if (d.state !== 'fly') return note(d, 'The drone is not flying.');
         const g = FIRES.debug.parseGrid(B('f-pp').value); if (g.err) return note(d, g.err);
-        const p = toLocal(g.e, g.n); if (!onMap(p.x, p.z)) return note(d, 'That grid is off the map.');
+        const p = toLocal(g.e, g.n); if (!inPlay(p.x, p.z)) return note(d, 'That grid is off the map.');
         const c = d.cam; updateCam(d);
         const f = d.spi || new THREE.Vector3(c.sx, gy(c.sx, c.sz), c.sz), o = d.cam3.position;
         const ang = f.clone().sub(o).angleTo(new THREE.Vector3(p.x, gy(p.x, p.z), p.z).sub(o));
@@ -4185,7 +4389,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           bar.appendChild(inp);
           bar.appendChild(btn('Launch', 'Fly to the grid and strike it. No camera.', () => {
             const g = FIRES.debug.parseGrid(inp.value); if (g.err) return msg('uas-lmsg', g.err, 'bad');
-            const p = toLocal(g.e, g.n); if (!onMap(p.x, p.z)) return msg('uas-lmsg', 'Target must be on the map.', 'bad');
+            const p = toLocal(g.e, g.n); if (!inPlay(p.x, p.z)) return msg('uas-lmsg', 'Target must be on the map.', 'bad');
             lp.draft = null; msg('uas-lmsg', ''); launch(lp, 'lucas', p);
           }));
         } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
