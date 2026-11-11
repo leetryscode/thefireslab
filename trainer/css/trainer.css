@@ -223,6 +223,14 @@ a.tb-name:hover { color: var(--brass); }
 /* UAS: prominent feed button, custom launch point fold, pop-up reminder */
 .win .feed-btn { margin-left: auto; border-color: var(--brass, #d6b25a); color: #10140f; background: var(--brass, #d6b25a); font-weight: 700; padding: 3px 10px; }
 .win .feed-btn:hover { filter: brightness(1.1); }
+/* Display panel, layout A: big common toggles, minor settings folded under More */
+.dmain button { font-size: 13px; padding: 7px 12px; }
+.dmore details { border-top: 1px solid rgba(255,255,255,.08); }
+.dmore summary { cursor: pointer; padding: 7px 0; color: var(--ink); font: 500 13px var(--font-head, inherit); letter-spacing: .04em; }
+.dmore details[open] summary { color: var(--brass); }
+.dfold { display: grid; gap: 8px; padding: 0 0 10px 12px; }
+.dfold .lbl { min-width: 64px; font-size: 12px; }
+.dfold button { font-size: 11px; padding: 3px 8px; }
 .custom-lp { margin-top: 8px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 6px; }
 .custom-lp summary { cursor: pointer; color: var(--dim); font: 600 12px var(--font-head, inherit); letter-spacing: .06em; text-transform: uppercase; }
 .custom-lp[open] summary { color: inherit; margin-bottom: 6px; }

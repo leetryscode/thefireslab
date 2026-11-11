@@ -1956,7 +1956,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser; the Scenario panel writes the same data to a file)
-    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, offShip: g.offShip, unload: g.unload, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
+    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, offShip: g.offShip, unload: g.unload, offload: g.offload, q: g.q, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
     function save() { try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} }
     function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
@@ -2135,7 +2135,30 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const up = g._rides ? parentOf(g) : null;  // the loose drift carries on through a split without a jump
       g.prof.ph = up && up.prof && up.prof.wpS[g.splitAt] !== undefined ? up.prof.ph + up.prof.wpS[g.splitAt] : 0;
       g.prof.lags = colLags(g, famSize(g)); g.prof.line = lineFor(g, R, wpS, quick);
+      g.prof.delay = offDelays(g);
     }
+    // ---- offloading (Lee, 2026-11-11): one vehicle at a time down each ship's ramp, every `offload` seconds (30 by default).
+    //      Cargo groups off the same ramp queue in the order dragged in the list (q); a group's Wait holds the queue behind it.
+    //      _qoff (set in syncBranches): seconds after the ship arrives that the group's first vehicle is off. Vehicle i then
+    //      runs on its group's clock delayed by prof.delay[i], so it rolls off i × offload after the first and follows the same path.
+    const offloadOf = c => c.offload === undefined ? 30 : Math.max(0, +c.offload || 0);
+    const rampOf = g => { const c = carrierOf(g), n = c ? shipsSpread(c) : 0; return n ? g.offShip % n : 0; };
+    function offDelays(g) {
+      const c = carrierOf(g); if (!c) return null;
+      const P = g.prof, off = offloadOf(c), out = []; let any = false;
+      for (let i = 0; i < ownCount(g); i++) { const e = timeAtS(P, P.lags[i]), d = Math.max(0, i * off - (e === null ? 0 : e)); out.push(d); if (d) any = true; }
+      return any ? out : null;                 // less the time its column place takes anyway, so the gap is exactly one offload
+    }
+    function queueRamps() {
+      const ramps = new Map(), rank = g => g.q === undefined ? 1e9 : g.q;
+      for (const g of groups) if (g.carrier && carrierOf(g)) { const k = g.carrier + ':' + rampOf(g); (ramps.get(k) || ramps.set(k, []).get(k)).push(g); }
+      for (const q of ramps.values()) {
+        q.sort((a, b) => rank(a) - rank(b) || groups.indexOf(a) - groups.indexOf(b));
+        const off = offloadOf(carrierOf(q[0])); let cur = 0;
+        q.forEach((g, k) => { g.q = k; cur += g.start || 0; g._qoff = cur + off; cur += ownCount(g) * off; });
+      }
+    }
+    const vehS = (g, i, t, s0) => { const d = g.prof && g.prof.delay && g.prof.delay[i]; return d ? sAt(g, t - d) : s0; };
 
     // ---- formations (Lee, 2026-11-03). A route point can switch the group to Line or back to Column.
     //      Line: from that point each vehicle drives its OWN path, to its slot on the front at each later point (the
@@ -2145,11 +2168,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     //      point and the rear falls back into column, centre first. Line, then Column at the next point = a swarm.
     //      All of it is worked out on edit (cached); a frame is still one lookup per vehicle.
     const FRONT_SPACING = 30;                  // metres between vehicles in a new line
+    const SEP_MIN = 0.5;                       // metres clear between any two vehicles (placeAll)
     const hash01 = k => { let h = k | 0; h = Math.imul(h ^ (h >>> 16), 0x45d9f3b); h = Math.imul(h ^ (h >>> 16), 0x45d9f3b); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
     const rnd = (g, i, k) => hash01(g.id * 7919 + i * 131 + k * 17);
     const loose = g => !isShip(g) && g.loose !== false;
     function colLags(g, n) {                   // how far behind the lead each vehicle drives in column; Loose: ±25 % of a gap, not cumulative
-      const L = []; for (let i = 0; i < n; i++) L.push(i * g.gap + (loose(g) && i > 0 ? (rnd(g, i, 1) - 0.5) * 0.5 * g.gap : 0)); return L;
+      // never closer than nose to tail plus SEP_MIN, allowing for the Loose breathing (vehAt) on both: a small Spacing can't stack a column
+      const len = Math.max(1, ...g.units.map(u => VT[u.type].L)), need = len + SEP_MIN + (loose(g) ? 2 * Math.min(8, 0.15 * g.gap) : 0);
+      const L = []; for (let i = 0; i < n; i++) L.push(Math.max(i ? L[i - 1] + need : 0, i * g.gap + (loose(g) && i > 0 ? (rnd(g, i, 1) - 0.5) * 0.5 * g.gap : 0))); return L;
     }
     function formAt(R, k) { for (let j = k; j >= 0; j--) if (R[j] && R[j].form) return R[j].form; return 'column'; }
     function frontDir(R, P, k) {               // unit vector along the front at point k: square to the route unless the bar was dragged
@@ -2377,7 +2403,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (!c || depth > 5) return g.start;
       if (!c.prof) return null;
       const arr = realTimeAt(c, c.prof.dur, depth + 1);
-      return arr === null ? null : arr + (c.unload || 0) + g.start;
+      return arr === null ? null : arr + (g._qoff !== undefined ? g._qoff : (c.unload || 0) + g.start);
     }
     // instructor Halt / Resume: live actions, not part of the saved plan
     const halts = g => g.halts || (g.halts = []);
@@ -2463,7 +2489,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (!m.visible || struckAt(g, i, t)) return;                     // a struck vehicle has stopped: no wake
           const T = VT[m.userData.t], pts = [];
           for (let k = 0; k * WAKE_STEP <= WAKE_AGE; k++) {
-            const sk = sAt(g, t - k * WAKE_STEP); if (sk === null) break;
+            const tk = t - k * WAKE_STEP, sk = sAt(g, tk - yldDelay(skey(g, i), tk)); if (sk === null) break;   // running late if it gave way
             const p = vehAt(g, i, sk); if (!p) break;
             const fx = Math.sin(p.hd), fz = Math.cos(p.hd);
             pts.push({ x: p.x - fx * T.L / 2, z: p.z - fz * T.L / 2, px: fz, pz: -fx });   // stern, and the sideways direction
@@ -2708,31 +2734,202 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const A = ashore(g), first = vehicles(g).length, ride = Math.max(1, g.land) / 3.6, walk = VT.inf.land / 3.6;
       if (!A.length) return;
       const holds = holdsFor(g), rel = holds.map(o => realTimeAt(o.g, o.t1));
+      const dl = g.prof.delay;
       A.forEach((a, i) => {
-        const tc = clockAtS(g, a.S); if (tc === null || t < tc) return;
+        const d = dl && dl[i] || 0, tc0 = clockAtS(g, a.S), tc = tc0 === null ? null : tc0 + d; if (tc === null || t < tc) return;
+        const relI = d ? rel.map(x => x === null ? null : x + d) : rel;             // this vehicle runs on a delayed clock
         const hit = struckAt(g, i, t); if (hit && hit.t < tc) return;          // burnt out before it landed: nobody gets out
         for (let j = 0; j < SQUAD; j++) {
           const slot = first + i * SQUAD + j, w = struckAt(g, slot, t);
           if (w) { fn(slot, w.x, w.z, w.hd, true); continue; }
           const tj = tc + j * EXIT_STEP / ride; if (t < tj) break;             // he gets out where the vehicle is, as it passes
-          const id = i * SQUAD + j, s = Math.min(soldierS(a.S + j * EXIT_STEP, walk * (0.9 + 0.2 * rnd(g, id, 4)), t, tj, holds, rel, j), Math.max(a.end, a.S + SQUAD * EXIT_STEP) - (SQUAD - 1 - j) * EXIT_STEP);
+          const id = i * SQUAD + j, s = Math.min(soldierS(a.S + j * EXIT_STEP, walk * (0.9 + 0.2 * rnd(g, id, 4)), t, tj, holds, relI, j), Math.max(a.end, a.S + SQUAD * EXIT_STEP) - (SQUAD - 1 - j) * EXIT_STEP);
           const q = vehAt(g, i, s); if (!q) continue;
           const side = (rnd(g, id, 5) - 0.5) * 2 * SPREAD * Math.min(1, (t - tj) / 5), x = q.x + Math.cos(q.hd) * side, z = q.z - Math.sin(q.hd) * side;
           if (waterAt(x, z)) fn(slot, q.x, q.z, q.hd, false); else fn(slot, x, z, q.hd, false);
         }
       });
     }
+    // ---- spacing (Lee, 2026-11-11): no vehicle drives into or through another. Paths are worked out per group, so a line's
+    //      vehicles converging on a point, or two groups crossing, used to overlap by up to 4 m. Each frame, after every
+    //      vehicle is placed, overlapping pairs are pushed apart to SEP_MIN clear of each other. A light touch pushes along the
+    //      line between them (the one behind holds back); the deeper they are into each other, the more the push turns to each
+    //      one's own right, so a vehicle whose path runs through another's slides round it instead of popping through.
+    //      Everything in the push varies smoothly with the clock, so nothing jumps. Stateless: same time, same places.
+    //      Wrecks don't move; a push into a building goes to the other vehicle.
+    //      Soldiers are left out (cheap to overlap, many of them); ships only space against ships, so cargo can leave its ship.
+    const SEP_PASSES = 4, SEP_CELL = 24, SEP_TURN = 3;   // SEP_MIN sits with FRONT_SPACING; SEP_TURN: how hard a deep overlap turns the push sideways
+    let placedT = null, placedN = -1, placedList = null, placedMap = null;
+    function sepAxes(A, B) {                   // A's and B's axes: per axis the centre offset c and the room D it needs; null if already clear
+      const ax = [];
+      for (const P of [A, B]) for (let k = 0; k < 2; k++) {
+        const nx = k ? Math.cos(P.hd) : Math.sin(P.hd), nz = k ? -Math.sin(P.hd) : Math.cos(P.hd);
+        const r = Q => Q.L / 2 * Math.abs(Math.sin(Q.hd) * nx + Math.cos(Q.hd) * nz) + Q.W / 2 * Math.abs(Math.cos(Q.hd) * nx - Math.sin(Q.hd) * nz);
+        const c = (B.x - A.x) * nx + (B.z - A.z) * nz, D = r(A) + r(B) + SEP_MIN;
+        if (Math.abs(c) >= D) return null;     // a separating axis with room to spare
+        ax.push({ nx, nz, c, D });
+      }
+      return ax;
+    }
+    function sepPush(ax, u) {                  // how far B must move along u to clear A on some axis
+      let best = Infinity;
+      for (const n of ax) { const k = u.x * n.nx + u.z * n.nz; if (Math.abs(k) < 1e-3) continue;
+        best = Math.min(best, k > 0 ? (n.D - n.c) / k : (n.D + n.c) / -k); }
+      return best;
+    }
+    function separate(V) {
+      const live = V.filter(v => !v.foot), C = live.reduce((m, v) => Math.max(m, 2 * v.R + SEP_MIN), SEP_CELL);   // cells at least one pair wide (a RoRo is 150 m)
+      for (let pass = 0; pass < SEP_PASSES; pass++) {
+        const cells = new Map(), key = (c, r) => c * 100003 + r;
+        for (const v of live) { const k = key(Math.floor(v.x / C), Math.floor(v.z / C)); const a = cells.get(k); if (a) a.push(v); else cells.set(k, [v]); }
+        let moved = false;
+        for (const [k, A0] of cells) {
+          const c = Math.round(k / 100003), r = k - c * 100003;
+          for (let dc = 0; dc <= 1; dc++) for (let dr = dc ? -1 : 0; dr <= 1; dr++) {   // each neighbouring pair of cells once
+            const B0 = dc || dr ? cells.get(key(c + dc, r + dr)) : A0; if (!B0) continue;
+            for (let a = 0; a < A0.length; a++) for (let b = B0 === A0 ? a + 1 : 0; b < B0.length; b++) {
+              let A = A0[a], B = B0[b];
+              if (A.ship !== B.ship || (A.struck && B.struck)) continue;
+              const reach = A.R + B.R + SEP_MIN; if (Math.abs(B.x - A.x) > reach || Math.abs(B.z - A.z) > reach) continue;
+              if (A.key > B.key) { const q = A; A = B; B = q; }   // fixed roles, whatever cells they fall in
+              const ax = sepAxes(A, B); if (!ax) continue;
+              // direction for B (A takes the opposite): A to B, plus a turn to B's own right that grows with the depth
+              let deep = Infinity; for (const n of ax) deep = Math.min(deep, n.D - Math.abs(n.c));
+              // (B's right by its own heading, so an overtake or a head-on pass goes round on a fixed side, never flipping as their centres pass)
+              // (the A-to-B part fades as their centres meet, so it can't flip there either)
+              const dx = B.x - A.x, dz = B.z - A.z, dL = Math.max(Math.hypot(dx, dz), (A.L + B.L) / 4), w = SEP_TURN * Math.min(1, deep / ((A.W + B.W) / 2));
+              let mx = dx / dL + Math.cos(B.hd) * w, mz = dz / dL - Math.sin(B.hd) * w, mL = Math.hypot(mx, mz);
+              if (mL < 1e-3) { mx = Math.cos(B.hd); mz = -Math.sin(B.hd); mL = 1; }
+              const m = { x: mx / mL, z: mz / mL }, d = sepPush(ax, m);
+              const s = { d: (isFinite(d) ? d : deep) + 0.05, nx: m.x, nz: m.z };   // a hair over, so a later push in the same pass rarely leaves it short
+              let wa = A.fix > B.fix ? 0 : B.fix > A.fix ? 1 : 0.5;   // the one moving goes round the one standing
+              if (wa > 0 && wa < 1 && !A.ship && CITY.ready) {   // don't shove one into a building: the other takes the push
+                const inA = CITY.solidAt(A.x - s.nx * s.d / 2, A.z - s.nz * s.d / 2), inB = CITY.solidAt(B.x + s.nx * s.d / 2, B.z + s.nz * s.d / 2);
+                if (inA && !inB) wa = 0; else if (inB && !inA) wa = 1;
+              }
+              A.x -= s.nx * s.d * wa; A.z -= s.nz * s.d * wa; B.x += s.nx * s.d * (1 - wa); B.z += s.nz * s.d * (1 - wa); moved = true;
+            }
+          }
+        }
+        if (!moved) break;
+      }
+    }
+    // ---- yielding (Lee, 2026-11-11): a vehicle whose next step would run it into another waits instead, and its own plan
+    //      runs late by that much. Worked out by stepping the whole scenario on a fixed YLD_DT grid from T+0, one step at a
+    //      time, kept as a per-vehicle table of how late it is (yld.D). A frame reads the table: the clock still decides
+    //      everything (pause, 10x, scrubbing back), and the steps are only computed as the clock first reaches them, so
+    //      normally a fraction of a step per frame. Route edits start the table again; a halt, resume or strike only
+    //      throws away the steps after it. The one moving in is the one that waits; two waiting on each other: the higher
+    //      key goes and the push below (separate) lets it squeeze by. Nobody waits for a vehicle whose group has finished its
+    //      route (parked for good): it squeezes by at once. After YLD_GIVEUP seconds behind something else that doesn't clear
+    //      (a halted vehicle on its road), it squeezes by the same way. Wrecks block nobody.
+    const YLD_DT = 0.25, YLD_MUTUAL = 2, YLD_GIVEUP = 30;
+    const yld = { k: 0, list: null, D: new Map(), W: new Map(), B: new Map(), posK: -1, pos: null, profs: [], halts: [], struck: new Map() };
+    function rawPos(g, i, t) {                 // where vehicle i of g stands at time t by its own plan; null off the ground
+      const st0 = startOf(g); if (g.carrier && (st0 === null || t < st0)) return null;
+      const s0 = sAt(g, t); if (s0 === null) return null;
+      return vehAt(g, i, vehS(g, i, t, s0));
+    }
+    const parked = (g, t) => { const s = sAt(g, t); return !!g.prof && s !== null && s >= g.prof.len; };   // its group has finished its route
+    const ovl = (A, B) => { const ax = sepAxes(A, B); if (!ax) return 0; let d = Infinity; for (const n of ax) d = Math.min(d, n.D - Math.abs(n.c)); return d; };
+    function yldCheck() {                      // what changed since the table was worked out, and from when it is now wrong
+      let reset = groups.length !== yld.profs.length;
+      for (let k = 0; k < groups.length && !reset; k++) if (groups[k].prof !== yld.profs[k]) reset = true;
+      for (const [k, w] of yld.struck) if (struck.get(k) !== w) reset = true;   // a wreck cleared
+      if (reset) {
+        yld.profs = groups.map(g => g.prof); yld.k = 0; yld.list = null; yld.D.clear(); yld.W.clear(); yld.B.clear(); yld.posK = -1;
+        yld.halts = groups.map(g => JSON.stringify(halts(g))); yld.struck = new Map(struck); return;
+      }
+      let from = Infinity;
+      groups.forEach((g, k) => { const h = JSON.stringify(halts(g)); if (h !== yld.halts[k]) { yld.halts[k] = h; from = Math.min(from, simT()); } });
+      for (const [k, w] of struck) if (!yld.struck.has(k)) { yld.struck.set(k, w); from = Math.min(from, w.t); }
+      if (from < Infinity) { yld.k = Math.min(yld.k, Math.max(0, Math.floor(from / YLD_DT) - 1)); yld.posK = -1; }
+    }
+    function yldStep() {                       // step k -> k + 1
+      const k = yld.k, t0 = k * YLD_DT, t1 = t0 + YLD_DT;
+      if (!yld.list) {
+        yld.list = [];
+        for (const g of groups) vehicles(g).forEach((type, i) => { const T = VT[type]; if (T.foot) return;
+          const key = skey(g, i); yld.list.push({ g, i, key, L: T.L, W: T.W, R: Math.hypot(T.L, T.W) / 2, ship: !!T.ship });
+          yld.D.set(key, [0]); yld.W.set(key, [0]); yld.B.set(key, ['']); });
+      }
+      const L = yld.list, C = L.reduce((m, v) => Math.max(m, 2 * v.R + SEP_MIN + 8), SEP_CELL), cell = (x, z) => Math.floor(x / C) * 100003 + Math.floor(z / C);
+      if (yld.posK !== k) {                    // where everyone stands at step k
+        yld.pos = new Map();
+        for (const v of L) { if (struckAt(v.g, v.i, t0)) continue; const tv = t0 - yld.D.get(v.key)[k], p = rawPos(v.g, v.i, tv);
+          if (p) yld.pos.set(v.key, { x: p.x, z: p.z, hd: p.hd, L: v.L, W: v.W, R: v.R, ship: v.ship, key: v.key, park: parked(v.g, tv) }); }
+      }
+      const cells = new Map();
+      for (const b of yld.pos.values()) { const c = cell(b.x, b.z), a = cells.get(c); if (a) a.push(b); else cells.set(c, [b]); }
+      const next = new Map(), blockerNow = new Map();
+      for (const v of L) {
+        const D = yld.D.get(v.key), W = yld.W.get(v.key), Bk = yld.B.get(v.key), d = D[k], w = W[k], p = yld.pos.get(v.key);
+        if (struckAt(v.g, v.i, t1)) { D[k + 1] = d; W[k + 1] = 0; Bk[k + 1] = ''; if (p) p.gone = true; continue; }   // a wreck: blocks nobody
+        const q = rawPos(v.g, v.i, t1 - d);
+        if (!q) { D[k + 1] = d; W[k + 1] = 0; Bk[k + 1] = ''; if (p) p.gone = true; continue; }
+        const cand = { x: q.x, z: q.z, hd: q.hd, L: v.L, W: v.W, R: v.R, ship: v.ship, key: v.key, park: parked(v.g, t1 - d) };
+        let by = '';
+        if (p) {
+          const c0 = Math.floor(cand.x / C), r0 = Math.floor(cand.z / C);
+          search: for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) for (const o of cells.get((c0 + dc) * 100003 + r0 + dr) || []) {
+            if (o.key === v.key || o.gone || o.park || o.ship !== v.ship) continue;
+            const reach = o.R + v.R + SEP_MIN; if (Math.abs(o.x - cand.x) > reach || Math.abs(o.z - cand.z) > reach) continue;
+            const dn = ovl(cand, o); if (dn > 0 && dn > ovl(p, o) + 1e-3) { by = o.key; break search; }
+          }
+        }
+        let go = !by;
+        if (by) {
+          const theirs = blockerNow.has(by) ? blockerNow.get(by) : yld.B.get(by)[k];
+          go = theirs === v.key ? v.key > by && w >= YLD_MUTUAL : w >= YLD_GIVEUP;
+        }
+        D[k + 1] = go ? d : d + YLD_DT; W[k + 1] = by ? w + YLD_DT : 0; Bk[k + 1] = go ? '' : by; blockerNow.set(v.key, Bk[k + 1]);
+        const b = go ? cand : p; next.set(v.key, b);
+        if (p && b !== p) { p.x = b.x; p.z = b.z; p.hd = b.hd; p.park = b.park; }   // moved: others this step see where it went (same cell or the next)
+        else if (!p) { const c = cell(b.x, b.z), a = cells.get(c); if (a) a.push(b); else cells.set(c, [b]); }
+      }
+      for (const b of next.values()) delete b.gone;
+      yld.pos = next; yld.posK = k + 1; yld.k = k + 1;
+    }
+    // Catching up a long way (a route edited late in a run, the clock jumped forward) is spread over frames, YLD_BUDGET ms
+    // each; until it is done, vehicles past the worked-out steps keep the lateness they had there.
+    const YLD_BUDGET = 6;
+    let yldFrame = -1, yldUntil = 0;
+    function yldCatchUp(K, all) {
+      const now = performance.now();
+      if (yldFrame !== tickN) { yldFrame = tickN; yldCheck(); yldUntil = now + YLD_BUDGET; }
+      while (yld.k < K && (all || yld.k === 0 || performance.now() < yldUntil)) yldStep();
+    }
+    function yldDelay(key, t) {                // how late vehicle `key` is running at time t
+      if (t <= 0) return 0;
+      const K = t / YLD_DT, k0 = Math.floor(K);
+      yldCatchUp(k0 + 1);
+      const a = yld.D.get(key); if (!a) return 0;
+      if (k0 >= yld.k) return a[yld.k] || 0;
+      const d0 = a[k0] || 0, d1 = a[k0 + 1] === undefined ? d0 : a[k0 + 1];
+      return d0 + (d1 - d0) * (K - k0);
+    }
+    function placeAll(t) {                     // every vehicle on the ground at time t, spaced; cached for the frame
+      if (placedT === t && placedN === tickN) return placedList;
+      const out = [], map = new Map();
+      for (const g of groups) {
+        const st0 = startOf(g); if (g.carrier && (st0 === null || t < st0)) continue;
+        if (sAt(g, t) === null) continue;
+        vehicles(g).forEach((type, i) => {
+          const w = struckAt(g, i, t), tv = VT[type].foot ? t : t - yldDelay(skey(g, i), t), p = w || rawPos(g, i, tv); if (!p) return;
+          const T = VT[type], v = { g, i, type, key: skey(g, i), x: p.x, z: p.z, hd: p.hd, struck: !!w, L: T.L, W: T.W, R: Math.hypot(T.L, T.W) / 2, ship: !!T.ship, foot: !!T.foot,
+            fix: w ? 1 : 0 };                  // a wreck never moves; a parked one makes room, which looks better than the other being thrown round it
+          out.push(v); map.set(v.key, v);
+        });
+      }
+      separate(out);
+      placedT = t; placedN = tickN; placedList = out; placedMap = map;
+      return out;
+    }
     function vehiclesAt(t) {                   // every vehicle on the ground at time t (not aboard a ship), struck ones where they stopped
-      const out = [];
+      const out = placeAll(t).map(v => ({ g: v.g, i: v.i, type: v.type, key: v.key, x: v.x, z: v.z, hd: v.hd, struck: v.struck }));
       for (const g of groups) {
         const st0 = startOf(g); if (g.carrier && (st0 === null || t < st0)) continue;
         const s0 = sAt(g, t); if (s0 === null) continue;
-        vehicles(g).forEach((type, i) => {
-          const w = struckAt(g, i, t);
-          if (w) { out.push({ g, i, type, key: skey(g, i), x: w.x, z: w.z, hd: w.hd, struck: true }); return; }
-          const p = vehAt(g, i, s0); if (!p) return;
-          out.push({ g, i, type, key: skey(g, i), x: p.x, z: p.z, hd: p.hd, struck: false });
-        });
         eachDismount(g, t, (i, x, z, hd, down) => out.push({ g, i, type: 'inf', key: skey(g, i), x, z, hd, struck: down }));
       }
       return out;
@@ -2923,6 +3120,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         buildFam(c); const at = offPoint(g, c);
         if (f) g.route[0] = Object.assign({}, f, at); else g.route.push(at);
       }
+      queueRamps();
       for (const g of groups) if (g.parent) {
         const p = parentOf(g), q = p && p.route[g.splitAt];
         if (!q) { detach(g); continue; }
@@ -2956,7 +3154,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const st = startOf(g), t = simT();
       if (st === null) return 'Waiting for carrier route';
       const c = carrierOf(g);
-      if (c && t < st - g.start) return t < st - g.start - (c.unload || 0) ? 'Aboard ' + c.name : 'Unloading';
+      if (c && t < st) return (t < st - (g._qoff || 0) ? 'Aboard ' + c.name : 'In queue') + ' · off ' + fmt(st);
+      if (c && g.prof.delay) { const n = ownCount(g), off = offloadOf(c), k = off > 0 ? Math.min(n, Math.floor((t - st) / off) + 1) : n;
+        if (k < n) return 'Unloading ' + k + ' of ' + n + ' off'; }
       if (isHalted(g)) return 'Halted by instructor';
       if (!g.parent && (t < st || (t === st && t === 0))) return 'Starts ' + fmt(st);
       const s = sAt(g, t), e = moveTime(g, t);
@@ -2967,7 +3167,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function tick() {
       const t = simT(), w = canvas.clientWidth, h = canvas.clientHeight;
-      foot.begin(); pips.begin();
+      foot.begin(); pips.begin(); placeAll(t);
       for (const g of groups) {
         const v = view.g.get(g.id); if (!v) continue;
         const cargo = !!g.carrier, st0 = startOf(g), aboard = cargo && (st0 === null || t < st0);
@@ -2975,7 +3175,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         let leadPos = null, anyPos = null;
         v.meshes.forEach((m, i) => {
           if (s0 === null) { m.visible = false; return; }
-          const w = struckAt(g, i, t), p = w || vehAt(g, i, s0);
+          const w = struckAt(g, i, t), p = placedMap.get(skey(g, i));       // placed and spaced by placeAll
           if (!p) { m.visible = false; return; }                             // aboard, or no route to stand on
           const T = VT[m.userData.t];
           charred(m, !!w);
@@ -3115,7 +3315,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function newGroup(opts) {
       const type = (opts && opts.type) || 'zbd', T = VT[type];
       const g = { id: nextId++, name: (opts && opts.name) || (T.name + ' ' + (groups.filter(o => o.units[0] && o.units[0].type === type).length + 1)),
-        units: [{ type, n: T.ship ? 1 : T.squad || 6 }], route: [], roads: true, start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null, unload: T.unload || 0 };
+        units: [{ type, n: T.ship ? 1 : T.squad || 6 }], route: [], roads: true, start: 0, land: T.land, water: T.water, gap: T.gap, carrier: null };
+      if (T.ship) g.offload = 30;
       if (opts && opts.carrier) { g.carrier = opts.carrier; g.offShip = opts.offShip !== undefined ? opts.offShip : groups.filter(o => o.carrier === opts.carrier).length; }
       groups.push(g);
       if (opts && opts.stay) { refresh(); return g; }   // cargo (Lee, 2026-11-07): added as a subgroup in the list; the carrier's panel stays open
@@ -3164,11 +3365,42 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         ib.addEventListener('click', () => identGroup(g));
         const col = document.createElement('div'); col.className = 'gbtns'; col.append(hb, ib);   // Halt over IDENT, same size
         wrap.append(b, col); list.appendChild(wrap);
-        for (const c of groups.filter(o => o.carrier === g.id || o.parent === g.id)) row(c, depth + 1);
+        if (g.carrier) dragQueue(g, b, wrap);
+        const cargo = groups.filter(o => o.carrier === g.id).sort((x, y) => rampOf(x) - rampOf(y) || x.q - y.q);
+        for (const c of [...cargo, ...groups.filter(o => o.parent === g.id)]) row(c, depth + 1);
       };
       for (const g of top) row(g, 0);
       updateStatuses();
     }
+    // drag a cargo row onto another off the same ramp to change the offload order (Lee, 2026-11-11). Pointer events, not
+    // HTML drag and drop, so it works with a mouse, a pen or a finger. A press that never moves is still a click.
+    let qDrag = null;                          // { g, y0, on, over, after }
+    const sameRamp = (a, b) => a && b && a !== b && a.carrier === b.carrier && rampOf(a) === rampOf(b);
+    function dragQueue(g, b, wrap) {
+      b.style.touchAction = 'none'; b.title = 'Drag to change the offload order';
+      wrap.dataset.gid = g.id;
+      b.addEventListener('pointerdown', e => { if (e.button !== 0) return; qDrag = { g, y0: e.clientY, on: false, over: null, after: false }; });
+      b.addEventListener('click', e => { if (b.dataset.dragged) { delete b.dataset.dragged; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    }
+    const clearMarks = () => { for (const w of list.querySelectorAll('.gwrap')) w.style.boxShadow = ''; };
+    addEventListener('pointermove', e => {
+      if (!qDrag) return;
+      if (!qDrag.on && Math.abs(e.clientY - qDrag.y0) < 6) return;
+      qDrag.on = true; document.body.style.cursor = 'grabbing'; clearMarks();
+      const el = document.elementFromPoint(e.clientX, e.clientY), w = el && el.closest && el.closest('#op-list .gwrap'), o = w && groups.find(x => x.id === +w.dataset.gid);
+      qDrag.over = sameRamp(qDrag.g, o) ? o : null;
+      if (qDrag.over) { const r = w.getBoundingClientRect(); qDrag.after = e.clientY > r.top + r.height / 2; w.style.boxShadow = qDrag.after ? '0 3px 0 #d6b25a' : '0 -3px 0 #d6b25a'; }
+    });
+    addEventListener('pointerup', () => {
+      const d = qDrag; qDrag = null; if (!d) return;
+      document.body.style.cursor = ''; clearMarks(); if (!d.on) return;
+      const w = list.querySelector(`.gwrap[data-gid="${d.g.id}"] .grow`); if (w) w.dataset.dragged = '1';   // swallow the click that ends the drag
+      if (!d.over) return;
+      const q = groups.filter(o => sameRamp(o, d.over) || o === d.over).sort((x, y) => x.q - y.q).filter(o => o !== d.g);
+      q.splice(q.indexOf(d.over) + (d.after ? 1 : 0), 0, d.g); q.forEach((o, k) => { o.q = k; });
+      refresh();
+    });
+    addEventListener('pointercancel', () => { qDrag = null; document.body.style.cursor = ''; clearMarks(); });
     function updateStatuses() {
       for (const el of list.querySelectorAll('[data-st]')) { const g = groups.find(o => o.id === +el.dataset.st); if (g) el.textContent = status(g); }
       for (const el of list.querySelectorAll('[data-halt]')) { const g = groups.find(o => o.id === +el.dataset.halt); if (!g) continue;
@@ -3211,8 +3443,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         <div class="row"><button id="op-addunit">+ ${ship ? 'Ship' : 'Vehicle type'}</button></div>
         ${g.parent ? `<p class="hint">${g._rides ? `Stays in <b>${esc(parentOf(g).name)}</b>'s line until its point ${g.splitAt + 1}, then forms its own line.` : `Rides at the rear of <b>${esc(parentOf(g).name)}</b> and turns off at its point ${g.splitAt + 1}.`}</p>
                <div class="row"><button id="op-unsplit">Undo split</button><span class="hint">vehicles go back to ${esc(parentOf(g).name)}</span></div>`
-          : c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Drives off after it arrives and unloads.</p>
-               <div class="row"><span class="lbl">Delay after unload</span><input id="op-start" style="width:70px" aria-label="Delay after unloading, mm:ss"></div>${shipPick(g, c)}`
+          : c ? `<p class="hint">Carried by <b>${esc(c.name)}</b>. Comes off ${ordinal(g.q + 1)} in its ramp's queue: drag the cargo rows in the list to change the order.</p>
+               <div class="row"><span class="lbl">Wait first</span><input id="op-start" style="width:70px" aria-label="Wait before offloading, mm:ss"><span class="hint">holds the queue</span></div>${shipPick(g, c)}`
             : `<div class="row"><span class="lbl">Start</span><input id="op-start" style="width:70px" aria-label="Start time, mm:ss"><span class="hint">mm:ss</span></div>`}
         <div class="row"><span class="lbl">Speed km/h</span>
           ${ship ? '' : '<label class="mini">land <input id="op-land" style="width:50px"></label>'}
@@ -3220,7 +3452,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         <div class="row"><span class="lbl">Spacing m</span><input id="op-gap" style="width:60px" aria-label="Spacing in metres"></div>
         ${ship ? '' : `<div class="row"><span class="lbl">Movement</span><button id="op-loose" aria-pressed="${loose(g)}">Loose</button><span class="hint">${loose(g) ? 'uneven spacing, slight drift' : 'exact spacing'}</span></div>`}
         ${ship ? '' : `<div class="row"><span class="lbl">Roads</span><button id="op-roads" aria-pressed="${g.roads !== false}">Follow roads</button><span class="hint">${g.roads !== false ? 'between your points' : 'straight lines'}</span></div>`}
-        ${ship ? `<div class="row"><span class="lbl">Unload s</span><input id="op-unload" style="width:60px" aria-label="Unloading time in seconds"></div>` : ''}
+        ${ship ? `<div class="row"><span class="lbl">Offload s</span><input id="op-offload" style="width:60px" aria-label="Seconds to offload each vehicle"><span class="hint">per vehicle, one at a time</span></div>${offloadPlan(g, kids)}` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
         <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
         ${g.join ? `<div class="row"><span class="hint">Rejoins <b>${esc((groups.find(o => o.id === g.join.group) || {}).name || '?')}</b> at its point ${g.join.at + 1}, then follows its route.</span><button id="op-unjoin">Unjoin</button></div>`
@@ -3253,7 +3485,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       $('op-water').value = g.water; $('op-water').addEventListener('change', e => { g.water = Math.max(0, +e.target.value || 0); refresh(); });
       if ($('op-roads')) $('op-roads').addEventListener('click', () => { g.roads = g.roads === false; refresh(); });
       $('op-gap').value = g.gap; $('op-gap').addEventListener('change', e => { g.gap = Math.max(5, +e.target.value || g.gap); refresh(); });
-      if ($('op-unload')) { $('op-unload').value = g.unload; $('op-unload').addEventListener('change', e => { g.unload = Math.max(0, +e.target.value || 0); refresh(); }); }
+      if ($('op-offload')) { $('op-offload').value = offloadOf(g); $('op-offload').addEventListener('change', e => { g.offload = Math.max(0, Math.round(+e.target.value || 0)); refresh(); }); }
       if ($('op-hold')) { const p = g.route[selPt]; $('op-hold').value = fmt(+p.hold || 0).slice(2);
         $('op-hold').addEventListener('change', e => { const v = parseT(e.target.value); if (v === null) { e.target.value = fmt(+p.hold || 0).slice(2); return; }
           if (v > 0) p.hold = v; else delete p.hold; refresh(); }); }
@@ -3289,6 +3521,17 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (n0 || (!editing && w.length)) m.className = 'msg bad';
     }
     const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    const ordinal = n => n + (n % 100 > 10 && n % 100 < 14 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+    function offloadPlan(c, kids) {            // each ramp's queue with its off times, in order
+      if (!kids.length) return '';
+      const arr = c.prof ? realTimeAt(c, c.prof.dur) : null, n = shipsSpread(c), off = offloadOf(c), rows = [];
+      for (let r = 0; r < Math.max(1, n); r++) {
+        const q = kids.filter(k => rampOf(k) === r).sort((a, b) => a.q - b.q); if (!q.length) continue;
+        const at = k => arr === null || !isFinite(arr) ? '' : ' ' + fmt(arr + k._qoff) + '–' + fmt(arr + k._qoff + (ownCount(k) - 1) * off);
+        rows.push(`<p class="hint">${n ? 'Ship ' + (r + 1) + ': ' : ''}${q.map((k, i) => (i + 1) + '. ' + esc(k.name) + at(k)).join(' · ')}</p>`);
+      }
+      return `<div class="lbl">Offload order</div>${rows.join('')}<p class="hint">Drag cargo rows in the list above to reorder.${arr === null ? ' Times show once the ship has a route.' : ''}</p>`;
+    }
     function cargoByShip(g, kids) {            // ship first: each ship's row adds cargo off that ship and lists what it carries
       const n = shipsSpread(g), mine = r => kids.filter(k => !(k.route[0] && k.route[0].moved) && k.offShip % n === r), placed = kids.filter(k => k.route[0] && k.route[0].moved);
       const names = list => list.length ? `<span class="hint">${list.map(k => esc(k.name)).join(', ')}</span>` : '';   // names only: a cargo group is edited from the list above
@@ -3323,7 +3566,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, pips: pips.obj, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, pips: pips.obj, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, vehAt, placeAll, yld, yldDelay, yldCatchUp, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -4703,7 +4946,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         ${tbl(['Type', 'L × W × H m', 'Land', 'Water', 'Gap', 'Damage class', 'Notes'],
           Object.entries(VT).map(([k, t]) => [t.name, t.L + ' × ' + t.W + ' × ' + t.H, t.land ? t.land + ' km/h' : '—', t.water ? t.water + ' km/h' : '—', t.gap + ' m',
             D.CLASS[k] ? CLS[D.CLASS[k]].split(' ')[0] : 'cannot be struck',
-            [t.amph ? 'amphibious' : '', t.ship ? 'draft ' + t.draft + ' m, unloads in ' + mmss(t.unload) : ''].filter(Boolean).join(', ') || '—']), 'num')}
+            [t.amph ? 'amphibious' : '', t.ship ? 'draft ' + t.draft + ' m, offloads one vehicle at a time (30 s each unless set on the ship)' : ''].filter(Boolean).join(', ') || '—']), 'num')}
         ${list([
           'Sizes and speeds are approximate public figures ' + PH + '; speed and gap are set per group in the editor.',
           'Water = no terrain data or ground below 0.3 m.',

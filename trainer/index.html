@@ -59,24 +59,37 @@
 
 <section class="win" id="w-display" aria-label="Display settings" hidden>
   <header class="win-h"><h2>Display</h2><button class="win-x" aria-label="Close Display">×</button></header>
+  <!-- Layout A (Lee, 2026-11-10): the common toggles up top at full weight, the rest folded under More. Tabled for later refinement. -->
   <div class="win-b">
-    <div class="row"><span class="lbl">Ground</span><button id="gr-hybrid" aria-pressed="true">Hybrid</button><button id="gr-photo" aria-pressed="false">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
-    <div class="row"><span class="lbl">Exaggeration</span>
-      <button id="ex1" aria-pressed="true">1×</button><button id="ex2" aria-pressed="false">2×</button><button id="ex3" aria-pressed="false">3×</button></div>
-    <div class="row"><span class="lbl">Layers</span>
-      <button id="tg-grid" aria-pressed="true">1 km grid</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-labels" aria-pressed="true">Labels</button></div>
-    <div class="row"><span class="lbl">City</span><button id="tg-bldg" aria-pressed="true">Buildings</button><button id="tg-trees" aria-pressed="true">Trees</button></div>
-    <div class="row"><span class="lbl">Roofs</span><button id="rf-plain" aria-pressed="true">Plain</button><button id="rf-photo" aria-pressed="false">Photo</button></div>
-    <div class="row"><span class="lbl">Enemy</span><button id="tg-enemy" aria-pressed="true">Enemy</button><button id="tg-eroutes" aria-pressed="true">Enemy routes</button></div>
-    <div class="row"><span class="lbl">Civilians</span><button id="cv-off" aria-pressed="false">Off</button><button id="cv-sparse" aria-pressed="false">Sparse</button><button id="cv-normal" aria-pressed="true">Normal</button><button id="cv-rush" aria-pressed="false">Rush hour</button></div>
-    <div class="row"><span class="lbl">Artillery</span><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
-    <div class="row"><span class="lbl">Diagnostics</span><button id="tg-perf" aria-pressed="false" title="Frame time, fps, JS time per module, draw calls and triangles">Performance</button></div>
-    <div class="row"><span class="lbl">UAS</span><button id="tg-u-sym" aria-pressed="true">Symbols</button><button id="tg-u-marks" aria-pressed="true">Marks</button></div>
-    <div class="row"><span class="lbl">UAS paths</span><button id="tg-u-orbit" aria-pressed="true" title="Orbit circles and their centre drop lines">Orbits</button><button id="tg-u-route" aria-pressed="true" title="Waypoint routes, return-to-base and LUCAS flight paths">Routes</button></div>
-    <div class="row"><span class="lbl">UAS sensor</span><button id="tg-u-fov" aria-pressed="true" title="Camera footprint on the ground">FOV</button><button id="tg-u-spi" aria-pressed="true" title="Dashed line from the UAS to the point under its crosshair">Sensor line</button><button id="tg-u-scan" aria-pressed="true" title="Area a camera in Scan mode sweeps">Scan area</button></div>
-    <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N.</p>
-    <p class="meta" id="city-meta">Buildings and trees: loading…</p>
-    <p class="hint">3D: drag to pan; Shift-drag or right-drag to orbit and tilt; scroll to zoom. Keys: arrows or WASD pan, Q/E or Shift+arrows turn, PageUp/PageDown zoom. Map: drag to pan, scroll to zoom.</p>
+    <div class="lbl">On the map</div>
+    <div class="row dmain"><button id="tg-enemy" aria-pressed="true">Enemy</button><button id="tg-eroutes" aria-pressed="true">Enemy routes</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-u-sym" aria-pressed="true" title="UAS symbols">UAS</button><button id="tg-labels" aria-pressed="true">Labels</button><button id="tg-grid" aria-pressed="true">1 km grid</button></div>
+    <div class="lbl">Civilians</div>
+    <div class="row"><span class="seg" role="group" aria-label="Civilians"><button id="cv-off" aria-pressed="false">Off</button><button id="cv-sparse" aria-pressed="false">Sparse</button><button id="cv-normal" aria-pressed="true">Normal</button><button id="cv-rush" aria-pressed="false">Rush hour</button></span></div>
+    <div class="dmore">
+      <div class="lbl">More</div>
+      <details><summary>Ground and city</summary><div class="dfold">
+        <div class="row"><span class="lbl">Ground</span><button id="gr-hybrid" aria-pressed="true">Hybrid</button><button id="gr-photo" aria-pressed="false">Photo</button><button id="gr-relief" aria-pressed="false">Relief</button></div>
+        <div class="row"><span class="lbl">Height</span><button id="ex1" aria-pressed="true" title="Terrain exaggeration">1×</button><button id="ex2" aria-pressed="false" title="Terrain exaggeration">2×</button><button id="ex3" aria-pressed="false" title="Terrain exaggeration">3×</button></div>
+        <div class="row"><span class="lbl">City</span><button id="tg-bldg" aria-pressed="true">Buildings</button><button id="tg-trees" aria-pressed="true">Trees</button></div>
+        <div class="row"><span class="lbl">Roofs</span><button id="rf-plain" aria-pressed="true">Plain</button><button id="rf-photo" aria-pressed="false">Photo</button></div>
+      </div></details>
+      <details><summary>UAS detail</summary><div class="dfold">
+        <div class="row"><span class="lbl">Marks</span><button id="tg-u-marks" aria-pressed="true">Marks</button></div>
+        <div class="row"><span class="lbl">Paths</span><button id="tg-u-orbit" aria-pressed="true" title="Orbit circles and their centre drop lines">Orbits</button><button id="tg-u-route" aria-pressed="true" title="Waypoint routes, return-to-base and LUCAS flight paths">Routes</button></div>
+        <div class="row"><span class="lbl">Sensor</span><button id="tg-u-fov" aria-pressed="true" title="Camera footprint on the ground">FOV</button><button id="tg-u-spi" aria-pressed="true" title="Dashed line from the UAS to the point under its crosshair">Sensor line</button><button id="tg-u-scan" aria-pressed="true" title="Area a camera in Scan mode sweeps">Scan area</button></div>
+      </div></details>
+      <details><summary>Artillery</summary><div class="dfold">
+        <div class="row"><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
+      </div></details>
+      <details><summary>Diagnostics</summary><div class="dfold">
+        <div class="row"><button id="tg-perf" aria-pressed="false" title="Frame time, fps, JS time per module, draw calls and triangles">Performance</button></div>
+      </div></details>
+      <details><summary>Data sources and keys</summary><div class="dfold">
+        <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N.</p>
+        <p class="meta" id="city-meta">Buildings and trees: loading…</p>
+        <p class="hint">3D: drag to pan; Shift-drag or right-drag to orbit and tilt; scroll to zoom. Keys: arrows or WASD pan, Q/E or Shift+arrows turn, PageUp/PageDown zoom. Map: drag to pan, scroll to zoom.</p>
+      </div></details>
+    </div>
   </div>
 </section>
 
