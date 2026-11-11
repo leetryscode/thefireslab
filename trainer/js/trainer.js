@@ -1805,6 +1805,71 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     $('fm-low').addEventListener('click', () => { angle = 'low'; syncAngle(); });
     $('fm-unit').addEventListener('change', syncAngle);
 
+    // ---- QUICK FIRE (Lee, 2026-11-11): the instructor paints effects on a point. No firing unit, no flight: rounds land
+    //      now, scattered round the aim point (gaussian, sd m 1σ each axis), one every gap s. Damage rolls as for any burst,
+    //      with the radii in DAMAGE.R under the same key. All figures placeholders (Claude's proposal, unsourced).
+    //      n: default count · sd: default spread · gap: s between impacts · burst: visual size (155 = 1)
+    const QF = {
+      m777:    { cat: 'Artillery', label: '155 mm',            n: 6,  ns: [1, 6, 12, 18, 36], sd: 35, gap: 0.6, burst: 1.0 },
+      m119:    { cat: 'Artillery', label: '105 mm',            n: 6,  ns: [1, 6, 12, 18, 36], sd: 30, gap: 0.6, burst: 0.75 },
+      m120:    { cat: 'Artillery', label: '120 mm mortar',     n: 4,  ns: [1, 4, 8, 16],      sd: 30, gap: 0.6, burst: 0.8 },
+      m252:    { cat: 'Artillery', label: '81 mm mortar',      n: 4,  ns: [1, 4, 8, 16],      sd: 25, gap: 0.6, burst: 0.55 },
+      gmlrs:   { cat: 'Rocket artillery', label: 'GMLRS (unitary)', n: 1, ns: [1, 2, 4, 6, 12], sd: 4,  gap: 4,   burst: 1.4 },
+      rt_mk15: { cat: 'Rocket artillery', label: 'RT-2000 Mk15 117 mm', n: 45, ns: [1, 15, 45, 90], sd: 90, gap: 0.25, burst: 0.7 },
+      rt_mk30: { cat: 'Rocket artillery', label: 'RT-2000 Mk30 180 mm', n: 27, ns: [1, 9, 27, 54], sd: 120, gap: 0.35, burst: 0.9 },
+      rt_mk45: { cat: 'Rocket artillery', label: 'RT-2000 Mk45 227 mm', n: 12, ns: [1, 6, 12, 24], sd: 150, gap: 0.5, burst: 1.1 },
+      atacms:  { cat: 'Rocket artillery', label: 'ATACMS (unitary)', n: 1, ns: [1, 2],            sd: 6,  gap: 0,   burst: 2.0 },
+      mk81:    { cat: 'Bombs', label: '250 lb',                n: 1,  ns: [1, 2, 4, 8],       sd: 5,  gap: 0.15, burst: 1.6 },
+      mk82:    { cat: 'Bombs', label: '500 lb',                n: 1,  ns: [1, 2, 4, 8],       sd: 5,  gap: 0.15, burst: 2.0 },
+      mk83:    { cat: 'Bombs', label: '1,000 lb',              n: 1,  ns: [1, 2, 4],          sd: 5,  gap: 0.15, burst: 2.6 },
+      mk84:    { cat: 'Bombs', label: '2,000 lb',              n: 1,  ns: [1, 2, 4],          sd: 5,  gap: 0.15, burst: 3.3 }
+    };
+    const quicks = []; let painting = false, qfId = 0;
+    const qfMsg = $('qf-msg'), qfMun = $('qf-mun'), qfN = $('qf-n');
+    { let og = null; for (const [k, q] of Object.entries(QF)) {
+        if (!og || og.label !== q.cat) { og = document.createElement('optgroup'); og.label = q.cat; qfMun.appendChild(og); }
+        const o = document.createElement('option'); o.value = k; o.textContent = q.label; og.appendChild(o); } }
+    function qfCounts() {
+      const q = QF[qfMun.value]; qfN.textContent = '';
+      for (const n of q.ns) { const o = document.createElement('option'); o.value = String(n); o.textContent = n + (q.cat === 'Bombs' ? (n > 1 ? ' bombs' : ' bomb') : q.cat === 'Artillery' ? ' rds' : n > 1 ? ' rockets' : ' rocket'); qfN.appendChild(o); }
+      qfN.value = String(q.n);
+    }
+    qfMun.addEventListener('change', qfCounts); qfCounts();
+    function quickFire(e, n) {
+      const k = qfMun.value, q = QF[k];
+      { const p = toLocal(e, n); if (!inPlay(p.x, p.z)) return msg(qfMsg, 'That point is off the map.', 'bad'); }
+      const cnt = Number(qfN.value) || q.n, sd = Number($('qf-sd').value) || q.sd, id = ++qfId, r = rng(id * 40503 + 7), impacts = [];
+      for (let j = 0; j < cnt; j++) {
+        const ie = e + (cnt > 1 || sd > 1 ? gauss(r) * sd : 0), inn = n + (cnt > 1 || sd > 1 ? gauss(r) * sd : 0), pl = toLocal(ie, inn);
+        if (!inPlay(pl.x, pl.z)) continue;
+        const roof = CITY.ready ? CITY.roofAt(pl.x, pl.z, true) : null, t = simT + j * q.gap + (q.gap ? r() * q.gap * 0.5 : 0);
+        impacts.push(roof !== null ? { t, e: ie, n: inn, y: roof, what: 'building', above: roof - heightAt(pl.x, pl.z), done: false } : { t, e: ie, n: inn, done: false });
+      }
+      const m = { tag: 'Q' + id, mun: k, t: { burst: q.burst }, impacts, endT: Math.max(simT, ...impacts.map(i => i.t)), logged: false };
+      quicks.push(m);
+      log(`Q${id} quick fire ${cnt} × ${q.label} → ${gridTxt(e, n)}, spread ${sd} m`);
+      msg(qfMsg, `Q${id}: ${cnt} × ${q.label} on ${gridTxt(e, n)}.` + (painting ? ' Click again to fire more; Esc stops.' : ''));
+    }
+    $('qf-fire').addEventListener('click', () => { const g = parseGrid($('qf-grid').value); if (g.err) return msg(qfMsg, g.err, 'bad'); quickFire(g.e, g.n); });
+    function setPaint(on) {
+      painting = on; $('qf-paint').setAttribute('aria-pressed', String(on));
+      document.body.classList.toggle('qf-armed', on); $('qf-armed').hidden = !on; armedText();
+      if (on) { placing = moving = null; picking = false; msg(qfMsg, 'Click the map to fire there. Esc stops.', 'arm'); } else msg(qfMsg, 'Stopped.');
+    }
+    $('qf-paint').addEventListener('click', () => setPaint(!painting));
+    $('qf-stop').addEventListener('click', () => setPaint(false));
+    // another map-click task (place, move, pick a target) disarms quick fire, so the reticle never lies about what a click does
+    document.addEventListener('click', () => { if (painting && (placing || moving || picking)) setPaint(false); });
+    function armedText() { const q = QF[qfMun.value]; $('qf-armed-t').textContent = 'Fire on click: ' + (Number(qfN.value) || q.n) + ' × ' + q.label; }
+    qfMun.addEventListener('change', armedText); qfN.addEventListener('change', armedText);
+    function tickQuick() {
+      for (const m of quicks) {
+        if (m.logged) continue;
+        m.impacts.forEach((i, k) => { if (!i.done && simT >= i.t) { i.done = true; burst(i, m); for (const f of impactFns) f(i, m, k); } });
+        if (simT > m.endT + 1) { m.logged = true; log(`${m.tag} complete, ${m.impacts.length} burst${m.impacts.length === 1 ? '' : 's'}, ${m.struck || 0} struck` + (m.civ ? ` (${m.civ} civilian)` : '')); }
+      }
+    }
+
     // ---- arcs: the mission's computed trajectory (true heights × terrain exaggeration), gun to aim point
     function arcPoint(m, f, out) {
       const P = m.sol.pts, T = f * m.tof; let lo = 0, hi = P.length - 1;
@@ -1865,6 +1930,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; const nb = m.impacts.filter(i => i.what === 'building').length, nt = m.impacts.filter(i => i.what === 'terrain').length;
           log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck` + (m.civ ? ` (${m.civ} civilian)` : '') + (nb ? `, ${nb} hit buildings` : '') + (nt ? `, ${nt} hit terrain` : '')); }
       }
+      tickQuick();
       animateFx();
     }
 
@@ -1907,18 +1973,20 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
     canvas.addEventListener('pointerup', e => {
       if (!down || obs) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null;
-      if (moved > 5 || !(placing || moving || picking)) return;
+      if (moved > 5 || !(placing || moving || picking || painting)) return;
       const p = pick(e.clientX, e.clientY); if (!p) return;
       const E = CE + p.x, N = CN - p.z;
-      if (placing) { addUnit(placing, E, N, 0); msg(placeMsg, 'Placed. Pick another type to add more.'); placing = null; }
+      if (painting && !(placing || moving || picking)) { $('qf-grid').value = toGrid(E, N) || ''; quickFire(E, N); }
+      else if (placing) { addUnit(placing, E, N, 0); msg(placeMsg, 'Placed. Pick another type to add more.'); placing = null; }
       else if (moving) moveUnit(moving, E, N, 0);
       else if (picking) { $('fm-grid').value = toGrid(E, N); picking = false; msg(fmMsg, 'Target set. Press Fire.'); }
     });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && painting) setPaint(false); });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     let savedUnits = null; try { savedUnits = JSON.parse(localStorage.getItem(STORE.units)); } catch (e) {}
     if (Array.isArray(savedUnits)) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt);
     drawUnits();
-    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { unitList, units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { QF, quicks, quickFire, tick, unitList, units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -3590,7 +3658,18 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       altius_600m: { soft: 10, eng: 3,  armor: 2 },              // guesses from here down
       altius_700m: { soft: 15, eng: 5,  armor: 4 },
       switchblade: { soft: 12, eng: 4,  armor: 3 },
-      lucas:       { soft: 30, eng: 12, armor: 8 }
+      lucas:       { soft: 30, eng: 12, armor: 8 },
+      // Quick fire only (Claude, 2026-11-11, unsourced guesses for Lee to tune). Scaled from the 155 row by roughly the
+      // cube root of explosive weight, softened for frag: blast reach grows slower than the bomb.
+      gmlrs:       { soft: 50, eng: 22, armor: 14 },             // M31 unitary, ~90 kg warhead
+      rt_mk15:     { soft: 25, eng: 10, armor: 6 },              // RT-2000 Mk15 117 mm, ~105-class
+      rt_mk30:     { soft: 35, eng: 15, armor: 9 },              // RT-2000 Mk30 180 mm, ~155-class
+      rt_mk45:     { soft: 50, eng: 20, armor: 12 },             // RT-2000 Mk45 227 mm, HE treated as unitary
+      atacms:      { soft: 75, eng: 35, armor: 18 },             // M57 unitary, ~225 kg warhead
+      mk81:        { soft: 55, eng: 25, armor: 12 },             // 250 lb
+      mk82:        { soft: 75, eng: 35, armor: 18 },             // 500 lb
+      mk83:        { soft: 100, eng: 45, armor: 25 },            // 1,000 lb
+      mk84:        { soft: 130, eng: 60, armor: 35 }             // 2,000 lb
     };
     const PDH = {                                                 // chance a burst ON the vehicle strikes it (missing = 1)
       altius_600m: { eng: 0.6, armor: 0.35 },
@@ -3635,7 +3714,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const vy = (O.waterAt(v.x, v.z) ? 0 : heightAt(v.x, v.z)) + 1.5;
         const d = up ? Math.hypot(v.x - x, v.z - z, vy - y) : Math.hypot(v.x - x, v.z - z);
         if (!out.near || d < out.near.d) out.near = { v, d };
-        if (v.struck || d > 320) continue;
+        if (v.struck || d > 450) continue;
         let p = pStrike(mun, v.type, d);
         if (p > 0 && TUBES[mun] && (wetB || O.waterAt(v.x, v.z))) p = 0;
         if (p > 0 && CITY.ready && shielded(x, z, yb, v.x, v.z, vy)) { p = 0; out.shielded++; }
@@ -3645,8 +3724,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     // artillery: every round that lands
     FIRES.onImpact((imp, m, k) => {
-      const p = toLocal(imp.e, imp.n), r = burstAt('M' + m.id + '|' + k, m.u.type, p.x, p.z, imp.t, imp.what ? imp.y : undefined);
-      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; if (h.v.civ) m.civ = (m.civ || 0) + 1; FIRES.log(`M${m.id} STRUCK ${h.v.civ ? h.v.name.toUpperCase() : OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
+      const tag = m.tag || 'M' + m.id, p = toLocal(imp.e, imp.n), r = burstAt(tag + '|' + k, m.mun || m.u.type, p.x, p.z, imp.t, imp.what ? imp.y : undefined);
+      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; if (h.v.civ) m.civ = (m.civ || 0) + 1; FIRES.log(`${tag} STRUCK ${h.v.civ ? h.v.name.toUpperCase() : OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
     });
     // UAS: aim point plus a little keyed guidance scatter
     function uasImpact(id, type, x, z, t) {
@@ -4878,7 +4957,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function build() {
       const FT = FIRES.debug.TYPES, UT = UAS.debug.TYPES, CAM = UAS.debug.CAM, VT = OPFOR.debug.VT, FX = OPFOR.debug.fxRules, D = DAMAGE;
       const CLS = { soft: 'Soft (fuel truck, civilians)', eng: 'Engineering', armor: 'Armour (ZBD, ZTD, PLZ)' }, cls = Object.keys(CLS);
-      const MUN = Object.keys(D.R), munName = k => FT[k] ? FT[k].short : UT[k].label, src = k => k === 'm777' || k === 'm119' ? 'Fire Mission Sim' : PH;
+      const MUN = Object.keys(D.R), QF = FIRES.debug.QF, munName = k => FT[k] ? FT[k].short : UT[k] ? UT[k].label : QF[k] ? QF[k].label : k, src = k => k === 'm777' || k === 'm119' ? 'Fire Mission Sim' : PH;
       const MISS = [0, 5, 10, 15, 20, 30, 50];
       const sec = [];
 
@@ -4924,6 +5003,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           Object.entries(FT).flatMap(([k, t]) => [1000, 3000, 5000, 10000, 15000, 20000].filter(R => R >= t.min && R <= t.max).map((R, j) => {
             const c = s => s.err ? '—' : 'ch ' + s.ch + ' · ' + Math.round(s.qe) + ' mils · ' + Math.round(s.tof) + ' s';
             return [j ? '' : t.short, R / 1000 + ' km', t.angle === 'high' ? 'n/a' : c(FIRES.debug.BAL.solve(k, R, 0, false)), c(FIRES.debug.BAL.solve(k, R, 0, true))]; })), 'num')}`]);
+
+      sec.push(['qf', 'Quick fire', `
+        ${tbl(['Munition', 'Group', 'Default count', 'Default spread (1σ) m', 'Between impacts s', 'R soft · eng · armour m'],
+          Object.entries(QF).map(([k, q]) => [q.label, q.cat, q.n, q.sd, q.gap, D.R[k].soft + ' · ' + D.R[k].eng + ' · ' + D.R[k].armor]), 'num')}
+        ${list([
+          'For the instructor: effects land on the aim point at once. No firing unit, no flight, no range limit, no trajectory, no masking by buildings or crests on the way in.',
+          'Each round lands at the aim point plus gaussian scatter (spread, 1σ each axis). One landing inside a building footprint bursts on the roof.',
+          'Damage rolls exactly as for any other burst (see Damage). Artillery types use the artillery rows, so tube rounds still do nothing in the water.',
+          'RT-2000 rockets are treated as unitary HE; the Mk45 submunition load is not modelled. GMLRS and ATACMS are the unitary warheads.',
+          'All quick-fire figures are guesses scaled from the 155 mm row by explosive weight ' + PH + '.'])}`]);
 
       sec.push(['uas', 'UAS', `
         ${tbl(['Type', 'Transit', 'Loiter', 'Dive', 'Endurance', 'Cruise AGL', 'Orbit r', 'Turn', 'Camera', 'Notes'],

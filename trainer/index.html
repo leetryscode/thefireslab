@@ -17,6 +17,7 @@
   <button id="ovl" aria-pressed="false">Friendly overlay</button>
   <button id="obsexit">Back to map (Esc)</button>
 </div>
+<div id="qf-armed" hidden role="status"><span class="dot"></span><span id="qf-armed-t">Fire on click</span><button id="qf-stop" type="button">Stop (Esc)</button></div>
 
 <header id="topbar" aria-label="Exercise control">
   <a class="tb-name" href="../index.html" title="Back to The Fires Lab home">Fires Lab</a>
@@ -119,6 +120,14 @@
   <header class="win-h"><h2>Fires Control</h2><button class="win-x" aria-label="Close Fires Control">×</button></header>
   <div class="win-b">
     <div class="fsec first">
+      <h3>Quick fire</h3>
+      <div class="row"><select id="qf-mun" aria-label="Munition"></select>
+        <select id="qf-n" aria-label="How many"></select>
+        <select id="qf-sd" aria-label="Spread" title="Spread: 1σ scatter each axis around the aim point"><option value="">Auto spread</option><option value="1">Point</option><option value="25">25 m</option><option value="50">50 m</option><option value="100">100 m</option><option value="200">200 m</option><option value="400">400 m</option></select></div>
+      <div class="row"><input id="qf-grid" class="grid-in" placeholder="aim grid" aria-label="Quick fire aim grid"><button id="qf-fire" class="fire-btn">Fire</button><button id="qf-paint" aria-pressed="false" title="Each click on the map fires there. Esc stops.">Fire on click</button></div>
+      <p class="msg" id="qf-msg">No firing unit or flight: effects land at once. For painting effects.</p>
+    </div>
+    <div class="fsec">
       <h3>Firing units</h3>
       <div class="row" id="addbtns"></div>
       <div class="row"><input id="place-grid" class="grid-in" placeholder="or grid: 4Q FJ 21500 55200" aria-label="Grid to place the unit at"><input id="place-alt" placeholder="alt m" aria-label="Altitude for an off-map unit" style="width:62px"><button id="place-go">Place</button></div>

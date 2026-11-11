@@ -144,6 +144,18 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .flog div { display: grid; grid-template-columns: 54px 1fr; gap: 6px; }
 .flog .t { color: var(--brass); }
 .win .fire-btn { border-color: #c8402c; color: #ffb3a5; font-weight: 600; }
+/* Quick fire armed (Fire on click): red reticle cursor, red screen frame, banner. Hard to miss on purpose. */
+body.qf-armed #view { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23000' stroke-width='4' opacity='.6'%3E%3Ccircle cx='16' cy='16' r='10'/%3E%3Cpath d='M16 1v8M16 23v8M1 16h8M23 16h8'/%3E%3C/g%3E%3Cg stroke='%23ff4a32' stroke-width='2'%3E%3Ccircle cx='16' cy='16' r='10'/%3E%3Cpath d='M16 1v8M16 23v8M1 16h8M23 16h8'/%3E%3C/g%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='1.6' fill='%23ff4a32'/%3E%3C/svg%3E") 16 16, crosshair; }
+body.qf-armed::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 5; box-shadow: inset 0 0 0 3px rgba(255, 74, 50, .85), inset 0 0 40px rgba(255, 74, 50, .25); }
+#qf-armed { position: fixed; left: 50%; transform: translateX(-50%); top: calc(var(--tb-h, 56px) + 10px); z-index: 30; display: flex; align-items: center; gap: 10px;
+  background: rgba(120, 20, 10, .92); border: 1px solid #ff4a32; border-radius: 6px; padding: 6px 8px 6px 12px; color: #ffe1db;
+  font: 600 13px var(--font-head, inherit); letter-spacing: .05em; text-transform: uppercase; box-shadow: 0 4px 16px rgba(0, 0, 0, .45); max-width: calc(100vw - 32px); }
+#qf-armed[hidden] { display: none; }
+#qf-armed .dot { width: 9px; height: 9px; border-radius: 50%; background: #ff4a32; animation: qfpulse 1s ease-in-out infinite; flex: none; }
+#qf-armed button { background: #ffe1db; color: #5a0d05; border: 0; border-radius: 4px; padding: 4px 10px; font: 700 12px var(--font-head, inherit); letter-spacing: .05em; cursor: pointer; text-transform: uppercase; }
+@keyframes qfpulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { #qf-armed .dot { animation: none; } }
+.win #qf-paint[aria-pressed="true"] { background: #c8402c; border-color: #ff4a32; color: #fff; }
 #loading[hidden] { display: none; }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; font: 500 13px var(--font-mono); color: var(--dim); pointer-events: none; }
 /* ---- exercise banner ---- */
