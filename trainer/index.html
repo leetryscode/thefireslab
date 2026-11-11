@@ -128,10 +128,10 @@
       <p class="msg" id="qf-msg">No firing unit or flight: effects land at once. For painting effects.</p>
     </div>
     <div class="fsec">
-      <h3>Firing units</h3>
-      <div class="row" id="addbtns"></div>
+      <h3>Position firing units</h3>
+      <div class="row"><select id="place-type" aria-label="Unit type"></select><input id="place-cs" placeholder="Callsign" aria-label="Callsign" maxlength="20" style="width:120px"><button id="place-click">Click map</button></div>
       <div class="row"><input id="place-grid" class="grid-in" placeholder="or grid: 4Q FJ 21500 55200" aria-label="Grid to place the unit at"><input id="place-alt" placeholder="alt m" aria-label="Altitude for an off-map unit" style="width:62px"><button id="place-go">Place</button></div>
-      <p class="msg" id="place-msg">Pick a unit type, then click the map or type a grid. A grid off the map is fine.</p>
+      <p class="msg" id="place-msg">Pick a type and a callsign, then Click map or type a grid. A grid off the map is fine for guns and LUCAS.</p>
       <div class="ulist" id="ulist"></div>
     </div>
     <div class="fsec">

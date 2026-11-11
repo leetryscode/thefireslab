@@ -1641,10 +1641,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (!onm) { const k = Math.min(HW / Math.abs(p.x || 1e-9), HH / Math.abs(p.z || 1e-9)) * 0.985; p = { x: p.x * k, z: p.z * k }; }
       u.sprite.position.set(p.x, y, p.z);
     }
-    function addUnit(type, e, n, alt) {
+    // name on the map: callsign then type ("Steel Rain M777"); no callsign keeps the old "M777 A"
+    function addUnit(type, e, n, alt, cs) {
       const t = TYPES[type], count = units.filter(u => u.type === type).length + 1;
-      const name = t.short + ' ' + 'ABCDEFGH'[count - 1];
-      const u = { id: nextId++, type, name, e, n, alt: onMap(e, n) ? null : (alt || 0) };
+      cs = String(cs || '').trim();
+      const name = cs ? cs + ' ' + t.short : t.short + ' ' + 'ABCDEFGHJKLMNPQRSTUVWXYZ'[(count - 1) % 24];
+      const u = { id: nextId++, type, name, cs, e, n, alt: onMap(e, n) ? null : (alt || 0) };
       u.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: symbolTexture(t, name), depthTest: false, transparent: true }));
       u.sprite.scale.set(384 * SYM_K, 128 * SYM_K, 1); u.sprite.material.sizeAttenuation = false; u.sprite.renderOrder = 10;
       unitGroup.add(u.sprite); placeSprite(u); units.push(u);
@@ -1657,25 +1659,44 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
 
     // ---- UI: units
-    const addBtns = $('addbtns'); let placing = null, moving = null, picking = false;
+    let placing = null, moving = null, picking = false;
     const placeMsg = $('place-msg'), fmMsg = $('fm-msg');
     function msg(el, text, cls) { el.textContent = text; el.className = 'msg' + (cls ? ' ' + cls : ''); }
-    for (const [k, t] of Object.entries(TYPES)) {
-      const b = document.createElement('button'); b.id = 'add-' + k; b.textContent = '+ ' + t.short; b.title = t.label;
-      b.addEventListener('click', () => { placing = k; moving = null; picking = false; msg(placeMsg, 'Click the map to place a ' + t.label + ', or type a grid and press Place. Esc cancels.', 'arm'); });
-      addBtns.appendChild(b);
+    // Position firing units (Lee, 2026-11-11): one dropdown, cannon artillery or a one-way attack UAS launch point.
+    // A UAS choice places a launch point in the UAS module (launched from the UAS panel). Values: gun type key, or 'uas:<family>'.
+    const OWA = { altius: 'Altius launch point', switchblade: 'Switchblade launch point', lucas: 'LUCAS launch point' };
+    const UAS_SHORT = { altius: 'Altius', switchblade: 'Switchblade', lucas: 'LUCAS' };
+    { const s = $('place-type'), grp = (label, items) => { const og = document.createElement('optgroup'); og.label = label;
+        for (const [v, t] of items) { const o = document.createElement('option'); o.value = v; o.textContent = t; og.appendChild(o); } s.appendChild(og); };
+      grp('Cannon artillery', Object.entries(TYPES).map(([k, t]) => [k, t.label]));
+      grp('One-way attack UAS', Object.entries(OWA).map(([k, t]) => ['uas:' + k, t])); }
+    function placeAt(kind, e, n, alt) {      // returns an error string, or '' when placed
+      const cs = $('place-cs').value.trim();
+      if (kind.startsWith('uas:')) {
+        const fam = kind.slice(4), p = toLocal(e, n);
+        if (!onMap(e, n) && fam !== 'lucas') return 'Altius and Switchblade launch points must be on the map.';
+        const lp = UAS.debug.addLP(fam, p.x, p.z, cs ? cs + ' ' + UAS_SHORT[fam] : undefined);
+        msg(placeMsg, 'Placed ' + lp.name + '. Launch it from the UAS panel.'); return '';
+      }
+      const u = addUnit(kind, e, n, alt, cs); msg(placeMsg, 'Placed ' + u.name + '.'); return '';
     }
+    function armPlace() {
+      const k = $('place-type').value, label = k.startsWith('uas:') ? OWA[k.slice(4)] : TYPES[k].label;
+      placing = k; moving = null; picking = false; msg(placeMsg, 'Click the map to place the ' + label + '. Esc cancels.', 'arm');
+    }
+    $('place-click').addEventListener('click', armPlace);
     $('place-go').addEventListener('click', () => {
       const g = parseGrid($('place-grid').value); if (g.err) return msg(placeMsg, g.err, 'bad');
       if (moving) { moveUnit(moving, g.e, g.n, Number($('place-alt').value) || 0); return; }
-      if (!placing) return msg(placeMsg, 'Pick a unit type first.', 'bad');
-      addUnit(placing, g.e, g.n, Number($('place-alt').value) || 0); placing = null; msg(placeMsg, 'Placed. Pick another type to add more.');
+      placing = null; const err = placeAt($('place-type').value, g.e, g.n, Number($('place-alt').value) || 0); if (err) msg(placeMsg, err, 'bad');
     });
+    let UL = null;                           // the UAS module's launch points, linked once UAS starts (it is built after FIRES)
     function moveUnit(u, e, n, alt) {
+      if (u.lp) { const p = toLocal(e, n), err = UL.moveLP(u.lp, p.x, p.z); moving = null; return msg(placeMsg, err || 'Moved ' + u.lp.name + '.', err ? 'bad' : ''); }
       u.e = e; u.n = n; u.alt = onMap(e, n) ? null : (alt || 0); placeSprite(u); moving = null;
       log('Moved ' + u.name + ' to ' + gridTxt(e, n) + (onMap(e, n) ? '' : ' (off map)')); msg(placeMsg, 'Moved.'); drawUnits();
     }
-    const unitList = () => units.map(u => ({ type: u.type, e: Math.round(u.e), n: Math.round(u.n), alt: u.alt }));
+    const unitList = () => units.map(u => ({ type: u.type, cs: u.cs || undefined, e: Math.round(u.e), n: Math.round(u.n), alt: u.alt }));
     function drawUnits() {
       try { localStorage.setItem(STORE.units, JSON.stringify(unitList())); } catch (e) {}
       const L = $('ulist'); L.textContent = '';
@@ -1686,6 +1707,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const mv = document.createElement('button'); mv.textContent = 'Move'; mv.addEventListener('click', () => { moving = u; placing = null; msg(placeMsg, 'Click the map, or type a grid and press Place, to move ' + u.name + '.', 'arm'); });
         const rm = document.createElement('button'); rm.textContent = 'Remove'; rm.addEventListener('click', () => { unitGroup.remove(u.sprite); units.splice(units.indexOf(u), 1); log('Removed ' + u.name); drawUnits(); });
         row.append(nm, mv, rm); L.appendChild(row);
+      }
+      if (UL) for (const lp of UL.lps) {          // UAS launch points: same list, moved and removed through the UAS module
+        const row = document.createElement('div'); row.className = 'urow';
+        const nm = document.createElement('span'); nm.className = 'un'; nm.textContent = lp.name;
+        const gr = document.createElement('span'); gr.className = 'ug'; const E = CE + lp.x, N = CN - lp.z;
+        gr.textContent = 'Launch point · ' + gridTxt(E, N) + (onMap(E, N) ? '' : '  off map'); nm.appendChild(gr);
+        const mv = document.createElement('button'); mv.textContent = 'Move'; mv.addEventListener('click', () => { moving = { lp }; placing = null; picking = false; msg(placeMsg, 'Click the map, or type a grid and press Place, to move ' + lp.name + '.', 'arm'); });
+        row.append(nm, mv, UL.lpRemoveBtn(lp, (t, c) => msg(placeMsg, t, c))); L.appendChild(row);
       }
       const sel = $('fm-unit'), keep = sel.value; sel.textContent = '';
       if (!units.length) { const o = document.createElement('option'); o.value = ''; o.textContent = 'Place a unit first'; sel.appendChild(o); }
@@ -1977,16 +2006,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const p = pick(e.clientX, e.clientY); if (!p) return;
       const E = CE + p.x, N = CN - p.z;
       if (painting && !(placing || moving || picking)) { $('qf-grid').value = toGrid(E, N) || ''; quickFire(E, N); }
-      else if (placing) { addUnit(placing, E, N, 0); msg(placeMsg, 'Placed. Pick another type to add more.'); placing = null; }
+      else if (placing) { const err = placeAt(placing, E, N, 0); if (err) msg(placeMsg, err, 'bad'); placing = null; }
       else if (moving) moveUnit(moving, E, N, 0);
       else if (picking) { $('fm-grid').value = toGrid(E, N); picking = false; msg(fmMsg, 'Target set. Press Fire.'); }
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && painting) setPaint(false); });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     let savedUnits = null; try { savedUnits = JSON.parse(localStorage.getItem(STORE.units)); } catch (e) {}
-    if (Array.isArray(savedUnits)) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt);
+    if (Array.isArray(savedUnits)) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt, u.cs);
     drawUnits();
-    return { tick, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { QF, quicks, quickFire, tick, unitList, units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { QF, quicks, quickFire, tick, unitList, units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -4137,10 +4166,57 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // ---- launch points: one per family; any number of each variant can launch from it
     function addLP(fam, x, z, name) {
       const n = lps.filter(l => l.fam === fam).length + 1;
-      const lp = { id: nextId++, fam, name: name || (FAMS[fam] + (n > 1 ? ' ' + n : '')), x, z };
+      const lp = { id: nextId++, fam, name: uniqueName(name || (FAMS[fam] + (n > 1 ? ' ' + n : ''))), x, z };
       lp.sprite = sprite(lp.name, true); lp.sprite.position.set(x, gy(x, z) + 40, z);
-      lps.push(lp); FIRES.log('Placed ' + lp.name + ' launch point at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); draw(); saveLPs(); return lp;
+      lps.push(lp); FIRES.log('Placed ' + lp.name + ' launch point at ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); lpsChanged(); return lp;
     }
+    // Move and remove (Lee, 2026-11-11). A drone keeps a link to its launch point (d.lp), read live, so a move just
+    // redirects anything recovering. A removal re-homes its drones to the nearest launch point of the same family;
+    // with none left d.lp is null: Recover is greyed and the drone flies on until tasked or out of endurance.
+    function uniqueName(name, skip) { let s = name, i = 2; while (lps.some(l => l !== skip && l.name === s)) s = name + ' ' + i++; return s; }
+    function lpsChanged() { draw(); saveLPs(); FIRES.lpsChanged(); }
+    const LP_ON_MAP = 'Altius and Switchblade launch points must be on the map.';
+    function moveLP(lp, x, z) {
+      if (!onMap(x, z) && lp.fam !== 'lucas') return LP_ON_MAP;
+      lp.x = x; lp.z = z; lp.sprite.position.set(x, gy(x, z) + 40, z);
+      for (const d of drones) if (d.lp === lp && d.state === 'fly' && d.task.kind === 'recover') drawTask(d);
+      FIRES.log('Moved ' + lp.name + ' launch point to ' + gridAt(x, z) + (onMap(x, z) ? '' : ' (off the map)')); lpsChanged(); return '';
+    }
+    function heir(lp) {           // nearest other launch point of the same family
+      let best = null, bd = Infinity;
+      for (const l of lps) if (l !== lp && l.fam === lp.fam) { const dd = Math.hypot(l.x - lp.x, l.z - lp.z); if (dd < bd) { bd = dd; best = l; } }
+      return best;
+    }
+    function removeNote(lp) {     // '' when nothing in the air depends on it
+      const a = drones.filter(d => d.lp === lp && d.state === 'fly' && TYPES[d.type].recover); if (!a.length) return '';
+      const h = heir(lp), who = a.length === 1 ? a[0].name + ' is' : a.length + ' recoverable drones are';
+      return who + ' airborne from ' + lp.name + (h ? ' and will re-home to ' + h.name : '. With no other ' + FAMS[lp.fam] + ' launch point, ' + (a.length === 1 ? 'it' : 'they') + ' cannot be recovered') + '.';
+    }
+    function removeLP(lp) {
+      if (!lps.includes(lp)) return;
+      const h = heir(lp);
+      for (const d of drones) {
+        if (d.lp !== lp) continue;
+        d.lp = h;
+        if (d.state !== 'fly') continue;
+        if (TYPES[d.type].recover) FIRES.log(d.name + (h ? ' re-homed to ' + h.name : ' has no launch point to recover to'));
+        if (d.task.kind === 'recover') { if (h) drawTask(d); else setTask(d, { kind: 'orbit', cx: d.pos.x, cz: d.pos.z, r: TYPES[d.type].r }); }
+      }
+      dropObj(lp.sprite); lps.splice(lps.indexOf(lp), 1); FIRES.log('Removed ' + lp.name + ' launch point'); lpsChanged();
+    }
+    // a Remove button that asks once when drones depend on the launch point; say(text, cls) shows the warning.
+    // The ask lives on the launch point for 6 s (real clock), so the UAS panel's periodic redraw keeps it.
+    function lpRemoveBtn(lp, say) {
+      const b = document.createElement('button'), asked = () => lp.rmAsk && performance.now() - lp.rmAsk < 6000;
+      b.textContent = asked() ? 'Confirm' : 'Remove';
+      b.addEventListener('click', () => {
+        const n = removeNote(lp);
+        if (n && !asked()) { lp.rmAsk = performance.now(); b.textContent = 'Confirm'; say(n + ' Press Confirm to remove.', 'arm'); setTimeout(() => { if (lps.includes(lp)) { draw(); FIRES.lpsChanged(); } }, 6100); return; }
+        removeLP(lp); say('Removed ' + lp.name + '.');
+      });
+      return b;
+    }
+    FIRES.linkUAS({ lps, moveLP, removeLP, lpRemoveBtn, LP_ON_MAP });
     const lpList = () => lps.map(l => ({ fam: l.fam, name: l.name, e: Math.round(CE + l.x), n: Math.round(CN - l.z) }));
     // Saved only once the start-up set is in, so a browser that never edits them keeps following data/uas.json
     let lpsReady = false;
@@ -4288,7 +4364,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       FIRES.log(d.name + ' waved off; climbing back to orbit over ' + gridAt(p.x, p.z)); note(d, 'Waved off.');
     }
     function recover(d) {
-      if (!TYPES[d.type].recover || d.state !== 'fly') return;
+      if (!TYPES[d.type].recover || d.state !== 'fly' || !d.lp) return;
       setTask(d, { kind: 'recover' }); FIRES.log(d.name + ' returning to ' + d.lp.name + ' for recovery');
     }
 
@@ -4715,7 +4791,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
             lp.draft = null; msg('uas-lmsg', ''); launch(lp, 'lucas', p);
           }));
         } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
-        bar.appendChild(btn('Remove', '', () => { dropObj(lp.sprite); lps.splice(lps.indexOf(lp), 1); FIRES.log('Removed ' + lp.name); draw(); saveLPs(); }));
+        bar.appendChild(lpRemoveBtn(lp, (t, c) => msg('uas-lmsg', t, c)));
         row.appendChild(bar); L.appendChild(row);
       }
       const D = $('uas-list'); D.textContent = '';
@@ -4738,7 +4814,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (armed && armed.kind === 'route' && armed.d === d) bar.appendChild(btn('Done', '', finishRoute));
           bar.appendChild(sel('Height above ground', [500, 1000, 2000, 3000, 5000, 8000], ft(d.alt), v => { d.alt = v * FT; drawTask(d); draw(); }, v => v.toLocaleString('en-US') + ' ft'));
           if (k.kind === 'orbit') bar.appendChild(sel('Orbit radius', [250, 400, 700, 1000, 1500, 2500], k.r, v => { k.r = v; drawTask(d); }, v => 'r ' + v));
-          if (T.recover && k.kind !== 'recover') bar.appendChild(btn('Recover', 'Fly back to the launch point and land', () => recover(d)));
+          if (T.recover && k.kind !== 'recover') { const b = btn('Recover', d.lp ? 'Fly back to ' + d.lp.name + ' and land' : 'No ' + FAMS[T.fam] + ' launch point to recover to', () => recover(d)); b.disabled = !d.lp; bar.appendChild(b); }
         }
         if (d.state === 'fly' && T.waveoff && k.kind === 'strike') bar.appendChild(btn('Wave off', 'Pull out of the dive', () => waveOff(d)));
         if (d.state === 'fly') bar.appendChild(btn('IDENT', 'Centre the map on this UAS and flash its symbol', () => ident(d)));
