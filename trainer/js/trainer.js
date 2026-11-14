@@ -1,4 +1,4 @@
-/* FiST Trainer — instructor view: terrain, OPs and viewshed, fires, OPFOR editor, banner and panels.
+/* Kill Chain Simulator (renamed from FiST Trainer 2026-11-13; storage keys and the scenario format keep "fist") — instructor view: terrain, OPs and viewshed, fires, OPFOR editor, banner and panels.
    The Fires Lab, Catherine Lake Creations LLC. Data comes from data/ through load(). */
 (async function () {
   // ---- data: every file the page needs comes through load(), so the loading method can change in one place

@@ -1052,6 +1052,62 @@ dl.glossary dd { margin: 2px 0 0 0; color: var(--muted); font-size: .98rem; }
   border-radius: 999px;
 }
 
+/* ---------- Home page order (2026-11-13): Kill Chain Simulator first and largest, the D3A course second,
+   the Fire Mission Sim last as a small row. .feature-media can hold an explainer video later. ---------- */
+.panel.home { display: grid; gap: 20px; }
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--accent-dark);
+  color: #eef1e8;
+  border-top: 6px solid var(--gold-fill);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform .12s;
+}
+.feature-card:hover { transform: translateY(-3px); }
+.feature-media { position: relative; aspect-ratio: 1600 / 750; background: #0d140b; }
+.feature-media img, .feature-media video, .feature-media iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
+.feature-text { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 8px 32px; align-items: start; padding: 24px 30px 28px; }
+.feature-main { display: flex; flex-direction: column; }
+.feature-card h2 { margin: 0 0 2px; color: #fff; font-size: 2.6rem; border-bottom: none; padding-bottom: 0; }
+.feature-card .mode-tag {
+  font-family: var(--font-head); font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--gold-fill); margin: 0 0 12px; font-weight: 600;
+}
+.feature-card .mode-desc { margin: 0 0 18px; font-size: 1rem; line-height: 1.5; }
+.feature-card ul { margin: 6px 0 0; padding-left: 20px; font-size: .98rem; }
+.feature-card ul li { margin: 7px 0; }
+.feature-cta {
+  align-self: flex-start;
+  font-family: var(--font-head); font-size: 1.1rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--gold-fill); color: var(--gold-on-fill); border-radius: 4px; padding: 9px 18px;
+}
+.feature-card:hover .feature-cta, .feature-card:focus-visible .feature-cta { filter: brightness(1.08); }
+.mode-card.course-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 28px; align-items: start; border-top-color: var(--accent); }
+.course-card ul { margin-top: 4px; }
+.minor-card {
+  display: flex; align-items: center; gap: 16px;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 14px; text-decoration: none; color: var(--ink); transition: border-color .12s;
+}
+.minor-card:hover { border-color: var(--muted); }
+.minor-card img { width: 120px; height: 57px; object-fit: cover; border-radius: 3px; flex: none; }
+.minor-text { display: grid; gap: 2px; }
+.minor-text p { margin: 0; }
+.minor-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 600; color: var(--accent-dark); }
+.minor-tag { font-family: var(--font-head); font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 760px) {
+  .feature-text { grid-template-columns: 1fr; padding: 20px; }
+  .feature-card ul { order: 2; margin-top: 4px; }
+  .feature-card h2 { font-size: 2.1rem; }
+  .course-card { grid-template-columns: 1fr; }
+}
+:lang(zh-Hant) .feature-card .mode-tag, :lang(zh-Hant) .feature-cta,
+:lang(zh-Hant) .minor-title, :lang(zh-Hant) .minor-tag { font-family: var(--font-cjk); letter-spacing: normal; text-transform: none; }
+:lang(zh-Hant) .feature-card h2 { font-size: 2.2rem; }   /* the site shrinks Chinese h2 to 1.4rem; the headline card stays large */
+
 /* ---------- Coming-soon placeholder (campaign.html) ---------- */
 .soon-tag {
   display: inline-block;

@@ -33,6 +33,42 @@ window.D3A_LANG_ZH = {
     en: "Commander's Objectives → Fires → Mission Success",
     zh: "指揮官目標 → 火力 → 任務成功"
   },
+  "index.013": {
+    en: "Kill Chain Simulator",
+    zh: "殺傷鏈模擬器"
+  },
+  "index.016": {
+    en: "Multiplayer sensor-to-shooter training",
+    zh: "多人連線「感測器到射擊單位」訓練"
+  },
+  "index.017": {
+    en: "Built for command post fires teams, forward observers, and one-way attack UAS targeting teams. Observe a moving, instructor-controlled enemy from OPs or UAS, then engage it with artillery and one-way attack UAS, in dense, 3D, urban terrain.",
+    zh: "專為指揮所火力小組、前進觀測官及攻擊型無人機目標選定小組設計。從觀測所或無人機觀測由教官操控的移動敵軍，再以砲兵與攻擊型無人機接戰，場景為密集的 3D 城市地形。"
+  },
+  "index.022": {
+    en: "Launch the simulator",
+    zh: "啟動模擬器"
+  },
+  "index.018": {
+    en: "UAS reconnaissance",
+    zh: "無人機偵察"
+  },
+  "index.023": {
+    en: "One-way attack UAS",
+    zh: "攻擊型無人機"
+  },
+  "index.019": {
+    en: "Artillery fire missions",
+    zh: "砲兵射擊任務"
+  },
+  "index.020": {
+    en: "Multiple observation posts",
+    zh: "多個觀測所"
+  },
+  "index.021": {
+    en: "Editable enemy courses of action (ECOA)",
+    zh: "可編輯的敵軍行動方案（ECOA）"
+  },
   "index.005": {
     en: "D3A Targeting Course",
     zh: "D3A 目標選定課程"
@@ -80,18 +116,6 @@ window.D3A_LANG_ZH = {
   "index.015": {
     en: "Practice dynamic targeting",
     zh: "練習動態目標獲取"
-  },
-  "index.013": {
-    en: "In progress",
-    zh: ""
-  },
-  "index.016": {
-    en: "FiST Trainer",
-    zh: ""
-  },
-  "index.017": {
-    en: "Plan and shoot on real terrain",
-    zh: ""
   },
 
   /* ---------- battle.html ---------- */
