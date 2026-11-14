@@ -5515,7 +5515,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      the one named in "to") and student messages to the host, and itself says bye / hostbye / nohost.
   //      Instructor PIN: the host claims the room with a PIN (&pin=, else one kept in this browser's localStorage per room);
   //      another instructor is refused while the room is held. The host badge's tooltip shows it, to host from another computer.
-  const RELAY_URL = '';          // set after `npx wrangler deploy`, e.g. 'wss://fist-relay.<account>.workers.dev'
+  const RELAY_URL = 'wss://fist-relay.lee-will-biz1.workers.dev';   // deployed 2026-11-13 (`npx wrangler deploy` in relay\)
   const ROOM = (() => {
     if (!NET.room) return null;
     const q = new URLSearchParams(location.search), rq = q.get('relay');
