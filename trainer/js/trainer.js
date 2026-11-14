@@ -99,18 +99,63 @@
   //      no Play/Pause or speed, no Scenario, Fires or OPFOR panels, and nothing on the map that gives the enemy away
   //      (enemy, enemy routes, civilians, bursts, smoke). Students see the battlefield only through an OP or a UAS feed.
   //      Elements marked class="instr-only" in index.html are hidden for students by trainer.css.
-  const STUDENT = new URLSearchParams(location.search).get('role') === 'student';
+  const STUDENT = (q0 => q0.get('role') === 'student' || q0.has('join'))(new URLSearchParams(location.search));   // ?join=CODE is a student link
   document.body.classList.toggle('role-student', STUDENT);
   window.__role = STUDENT ? 'student' : 'instructor';
-  // ---- room (multiplayer build step 2). ?room=CODE: an instructor hosts it (runs the whole sim); ?role=student&room=CODE joins
-  //      it, optionally with &cs=CALLSIGN. Until the Cloudflare relay (step 3) the link is a BroadcastChannel, so host and
-  //      students are tabs of one browser on one computer. NET.emit is filled in by the ROOM module near the end of the file;
-  //      until then (and always for students and solo) it does nothing. A student in a room never writes the saved scenario.
+  // ---- live session (multiplayer). ?room=CODE: an instructor hosts it (runs the whole sim); ?join=CODE&cs=CALLSIGN joins it
+  //      as a student. The link is the Cloudflare relay (ROOM, near the end of the file). NET.emit is filled in by ROOM while
+  //      hosting; otherwise (students and solo) it does nothing. A student in a session never writes the saved scenario.
+  //      2026-11-13 welcome screen: the student link is ?join=CODE (the welcome screen asks for a callsign if &cs= is missing;
+  //      ?role=student&room=CODE still works), and an instructor can start hosting at any time (hostSession, near ROOM), so
+  //      NET.room / NET.host / NET.cs can change after load. NET.client (and so NOSAVE) is fixed at load.
   const NET = (() => {
-    const q = new URLSearchParams(location.search), room = (q.get('room') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16) || null;
-    let cs = (q.get('cs') || '').trim().toUpperCase().slice(0, 20);
-    if (!cs && room) cs = STUDENT ? 'STUDENT ' + Math.floor(100 + Math.random() * 900) : 'INSTRUCTOR';
-    return { room, host: !!room && !STUDENT, client: !!room && STUDENT, cs, emit() {} };
+    const q = new URLSearchParams(location.search), room = NET_CODE(q.get('room') || q.get('join'));
+    let cs = NET_CS(q.get('cs'));
+    if (!cs && room && !STUDENT) cs = 'INSTRUCTOR';
+    return { room, host: !!room && !STUDENT, client: STUDENT && !!room, cs, emit() {} };
+  })();
+  function NET_CODE(s) { return (s || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16) || null; }
+  function NET_CS(s) { return (s || '').trim().toUpperCase().replace(/\s+/g, ' ').slice(0, 20); }
+  // ---- welcome screen (2026-11-13). A plain /trainer/ opens it: Start Simulation (solo, as before), Host Live Session (solo
+  //      plus a session code: SESSION.hostSession near the end) or Join Live Session (code + callsign, then the page reloads as
+  //      ?join=CODE&cs=CALLSIGN). A student link ?join=CODE without &cs asks only for the callsign. It shows at once, before
+  //      the terrain loads; a choice that needs the trainer (host, join) waits in `act` until SESSION calls ready().
+  //      The callsign is remembered in localStorage ('fist-callsign'): the one thing a student writes, a preference only.
+  const WELCOME = (() => {
+    const $ = id => document.getElementById(id), wl = $('welcome'), form = $('wl-form');
+    const setQuery = p => { const u = new URL(location.href); for (const [k, v] of Object.entries(p)) { if (v == null) u.searchParams.delete(k); else u.searchParams.set(k, v); } history.replaceState(null, '', u); };
+    const base = () => location.origin + location.pathname;
+    let act = null, run = null;
+    const want = a => { if (run) run(a); else act = a; };
+    let lastCs = ''; try { lastCs = localStorage.getItem('fist-callsign') || ''; } catch {}
+    function show(mode) {
+      wl.hidden = false;
+      const joinOnly = mode === 'callsign';
+      $('wl-main').hidden = mode !== 'main'; form.hidden = mode === 'main';
+      $('wl-code-l').hidden = joinOnly;
+      $('wl-form-t').textContent = joinOnly ? 'Join Live Session ' + NET.room : 'Join Live Session';
+      $('wl-msg').textContent = '';
+      $('wl-cs').value = $('wl-cs').value || lastCs;
+      if (mode === 'main') $('wl-start').focus();
+      else (joinOnly || $('wl-code').value ? $('wl-cs') : $('wl-code')).focus();
+    }
+    const close = () => { wl.hidden = true; };
+    $('wl-start').addEventListener('click', close);
+    $('wl-host').addEventListener('click', () => { close(); want('host'); });
+    $('wl-join').addEventListener('click', () => show('join'));
+    $('wl-back').addEventListener('click', () => { if (STUDENT) location.href = base(); else show('main'); });
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const cs = NET_CS($('wl-cs').value), code = STUDENT ? NET.room : NET_CODE($('wl-code').value);
+      if (!code) { $('wl-msg').textContent = 'Enter the session code your instructor gave you.'; $('wl-code').focus(); return; }
+      if (!cs) { $('wl-msg').textContent = 'Enter a callsign, so others know who you are.'; $('wl-cs').focus(); return; }
+      try { localStorage.setItem('fist-callsign', cs); } catch {}
+      if (!STUDENT) { location.href = base() + '?join=' + encodeURIComponent(code) + '&cs=' + encodeURIComponent(cs); return; }   // the student screen needs a fresh load
+      NET.cs = cs; setQuery({ cs }); close(); want('join');
+    });
+    if (STUDENT && NET.room && !NET.cs) show('callsign');
+    else if (!STUDENT && !NET.room) show('main');
+    return { setQuery, base, show, ready(f) { run = f; if (act) { const a = act; act = null; f(a); } } };
   })();
   const NOSAVE = NET.client;
   window.__net = NET;
@@ -5504,82 +5549,101 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     return { time, frame };
   })();
-  // ---- ROOM (multiplayer build step 2; plan in Trainer/notes/trainer-multiplayer.md). The host (instructor, ?room=CODE) runs
-  //      the sim and sends: the enemy groups and halts, firing units, civilian level and damage when they change; the clock
-  //      4x a second; every drone, launch point, mark and who flies what 5x a second; each burst and strike as it happens.
-  //      A student (?role=student&room=CODE) moves the enemy and civilians itself from those and the clock, mirrors the drones,
-  //      and sends back commands (UAS orders, Take control) and the camera of any drone it flies.
-  //      Link (step 3): a websocket to the Cloudflare relay (source: Fires Lab\relay\, beside the repo) when RELAY_URL is set
-  //      or the address says &relay=local (ws://<this host>:8787, i.e. `npm run dev` in relay\) or &relay=wss://…; otherwise,
-  //      or with &relay=tab, a BroadcastChannel (tabs of one browser). The relay sends host messages to every student (or to
-  //      the one named in "to") and student messages to the host, and itself says bye / hostbye / nohost.
-  //      Instructor PIN: the host claims the room with a PIN (&pin=, else one kept in this browser's localStorage per room);
-  //      another instructor is refused while the room is held. The host badge's tooltip shows it, to host from another computer.
+  // ---- ROOM (multiplayer; plan in Trainer/notes/trainer-multiplayer.md). The host (instructor) runs the sim and sends: the
+  //      enemy groups and halts, firing units, civilian level and damage when they change; every drone, launch point, mark,
+  //      who flies what, and the clock 5x a second; each burst and strike as it happens. A student moves the enemy and
+  //      civilians itself from those and the clock, mirrors the drones, and sends back commands (UAS orders, Take control)
+  //      and the camera of any drone it flies.
+  //      Link (step 3): a websocket to the Cloudflare relay (source: Fires Lab\relay\, beside the repo) at RELAY_URL, or
+  //      &relay=local (ws://<this host>:8787, i.e. `npm run dev` in relay\) or &relay=wss://…; &relay=tab (or no relay) is
+  //      a BroadcastChannel (tabs of one browser). The relay sends host messages to every student (or to the one named in
+  //      "to") and student messages to the host, and itself says bye / hostbye / nohost / hostok.
+  //      Instructor PIN: the host claims the session with a PIN (&pin=, else one kept in this browser's localStorage per
+  //      code); another instructor is refused while the session is held. The Live Session panel shows a link carrying it.
+  //      openRoom() starts the link from NET (at load, or when an instructor hosts or a student gives a callsign: SESSION
+  //      below); ROOM.stop() ends a hosted session and leaves the sim as it is (solo again).
   const RELAY_URL = 'wss://fist-relay.fireslab.workers.dev';   // deployed 2026-11-13 (`npx wrangler deploy` in relay\)
-  const ROOM = (() => {
-    if (!NET.room) return null;
+  let ROOM = null;
+  const roomHooks = { roster() {}, refused() {} };             // filled in by SESSION
+  function openRoom() {
+    if (ROOM || !NET.room || !NET.cs) return ROOM;
+    ROOM = makeRoom(); window.__room = ROOM;
+    return ROOM;
+  }
+  function makeRoom() {
     const q = new URLSearchParams(location.search), rq = q.get('relay');
     const relay = rq === 'tab' ? null : rq === 'local' ? 'ws://' + location.hostname + ':8787' : rq && /^wss?:\/\//.test(rq) ? rq : RELAY_URL || null;
-    const me = Math.random().toString(36).slice(2, 10);
+    const me = Math.random().toString(36).slice(2, 10), code = NET.room;
     let pin = '';
     if (NET.host && relay) {
-      const k = 'fist-room-pin-' + NET.room;
-      try { pin = q.get('pin') || localStorage.getItem(k) || ''; } catch {}
+      try { pin = q.get('pin') || localStorage.getItem('fist-room-pin-' + code) || ''; } catch {}
       if (!pin) pin = String(Math.floor(1000 + Math.random() * 9000));
     }
-    const keepPin = () => { try { localStorage.setItem('fist-room-pin-' + NET.room, pin); } catch {} };   // on the relay's hostok
+    const keepPin = () => { try { localStorage.setItem('fist-room-pin-' + code, pin); } catch {} };   // on the relay's hostok
     let handle = () => {}, onLink = () => {};
     const link = (() => {
-      if (!relay) { const ch = new BroadcastChannel('fist-room-' + NET.room); ch.onmessage = e => handle(e.data); return { post: o => ch.postMessage(o) }; }
-      const url = relay.replace(/\/+$/, '') + '/room/' + encodeURIComponent(NET.room) + '?' +
+      if (!relay) { const ch = new BroadcastChannel('fist-room-' + code); ch.onmessage = e => handle(e.data); return { post: o => ch.postMessage(o), close: () => ch.close() }; }
+      const url = relay.replace(/\/+$/, '') + '/room/' + encodeURIComponent(code) + '?' +
         new URLSearchParams({ role: NET.host ? 'host' : 'student', id: me, cs: NET.cs, pin });
-      let ws = null, tries = 0;
+      let ws = null, tries = 0, shut = false;
       const connect = () => {
+        if (shut) return;
         ws = new WebSocket(url);
         ws.onopen = () => { tries = 0; onLink('open'); };
         ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch { return; } handle(m); };
         ws.onclose = e => {
           ws = null;
-          if (e.code === 4003) { onLink('refused'); return; }          // another instructor holds this room: don't retry
+          if (shut) return;
+          if (e.code === 4003) { onLink('refused'); return; }          // another instructor holds this code: don't retry
           onLink('closed'); setTimeout(connect, Math.min(10000, 1000 * 2 ** tries++));
         };
       };
       connect();
-      return { post: o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); } };
+      return { post: o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }, close: () => { shut = true; if (ws) ws.close(1000); } };
     })();
     const send = (type, o) => link.post(Object.assign({ type, from: me, cs: NET.cs }, o || {}));
+    const timers = [], every = (f, ms) => timers.push(setInterval(f, ms));
     const F = FIRES.debug, O = OPFOR.debug, badge = document.getElementById('room-badge');
     const say = (text, cls, title) => { badge.hidden = false; badge.textContent = text; badge.className = cls || ''; badge.title = title || ''; };
     const struckList = () => [...O.struck].map(([k, w]) => { const [g, i] = k.split(':').map(Number); return { g, i, t: w.t, cause: w.cause }; });
+    const onUnload = () => send(NET.host ? 'hostbye' : 'bye');
+    addEventListener('beforeunload', onUnload);
+    function stop() {
+      onUnload(); link.close(); for (const t of timers) clearInterval(t);
+      removeEventListener('beforeunload', onUnload);
+      NET.emit = () => {}; badge.hidden = true;
+      if (NET.host) { NET.room = null; NET.host = false; }
+      ROOM = null; window.__room = null;
+    }
     if (NET.host) {
       const students = new Map();                 // tab id -> { cs, seen }
       const roster = () => { const n = students.size, who = [...students.values()].map(s => s.cs);
-        say('Room ' + NET.room + ' · ' + n + ' student' + (n === 1 ? '' : 's'), 'host', (who.length ? 'In the room: ' + who.join(', ') : 'Nobody has joined yet') +
-          (pin ? '\nInstructor PIN ' + pin + ' (add &pin=' + pin + ' to host this room from another computer)' : '')); };
+        say('Session ' + code + ' · ' + n + ' student' + (n === 1 ? '' : 's'), 'host', who.length ? 'In the session: ' + who.join(', ') : 'Nobody has joined yet');
+        roomHooks.roster(who, pin); };
       const dmg = () => ({ opfor: struckList(), civ: CIV.hits() });
       const full = to => send('full', { to, opfor: O.netState(), units: F.unitList(), civ: CIV.debug.level, clock: { t: F.simT, speed: F.speed }, dmg: dmg(), uas: UAS.netState() });
       NET.emit = (type, o) => send(type, o);
       onLink = st => {
         if (st === 'open') roster();
-        else if (st === 'refused') say('Room ' + NET.room + ' is held by another instructor', 'lost', 'Pick another room code, or add &pin=<their PIN> to the address');
-        else say('Room ' + NET.room + ' · relay connection lost, retrying…', 'lost');
+        else if (st === 'refused') { say('Session ' + code + ' is held by another instructor', 'lost'); roomHooks.refused(); }
+        else say('Session ' + code + ' · relay connection lost, retrying…', 'lost');
       };
       handle = m => {
         if (!m || m.from === me) return;
         if (m.type === 'hostok') { keepPin(); return; }
         if (m.type === 'hello' || m.type === 'ping') {
           const isNew = !students.has(m.from); students.set(m.from, { cs: m.cs, seen: performance.now() });
-          if (m.type === 'hello') { full(m.from); if (isNew) FIRES.log(m.cs + ' joined the room'); }
+          if (m.type === 'hello') { full(m.from); if (isNew) FIRES.log(m.cs + ' joined the session'); }
           if (isNew) roster();
-        } else if (m.type === 'bye') { const s = students.get(m.from); if (s) { students.delete(m.from); FIRES.log(s.cs + ' left the room'); roster(); } }
+        } else if (m.type === 'bye') { const s = students.get(m.from); if (s) { students.delete(m.from); FIRES.log(s.cs + ' left the session'); roster(); } }
         else if (m.type === 'cmd') UAS.runCmd(m.op, m.a || {}, m.cs);
         else if (m.type === 'cam') { const d = UAS.droneById(m.d); if (d && UAS.debug.ctl.get(d.id) === m.cs) UAS.applyCam(d, m.cam); }
       };
-      setInterval(() => send('uas', Object.assign(UAS.netState(), { clock: { t: F.simT, speed: F.speed } })), 200);   // one message: the relay bills per message
+      every(() => send('uas', Object.assign(UAS.netState(), { clock: { t: F.simT, speed: F.speed } })), 200);   // one message: the relay bills per message
       const last = {};
       const changed = (k, v) => { const j = JSON.stringify(v); if (j === last[k]) return false; last[k] = j; return true; };
       changed('opfor', O.netState()); changed('units', F.unitList()); changed('civ', CIV.debug.level);
-      setInterval(() => {
+      every(() => {
         const op = O.netState(), un = F.unitList();
         if (changed('opfor', op)) send('opfor', { opfor: op });
         if (changed('units', un)) send('units', { units: un });
@@ -5588,13 +5652,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const now = performance.now();
         for (const [id, s] of students) if (now - s.seen > 7000) { students.delete(id); FIRES.log(s.cs + ' lost contact'); roster(); }
       }, 1000);
-      addEventListener('beforeunload', () => send('hostbye'));
       roster();
-      return { send, students };
+      return { send, students, stop, get pin() { return pin; } };
     }
     // ---- student
     let joined = false, lastHost = 0, paused = false;
-    const status = () => say('Room ' + NET.room + ' · ' + NET.cs + (paused ? ' · PAUSED BY INSTRUCTOR' : ''), paused ? 'paused' : 'ok');
+    const status = () => say('Session ' + code + ' · ' + NET.cs + (paused ? ' · PAUSED BY INSTRUCTOR' : ''), paused ? 'paused' : 'ok');
     function strikeOne(s) {
       if (s.g !== undefined) { const g = O.groups.find(o => o.id === s.g); return !!g && O.strike(g, s.i, s.t, s.cause); }
       return CIV.strike(s.civ, s.t, !!s.boat);
@@ -5607,11 +5670,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     onLink = st => {
       if (st === 'open') { joined = false; send('hello'); }          // (re)connected: ask for the full state again
-      else if (st === 'closed') say('Room ' + NET.room + ' · relay connection lost, retrying…', 'lost');
+      else if (st === 'closed') say('Session ' + code + ' · relay connection lost, retrying…', 'lost');
     };
     handle = m => {
       if (!m || m.from === me) return;
-      if (m.type === 'nohost') { if (!joined) say('Room ' + NET.room + ' · waiting for the instructor…', 'lost'); return; }
+      if (m.type === 'nohost') { if (!joined) say('Session ' + code + ' · waiting for the instructor…', 'lost'); return; }
       if (m.type === 'full') {
         if (m.to !== me) return;
         joined = true; clock(m.clock);
@@ -5627,18 +5690,85 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       else if (m.type === 'burst') FIRES.blast(m.e, m.n, m.s, m.y);
       else if (m.type === 'strike') strikeOne(m);
       else if (m.type === 'dmg') applyDmg(m.dmg);
-      else if (m.type === 'hostbye') { lastHost = 0; joined = false; say('Room ' + NET.room + ' · the instructor left', 'lost'); }
+      else if (m.type === 'hostbye') { lastHost = 0; joined = false; say('Session ' + code + ' · the instructor left', 'lost'); }
     };
     UAS.setSend((op, a) => send('cmd', { op, a }));
-    say('Room ' + NET.room + ' · joining as ' + NET.cs + '…', 'lost');
+    say('Session ' + code + ' · joining as ' + NET.cs + '…', 'lost');
     send('hello');
-    setInterval(() => { if (!joined) send('hello'); else send('ping'); }, 1500);
-    setInterval(() => { if (joined) for (const c of UAS.camOut()) send('cam', c); }, 200);
-    setInterval(() => { if (joined && performance.now() - lastHost > 5000 && !badge.className.includes('lost')) say('Room ' + NET.room + ' · lost the instructor, waiting…', 'lost'); else if (joined && performance.now() - lastHost < 5000 && badge.className === 'lost') status(); }, 1000);
-    addEventListener('beforeunload', () => send('bye'));
-    return { send };
+    every(() => { if (!joined) send('hello'); else send('ping'); }, 1500);
+    every(() => { if (joined) for (const c of UAS.camOut()) send('cam', c); }, 200);
+    every(() => { if (joined && performance.now() - lastHost > 5000 && !badge.className.includes('lost')) say('Session ' + code + ' · lost the instructor, waiting…', 'lost'); else if (joined && performance.now() - lastHost < 5000 && badge.className === 'lost') status(); }, 1000);
+    return { send, stop };
+  }
+
+  // ---- welcome screen and live sessions (2026-11-13). A plain /trainer/ opens the welcome screen: Start Simulation (solo,
+  //      as before), Host Live Session (solo plus a session code: hostSession) or Join Live Session (code + callsign, then
+  //      the page reloads as ?join=CODE&cs=CALLSIGN). A student link ?join=CODE without &cs asks only for the callsign.
+  //      An instructor can also host later from the topbar's Host Live Session button. The Live Session panel (w-session)
+  //      shows the code, the join link and its QR code (qrcode-generator, loaded from cdnjs only when needed, so solo stays
+  //      offline-safe), who has joined, the link for hosting from another computer, and End session.
+  //      The callsign is remembered in localStorage ('fist-callsign'): the one thing a student writes, a preference only.
+  const SESSION = (() => {
+    const $ = id => document.getElementById(id);
+    const WORDS = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL', 'INDIA', 'KILO', 'LIMA', 'MIKE', 'OSCAR', 'PAPA', 'ROMEO', 'SIERRA', 'TANGO', 'VICTOR', 'WHISKEY', 'YANKEE', 'ZULU'];
+    const newCode = () => WORDS[Math.floor(Math.random() * WORDS.length)] + (10 + Math.floor(Math.random() * 90));
+    const { setQuery, base } = WELCOME;
+    const hostBtn = $('host-btn'), win = $('w-session');
+    let retries = 0;
+
+    // ---- hosting
+    function syncBtn() { hostBtn.textContent = NET.host ? 'Live Session' : 'Host Live Session'; hostBtn.title = NET.host ? 'Session code, join link and who has joined' : 'Open a live session: others join your battlefield with a code'; }
+    function hostSession(code) {
+      if (STUDENT || ROOM) return;
+      NET.room = code; NET.host = true; NET.cs = NET.cs || 'INSTRUCTOR';
+      setQuery({ room: code, pin: null });
+      openRoom(); syncBtn(); draw([]); __wins.show('w-session', true);
+    }
+    function endSession() {
+      if (!ROOM || !NET.host) return;
+      ROOM.stop(); setQuery({ room: null, pin: null }); syncBtn(); __wins.show('w-session', false);
+      FIRES.log('Live session ended');
+    }
+    roomHooks.refused = () => {                 // a code someone else holds: a fresh code for a generated one, else say so
+      if (retries++ < 5 && !new URLSearchParams(location.search).get('pin')) { ROOM.stop(); hostSession(newCode()); }
+      else $('ss-who').textContent = 'Another instructor holds this code. End the session and host again for a new code.';
+    };
+    roomHooks.roster = (who, pin) => { draw(who, pin); };
+    let qrFor = '';
+    function draw(who, pin) {
+      if (!NET.host) return;
+      const link = base() + '?join=' + NET.room;
+      $('ss-code').textContent = NET.room;
+      $('ss-link').value = link;
+      $('ss-who').textContent = who && who.length ? 'Joined: ' + who.join(', ') : 'No one has joined yet.';
+      if (pin !== undefined) { $('ss-pinlink').textContent = base() + '?room=' + NET.room + '&pin=' + pin; $('ss-pin').hidden = !pin; }
+      if (qrFor !== link) { qrFor = link; qr(link); }
+    }
+    let qrLib = null;
+    function qr(text) {
+      const box = $('ss-qr'); box.textContent = '';
+      qrLib = qrLib || new Promise((ok, bad) => { if (window.qrcode) return ok(window.qrcode);
+        const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+        s.onload = () => window.qrcode ? ok(window.qrcode) : bad(); s.onerror = bad; document.head.appendChild(s); });
+      qrLib.then(lib => { if (qrFor !== text) return; const c = lib(0, 'M'); c.addData(text); c.make(); box.innerHTML = c.createSvgTag(4, 0); box.hidden = false; })
+        .catch(() => { qrLib = null; box.hidden = true; });
+    }
+    hostBtn.addEventListener('click', () => { if (NET.host) __wins.show('w-session', win.hidden); else hostSession(newCode()); });
+    $('ss-end').addEventListener('click', endSession);
+    $('ss-copy').addEventListener('click', () => {
+      const i = $('ss-link'); i.select();
+      (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).catch(() => document.execCommand('copy'))
+        .finally(() => { $('ss-copy').textContent = 'Copied'; setTimeout(() => { $('ss-copy').textContent = 'Copy'; }, 1500); });
+    });
+    syncBtn();
+    if (!NET.host && !win.hidden) __wins.show('w-session', false);   // a panel left open last time, with no session now
+
+    // the welcome screen (WELCOME, near the top) shows before the terrain loads; what was chosen meanwhile runs now
+    WELCOME.ready(a => { if (a === 'host') hostSession(newCode()); else openRoom(); });
+    if (NET.room && NET.cs) openRoom();         // ?room=CODE (instructor) or ?join=CODE&cs=… (student) in the address
+    return { hostSession, endSession, newCode };
   })();
-  window.__room = ROOM;
+  window.__session = SESSION;
 
   // ---- student screen: on the map (not at an OP, not in a feed) hide the enemy, civilians, bursts, smoke and fire, and
   //      trajectories for the one main render, then put them back. Feeds render first with their own rules, so they still see it all.

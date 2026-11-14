@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FiST Trainer — Fires Lab</title>
-<link rel="stylesheet" href="css/trainer.css">
+<link rel="stylesheet" href="css/trainer.css?v=2026-11-13b">
 </head>
 <body>
 <canvas id="view" aria-label="3D terrain of the Honolulu battlespace with the scenario sketch"></canvas>
@@ -21,7 +21,6 @@
 
 <header id="topbar" aria-label="Exercise control">
   <a class="tb-name" href="../index.html" title="Back to The Fires Lab home">Fires Lab</a>
-  <span class="wip" title="Under construction: features and figures will change">In progress</span>
   <span id="room-badge" hidden role="status" aria-live="polite"></span>
   <div class="tb-clock" role="group" aria-label="Clock">
     <button id="ck-play" class="tb-play instr-only" aria-pressed="true" aria-label="Pause">Pause</button>
@@ -30,6 +29,7 @@
   </div>
   <div class="tb-timeline" aria-hidden="true"><div class="tl-ticks" id="tl-ticks"></div><div class="tl-done" id="tl-done"></div><div class="tl-now" id="tl-now"></div></div>
   <div class="tb-right">
+    <button id="host-btn" class="instr-only" type="button">Host Live Session</button>
     <span class="seg instr-only" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
     <nav class="tb-tools" id="tools" aria-label="Control panels">
       <button data-win="w-scn" class="instr-only" aria-pressed="false">Scenario</button>
@@ -199,6 +199,43 @@
   <span id="dirbox" hidden><b>DIR</b><span id="dir">—</span></span>
 </div>
 
+<section class="win instr-only" id="w-session" aria-label="Live session" hidden>
+  <header class="win-h"><h2>Live Session</h2><button class="win-x" aria-label="Close Live Session">×</button></header>
+  <div class="win-b">
+    <p class="ss-l">Session code</p>
+    <p id="ss-code" class="ss-code"></p>
+    <div id="ss-qr" class="ss-qr" hidden></div>
+    <p class="ss-l">Join link</p>
+    <div class="ss-link"><input id="ss-link" readonly aria-label="Join link"><button id="ss-copy" type="button">Copy</button></div>
+    <p id="ss-who" class="ss-who" role="status">No one has joined yet.</p>
+    <details id="ss-pin" hidden><summary>Host from another computer</summary>
+      <p>Open this address there. It carries this session's instructor PIN, so share it only with other instructors.</p>
+      <code id="ss-pinlink"></code>
+    </details>
+    <button id="ss-end" type="button">End session</button>
+  </div>
+</section>
+
+<div id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="wl-title">
+  <div class="wl-card">
+    <h1 id="wl-title">FiST Trainer</h1>
+    <div id="wl-main">
+      <button class="wl-opt wl-big" id="wl-start" type="button"><span class="wl-t">Start Simulation</span><span class="wl-d">God's-eye view of the battlefield. Single player, works offline. You can open a live session later.</span></button>
+      <div class="wl-row">
+        <button class="wl-opt" id="wl-host" type="button"><span class="wl-t">Host Live Session</span><span class="wl-d">God's-eye view, plus a code for others to join your battlefield.</span></button>
+        <button class="wl-opt" id="wl-join" type="button"><span class="wl-t">Join Live Session</span><span class="wl-d">Join a session someone is hosting. You see the fight from OPs and sUAS feeds only.</span></button>
+      </div>
+    </div>
+    <form id="wl-form" hidden novalidate>
+      <h2 id="wl-form-t">Join Live Session</h2>
+      <label id="wl-code-l">Session code<input id="wl-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="KILO42"></label>
+      <label>Callsign<input id="wl-cs" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="VIPER 2"></label>
+      <p id="wl-msg" class="wl-msg" role="alert"></p>
+      <div class="wl-btns"><button type="button" id="wl-back">Back</button><button type="submit" id="wl-go">Join</button></div>
+    </form>
+  </div>
+</div>
+
 <pre id="perf" hidden></pre>
 <button id="rules-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="rules">Rules and Assumptions</button>
 <div id="rules" hidden role="dialog" aria-modal="true" aria-labelledby="rules-title">
@@ -211,6 +248,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js"></script>
+<script src="js/trainer.js?v=2026-11-13"></script>
 </body>
 </html>

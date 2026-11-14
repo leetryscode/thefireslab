@@ -230,11 +230,9 @@ body.qf-armed::after { content: ''; position: fixed; inset: 0; pointer-events: n
 #oplabels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .tag.oplab { transform: translate(-50%, -100%); }
 
-/* site chrome: the title links home; the in-progress flag */
+/* site chrome: the title links home */
 a.tb-name { color: inherit; text-decoration: none; }
 a.tb-name:hover { color: var(--brass); }
-.wip { display: inline-block; padding: 2px 9px; border-radius: 999px; background: #c9a227; color: #2e2609;
-  font: 600 11px var(--font-head); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 
 /* UAS panel: drone rows stack a status line over a row of controls */
 .drow { display: grid; gap: 3px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.06); font: 500 12px var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -324,3 +322,45 @@ a.tb-name:hover { color: var(--brass); }
 #room-badge.ok { border-color: #6fbf73; color: #8fd493; }
 #room-badge.paused, #room-badge.lost { border-color: #e0a040; color: #f0b860; }
 .ug.ctl { flex-basis: 100%; }
+
+/* ---- Welcome screen and live sessions (2026-11-13). Start Simulation is the big default; Host / Join beside it. */
+#welcome { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: rgba(6, 8, 5, 0.72); backdrop-filter: blur(4px); overflow-y: auto; }
+#welcome[hidden] { display: none; }
+.wl-card { width: min(640px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5); padding: 20px; display: grid; gap: 16px; }
+.wl-card h1 { font-size: 26px; color: var(--brass); }
+#wl-main { display: grid; gap: 12px; }
+#wl-main[hidden], #wl-form[hidden], #wl-code-l[hidden] { display: none; }
+.wl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.wl-opt { display: grid; gap: 6px; align-content: start; text-align: left; padding: 14px 16px; border-radius: 6px;
+  background: rgba(10, 13, 9, 0.6); border: 1px solid var(--line); transition: border-color .12s, background .12s; }
+.wl-opt:hover { border-color: var(--brass); background: rgba(214, 178, 90, 0.08); }
+.wl-t { font: 700 18px var(--font-head); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.wl-d { font: 400 14px/1.4 var(--font-body); color: var(--dim); }
+.wl-big { border-color: var(--brass); padding: 18px 18px; }
+.wl-big .wl-t { font-size: 22px; color: var(--brass); }
+#wl-form { display: grid; gap: 12px; }
+#wl-form h2 { margin: 0; font: 700 18px var(--font-head); letter-spacing: .06em; text-transform: uppercase; }
+#wl-form label { display: grid; gap: 4px; font: 600 13px var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+#wl-form input { font: 600 16px var(--font-mono); text-transform: uppercase; color: var(--ink); background: var(--ground);
+  border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+#wl-form input:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.wl-msg { margin: 0; min-height: 1.2em; font-size: 13px; color: #ff9c8a; }
+.wl-btns { display: flex; justify-content: flex-end; gap: 8px; }
+.wl-btns button { font-size: 13px; padding: 7px 14px; }
+#wl-go { background: var(--brass); border-color: var(--brass); color: #10140f; font-weight: 700; }
+@media (max-width: 560px) { .wl-row { grid-template-columns: 1fr; } .wl-card { padding: 16px; } }
+#host-btn { border-color: var(--brass); color: var(--brass); white-space: nowrap; }
+.ss-l { margin: 0; font: 600 12px var(--font-head); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.ss-code { margin: -6px 0 0; font: 700 30px var(--font-mono); letter-spacing: .08em; color: var(--brass); }
+.ss-qr { background: #fff; padding: 8px; border-radius: 4px; width: 168px; }
+.ss-qr[hidden] { display: none; }
+.ss-qr svg { display: block; width: 100%; height: auto; }
+.ss-link { display: flex; gap: 6px; }
+.ss-link input { flex: 1 1 auto; }
+.ss-who { margin: 0; font-size: 13px; color: var(--ink); }
+#ss-pin summary { cursor: pointer; font-size: 12px; color: var(--dim); }
+#ss-pin p { margin: 6px 0; font-size: 12px; color: var(--dim); }
+#ss-pin code { display: block; font: 500 11px var(--font-mono); word-break: break-all; color: var(--ink); user-select: all; }
+#ss-end { justify-self: start; border-color: #c8402c; color: #ffb3a5; }
