@@ -80,6 +80,18 @@ body { background: var(--ground); color: var(--ink); font-family: var(--font-bod
   font: 700 13px var(--font-head); letter-spacing: .06em; text-transform: uppercase; padding: 0;
   text-shadow: 0 0 2px rgba(5, 8, 6, .95), 0 0 4px rgba(5, 8, 6, .9), 0 1px 2px #000; }
 .tag.op { color: var(--friend); }
+/* Map view grid margins (2026-11-11): line numbers along the screen edges, like a printed map's neatline */
+#mapgrid { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+#mapgrid .gl { position: absolute; font: 700 14px var(--font-head); letter-spacing: .04em; color: var(--brass);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  text-shadow: 0 0 2px rgba(5, 8, 6, .95), 0 0 4px rgba(5, 8, 6, .9), 0 1px 2px #000; }
+#mapgrid .gl.top { transform: translate(-50%, 0); }
+#mapgrid .gl.bot { transform: translate(-50%, -100%); }
+#mapgrid .gl.left { transform: translate(0, -50%); }
+#mapgrid .gl.right { transform: translate(-100%, -50%); }
+#mapgrid .gzd { position: absolute; left: 34px; font: 600 12px var(--font-mono); letter-spacing: .04em; color: var(--brass);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; white-space: pre; }
+#mapgrid .gzd:empty { display: none; }
 .tag.rt { color: var(--enemy); transform: translate(-50%, -50%); width: auto; margin: 0; }   /* width, margin: not the .rt table's */
 h1 { margin: 0; font-family: var(--font-head); font-weight: 600; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
 .meta { margin: 0; font-size: 13px; line-height: 1.45; color: var(--dim); }
@@ -132,6 +144,7 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .win input, .win select { font: 500 12px var(--font-mono); color: var(--ink); background: var(--ground); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; min-width: 0; }
 .win input:focus-visible, .win select:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .win .grid-in { flex: 1 1 150px; }
+.win .row.split > select { flex: 1 1 0; }
 .win .msg { font-size: 12px; color: var(--dim); min-height: 1.2em; margin: 0; }
 .win .msg.bad { color: #ff9c8a; }
 .win .msg.arm { color: var(--brass); }
@@ -300,3 +313,14 @@ a.tb-name:hover { color: var(--brass); }
 #lite-note b { color: var(--brass); font-family: var(--font-head); letter-spacing: .04em; font-size: 15px; }
 #lite-note .x { display: block; margin-top: 6px; font-size: 12px; color: var(--dim); }
 @media (max-width: 640px) { #rules-btn { bottom: calc(52px + env(safe-area-inset-bottom, 0px)); font-size: 11px; padding: 4px 9px; } #perf { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); font-size: 10px; } }
+
+/* ---- Student screen (?role=student; multiplayer plan, Trainer/notes/trainer-multiplayer.md).
+   Exercise controls and anything that gives the enemy away are marked class="instr-only" in index.html. */
+.role-student .instr-only { display: none !important; }
+.role-student .tb-name::after { content: ' · Student'; color: var(--brass); }
+/* Room badge in the banner (multiplayer step 2): host = brass, student ok = green, paused or lost contact = amber */
+#room-badge { font: 600 11px/1 var(--font-mono, ui-monospace, monospace); letter-spacing: .04em; padding: 4px 8px; border-radius: 4px;
+  border: 1px solid var(--brass); color: var(--brass); white-space: nowrap; }
+#room-badge.ok { border-color: #6fbf73; color: #8fd493; }
+#room-badge.paused, #room-badge.lost { border-color: #e0a040; color: #f0b860; }
+.ug.ctl { flex-basis: 100%; }

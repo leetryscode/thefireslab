@@ -94,6 +94,26 @@
   const LITE = (() => { const q = new URLSearchParams(location.search).get('lite'); if (q === '1') return true; if (q === '0') return false;
     return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); })();
   window.__lite = LITE;
+  // ---- role (multiplayer plan, Trainer/notes/trainer-multiplayer.md, Lee 2026-11-11). ?role=student shows the student screen
+  //      (until rooms exist this is the only way in): the 2D map, OPs, UAS, Display basics, Rules, clock. No god's-eye 3D view,
+  //      no Play/Pause or speed, no Scenario, Fires or OPFOR panels, and nothing on the map that gives the enemy away
+  //      (enemy, enemy routes, civilians, bursts, smoke). Students see the battlefield only through an OP or a UAS feed.
+  //      Elements marked class="instr-only" in index.html are hidden for students by trainer.css.
+  const STUDENT = new URLSearchParams(location.search).get('role') === 'student';
+  document.body.classList.toggle('role-student', STUDENT);
+  window.__role = STUDENT ? 'student' : 'instructor';
+  // ---- room (multiplayer build step 2). ?room=CODE: an instructor hosts it (runs the whole sim); ?role=student&room=CODE joins
+  //      it, optionally with &cs=CALLSIGN. Until the Cloudflare relay (step 3) the link is a BroadcastChannel, so host and
+  //      students are tabs of one browser on one computer. NET.emit is filled in by the ROOM module near the end of the file;
+  //      until then (and always for students and solo) it does nothing. A student in a room never writes the saved scenario.
+  const NET = (() => {
+    const q = new URLSearchParams(location.search), room = (q.get('room') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16) || null;
+    let cs = (q.get('cs') || '').trim().toUpperCase().slice(0, 20);
+    if (!cs && room) cs = STUDENT ? 'STUDENT ' + Math.floor(100 + Math.random() * 900) : 'INSTRUCTOR';
+    return { room, host: !!room && !STUDENT, client: !!room && STUDENT, cs, emit() {} };
+  })();
+  const NOSAVE = NET.client;
+  window.__net = NET;
   // ---- edge smoothing (2026-11-04, under comparison): 'msaa' is the browser's 4x (default), 'fxaa' a cheaper pass over the
   //      finished picture, 'off' none. ?aa=msaa / ?aa=fxaa / ?aa=off in the address. It must be chosen before the page's GPU
   //      context exists, so changing it means a reload. Lite stays 'off' unless the address says otherwise.
@@ -467,6 +487,7 @@ vec3 gradeGround(vec3 base, vec3 lit){
   scene.add(sun);
 
   // ---- overlays, rebuilt when exaggeration changes
+  let mapView = false;                 // 2D Map view (set by the Fires module's setMap): grid margin labels show
   let ex = 1, onExCity = null;          // onExCity: the CITY module's exaggeration hook (set once it exists)
   const groups = { grid: new THREE.Group(), sketch: new THREE.Group() };
   scene.add(groups.grid, groups.sketch);
@@ -1697,8 +1718,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       log('Moved ' + u.name + ' to ' + gridTxt(e, n) + (onMap(e, n) ? '' : ' (off map)')); msg(placeMsg, 'Moved.'); drawUnits();
     }
     const unitList = () => units.map(u => ({ type: u.type, cs: u.cs || undefined, e: Math.round(u.e), n: Math.round(u.n), alt: u.alt }));
+    // room: a student's firing units follow the host's list (friendly positions on the map)
+    function setUnits(list) {
+      for (const u of units) unitGroup.remove(u.sprite); units.length = 0;
+      for (const u of list || []) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt, u.cs);
+    }
     function drawUnits() {
-      try { localStorage.setItem(STORE.units, JSON.stringify(unitList())); } catch (e) {}
+      if (!NOSAVE) try { localStorage.setItem(STORE.units, JSON.stringify(unitList())); } catch (e) {}
       const L = $('ulist'); L.textContent = '';
       for (const u of units) {
         const row = document.createElement('div'); row.className = 'urow';
@@ -1721,6 +1747,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       for (const u of units) { const o = document.createElement('option'); o.value = String(u.id); o.textContent = u.name; sel.appendChild(o); }
       if (units.some(u => String(u.id) === keep)) sel.value = keep;
       if (typeof syncAngle === 'function') syncAngle();
+      if (typeof syncCff === 'function') syncCff();
     }
 
     // ---- BALLISTICS (Lee, 2026-11-02): a point-mass shell with gravity and quadratic drag (a = −k|v|v), constant air
@@ -1789,40 +1816,118 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
       return null;
     }
-    // ---- fire missions
-    $('fm-pick').addEventListener('click', () => { picking = true; placing = null; moving = null; msg(fmMsg, 'Click the target on the map. Esc cancels.', 'arm'); });
-    $('fm-fire').addEventListener('click', fire);
-    function fire() {
-      const u = units.find(x => String(x.id) === $('fm-unit').value);
-      if (!u) return msg(fmMsg, 'Place a firing unit first.', 'bad');
-      const g = parseGrid($('fm-grid').value); if (g.err) return msg(fmMsg, g.err, 'bad');
-      { const q = toLocal(g.e, g.n); if (!inPlay(q.x, q.z)) return msg(fmMsg, 'That target is off the map.', 'bad'); }
-      const t = TYPES[u.type], R = Math.hypot(g.e - u.e, g.n - u.n);
-      if (R > t.max) return msg(fmMsg, `Out of range: ${(R / 1000).toFixed(1)} km, ${t.short} max ${(t.max / 1000).toFixed(1)} km.`, 'bad');
-      if (R < t.min) return msg(fmMsg, `Inside minimum range: ${Math.round(R)} m, ${t.short} min ${t.min} m.`, 'bad');
-      const per = Number($('fm-rds').value);     // no ammunition count or limit (Lee, 2026-11-02): the instructor decides
-      const high = t.angle === 'high' || angle === 'high';
+    // ---- CALL FOR FIRE (Lee, 2026-11-11): the Fire Mission Sim's call for fire (js/sim-missions.js).
+    //      TYPE OF MISSION sets how many tubes fire, how many rounds each and how far apart: the sim's table, sized to the
+    //      unit ('all' = every tube, 'half' = half rounded up, the sim's 3 of 6). Fire for effect keeps the rounds-per-tube
+    //      choice (no ammunition limit, Lee 2026-11-02). iv null = the unit's own interval.
+    //      METHOD OF CONTROL says only WHEN the guns fire; the flight is the same once they do. When ready: on Send.
+    //      At my command: laid and held until the instructor presses FIRE. Time on target: fired at TOT − time of flight,
+    //      so the first rounds land at the TOT (sim clock); a TOT inside the time of flight is refused, with the earliest.
+    //      A held mission is solved again when it fires, so a unit moved meanwhile shoots from where it is now, and one
+    //      removed or out of range cancels with a log line. No acknowledgement delay: the instructor is the FDC.
+    const MTYPES = {
+      ffe:  { label: 'Fire for effect',       tubes: 'all',  per: null, iv: null },
+      isup: { label: 'Immediate suppression', tubes: 'all',  per: 1,    iv: null },
+      adj:  { label: 'Adjust fire',           tubes: 'half', per: 1,    iv: null },
+      sup:  { label: 'Suppression',           tubes: 1,      per: 18,   iv: 7 }
+    };
+    const CTL = { ready: 'when ready', amc: 'at my command', tot: 'time on target' };
+    for (const [k, v] of Object.entries(MTYPES)) { const o = document.createElement('option'); o.value = k; o.textContent = v.label; $('fm-type').appendChild(o); }
+    function shapeOf(t, mt, rds) {
+      const M = MTYPES[mt] || MTYPES.ffe;
+      return { n: M.tubes === 'all' ? t.tubes : M.tubes === 'half' ? Math.ceil(t.tubes / 2) : M.tubes, per: M.per || rds, iv: M.iv || t.interval };
+    }
+    const held = [];                        // laid missions waiting: { id, spec, ctl, tot, fireAt (null = at my command) }
+    let nextMid = 1;
+    function plan(s) {                      // s: { uid, e, n, mt, rds, angle } → the solved mission, or { err }
+      const u = units.find(x => x.id === s.uid); if (!u) return { err: 'Firing unit removed' };
+      const g = { e: s.e, n: s.n }, t = TYPES[u.type], R = Math.hypot(g.e - u.e, g.n - u.n);
+      if (R > t.max) return { err: `Out of range: ${(R / 1000).toFixed(1)} km, ${t.short} max ${(t.max / 1000).toFixed(1)} km.` };
+      if (R < t.min) return { err: `Inside minimum range: ${Math.round(R)} m, ${t.short} min ${t.min} m.` };
+      const high = t.angle === 'high' || s.angle === 'high';
       const G = toLocal(u.e, u.n), gH = onMap(u.e, u.n) ? heightAt(G.x, G.z) : (u.alt || 0), tl = toLocal(g.e, g.n), tH = heightAt(tl.x, tl.z);
       const sol = BAL.solve(u.type, R, tH - gH, high);
-      if (sol.err) return msg(fmMsg, `${sol.err}: ${(R / 1000).toFixed(1)} km${high && t.angle !== 'high' ? '. Try Low.' : '.'}`, 'bad');
-      const id = missions.length + 1, r = rng(id * 2654435761 + u.id * 97), tof = sol.tof;
+      if (sol.err) return { err: `${sol.err}: ${(R / 1000).toFixed(1)} km${high && t.angle !== 'high' ? '. Try Low.' : '.'}` };
+      return { u, t, g, R, high, G, gH, sol, tof: sol.tof, sh: shapeOf(t, s.mt, s.rds), mt: s.mt };
+    }
+    function launch(id, p, t0) {            // the guns fire at t0
+      const { u, t, g, R, G, gH, sol, tof, sh, high } = p, r = rng(id * 2654435761 + u.id * 97);
       const ux = (g.e - u.e) / R, uy = (g.n - u.n) / R;       // gun-target line, east/north components
       const impacts = [], volEnd = [];
-      for (let k = 0; k < per; k++) for (let j = 0; j < t.tubes; j++) {
-        const lat = t.tubes > 1 ? (j / (t.tubes - 1) - 0.5) * t.sheaf : 0;  // parallel sheaf across the gun-target line
+      for (let k = 0; k < sh.per; k++) for (let j = 0; j < sh.n; j++) {
+        const lat = sh.n > 1 ? (j / (sh.n - 1) - 0.5) * t.sheaf * (sh.n - 1) / (t.tubes - 1) : 0;  // parallel sheaf across the gun-target line
         const dr = gauss(r) * t.sR(R), dd = gauss(r) * t.sD(R) + lat;
-        const e = g.e + ux * dr - uy * dd, n = g.n + uy * dr + ux * dd, fired = simT + k * t.interval + r() * 1.5;
+        const e = g.e + ux * dr - uy * dd, n = g.n + uy * dr + ux * dd, fired = t0 + k * sh.iv + r() * 1.5;
         const Rr = Math.hypot(e - u.e, n - u.n), hit = maskRound(sol, G, gH, (e - u.e) / Rr, -(n - u.n) / Rr, Rr);
         const imp = hit ? { t: fired + hit.t, e: CE + hit.x, n: CN - hit.z, y: hit.y, what: hit.what, above: hit.above, done: false }
                         : { t: fired + tof, e, n, done: false };
         impacts.push(imp); volEnd[k] = Math.max(volEnd[k] || 0, imp.t);
       }
-      const m = { id, u, t, g, R, tof, per, t0: simT, impacts, splash: false, endT: Math.max(...impacts.map(i => i.t)), arc: null, shells: [], sol, G, gH, volEnd };
+      const m = { id, u, t, g, R, tof, per: sh.per, iv: sh.iv, t0, impacts, splash: false, endT: Math.max(...impacts.map(i => i.t)), arc: null, shells: [], sol, G, gH, volEnd };
       missions.push(m); buildArc(m);
       const masked = impacts.filter(i => i.what).length;
-      log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${per} rd × ${t.tubes}, range ${(R / 1000).toFixed(1)} km, ${high ? 'HIGH' : 'LOW'} ch ${sol.ch} QE ${Math.round(sol.qe)} mils, ToF ${Math.round(tof)} s — SHOT`);
-      msg(fmMsg, `Mission ${id} away (${high ? 'high' : 'low'} angle, charge ${sol.ch}, QE ${Math.round(sol.qe)} mils). Splash in ${Math.round(tof)} s.` + (masked ? ` ${masked} of ${impacts.length} rounds will hit a building or crest first.` : ''));
+      log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${sh.per} rd × ${sh.n}, range ${(R / 1000).toFixed(1)} km, ${high ? 'HIGH' : 'LOW'} ch ${sol.ch} QE ${Math.round(sol.qe)} mils, ToF ${Math.round(tof)} s — SHOT`);
+      msg(fmMsg, `Mission ${id} away (${high ? 'high' : 'low'} angle, charge ${sol.ch}, QE ${Math.round(sol.qe)} mils). Splash in ${Math.round(tof + t0 - simT)} s.` + (masked ? ` ${masked} of ${impacts.length} rounds will hit a building or crest first.` : ''));
     }
+    function parseTot(v) {                  // "T+05:30" or "5:30" (sim clock, minutes may pass 59) → seconds, or null
+      const m = /^\s*(?:T\s*\+\s*)?(\d{1,4}):([0-5]\d)\s*$/i.exec(v || ''); return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    }
+    $('fm-pick').addEventListener('click', () => { picking = true; placing = null; moving = null; msg(fmMsg, 'Click the target on the map. Esc cancels.', 'arm'); });
+    $('fm-fire').addEventListener('click', send);
+    function send() {
+      const u = units.find(x => String(x.id) === $('fm-unit').value);
+      if (!u) return msg(fmMsg, 'Place a firing unit first.', 'bad');
+      const g = parseGrid($('fm-grid').value); if (g.err) return msg(fmMsg, g.err, 'bad');
+      { const q = toLocal(g.e, g.n); if (!inPlay(q.x, q.z)) return msg(fmMsg, 'That target is off the map.', 'bad'); }
+      const spec = { uid: u.id, e: g.e, n: g.n, mt: $('fm-type').value, rds: Number($('fm-rds').value), angle };
+      const p = plan(spec); if (p.err) return msg(fmMsg, p.err, 'bad');
+      const ctl = $('fm-control').value; let tot = null;
+      if (ctl === 'tot') {
+        tot = parseTot($('fm-tot').value);
+        if (tot === null) return msg(fmMsg, 'Time on target needs a sim clock time, as T+MM:SS.', 'bad');
+        if (tot - p.tof < simT) return msg(fmMsg, `Unable: time of flight ${Math.round(p.tof)} s. Earliest TOT is ${fmt(Math.ceil(simT + p.tof + 1))}.`, 'bad');
+      }
+      const id = nextMid++;
+      log(`M${id} CFF ${u.name}: ${MTYPES[spec.mt].label.toLowerCase()}, grid ${gridTxt(g.e, g.n)}, ${p.sh.per} rd × ${p.sh.n}, ${CTL[ctl]}${tot !== null ? ' ' + fmt(tot) : ''}`);
+      if (ctl === 'ready') return launch(id, p, simT);
+      held.push({ id, spec, ctl, tot, fireAt: tot !== null ? tot - p.tof : null, name: u.name, label: MTYPES[spec.mt].label });
+      msg(fmMsg, ctl === 'tot' ? `Mission ${id} laid. Fires at ${fmt(tot - p.tof)}, first rounds land at ${fmt(tot)}.`
+                               : `Mission ${id} laid and waiting. Press FIRE below when you want it.`);
+      drawHeld();
+    }
+    function fireHeld(h, t0) {
+      held.splice(held.indexOf(h), 1);
+      const p = plan(h.spec);
+      if (p.err) { log(`M${h.id} cancelled: ${p.err}`); msg(fmMsg, `Mission ${h.id} cancelled: ${p.err}`, 'bad'); }
+      else { if (h.ctl === 'amc') log(`M${h.id} FIRE`); launch(h.id, p, t0); }
+      drawHeld();
+    }
+    function drawHeld() {
+      const L = $('fm-held'); L.textContent = '';
+      for (const h of held) {
+        const row = document.createElement('div'); row.className = 'urow';
+        const nm = document.createElement('span'); nm.className = 'un'; nm.textContent = `M${h.id} ${h.name} · ${h.label}`;
+        const gr = document.createElement('span'); gr.className = 'ug';
+        gr.textContent = h.ctl === 'tot' ? `TOT ${fmt(h.tot)} · fires ${fmt(h.fireAt)}` : 'At my command · laid'; nm.appendChild(gr); row.appendChild(nm);
+        if (h.ctl === 'amc') { const f = document.createElement('button'); f.className = 'fire-btn'; f.textContent = 'FIRE'; f.addEventListener('click', () => fireHeld(h, simT)); row.appendChild(f); }
+        const c = document.createElement('button'); c.textContent = 'Cancel';
+        c.addEventListener('click', () => { held.splice(held.indexOf(h), 1); log(`M${h.id} cancelled`); msg(fmMsg, `Mission ${h.id} cancelled.`); drawHeld(); });
+        row.appendChild(c); L.appendChild(row);
+      }
+    }
+    function tickHeld() {                   // a time on target fires on its own, at the exact moment
+      for (const h of held.slice()) if (h.fireAt !== null && simT >= h.fireAt) fireHeld(h, h.fireAt);
+    }
+    // the form follows the choices: rounds per tube only for fire for effect (the other types fix it), TOT field only for TOT
+    function syncCff() {
+      const mt = $('fm-type').value, u = units.find(x => String(x.id) === $('fm-unit').value), ffe = mt === 'ffe';
+      $('fm-rds').hidden = !ffe; const sh = $('fm-shape'); sh.hidden = ffe;
+      if (!ffe) { const s = shapeOf(u ? TYPES[u.type] : { tubes: 6, interval: 15 }, mt, 1);
+        sh.textContent = `${s.n} tube${s.n === 1 ? '' : 's'} × ${s.per} rd${s.per === 1 ? '' : 's'}` + (s.per > 1 ? `, ${s.iv} s apart` : ''); }
+      const tot = $('fm-control').value === 'tot', ti = $('fm-tot'); ti.hidden = !tot;
+      if (tot && !ti.value) ti.value = fmt(Math.ceil((simT + 180) / 60) * 60);   // a suggestion: the next whole minute, 3 or more out
+    }
+    $('fm-type').addEventListener('change', syncCff); $('fm-control').addEventListener('change', syncCff); $('fm-unit').addEventListener('change', syncCff);
     // Low / High angle (Lee, 2026-11-02: High is the default — most of this terrain needs it). Mortars are always high.
     let angle = 'high';
     function syncAngle() {
@@ -1924,6 +2029,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
     const scorchGeo = new THREE.PlaneGeometry(1, 1);
     function burst(i, m) {
+      NET.emit('burst', { e: i.e, n: i.n, y: i.y, s: m.t.burst });          // a room's students see every burst too
       const p = toLocal(i.e, i.n), y = (i.y !== undefined ? i.y : heightAt(p.x, p.z)) * ex, s = m.t.burst;
       const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: 0xffd27a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
       flash.position.set(p.x, y + 4, p.z); fxGroup.add(flash);
@@ -1948,11 +2054,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const tmpV = new THREE.Vector3();
     function tick(dt) {
       simT += dt * speed; $('clock').textContent = fmt(simT);
+      tickHeld();
       for (const m of missions) {
         if (!m.splash && simT >= m.t0 + m.tof - 5) { m.splash = true; log(`M${m.id} SPLASH`); }
         m.impacts.forEach((i, k) => { if (!i.done && simT >= i.t) { i.done = true; burst(i, m); for (const f of impactFns) f(i, m, k); } });
         for (let k = 0; k < m.per; k++) {
-          const f = (simT - (m.t0 + k * m.t.interval)) / m.tof, s = m.shells[k];
+          const f = (simT - (m.t0 + k * m.iv)) / m.tof, s = m.shells[k];
           s.visible = arcsOn && f > 0 && f < 1 && simT < m.volEnd[k];
           if (s.visible) { arcPoint(m, f, tmpV); s.position.copy(tmpV); const d = camera.position.distanceTo(tmpV) * 0.004; s.scale.setScalar(Math.max(2, d)); }
         }
@@ -1978,9 +2085,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       p.textContent = playing ? 'Pause' : 'Play'; p.setAttribute('aria-pressed', String(playing)); p.setAttribute('aria-label', playing ? 'Pause' : 'Play'); }
     $('ck-play').addEventListener('click', () => { playing = !playing; applyClock(); });
     for (const id of Object.keys(ck)) $(id).addEventListener('click', () => { rate = ck[id]; for (const o of Object.keys(ck)) $(o).setAttribute('aria-pressed', String(o === id)); applyClock(); });
-    addEventListener('keydown', e => { if (e.code === 'Space' && !obs && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); playing = !playing; applyClock(); } });
+    addEventListener('keydown', e => { if (e.code === 'Space' && !obs && !STUDENT && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); playing = !playing; applyClock(); } });
     function setMap(on) {
-      mapMode = on; $('vw-map').setAttribute('aria-pressed', String(on)); $('vw-3d').setAttribute('aria-pressed', String(!on));
+      mapMode = mapView = on; $('vw-map').setAttribute('aria-pressed', String(on)); $('vw-3d').setAttribute('aria-pressed', String(!on));
       if (on) {
         const t = controls.target.clone(), h = Math.max(1500, camera.position.distanceTo(t));
         controls.minPolarAngle = controls.maxPolarAngle = 0.0001; controls.minAzimuthAngle = controls.maxAzimuthAngle = 0;
@@ -2008,14 +2115,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (painting && !(placing || moving || picking)) { $('qf-grid').value = toGrid(E, N) || ''; quickFire(E, N); }
       else if (placing) { const err = placeAt(placing, E, N, 0); if (err) msg(placeMsg, err, 'bad'); placing = null; }
       else if (moving) moveUnit(moving, E, N, 0);
-      else if (picking) { $('fm-grid').value = toGrid(E, N); picking = false; msg(fmMsg, 'Target set. Press Fire.'); }
+      else if (picking) { $('fm-grid').value = toGrid(E, N); picking = false; msg(fmMsg, 'Target set. Press Send.'); }
     });
     addEventListener('keydown', e => { if (e.key === 'Escape' && painting) setPaint(false); });
     addEventListener('keydown', e => { if (e.key === 'Escape' && (placing || moving || picking)) { placing = moving = null; picking = false; msg(placeMsg, 'Cancelled.'); msg(fmMsg, ''); } });
     let savedUnits = null; try { savedUnits = JSON.parse(localStorage.getItem(STORE.units)); } catch (e) {}
-    if (Array.isArray(savedUnits)) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt, u.cs);
+    if (Array.isArray(savedUnits) && !NET.client) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt, u.cs);
     drawUnits();
-    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size) { burst({ e, n, t: simT }, { t: { burst: size } }); }, log, debug: { QF, quicks, quickFire, tick, unitList, units, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size, y) { burst({ e, n, y, t: simT }, { t: { burst: size } }); }, log, setUnits, debug: { QF, quicks, quickFire, tick, unitList, units, get speed() { return speed; }, set speed(v) { speed = Math.max(0, +v || 0); }, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, fxGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -2054,8 +2161,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
     // ---- persistence (this browser; the Scenario panel writes the same data to a file)
     const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, offShip: g.offShip, unload: g.unload, offload: g.offload, q: g.q, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
-    function save() { try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} }
-    function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
+    function save() { if (NOSAVE) return; try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} }
+    function load() { if (NET.client) return; try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
     // ---- motion profile: arc length vs time along the route, speed by land or water
     function fullRoute(g, d = 0) {             // own points, then (if rejoined) the rest of the route it joins
@@ -3233,6 +3340,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function detach(b) { const st = b.parent ? startOf(b) : b.start; b.parent = null; delete b.splitAt; b.start = st === null || !isFinite(st) ? 0 : Math.round(st); }
     let note = '';
     function refresh() { syncBranches(); for (const g of groups) profile(g); pruneStruck(); rebuildViews(); rebuildLines(); renderList(); renderEditor(); save(); }
+    // room: the host sends its groups plus their halts (halts are not in a scenario file); a student replaces its own with them.
+    //      Movement is then worked out here from the clock, exactly as on the host.
+    const netState = () => ({ snap: snapshot(), halts: groups.map(g => [g.id, g.halts || []]) });
+    function applyNet(o) {
+      const s = JSON.parse(JSON.stringify(o.snap)), h = new Map(o.halts);
+      sel = null; editing = false; groups = s.groups; nextId = s.nextId || groups.length + 1;
+      for (const g of groups) if (h.get(g.id) && h.get(g.id).length) g.halts = h.get(g.id);
+      refresh();
+    }
 
     // ---- per-frame placement
     const pv = new THREE.Vector3();
@@ -3295,7 +3411,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         v.label.style.display = showLab ? '' : 'none';
       }
       foot.end(); pips.end(!obs && showEnemy); identTick(); updateWakes(t); animFx(t);
-      root.visible = showEnemy; lines.visible = !obs && showRoutes; handles.visible = !obs && showRoutes;
+      root.visible = showEnemy || (STUDENT && !!obs); lines.visible = !obs && showRoutes; handles.visible = !obs && showRoutes;
       const hideTags = obs || labelHidden() || !showRoutes;
       for (const h of holdTags) {
         let show = !hideTags; if (show) { pv.copy(h.pos).project(camera); show = pv.z < 1 && Math.abs(pv.x) < 1.1 && Math.abs(pv.y) < 1.1; }
@@ -3663,7 +3779,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, models: tmpl, view, lines, handles, pips: pips.obj, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, vehAt, placeAll, yld, yldDelay, yldCatchUp, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, netState, applyNet, models: tmpl, view, lines, handles, pips: pips.obj, fxRoot, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, vehAt, placeAll, yld, yldDelay, yldCatchUp, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -3747,7 +3863,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         let p = pStrike(mun, v.type, d);
         if (p > 0 && TUBES[mun] && (wetB || O.waterAt(v.x, v.z))) p = 0;
         if (p > 0 && CITY.ready && shielded(x, z, yb, v.x, v.z, vy)) { p = 0; out.shielded++; }
-        if (p > 0 && u01(id + '|' + v.key) < p && (v.civ ? CIV.strike(v.i, t, !!v.civ.boat) : O.strike(v.g, v.i, t, id))) out.hits.push({ v, d, p });
+        if (p > 0 && u01(id + '|' + v.key) < p && (v.civ ? CIV.strike(v.i, t, !!v.civ.boat) : O.strike(v.g, v.i, t, id))) {
+          out.hits.push({ v, d, p });
+          NET.emit('strike', v.civ ? { civ: v.i, boat: !!v.civ.boat, t } : { g: v.g.id, i: v.i, t, cause: id });   // a room's students apply the same strike
+        }
       }
       return out;
     }
@@ -4036,7 +4155,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     for (const [k] of LEVELS) { const b = document.getElementById('cv-' + k); if (b) b.addEventListener('click', () => set(k)); }
     const prevRN = onRoadNet; onRoadNet = () => { if (prevRN) prevRN(); if (N && specs && !built) build(); };
     set(level);
-    return { tick, near, set, vehiclesAt, strike, debug: { cars, boats, BOATS, boatPos, get NBt() { return NBt; }, LEVELS, PARKED, KMH, FAR_R, NEAR_CAP, get N() { return N; }, get level() { return level; }, posOf, grp, get parts() { return parts; } } };
+    // room: a tracked civilian travels as { civ: i } or { boat: i }; this finds the same car or boat here
+    const proxyOf = (i, boat) => boat ? (boats[i] ? boatProxy(boats[i]) : null) : (cars[i] ? proxy(cars[i]) : null);
+    const hits = () => [...cars.filter(c => c.st).map(c => ({ civ: c.i, boat: false, t: c.st.t })), ...boats.filter(b => b.st).map(b => ({ civ: b.i, boat: true, t: b.st.t }))];
+    return { tick, near, set, vehiclesAt, strike, proxyOf, hits, debug: { cars, boats, BOATS, boatPos, get NBt() { return NBt; }, LEVELS, PARKED, KMH, FAR_R, NEAR_CAP, get N() { return N; }, get level() { return level; }, posOf, grp, get parts() { return parts; } } };
   })();
   window.__civ = CIV.debug;
 
@@ -4220,10 +4342,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const lpList = () => lps.map(l => ({ fam: l.fam, name: l.name, e: Math.round(CE + l.x), n: Math.round(CN - l.z) }));
     // Saved only once the start-up set is in, so a browser that never edits them keeps following data/uas.json
     let lpsReady = false;
-    function saveLPs() { if (lpsReady) try { localStorage.setItem(STORE.lps, JSON.stringify(lpList())); } catch (e) {} }
+    function saveLPs() { if (lpsReady && !NOSAVE) try { localStorage.setItem(STORE.lps, JSON.stringify(lpList())); } catch (e) {} }
     // Default set (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n }] } (an old rounds field is ignored)
     let savedLPs = null; try { savedLPs = JSON.parse(localStorage.getItem(STORE.lps)); } catch (e) {}
-    (Array.isArray(savedLPs) ? Promise.resolve({ lps: savedLPs }) : fetch('data/uas.json').then(r => r.ok ? r.json() : null)).then(j => {
+    // a room's student starts with none: it gets the host's
+    (NET.client ? Promise.resolve(null) : Array.isArray(savedLPs) ? Promise.resolve({ lps: savedLPs }) : fetch('data/uas.json').then(r => r.ok ? r.json() : null)).then(j => {
       if (!j || !Array.isArray(j.lps)) return;
       for (const l of j.lps) if (FAMS[l.fam]) { const p = toLocal(l.e, l.n); addLP(l.fam, p.x, p.z, l.name); }
     }).catch(() => {}).then(() => { lpsReady = true; });
@@ -4368,6 +4491,155 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       setTask(d, { kind: 'recover' }); FIRES.log(d.name + ' returning to ' + d.lp.name + ' for recovery');
     }
 
+    // ---- commands (multiplayer plan, Trainer/notes/trainer-multiplayer.md): every order that changes what a drone does,
+    //      and every mark, goes through cmd(op, args). Args are plain data (ids and map x/z, never objects), so in a room a
+    //      student's command can be sent to the host and run there. Solo: it runs here at once. The camera itself (slew,
+    //      zoom, stare, track) stays with whoever is flying and will be shared as state, not as commands.
+    const droneById = id => drones.find(d => d.id === id), lpById = id => lps.find(l => l.id === id);
+    const OPS = {
+      launch:  a => { const lp = lpById(a.lp); return lp ? launch(lp, a.type, a.target || null) : null; },
+      orbit:   a => { const d = droneById(a.d); if (d && d.task.kind !== 'strike') setTask(d, { kind: 'orbit', cx: a.x, cz: a.z, r: a.r || d.task.r || TYPES[d.type].r }); },
+      route:   a => { const d = droneById(a.d); if (d && a.pts && a.pts.length) setTask(d, { kind: 'route', pts: a.pts.map(p => ({ x: p.x, z: p.z })), i: 0 }); },
+      alt:     a => { const d = droneById(a.d); if (d) { d.alt = a.alt; drawTask(d); draw(); } },
+      radius:  a => { const d = droneById(a.d); if (d && d.task.kind === 'orbit') { d.task.r = a.r; drawTask(d); } },
+      strike:  a => { const d = droneById(a.d); if (d) commitStrike(d); },
+      waveoff: a => { const d = droneById(a.d); if (d) waveOff(d); },
+      recover: a => { const d = droneById(a.d); if (d) recover(d); },
+      mark:    a => addMark(a.d == null ? null : droneById(a.d), a.x, a.z, a.note || '', a.by),
+      unmark:  a => { const mk = marks.find(m => m.id === a.id); if (mk) { dropObj(mk.sprite); marks.splice(marks.indexOf(mk), 1); draw(); } },
+      take:    a => { if (droneById(a.d)) { ctl.set(a.d, a.by); draw(); } },
+      release: a => { if (ctl.get(a.d) === a.by) { ctl.delete(a.d); draw(); } }
+    };
+    // ---- control (Lee, 2026-11-11): anyone in a room can watch any feed; one person flies each UAS. Whoever launches it
+    //      flies it; Take control takes a free one (the instructor can take any); Release frees it. Solo: always yours.
+    //      Map: drone id -> callsign. No entry = free (the instructor's to fly).
+    const ctl = new Map();
+    const flier = d => ctl.get(d.id) || null;
+    const mine = d => !NET.room || flier(d) === NET.cs || (NET.host && !flier(d));
+    const ORDERS = new Set(['orbit', 'route', 'alt', 'radius', 'strike', 'waveoff', 'recover']);
+    // run a command for callsign `by` (the host's own, or one a student sent); orders need control of that drone
+    function runCmd(op, a, by) {
+      a = Object.assign({}, a, { by });
+      if (ORDERS.has(op)) {
+        const d = droneById(a.d); if (!d) return null;
+        const f = ctl.get(d.id);
+        if (by !== NET.cs ? f !== by : (f && f !== by)) return null;        // a student needs control; the instructor needs it free or theirs
+        if (op === 'strike' && a.cam) applyCam(d, a.cam);                  // the flier's camera, exactly as it was when they pressed Strike
+      }
+      if (op === 'take' && by !== NET.cs && ctl.get(a.d) && ctl.get(a.d) !== by) return null;   // students take only a free UAS
+      const r = OPS[op](a);
+      if (op === 'launch' && r && NET.room) { ctl.set(r.id, by); draw(); }
+      return r;
+    }
+    let sendCmd = null;          // set by the ROOM module: a student's commands go to the host instead of running here
+    function cmd(op, a) {
+      if (!OPS[op]) throw new Error('Unknown UAS command: ' + op);
+      a = a || {};
+      if (op === 'strike' && NET.room) { const d = droneById(a.d); if (d) a = Object.assign({}, a, { cam: serCam(d.cam) }); }
+      return sendCmd ? sendCmd(op, a) : runCmd(op, a, NET.cs);
+    }
+
+    // ---- room: drone state as plain data. The host flies every drone and sends this; students mirror it and draw it.
+    //      A tracked vehicle travels as { g, i } (enemy group id, vehicle index) or { civ, boat } (civilian).
+    function trkRef(m) {
+      if (!m) return null;
+      if (m.userData && m.userData.t === 'civ') return m.userData.boat !== undefined ? { civ: m.userData.boat, boat: true } : { civ: m.userData.civ, boat: false };
+      for (const [gid, v] of OPFOR.debug.view.g) { const i = v.meshes.indexOf(m); if (i >= 0) return { g: gid, i }; }
+      return null;
+    }
+    function trkFind(r) {
+      if (!r) return null;
+      if (r.civ !== undefined) return CIV.proxyOf(r.civ, r.boat);
+      const v = OPFOR.debug.view.g.get(r.g); return v ? v.meshes[r.i] || null : null;
+    }
+    const r1 = v => Math.round(v * 10) / 10;
+    const serCam = c => ({ mode: c.mode, az: +c.az.toFixed(4), el: +c.el.toFixed(4), fov: +c.fov.toFixed(2), sx: r1(c.sx), sz: r1(c.sz), trk: trkRef(c.trk), last: c.last ? { x: r1(c.last.x), z: r1(c.last.z) } : null });
+    function applyCam(d, s) {
+      const c = d.cam; c.mode = s.mode; c.az = s.az; c.el = s.el; c.fov = s.fov; c.sx = s.sx; c.sz = s.sz; c.last = s.last;
+      c.trk = s.mode === 'track' ? trkFind(s.trk) : null; if (s.mode === 'track' && !c.trk) c.mode = 'stare';
+      c.slew = null;
+    }
+    function serTask(k) { const o = Object.assign({}, k); if ('trk' in o) o.trk = trkRef(k.trk); if (o.pts) o.pts = o.pts.map(p => ({ x: r1(p.x), z: r1(p.z) })); return o; }
+    function readTask(o) { const k = Object.assign({}, o); if ('trk' in k) k.trk = trkFind(o.trk); return k; }
+    function serDrone(d) {
+      return { id: d.id, type: d.type, name: d.name, lp: d.lp ? d.lp.id : null, t0: d.t0, state: d.state, why: d.why, landedAt: d.landedAt,
+        pos: [r1(d.pos.x), r1(d.pos.y), r1(d.pos.z)], hdg: +d.hdg.toFixed(4), pitch: +d.pitch.toFixed(4), alt: d.alt,
+        task: serTask(d.task), cam: serCam(d.cam), fall: d.fall ? { t0: d.fall.t0, roll: +d.fall.roll.toFixed(3) } : null };
+    }
+    const netState = () => ({ t: simT(), drones: drones.map(serDrone), ctl: [...ctl],
+      lps: lps.map(l => ({ id: l.id, fam: l.fam, name: l.name, x: r1(l.x), z: r1(l.z) })),
+      marks: marks.map(m => ({ id: m.id, t: m.t, x: m.x, z: m.z, by: m.by, note: m.note })) });
+    // a student: make a mirror of a drone the host launched (the same object launch() builds, without the log)
+    function mirror(s) {
+      const T = TYPES[s.type];
+      const d = { id: s.id, type: s.type, name: s.name, lp: lpById(s.lp), t0: s.t0, state: 'fly', why: '',
+        pos: new THREE.Vector3(s.pos[0], s.pos[1], s.pos[2]), hdg: s.hdg, pitch: s.pitch, alt: s.alt, task: readTask(s.task),
+        cam: { mode: 'scan', az: 0, el: -0.6, fov: 30, sx: s.pos[0], sz: s.pos[2], trk: null, last: null },
+        cam3: new THREE.PerspectiveCamera(30, FEED_W / FEED_H, 1, 30000), feed: null, armedStrike: 0 };
+      d.obj = new THREE.Group(); const b = body(s.type); if (b) d.obj.add(b); models.add(d.obj);
+      d.sym = sprite(d.name, false); d.foot = null; d.spiLine = null; d.taskLine = null;
+      drones.push(d); drawTask(d); return d;
+    }
+    let lastLPs = '', lastMarks = '';
+    function applyNet(o) {
+      const lj = JSON.stringify(o.lps);
+      if (lj !== lastLPs) {                       // the instructor's launch points, with the host's ids
+        lastLPs = lj;
+        for (const lp of lps) dropObj(lp.sprite); lps.length = 0;
+        for (const l of o.lps) { const lp = Object.assign({}, l); lp.sprite = sprite(lp.name, true); lp.sprite.position.set(lp.x, gy(lp.x, lp.z) + 40, lp.z); lps.push(lp); }
+        for (const d of drones) d.lp = d.lp ? lpById(d.lp.id) : null;
+        FIRES.lpsChanged();
+      }
+      const now = performance.now();
+      for (const s of o.drones) {
+        let d = droneById(s.id); if (!d) d = mirror(s);
+        d.net = { pos: new THREE.Vector3(s.pos[0], s.pos[1], s.pos[2]), t: o.t, prev: d.net, at: now };
+        d.hdgNet = s.hdg; d.pitch = s.pitch; d.alt = s.alt; d.t0 = s.t0; d.landedAt = s.landedAt; d.why = s.why; d.lp = lpById(s.lp);
+        if (s.fall) d.fall = Object.assign(d.fall || {}, s.fall);
+        if (s.state !== d.state) {
+          const was = d.state; d.state = s.state;
+          if (s.state === 'fly') { d.obj.visible = true; drawTask(d); }
+          else if (s.state === 'falling') { clearOverlays(d); d.obj.visible = true; }
+          else if (was === 'fly' || was === 'falling') clearOverlays(d);
+        }
+        const tj = JSON.stringify(s.task);
+        if (tj !== d.taskJ) { d.taskJ = tj; d.task = readTask(s.task); drawTask(d); }
+        if (!mine(d) || !d.camSent) applyCam(d, s.cam);              // the flier's own camera stays theirs
+        if (mine(d)) d.camSent = true;
+      }
+      const cj = JSON.stringify(o.ctl);
+      if (cj !== JSON.stringify([...ctl])) { ctl.clear(); for (const [k, v] of o.ctl) ctl.set(k, v); draw(); }
+      const mj = JSON.stringify(o.marks);
+      if (mj !== lastMarks) {
+        lastMarks = mj;
+        for (const mk of marks) dropObj(mk.sprite); marks.length = 0;
+        for (const m of [...o.marks].reverse()) addMark(null, m.x, m.z, m.note, m.by, m);
+        draw();
+      }
+    }
+    // a student: the camera of each drone they fly, when it has changed (sent to the host a few times a second)
+    const camLast = new Map();
+    function camOut() {
+      const out = [];
+      for (const d of drones) if (d.state === 'fly' && flier(d) === NET.cs) { const c = serCam(d.cam), j = JSON.stringify(c); if (camLast.get(d.id) !== j) { camLast.set(d.id, j); out.push({ d: d.id, cam: c }); } }
+      return out;
+    }
+    // a student: move each mirror toward where the host says it is, projected on by its last known velocity
+    function netMove() {
+      const t = simT();
+      for (const d of drones) {
+        const n = d.net; if (!n) continue;
+        let px = n.pos.x, py = n.pos.y, pz = n.pos.z;
+        if (n.prev && n.t > n.prev.t && d.state === 'fly') {
+          const k = Math.min(1, Math.max(0, t - n.t)) / (n.t - n.prev.t);      // project at most 1 s ahead
+          px += (n.pos.x - n.prev.pos.x) * k; py += (n.pos.y - n.prev.pos.y) * k; pz += (n.pos.z - n.prev.pos.z) * k;
+        }
+        const far = Math.hypot(px - d.pos.x, pz - d.pos.z) > 300, a = far ? 1 : 0.25;
+        d.pos.x += (px - d.pos.x) * a; d.pos.y += (py - d.pos.y) * a; d.pos.z += (pz - d.pos.z) * a;
+        if (d.hdgNet !== undefined) d.hdg = wrapPi(d.hdg + wrapPi(d.hdgNet - d.hdg) * a);
+      }
+    }
+
     // ---- flight: steered toward a target point, limited turn rate, eased to the set height
     function steer(d, tx, tz, dt, spd) {
       const T = TYPES[d.type], want = Math.atan2(tx - d.pos.x, tz - d.pos.z), maxT = T.turn * Math.PI / 180 * dt;
@@ -4478,7 +4750,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const now = performance.now(), dt = lastKeySlew ? Math.min(0.25, (now - lastKeySlew) / 1000) : 0; lastKeySlew = now;
       for (const d of drones) {
         const K = d.slewKeys;
-        if (!d.feed || !K || !K.size || d.state !== 'fly') continue;
+        if (!d.feed || !K || !K.size || d.state !== 'fly' || !mine(d)) continue;
         const rate = d.cam.fov * Math.PI / 180 * (d.slewFast ? 1.5 : 0.5) * dt;
         const daz = ((K.has('ArrowLeft') ? 1 : 0) - (K.has('ArrowRight') ? 1 : 0)) * rate;
         const del = ((K.has('ArrowUp') ? 1 : 0) - (K.has('ArrowDown') ? 1 : 0)) * rate;
@@ -4491,7 +4763,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function tick() {
       const t = simT(); if (lastSim === null) lastSim = t;
       let dt = t - lastSim; lastSim = t; if (dt < 0) dt = 0;
-      while (dt > 1e-6) { const h = Math.min(0.25, dt); for (const d of drones) step(d, h); dt -= h; }
+      if (NET.client) netMove();                 // a room's student: the host flies every drone
+      else while (dt > 1e-6) { const h = Math.min(0.25, dt); for (const d of drones) step(d, h); dt -= h; }
       for (const d of drones) {
         if (d.state === 'falling') {
           d.obj.position.copy(d.pos); d.obj.rotation.set(d.pitch, d.hdg, d.fall.roll, 'YXZ');
@@ -4608,6 +4881,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       doc.getElementById('h-end').textContent = fly ? fmt(left) : '—';
       doc.getElementById('h-end').style.color = fly && left < 300 ? '#ff8a73' : '';   // last 5 minutes in red
       doc.getElementById('h-t').textContent = 'T+' + fmt(simT());
+      if (NET.room) { doc.getElementById('h-ctlw').hidden = false; doc.getElementById('h-ctl').textContent = flier(d) ? (flier(d) === NET.cs ? 'YOU' : flier(d)) : NET.host ? 'YOU (free)' : 'INSTRUCTOR';
+        doc.body.classList.toggle('watch', !mine(d)); }
       for (const m of ['scan', 'stare', 'track']) doc.getElementById('m-' + m).setAttribute('aria-pressed', String(d.cam.mode === m));
       const sb = doc.getElementById('f-strike');
       if (sb) { sb.disabled = !fly || d.task.kind === 'strike' || d.task.kind === 'recover';
@@ -4631,11 +4906,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       #f-note{flex:1 1 160px}
       #f-msg{color:#9aa39a;flex-basis:100%;min-height:1.2em}
       .sep{width:1px;height:20px;background:#2c3a2f}
+      body.watch #bar button:not(#f-mark),body.watch #f-pp{opacity:.35}
     </style></head><body><div id="wrap">
       <div style="position:relative;flex:1 1 auto;min-height:0;display:flex"><canvas id="fv" width="${FEED_W}" height="${FEED_H}"></canvas>
       <div id="hud"><span><b>UAS</b><span id="h-name"></span></span><span><b>MODE</b><span id="h-mode"></span></span><span><b>POS</b><span id="h-pos"></span></span><span><b>ALT</b><span id="h-alt"></span></span>
       <span><b>SPI</b><span id="h-spi"></span></span><span><b>RNG</b><span id="h-rng"></span></span><span><b>FOV</b><span id="h-fov"></span></span>
-      <span><b>END</b><span id="h-end"></span></span><span id="h-t"></span></div></div>
+      <span><b>END</b><span id="h-end"></span></span><span id="h-t"></span><span id="h-ctlw" hidden><b>FLOWN BY</b><span id="h-ctl"></span></span></div></div>
       <div id="bar">
         <button id="m-scan" title="Hands-off sweep of the orbit area">Scan</button>
         <button id="m-stare" title="Click the video: lock on that ground point">Stare</button><button id="m-track" title="Shift-click a vehicle in the video to follow it">Track</button>
@@ -4683,17 +4959,19 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       d.feed = w; d.fctx = cv.getContext('2d');
       const ndc = e => { const r = cv.getBoundingClientRect(), s = Math.min(r.width / FEED_W, r.height / FEED_H), ox = r.left + (r.width - FEED_W * s) / 2, oy = r.top + (r.height - FEED_H * s) / 2;
         return [((e.clientX - ox) / (FEED_W * s)) * 2 - 1, -((e.clientY - oy) / (FEED_H * s)) * 2 + 1]; };
-      const zoom = f => { d.cam.fov *= f; updateCam(d); };
+      // in a room only the flier steers the camera or gives orders; watchers get a note (marks are open to everyone)
+      const fly = () => { if (mine(d)) return true; note(d, (flier(d) ? 'Flown by ' + flier(d) : 'Flown by the instructor') + '. Take control in the UAS panel to fly it.'); return false; };
+      const zoom = f => { if (!fly()) return; d.cam.fov *= f; updateCam(d); };
       let drag = null;
       cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
       cv.addEventListener('pointermove', e => {
-        if (!drag || d.state !== 'fly') return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+        if (!drag || d.state !== 'fly' || !mine(d)) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         if (!drag.moved && Math.hypot(dx, dy) < 4) return; drag.moved = true; drag.x = e.clientX; drag.y = e.clientY;
         const k = d.cam.fov * Math.PI / 180 / cv.getBoundingClientRect().height;
         slewBy(d, dx * k, dy * k);           // the picture follows the hand on both axes (sideways used to run backwards)
       });
       cv.addEventListener('pointerup', e => {
-        const was = drag; drag = null; if (!was || was.moved || d.state !== 'fly') return;
+        const was = drag; drag = null; if (!was || was.moved || d.state !== 'fly' || !fly()) return;
         const [nx, ny] = ndc(e); updateCam(d); const p = groundThrough(d, nx, ny); if (!p) return note(d, 'No ground there.');
         if (e.shiftKey) {
           const v = vehiclesNear(p.x, p.z, 40).find(o => { const w = new THREE.Vector3(); o.m.getWorldPosition(w); return los(d.cam3.position, w.setY(w.y + 1.5)); });
@@ -4704,22 +4982,24 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       });
       cv.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
       const B = id => doc.getElementById(id);
-      B('m-scan').addEventListener('click', () => { d.cam.mode = 'scan'; d.cam.trk = null; });
-      B('m-stare').addEventListener('click', () => { if (d.spi) { d.cam.mode = 'stare'; d.cam.sx = d.spi.x; d.cam.sz = d.spi.z; d.cam.trk = null; } });
+      B('m-scan').addEventListener('click', () => { if (!fly()) return; d.cam.mode = 'scan'; d.cam.trk = null; });
+      B('m-stare').addEventListener('click', () => { if (fly() && d.spi) { d.cam.mode = 'stare'; d.cam.sx = d.spi.x; d.cam.sz = d.spi.z; d.cam.trk = null; } });
       B('m-track').addEventListener('click', () => note(d, 'Shift-click a vehicle in the video to track it.'));
       B('z-in').addEventListener('click', () => zoom(1 / 1.5));
       B('z-out').addEventListener('click', () => zoom(1.5));
-      B('f-orbit').addEventListener('click', () => { if (d.spi && d.state === 'fly' && d.task.kind !== 'strike') { setTask(d, { kind: 'orbit', cx: d.spi.x, cz: d.spi.z, r: d.task.r || TYPES[d.type].r }); note(d, 'Orbit moved to ' + gridAt(d.spi.x, d.spi.z) + '.'); } });
-      B('f-mark').addEventListener('click', () => { if (!d.spi) return; addMark(d, d.spi.x, d.spi.z, B('f-note').value.trim()); B('f-note').value = ''; note(d, 'Marked ' + gridAt(d.spi.x, d.spi.z) + '.'); });
+      B('f-orbit').addEventListener('click', () => { if (fly() && d.spi && d.state === 'fly' && d.task.kind !== 'strike') { cmd('orbit', { d: d.id, x: d.spi.x, z: d.spi.z }); note(d, 'Orbit moved to ' + gridAt(d.spi.x, d.spi.z) + '.'); } });
+      B('f-mark').addEventListener('click', () => { if (!d.spi) return; cmd('mark', { d: d.id, x: d.spi.x, z: d.spi.z, note: B('f-note').value.trim() }); B('f-note').value = ''; note(d, 'Marked ' + gridAt(d.spi.x, d.spi.z) + '.'); });
       if (B('f-strike')) B('f-strike').addEventListener('click', e => {
+        if (!fly()) return;
         if (!d.armedStrike) { if (d.cam.mode !== 'stare' && d.cam.mode !== 'track') return note(d, 'Stare at a point or track a vehicle first.'); d.armedStrike = performance.now() + 5000; e.target.textContent = 'Confirm strike'; e.target.classList.add('armed'); return; }
-        d.armedStrike = 0; e.target.textContent = 'Strike'; e.target.classList.remove('armed'); commitStrike(d);
+        d.armedStrike = 0; e.target.textContent = 'Strike'; e.target.classList.remove('armed'); cmd('strike', { d: d.id });
       });
-      if (B('f-abort')) B('f-abort').addEventListener('click', () => waveOff(d));
-      if (B('f-recover')) B('f-recover').addEventListener('click', () => recover(d));
+      if (B('f-abort')) B('f-abort').addEventListener('click', () => { if (fly()) cmd('waveoff', { d: d.id }); });
+      if (B('f-recover')) B('f-recover').addEventListener('click', () => { if (fly()) cmd('recover', { d: d.id }); });
       // prepoint (Altius): type a grid, the camera slews there (about 60 deg/s) and stares at it
       const prepoint = () => {
         if (d.state !== 'fly') return note(d, 'The drone is not flying.');
+        if (!fly()) return;
         const g = FIRES.debug.parseGrid(B('f-pp').value); if (g.err) return note(d, g.err);
         const p = toLocal(g.e, g.n); if (!inPlay(p.x, p.z)) return note(d, 'That grid is off the map.');
         const c = d.cam; updateCam(d);
@@ -4744,13 +5024,15 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
 
     // ---- marks: a grid, a time and the student's own note (no prediction, no truth)
-    function addMark(d, x, z, text) {
-      const mk = { id: nextId++, t: simT(), x, z, grid: gridAt(x, z), by: d ? d.name : 'Map', note: text || '' };
+    // by: who marked it in a room (callsign); from: a mark the host sent (a student redraws the host's list, no log)
+    function addMark(d, x, z, text, by, from) {
+      const mk = { id: from ? from.id : nextId++, t: from ? from.t : simT(), x, z, grid: gridAt(x, z), by: from ? from.by : (by && NET.room ? by + (d ? ' (' + d.name + ')' : '') : d ? d.name : 'Map'), note: text || '' };
       const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.strokeStyle = '#ffd25a'; g.lineWidth = 7;
       g.beginPath(); g.moveTo(12, 12); g.lineTo(52, 52); g.moveTo(52, 12); g.lineTo(12, 52); g.stroke();
       mk.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true, sizeAttenuation: false }));
       mk.sprite.scale.set(0.03, 0.03, 1); mk.sprite.renderOrder = 13; mk.sprite.position.set(x, gy(x, z) + 10, z); ui.add(mk.sprite);
-      marks.unshift(mk); FIRES.log('MARK ' + mk.grid + ' (' + mk.by + ')' + (mk.note ? ': ' + mk.note : '')); draw();
+      marks.unshift(mk); if (from) return mk;
+      FIRES.log('MARK ' + mk.grid + ' (' + mk.by + ')' + (mk.note ? ': ' + mk.note : '')); draw(); return mk;
     }
 
     // ---- panel
@@ -4788,10 +5070,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           bar.appendChild(btn('Launch', 'Fly to the grid and strike it. No camera.', () => {
             const g = FIRES.debug.parseGrid(inp.value); if (g.err) return msg('uas-lmsg', g.err, 'bad');
             const p = toLocal(g.e, g.n); if (!inPlay(p.x, p.z)) return msg('uas-lmsg', 'Target must be on the map.', 'bad');
-            lp.draft = null; msg('uas-lmsg', ''); launch(lp, 'lucas', p);
+            lp.draft = null; msg('uas-lmsg', ''); cmd('launch', { lp: lp.id, type: 'lucas', target: { x: p.x, z: p.z } });
           }));
-        } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => launch(lp, k)));
-        bar.appendChild(lpRemoveBtn(lp, (t, c) => msg('uas-lmsg', t, c)));
+        } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => cmd('launch', { lp: lp.id, type: k })));
+        if (!STUDENT) bar.appendChild(lpRemoveBtn(lp, (t, c) => msg('uas-lmsg', t, c)));   // launch points are the instructor's
         row.appendChild(bar); L.appendChild(row);
       }
       const D = $('uas-list'); D.textContent = '';
@@ -4808,15 +5090,22 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
             : 'cam ' + d.cam.mode + ' · ' + fmt(Math.max(0, T.endur - (simT() - d.t0))) + ' left · ' + ftStr(d.alt) + ' AGL';
         row.appendChild(nm);
         const bar = document.createElement('div'); bar.className = 'row';
-        if (d.state === 'fly' && !T.gps && k.kind !== 'strike') {
+        if (NET.room && d.state === 'fly' && !T.gps) {           // who flies it, and Take control / Release
+          const f = flier(d), who = document.createElement('span'); who.className = 'ug ctl';
+          who.textContent = f ? (f === NET.cs ? 'You fly it' : 'Flown by ' + f) : NET.host ? 'Free: yours until a student takes it' : 'Free';
+          bar.appendChild(who);
+          if (f && f === NET.cs) bar.appendChild(btn('Release', 'Stop flying it, so someone else can take it', () => cmd('release', { d: d.id })));
+          else if (f ? NET.host : NET.client) bar.appendChild(btn('Take control', 'Fly this UAS: its orders and camera become yours', () => cmd('take', { d: d.id })));
+        }
+        if (d.state === 'fly' && !T.gps && k.kind !== 'strike' && mine(d)) {
           bar.appendChild(btn('Orbit', 'Click the map: orbit there', () => { armed = { kind: 'orbit', d }; msg('uas-dmsg', 'Click the map where ' + d.name + ' should orbit. Esc cancels.', 'arm'); }));
           bar.appendChild(btn('Route', 'Click the map for each waypoint; Enter or Done to finish', () => { armed = { kind: 'route', d }; routeDraft = []; msg('uas-dmsg', 'Click waypoints for ' + d.name + ', then press Done or Enter. Esc cancels.', 'arm'); draw(); }));
           if (armed && armed.kind === 'route' && armed.d === d) bar.appendChild(btn('Done', '', finishRoute));
-          bar.appendChild(sel('Height above ground', [500, 1000, 2000, 3000, 5000, 8000], ft(d.alt), v => { d.alt = v * FT; drawTask(d); draw(); }, v => v.toLocaleString('en-US') + ' ft'));
-          if (k.kind === 'orbit') bar.appendChild(sel('Orbit radius', [250, 400, 700, 1000, 1500, 2500], k.r, v => { k.r = v; drawTask(d); }, v => 'r ' + v));
-          if (T.recover && k.kind !== 'recover') { const b = btn('Recover', d.lp ? 'Fly back to ' + d.lp.name + ' and land' : 'No ' + FAMS[T.fam] + ' launch point to recover to', () => recover(d)); b.disabled = !d.lp; bar.appendChild(b); }
+          bar.appendChild(sel('Height above ground', [500, 1000, 2000, 3000, 5000, 8000], ft(d.alt), v => cmd('alt', { d: d.id, alt: v * FT }), v => v.toLocaleString('en-US') + ' ft'));
+          if (k.kind === 'orbit') bar.appendChild(sel('Orbit radius', [250, 400, 700, 1000, 1500, 2500], k.r, v => cmd('radius', { d: d.id, r: v }), v => 'r ' + v));
+          if (T.recover && k.kind !== 'recover') { const b = btn('Recover', d.lp ? 'Fly back to ' + d.lp.name + ' and land' : 'No ' + FAMS[T.fam] + ' launch point to recover to', () => cmd('recover', { d: d.id })); b.disabled = !d.lp; bar.appendChild(b); }
         }
-        if (d.state === 'fly' && T.waveoff && k.kind === 'strike') bar.appendChild(btn('Wave off', 'Pull out of the dive', () => waveOff(d)));
+        if (d.state === 'fly' && T.waveoff && k.kind === 'strike' && mine(d)) bar.appendChild(btn('Wave off', 'Pull out of the dive', () => cmd('waveoff', { d: d.id })));
         if (d.state === 'fly') bar.appendChild(btn('IDENT', 'Centre the map on this UAS and flash its symbol', () => ident(d)));
         if (T.cam) bar.appendChild(btn('View feed', 'Open this drone\'s camera in its own window', () => openFeed(d), 'feed-btn'));
         row.appendChild(bar); D.appendChild(row);
@@ -4829,7 +5118,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const nm = document.createElement('span'); nm.className = 'un'; nm.textContent = 'T+' + fmt(mk.t) + '  ' + mk.grid + '  (' + fmt(simT() - mk.t) + ' ago)';
         const gr = document.createElement('span'); gr.className = 'ug'; gr.textContent = mk.by + (mk.note ? ' — ' + mk.note : ''); nm.appendChild(gr);
         row.append(nm, btn('Go', 'Look at this mark on the map', () => controls.target.set(mk.x, gy(mk.x, mk.z), mk.z)),
-          btn('×', 'Delete this mark', () => { dropObj(mk.sprite); marks.splice(marks.indexOf(mk), 1); draw(); }));
+          btn('×', 'Delete this mark', () => cmd('unmark', { id: mk.id })));
         M.appendChild(row);
       }
     }
@@ -4837,7 +5126,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function finishRoute() {
       if (!armed || armed.kind !== 'route') return;
       const d = armed.d; armed = null;
-      if (routeDraft && routeDraft.length) setTask(d, { kind: 'route', pts: routeDraft, i: 0 });
+      if (routeDraft && routeDraft.length) cmd('route', { d: d.id, pts: routeDraft });
       dropObj(draftLine); draftLine = null; routeDraft = null; msg('uas-dmsg', ''); draw();
     }
 
@@ -4849,7 +5138,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null; if (moved > 5) return;
       const p = pick(e.clientX, e.clientY); if (!p) return;
       if (armed.kind === 'lp') { addLP(armed.fam, p.x, p.z); armed = null; msg('uas-msg', 'Placed.'); }
-      else if (armed.kind === 'orbit') { const d = armed.d; armed = null; setTask(d, { kind: 'orbit', cx: p.x, cz: p.z, r: d.task.r || TYPES[d.type].r }); msg('uas-dmsg', d.name + ' orbiting ' + gridAt(p.x, p.z) + '.'); }
+      else if (armed.kind === 'orbit') { const d = armed.d; armed = null; cmd('orbit', { d: d.id, x: p.x, z: p.z }); msg('uas-dmsg', d.name + ' orbiting ' + gridAt(p.x, p.z) + '.'); }
       else if (armed.kind === 'route') {
         routeDraft.push({ x: p.x, z: p.z }); dropObj(draftLine);
         draftLine = polyline([armed.d.pos.clone(), ...routeDraft.map(q => new THREE.Vector3(q.x, gy(q.x, q.z) + 6, q.z))], 0xd6b25a, false);
@@ -4864,7 +5153,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     draw();
     const feedCams = () => drones.filter(d => d.feed && (d.state === 'fly' || d.state === 'falling')).map(d => d.cam3);
     const feedFocus = () => drones.filter(d => d.feed && d.spi && d.state === 'fly').map(d => ({ x: d.spi.x, z: d.spi.z, r: 350, cam: d.cam3.position }));
-    return { tick, renderFeeds, feedFocus, feedCams, debug: { lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
+    return { tick, renderFeeds, feedFocus, feedCams, cmd, runCmd, netState, applyNet, applyCam, droneById, setSend(f) { sendCmd = f; }, camOut, debug: { cmd, OPS, ctl, mine, lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
   })();
   window.__uas = UAS.debug;
 
@@ -5074,6 +5363,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           'Each round flies the mission path stretched to its own impact point. It bursts on the first <b>building</b> or <b>terrain crest</b> below its path (first 30 m from the guns and off-map stretches not checked).',
           'A burst on a building rolls damage by 3D distance to the vehicle. A building between any burst and a vehicle shields it completely.',
           'Not modelled: air density with height, wind, drift, fuzes, shell types, mean-point-of-impact error, different dispersion at high angle.'])}
+        <h4>Call for fire — the Fire Mission Sim's mission types</h4>
+        ${tbl(['Type of mission', 'Tubes', 'Rounds per tube', 'Rounds apart'],
+          [['Fire for effect', 'all', 'instructor sets', 'unit\'s volley interval'], ['Immediate suppression', 'all', '1', '—'],
+           ['Adjust fire', 'half, rounded up (sim: 3 of 6)', '1', '—'], ['Suppression', '1', '18', '7 s (about 2 minutes)']])}
+        ${list([
+          'Method of control decides only when the guns fire. <b>When ready</b>: on Send. <b>At my command</b>: laid and held until FIRE is pressed. <b>Time on target</b>: fired at TOT − time of flight, so the first rounds land at the TOT (sim clock); a TOT inside the time of flight is refused.',
+          'A held mission is solved again when it fires: a unit moved meanwhile fires from its new position; a unit removed or now out of range cancels the mission.',
+          'No acknowledgement delay and no one-mission-per-battery rule (both are in the sim): the instructor is the FDC.'])}
         <h4>Examples — same height gun and target</h4>
         ${tbl(['Unit', 'Range', 'Low: charge · QE · ToF', 'High: charge · QE · ToF'],
           Object.entries(FT).flatMap(([k, t]) => [1000, 3000, 5000, 10000, 15000, 20000].filter(R => R >= t.min && R <= t.max).map((R, j) => {
@@ -5207,8 +5504,204 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     return { time, frame };
   })();
+  // ---- ROOM (multiplayer build step 2; plan in Trainer/notes/trainer-multiplayer.md). The host (instructor, ?room=CODE) runs
+  //      the sim and sends: the enemy groups and halts, firing units, civilian level and damage when they change; the clock
+  //      4x a second; every drone, launch point, mark and who flies what 5x a second; each burst and strike as it happens.
+  //      A student (?role=student&room=CODE) moves the enemy and civilians itself from those and the clock, mirrors the drones,
+  //      and sends back commands (UAS orders, Take control) and the camera of any drone it flies.
+  //      Link (step 3): a websocket to the Cloudflare relay (source: Fires Lab\relay\, beside the repo) when RELAY_URL is set
+  //      or the address says &relay=local (ws://<this host>:8787, i.e. `npm run dev` in relay\) or &relay=wss://…; otherwise,
+  //      or with &relay=tab, a BroadcastChannel (tabs of one browser). The relay sends host messages to every student (or to
+  //      the one named in "to") and student messages to the host, and itself says bye / hostbye / nohost.
+  //      Instructor PIN: the host claims the room with a PIN (&pin=, else one kept in this browser's localStorage per room);
+  //      another instructor is refused while the room is held. The host badge's tooltip shows it, to host from another computer.
+  const RELAY_URL = '';          // set after `npx wrangler deploy`, e.g. 'wss://fist-relay.<account>.workers.dev'
+  const ROOM = (() => {
+    if (!NET.room) return null;
+    const q = new URLSearchParams(location.search), rq = q.get('relay');
+    const relay = rq === 'tab' ? null : rq === 'local' ? 'ws://' + location.hostname + ':8787' : rq && /^wss?:\/\//.test(rq) ? rq : RELAY_URL || null;
+    const me = Math.random().toString(36).slice(2, 10);
+    let pin = '';
+    if (NET.host && relay) {
+      const k = 'fist-room-pin-' + NET.room;
+      try { pin = q.get('pin') || localStorage.getItem(k) || ''; } catch {}
+      if (!pin) pin = String(Math.floor(1000 + Math.random() * 9000));
+    }
+    const keepPin = () => { try { localStorage.setItem('fist-room-pin-' + NET.room, pin); } catch {} };   // on the relay's hostok
+    let handle = () => {}, onLink = () => {};
+    const link = (() => {
+      if (!relay) { const ch = new BroadcastChannel('fist-room-' + NET.room); ch.onmessage = e => handle(e.data); return { post: o => ch.postMessage(o) }; }
+      const url = relay.replace(/\/+$/, '') + '/room/' + encodeURIComponent(NET.room) + '?' +
+        new URLSearchParams({ role: NET.host ? 'host' : 'student', id: me, cs: NET.cs, pin });
+      let ws = null, tries = 0;
+      const connect = () => {
+        ws = new WebSocket(url);
+        ws.onopen = () => { tries = 0; onLink('open'); };
+        ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch { return; } handle(m); };
+        ws.onclose = e => {
+          ws = null;
+          if (e.code === 4003) { onLink('refused'); return; }          // another instructor holds this room: don't retry
+          onLink('closed'); setTimeout(connect, Math.min(10000, 1000 * 2 ** tries++));
+        };
+      };
+      connect();
+      return { post: o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); } };
+    })();
+    const send = (type, o) => link.post(Object.assign({ type, from: me, cs: NET.cs }, o || {}));
+    const F = FIRES.debug, O = OPFOR.debug, badge = document.getElementById('room-badge');
+    const say = (text, cls, title) => { badge.hidden = false; badge.textContent = text; badge.className = cls || ''; badge.title = title || ''; };
+    const struckList = () => [...O.struck].map(([k, w]) => { const [g, i] = k.split(':').map(Number); return { g, i, t: w.t, cause: w.cause }; });
+    if (NET.host) {
+      const students = new Map();                 // tab id -> { cs, seen }
+      const roster = () => { const n = students.size, who = [...students.values()].map(s => s.cs);
+        say('Room ' + NET.room + ' · ' + n + ' student' + (n === 1 ? '' : 's'), 'host', (who.length ? 'In the room: ' + who.join(', ') : 'Nobody has joined yet') +
+          (pin ? '\nInstructor PIN ' + pin + ' (add &pin=' + pin + ' to host this room from another computer)' : '')); };
+      const dmg = () => ({ opfor: struckList(), civ: CIV.hits() });
+      const full = to => send('full', { to, opfor: O.netState(), units: F.unitList(), civ: CIV.debug.level, clock: { t: F.simT, speed: F.speed }, dmg: dmg(), uas: UAS.netState() });
+      NET.emit = (type, o) => send(type, o);
+      onLink = st => {
+        if (st === 'open') roster();
+        else if (st === 'refused') say('Room ' + NET.room + ' is held by another instructor', 'lost', 'Pick another room code, or add &pin=<their PIN> to the address');
+        else say('Room ' + NET.room + ' · relay connection lost, retrying…', 'lost');
+      };
+      handle = m => {
+        if (!m || m.from === me) return;
+        if (m.type === 'hostok') { keepPin(); return; }
+        if (m.type === 'hello' || m.type === 'ping') {
+          const isNew = !students.has(m.from); students.set(m.from, { cs: m.cs, seen: performance.now() });
+          if (m.type === 'hello') { full(m.from); if (isNew) FIRES.log(m.cs + ' joined the room'); }
+          if (isNew) roster();
+        } else if (m.type === 'bye') { const s = students.get(m.from); if (s) { students.delete(m.from); FIRES.log(s.cs + ' left the room'); roster(); } }
+        else if (m.type === 'cmd') UAS.runCmd(m.op, m.a || {}, m.cs);
+        else if (m.type === 'cam') { const d = UAS.droneById(m.d); if (d && UAS.debug.ctl.get(d.id) === m.cs) UAS.applyCam(d, m.cam); }
+      };
+      setInterval(() => send('uas', Object.assign(UAS.netState(), { clock: { t: F.simT, speed: F.speed } })), 200);   // one message: the relay bills per message
+      const last = {};
+      const changed = (k, v) => { const j = JSON.stringify(v); if (j === last[k]) return false; last[k] = j; return true; };
+      changed('opfor', O.netState()); changed('units', F.unitList()); changed('civ', CIV.debug.level);
+      setInterval(() => {
+        const op = O.netState(), un = F.unitList();
+        if (changed('opfor', op)) send('opfor', { opfor: op });
+        if (changed('units', un)) send('units', { units: un });
+        if (changed('civ', CIV.debug.level)) send('civ', { civ: CIV.debug.level });
+        send('dmg', { dmg: dmg() });
+        const now = performance.now();
+        for (const [id, s] of students) if (now - s.seen > 7000) { students.delete(id); FIRES.log(s.cs + ' lost contact'); roster(); }
+      }, 1000);
+      addEventListener('beforeunload', () => send('hostbye'));
+      roster();
+      return { send, students };
+    }
+    // ---- student
+    let joined = false, lastHost = 0, paused = false;
+    const status = () => say('Room ' + NET.room + ' · ' + NET.cs + (paused ? ' · PAUSED BY INSTRUCTOR' : ''), paused ? 'paused' : 'ok');
+    function strikeOne(s) {
+      if (s.g !== undefined) { const g = O.groups.find(o => o.id === s.g); return !!g && O.strike(g, s.i, s.t, s.cause); }
+      return CIV.strike(s.civ, s.t, !!s.boat);
+    }
+    const applyDmg = d => { for (const s of d.opfor || []) strikeOne(s); for (const s of d.civ || []) strikeOne(s); };   // already-struck ones are skipped
+    function clock(c) {
+      lastHost = performance.now(); F.speed = c.speed;
+      if (Math.abs(F.simT - c.t) > 0.3) F.simT = c.t;
+      const p = c.speed === 0; if (p !== paused || !badge.textContent.includes(NET.cs)) { paused = p; status(); }
+    }
+    onLink = st => {
+      if (st === 'open') { joined = false; send('hello'); }          // (re)connected: ask for the full state again
+      else if (st === 'closed') say('Room ' + NET.room + ' · relay connection lost, retrying…', 'lost');
+    };
+    handle = m => {
+      if (!m || m.from === me) return;
+      if (m.type === 'nohost') { if (!joined) say('Room ' + NET.room + ' · waiting for the instructor…', 'lost'); return; }
+      if (m.type === 'full') {
+        if (m.to !== me) return;
+        joined = true; clock(m.clock);
+        CIV.set(m.civ); FIRES.setUnits(m.units); O.applyNet(m.opfor); UAS.applyNet(m.uas); applyDmg(m.dmg);
+        status(); return;
+      }
+      if (!joined) return;
+      if (m.type === 'clock') clock(m);
+      else if (m.type === 'uas') { if (m.clock) clock(m.clock); UAS.applyNet(m); }
+      else if (m.type === 'opfor') O.applyNet(m.opfor);
+      else if (m.type === 'units') FIRES.setUnits(m.units);
+      else if (m.type === 'civ') CIV.set(m.civ);
+      else if (m.type === 'burst') FIRES.blast(m.e, m.n, m.s, m.y);
+      else if (m.type === 'strike') strikeOne(m);
+      else if (m.type === 'dmg') applyDmg(m.dmg);
+      else if (m.type === 'hostbye') { lastHost = 0; joined = false; say('Room ' + NET.room + ' · the instructor left', 'lost'); }
+    };
+    UAS.setSend((op, a) => send('cmd', { op, a }));
+    say('Room ' + NET.room + ' · joining as ' + NET.cs + '…', 'lost');
+    send('hello');
+    setInterval(() => { if (!joined) send('hello'); else send('ping'); }, 1500);
+    setInterval(() => { if (joined) for (const c of UAS.camOut()) send('cam', c); }, 200);
+    setInterval(() => { if (joined && performance.now() - lastHost > 5000 && !badge.className.includes('lost')) say('Room ' + NET.room + ' · lost the instructor, waiting…', 'lost'); else if (joined && performance.now() - lastHost < 5000 && badge.className === 'lost') status(); }, 1000);
+    addEventListener('beforeunload', () => send('bye'));
+    return { send };
+  })();
+  window.__room = ROOM;
+
+  // ---- student screen: on the map (not at an OP, not in a feed) hide the enemy, civilians, bursts, smoke and fire, and
+  //      trajectories for the one main render, then put them back. Feeds render first with their own rules, so they still see it all.
+  function studentVeil() {
+    const list = [OPFOR.debug.root, OPFOR.debug.pips, OPFOR.debug.lines, OPFOR.debug.handles, OPFOR.debug.fxRoot, CIV.debug.grp, FIRES.debug.fxGroup, FIRES.debug.arcGroup];
+    const out = []; for (const o of list) if (o) { out.push([o, o.visible]); o.visible = false; }
+    return out;
+  }
+  if (STUDENT) {
+    document.getElementById('vw-map').click();               // the student's main view is the 2D map
+    window.__opfor.showEnemy = false; window.__opfor.showRoutes = false;
+  }
   let lastFrameStart = performance.now();
-  (function loop(now) {
+  // ---- MAP GRID LABELS (Lee, 2026-11-11): in the 2D Map view the 1 km grid is numbered in the margins like a printed
+  //      map: easting along the top and bottom, northing down both sides, two principal digits (621000 E -> 21), plus a
+  //      grid zone box (zone and 100 km square at the view centre). Every 2nd, 5th or 10th line when zoomed out so the
+  //      numbers never crowd. Shown with Display -> Grid; hidden in 3D, at an OP and in UAS feeds (HTML, not in the scene).
+  const MAPGRID = (() => {
+    const box = document.createElement('div'); box.id = 'mapgrid'; box.hidden = true; document.body.insertBefore(box, labelBox.nextSibling);
+    const gzd = document.createElement('div'); gzd.className = 'gzd'; box.appendChild(gzd);
+    const pool = []; let used = 0;
+    const lab = (txt, x, y, cls) => {
+      let d = pool[used]; if (!d) { d = document.createElement('div'); box.appendChild(d); pool.push(d); }
+      used++; if (d.textContent !== txt) d.textContent = txt; d.className = 'gl ' + cls;
+      d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.display = '';
+    };
+    const P = new THREE.Vector3(), MIN_PX = 46, STEPS = [1, 2, 5, 10];
+    const sx = (x, z) => { P.set(x, 0, z).project(camera); return (P.x + 1) / 2 * canvas.clientWidth; };
+    const sy = (x, z) => { P.set(x, 0, z).project(camera); return (1 - P.y) / 2 * canvas.clientHeight; };
+    let top = 0, bottom = 0;
+    function edges() {                    // the margins: below the banner, above the readout
+      const tb = document.getElementById('topbar'), rd = document.querySelector('.readout');
+      top = tb ? tb.getBoundingClientRect().bottom : 0;
+      bottom = rd ? rd.getBoundingClientRect().top : canvas.clientHeight;
+    }
+    addEventListener('resize', edges);
+    function tick() {
+      const on = mapView && groups.grid.visible;
+      if (box.hidden !== !on) { box.hidden = !on; if (on) edges(); }
+      if (!on) return;
+      used = 0;
+      const w = canvas.clientWidth, t = controls.target, E0 = CE + PLAY.x0, E1 = CE + PLAY.x1, N0 = CN - PLAY.z1, N1 = CN - PLAY.z0;
+      const kmPx = Math.abs(sx(t.x + 1000, t.z) - sx(t.x, t.z)), step = 1000 * (STEPS.find(k => k * kmPx >= MIN_PX) || 20);
+      const yTop = top + 6, yBot = bottom - 6;
+      for (let e = Math.ceil(E0 / step) * step; e <= E1; e += step) {          // eastings: top and bottom margins
+        const x = sx(e - CE, t.z); if (x < 28 || x > w - 28) continue;
+        const txt = String(Math.floor((e % 100000) / 1000)).padStart(2, '0');
+        lab(txt, x, yTop, 'e top'); lab(txt, x, yBot, 'e bot');
+      }
+      for (let n = Math.ceil(N0 / step) * step; n <= N1; n += step) {          // northings: both side margins
+        const y = sy(t.x, CN - n); if (y < top + 64 || y > bottom - 30) continue;   // clear of the zone box
+        const txt = String(Math.floor((n % 100000) / 1000)).padStart(2, '0');
+        lab(txt, 8, y, 'n left'); lab(txt, w - 8, y, 'n right');
+      }
+      for (let i = used; i < pool.length; i++) pool[i].style.display = 'none';
+      const g = (FIRES.debug.toGrid(CE + t.x, CN - t.z) || '').split(' ');
+      const txt = g.length > 1 ? 'GZD ' + g[0] + '  ·  ' + g[1] + '  ·  1 km grid' : '';
+      if (gzd.textContent !== txt) gzd.textContent = txt;
+      gzd.style.top = (top + 30) + 'px';
+    }
+    return { tick };
+  })();
+  (function loop(now, once) {
     now = now || performance.now(); const dt = Math.min(0.25, (now - lastT) / 1000); lastT = now;
     const fs = performance.now();
     PERF.time('fires', () => FIRES.tick(dt));
@@ -5218,8 +5711,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     if (!obs) { navTick(dt); controls.update(); } reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000;
     const cams = [camera, ...UAS.feedCams()];
     PERF.time('trees', () => { CITY.treeTick(cams); GROUND.update(cams); OPFOR.farTick(cams); });
-    PERF.time('feeds', () => UAS.renderFeeds()); PERF.time('render', () => { if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera); });
+    PERF.time('feeds', () => UAS.renderFeeds());
+    const veiled = STUDENT && !obs ? studentVeil() : null;     // the student's map hides what only the sensors may show
+    PERF.time('render', () => { if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera); });
+    if (veiled) for (const [o, v] of veiled) o.visible = v;
     PERF.frame(now - lastFrameStart); lastFrameStart = now;
+    MAPGRID.tick();
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
       for (const t of tags) {
@@ -5229,6 +5726,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (show) { t.d.style.left = ((v.x + 1) / 2 * w) + 'px'; t.d.style.top = ((1 - v.y) / 2 * h) + 'px'; }
       }
     }
-    requestAnimationFrame(loop);
+    if (!once) requestAnimationFrame(loop);
+    // testing aid: window.__frame() runs one frame by hand (a page in a hidden window gets no animation frames)
+    if (!window.__frame) window.__frame = () => loop(performance.now(), true);
   })();
 })().catch(err => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'The terrain could not load in this browser: ' + err.message; });

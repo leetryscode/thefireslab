@@ -22,26 +22,27 @@
 <header id="topbar" aria-label="Exercise control">
   <a class="tb-name" href="../index.html" title="Back to The Fires Lab home">Fires Lab</a>
   <span class="wip" title="Under construction: features and figures will change">In progress</span>
+  <span id="room-badge" hidden role="status" aria-live="polite"></span>
   <div class="tb-clock" role="group" aria-label="Clock">
-    <button id="ck-play" class="tb-play" aria-pressed="true" aria-label="Pause">Pause</button>
-    <span class="seg"><button id="ck-1" aria-pressed="true">1×</button><button id="ck-5" aria-pressed="false">5×</button><button id="ck-10" aria-pressed="false">10×</button></span>
+    <button id="ck-play" class="tb-play instr-only" aria-pressed="true" aria-label="Pause">Pause</button>
+    <span class="seg instr-only"><button id="ck-1" aria-pressed="true">1×</button><button id="ck-5" aria-pressed="false">5×</button><button id="ck-10" aria-pressed="false">10×</button></span>
     <span id="clock">T+00:00</span>
   </div>
   <div class="tb-timeline" aria-hidden="true"><div class="tl-ticks" id="tl-ticks"></div><div class="tl-done" id="tl-done"></div><div class="tl-now" id="tl-now"></div></div>
   <div class="tb-right">
-    <span class="seg" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
+    <span class="seg instr-only" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
     <nav class="tb-tools" id="tools" aria-label="Control panels">
-      <button data-win="w-scn" aria-pressed="false">Scenario</button>
+      <button data-win="w-scn" class="instr-only" aria-pressed="false">Scenario</button>
       <button data-win="w-display" aria-pressed="false">Display</button>
       <button data-win="w-ops" aria-pressed="false" title="OPs and viewshed">OPs</button>
-      <button data-win="w-fires" aria-pressed="false">Fires</button>
-      <button data-win="w-opfor" aria-pressed="false">OPFOR</button>
+      <button data-win="w-fires" class="instr-only" aria-pressed="false">Fires</button>
+      <button data-win="w-opfor" class="instr-only" aria-pressed="false">OPFOR</button>
       <button data-win="w-uas" aria-pressed="false">UAS</button>
     </nav>
   </div>
 </header>
 
-<section class="win" id="w-scn" aria-label="Scenario" hidden>
+<section class="win instr-only" id="w-scn" aria-label="Scenario" hidden>
   <header class="win-h"><h2>Scenario</h2><button class="win-x" aria-label="Close Scenario">×</button></header>
   <div class="win-b">
     <div class="fsec first">
@@ -63,9 +64,9 @@
   <!-- Layout A (Lee, 2026-11-10): the common toggles up top at full weight, the rest folded under More. Tabled for later refinement. -->
   <div class="win-b">
     <div class="lbl">On the map</div>
-    <div class="row dmain"><button id="tg-enemy" aria-pressed="true">Enemy</button><button id="tg-eroutes" aria-pressed="true">Enemy routes</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-u-sym" aria-pressed="true" title="UAS symbols">UAS</button><button id="tg-labels" aria-pressed="true">Labels</button><button id="tg-grid" aria-pressed="true">1 km grid</button></div>
-    <div class="lbl">Civilians</div>
-    <div class="row"><span class="seg" role="group" aria-label="Civilians"><button id="cv-off" aria-pressed="false">Off</button><button id="cv-sparse" aria-pressed="false">Sparse</button><button id="cv-normal" aria-pressed="true">Normal</button><button id="cv-rush" aria-pressed="false">Rush hour</button></span></div>
+    <div class="row dmain"><button id="tg-enemy" class="instr-only" aria-pressed="true">Enemy</button><button id="tg-eroutes" class="instr-only" aria-pressed="true">Enemy routes</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-u-sym" aria-pressed="true" title="UAS symbols">UAS</button><button id="tg-labels" aria-pressed="true">Labels</button><button id="tg-grid" aria-pressed="true">1 km grid</button></div>
+    <div class="lbl instr-only">Civilians</div>
+    <div class="row instr-only"><span class="seg" role="group" aria-label="Civilians"><button id="cv-off" aria-pressed="false">Off</button><button id="cv-sparse" aria-pressed="false">Sparse</button><button id="cv-normal" aria-pressed="true">Normal</button><button id="cv-rush" aria-pressed="false">Rush hour</button></span></div>
     <div class="dmore">
       <div class="lbl">More</div>
       <details><summary>Ground and city</summary><div class="dfold">
@@ -79,7 +80,7 @@
         <div class="row"><span class="lbl">Paths</span><button id="tg-u-orbit" aria-pressed="true" title="Orbit circles and their centre drop lines">Orbits</button><button id="tg-u-route" aria-pressed="true" title="Waypoint routes, return-to-base and LUCAS flight paths">Routes</button></div>
         <div class="row"><span class="lbl">Sensor</span><button id="tg-u-fov" aria-pressed="true" title="Camera footprint on the ground">FOV</button><button id="tg-u-spi" aria-pressed="true" title="Dashed line from the UAS to the point under its crosshair">Sensor line</button><button id="tg-u-scan" aria-pressed="true" title="Area a camera in Scan mode sweeps">Scan area</button></div>
       </div></details>
-      <details><summary>Artillery</summary><div class="dfold">
+      <details class="instr-only"><summary>Artillery</summary><div class="dfold">
         <div class="row"><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
       </div></details>
       <details><summary>Diagnostics</summary><div class="dfold">
@@ -116,7 +117,7 @@
   </div>
 </section>
 
-<section class="win" id="w-fires" aria-label="Fires control" hidden>
+<section class="win instr-only" id="w-fires" aria-label="Fires control" hidden>
   <header class="win-h"><h2>Fires Control</h2><button class="win-x" aria-label="Close Fires Control">×</button></header>
   <div class="win-b">
     <div class="fsec first">
@@ -135,13 +136,20 @@
       <div class="ulist" id="ulist"></div>
     </div>
     <div class="fsec">
-      <h3>Fire mission</h3>
-      <div class="row"><select id="fm-unit" aria-label="Firing unit"></select>
-        <select id="fm-rds" aria-label="Rounds per tube"><option value="1">1 rd/tube</option><option value="2" selected>2 rds/tube</option><option value="3">3 rds/tube</option><option value="4">4 rds/tube</option><option value="6">6 rds/tube</option><option value="8">8 rds/tube</option><option value="12">12 rds/tube</option></select></div>
+      <h3>Call for fire</h3>
+      <!-- The Fire Mission Sim's call for fire, in spoken order (Lee, 2026-11-11): unit and type of mission, grid,
+           then method of control. Mission types and controls are the sim's; see FIRES CFF in trainer.js. -->
+      <div class="row split"><select id="fm-unit" aria-label="Unit called"></select>
+        <select id="fm-type" aria-label="Type of mission"></select></div>
       <div class="row"><input id="fm-grid" class="grid-in" placeholder="target grid" aria-label="Target grid"><button id="fm-pick">Pick on map</button></div>
+      <div class="row"><select id="fm-rds" aria-label="Rounds per tube"><option value="1">1 rd/tube</option><option value="2">2 rds/tube</option><option value="3" selected>3 rds/tube</option><option value="4">4 rds/tube</option><option value="6">6 rds/tube</option><option value="8">8 rds/tube</option><option value="12">12 rds/tube</option></select>
+        <span class="lbl" id="fm-shape" hidden></span></div>
       <div class="row"><span class="lbl">Angle</span><button id="fm-high" aria-pressed="true" title="High angle: steep, clears buildings, longer time of flight">High</button><button id="fm-low" aria-pressed="false">Low</button></div>
-      <div class="row"><button id="fm-fire" class="fire-btn">Fire</button></div>
+      <div class="row"><select id="fm-control" aria-label="Method of control"><option value="ready">When ready</option><option value="amc">At my command</option><option value="tot">Time on target</option></select>
+        <input id="fm-tot" placeholder="T+MM:SS" aria-label="Time on target, sim clock" maxlength="9" style="width:84px" hidden autocomplete="off">
+        <button id="fm-fire" class="fire-btn">Send</button></div>
       <p class="msg" id="fm-msg"></p>
+      <div class="ulist" id="fm-held"></div>
     </div>
     <div class="fsec">
       <h3>Fires log</h3>
@@ -151,7 +159,7 @@
   </div>
 </section>
 
-<section class="win" id="w-opfor" aria-label="OPFOR editor" hidden>
+<section class="win instr-only" id="w-opfor" aria-label="OPFOR editor" hidden>
   <header class="win-h"><h2>OPFOR</h2><button class="win-x" aria-label="Close OPFOR">×</button></header>
   <div class="win-b">
     <div class="row"><select id="op-newtype" aria-label="Type for the new group"></select><button id="op-new">+ New group</button></div>
@@ -167,7 +175,7 @@
     <div class="fsec first"><h3>Launch UAS</h3>
       <div class="ulist" id="uas-lps"></div>
       <p class="msg" id="uas-lmsg"></p>
-      <details class="custom-lp"><summary>Custom launch point</summary>
+      <details class="custom-lp instr-only"><summary>Custom launch point</summary>
         <div class="row" id="uas-add"></div>
         <div class="row"><input class="grid-in" id="uas-grid" placeholder="grid, e.g. 4Q FJ 12345 67890"><button id="uas-place">Place</button></div>
         <p class="msg" id="uas-msg"></p>
