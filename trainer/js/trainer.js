@@ -2096,32 +2096,181 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
     }
 
-    // ---- bursts: flash then a smoke puff that grows, drifts up and thins; all on sim time
-    const smokeTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
-      const gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
-    const scorchGeo = new THREE.PlaneGeometry(1, 1);
-    function burst(i, m) {
-      NET.emit('burst', { e: i.e, n: i.n, y: i.y, s: m.t.burst });          // a room's students see every burst too
-      const p = toLocal(i.e, i.n), y = (i.y !== undefined ? i.y : heightAt(p.x, p.z)) * ex, s = m.t.burst;
-      const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: 0xffd27a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-      flash.position.set(p.x, y + 4, p.z); fxGroup.add(flash);
-      const smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color: 0x3e3a36, transparent: true, depthWrite: false }));
-      smoke.position.set(p.x, y + 6, p.z); fxGroup.add(smoke);
-      const scorch = new THREE.Mesh(scorchGeo, new THREE.MeshBasicMaterial({ map: smokeTex, color: 0x000000, transparent: true, opacity: 0.55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
-      scorch.rotation.x = -Math.PI / 2; scorch.position.set(p.x, y + 0.5, p.z); scorch.scale.setScalar(14 * s); fxGroup.add(scorch); scorch.userData.off = i.what === 'building';
-      fx.push({ flash, smoke, scorch, t0: i.t, y, s });
-      if (fx.length > 600) { const o = fx.shift(); fxGroup.remove(o.flash, o.smoke, o.scorch); }
+    // ---- bursts (rebuilt 2026-11-14): pooled particles animated on the GPU from sim time. Each particle is written once, when
+    //      it is born (start, velocity, life, size and colour curves); the vertex shader works out where it is at simT. So a
+    //      burst costs nothing per frame on the CPU, pause and scrubbing just work, and a 90-rocket ripple makes no new
+    //      materials. Three pools, three draw calls: smoke/dust/debris, glow (flash, fireball, sparks), ground scorch.
+    //      The look differs by munition family (BFX). Every figure here is by eye, not data.
+    const FX_GLSL_V = `
+      attribute vec4 a0; attribute vec4 a1; attribute vec4 a2; attribute vec4 a3; attribute vec4 a4; attribute vec4 a5; attribute vec4 a6;
+      // a0 x y z t0 · a1 vx vy vz life · a2 size0 size1 sizePow drag · a3 grav rise windK floorY · a4 rgb0 rgb1 alpha colPow
+      // a5 fadeIn fadePow cell(+4 = flat on the ground) rot · a6 spin aspect minPx lift (× size: sits on the ground, not in it)
+      uniform float uT; uniform vec3 uWind; uniform float uPx;
+      varying vec2 vUv; varying vec3 vCol; varying float vA; varying float vCell; varying float vShade;
+      vec3 unpack(float c) { return pow(vec3(floor(c / 65536.0), mod(floor(c / 256.0), 256.0), mod(c, 256.0)) / 255.0, vec3(2.2)); }
+      #include <fog_pars_vertex>
+      void main() {
+        float a = uT - a0.w, life = a1.w;
+        vUv = position.xy + 0.5; vA = 0.0; vCell = 0.0; vShade = 1.0; vCol = vec3(0.0);
+        if (a < 0.0 || a > life) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+        float k = a2.w, g = a3.x, ae = a;
+        if (g > 0.0 && k == 0.0) { float tl = (a1.y + sqrt(max(0.0, a1.y * a1.y + 2.0 * g * (a0.y - a3.w)))) / g; ae = min(a, tl); }   // debris lands and stays
+        float D = k > 0.0 ? (1.0 - exp(-k * ae)) / k : ae;
+        vec3 p = a0.xyz + a1.xyz * D + uWind * (a3.z * a) + vec3(0.0, a3.y * a - 0.5 * g * ae * ae, 0.0);
+        p.y = max(p.y, a3.w);
+        float u = a / life;
+        float sz = mix(a2.x, a2.y, pow(u, a2.z));
+        p.y += sz * a6.w;
+        vA = a4.z * smoothstep(0.0, max(a5.x, 0.001), a) * pow(1.0 - u, a5.y);
+        vCol = mix(unpack(a4.x), unpack(a4.y), pow(u, a4.w));
+        float fl = step(3.5, a5.z); vCell = a5.z - 4.0 * fl;
+        float rot = a5.w + a6.x * ae; vec2 cs = vec2(cos(rot), sin(rot));
+        vec2 q = vec2(position.x, position.y * a6.y);
+        q = vec2(q.x * cs.x - q.y * cs.y, q.x * cs.y + q.y * cs.x);
+        vShade = clamp(q.y + 0.5, 0.0, 1.0);
+        vec4 mvPosition;
+        if (fl > 0.5) mvPosition = viewMatrix * vec4(p + vec3(q.x, 0.0, q.y) * sz, 1.0);
+        else { mvPosition = viewMatrix * vec4(p, 1.0); mvPosition.xy += q * max(sz, a6.z * -mvPosition.z / uPx); }   // never under minPx pixels
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`;
+    const FX_GLSL_F = `
+      uniform sampler2D uMap; uniform float uAdd;
+      varying vec2 vUv; varying vec3 vCol; varying float vA; varying float vCell; varying float vShade;
+      #include <fog_pars_fragment>
+      void main() {
+        float cx = mod(vCell, 2.0), cy = floor(vCell / 2.0);
+        float t = texture2D(uMap, vec2((cx + vUv.x) * 0.5, 0.5 - cy * 0.5 + vUv.y * 0.5)).a;
+        float al = t * vA; if (al < 0.004) discard;
+        gl_FragColor = vec4(vCol * (uAdd > 0.5 ? 1.0 : mix(0.7, 1.1, vShade)), al);   // smoke: lit from above
+        #include <fog_fragment>
+        #include <encodings_fragment>
+      }`;
+    // atlas, 2 × 2: 0 soft round · 1 lumpy billow · 2 hard chunk · 3 ring
+    const fxAtlas = (() => {
+      const N = 256, h = N / 2, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), r = rng(9173);
+      const blob = (x, y, rad, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(0.6, `rgba(255,255,255,${a * 0.45})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, 6.2832); g.fill(); };
+      blob(h / 2, h / 2, h * 0.47, 1);
+      for (let k = 0; k < 18; k++) { const a = r() * 6.2832, d = r() * h * 0.2; blob(h * 1.5 + Math.cos(a) * d, h / 2 + Math.sin(a) * d, h * (0.14 + r() * 0.13), 0.7); }
+      g.fillStyle = '#fff'; g.beginPath(); for (let k = 0; k < 7; k++) { const a = k / 7 * 6.2832, d = h * (0.24 + r() * 0.2); g[k ? 'lineTo' : 'moveTo'](h / 2 + Math.cos(a) * d, h * 1.5 + Math.sin(a) * d); } g.fill();
+      const gr = g.createRadialGradient(h * 1.5, h * 1.5, h * 0.28, h * 1.5, h * 1.5, h * 0.47); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(h * 1.5, h * 1.5, h * 0.47, 0, 6.2832); g.fill();
+      return new THREE.CanvasTexture(c); })();
+    const fxVp = new THREE.Vector4();
+    function fxPool(cap, add, order, extra) {
+      const geo = new THREE.InstancedBufferGeometry(), at = [];
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      geo.setAttribute('position', new THREE.Float32BufferAttribute([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0], 3));
+      for (let k = 0; k < 7; k++) { const b = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); b.setUsage(THREE.DynamicDrawUsage); geo.setAttribute('a' + k, b); at.push(b); }
+      geo.instanceCount = 0;
+      const mat = new THREE.ShaderMaterial(Object.assign({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uWind: { value: new THREE.Vector3() }, uPx: { value: 800 }, uMap: { value: null }, uAdd: { value: add ? 1 : 0 } }]),
+        vertexShader: FX_GLSL_V, fragmentShader: FX_GLSL_F, transparent: true, depthWrite: false, fog: !add, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending }, extra || {}));
+      mat.uniforms.uMap.value = fxAtlas;
+      const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; mesh.renderOrder = order;
+      mesh.onBeforeRender = (r, s, cam) => {     // pixels per unit at 1 m, for minPx: per camera, since the UAS feeds draw with their own
+        r.getCurrentViewport(fxVp); mat.uniforms.uPx.value = fxVp.w / r.getPixelRatio() / (2 * Math.tan((cam.fov || 50) * Math.PI / 360)); mat.uniformsNeedUpdate = true; };
+      fxGroup.add(mesh);
+      return { mesh, mat, geo, at, cap, head: 0, lo: Infinity, hi: -1 };
     }
-    function animateFx() {
-      for (const f of fx) {
-        const a = simT - f.t0;
-        f.flash.visible = a >= 0 && a < 0.8; if (f.flash.visible) { const k = 25 + 70 * f.s * (a / 0.8); f.flash.scale.set(k, k, 1); f.flash.material.opacity = 1 - a / 0.8; }
-        const life = 60; f.smoke.visible = a >= 0 && a < life;
-        if (f.smoke.visible) { const k = (18 + 60 * Math.sqrt(a / life)) * f.s; f.smoke.scale.set(k, k * 1.25, 1); f.smoke.position.y = f.y + k * 0.45 + a * 0.8; f.smoke.material.opacity = 0.9 * Math.pow(1 - a / life, 1.5); }
-        f.scorch.visible = a >= 0 && a < 600 && !f.scorch.userData.off; if (f.scorch.visible) f.scorch.material.opacity = 0.55 * (1 - a / 600);
+    const COARSE = matchMedia('(pointer: coarse)').matches, FXQ = COARSE ? 0.6 : 1;   // phones and tablets: fewer particles
+    const PS = fxPool(COARSE ? 10000 : 16384, false, 5), PG = fxPool(COARSE ? 5000 : 8192, true, 7), PM = fxPool(2048, false, 1, { polygonOffset: true, polygonOffsetFactor: -4 });
+    const FX_WIND_FROM = 70, FX_WIND = 2.5;   // m/s, from about 070 like the wreck smoke (placeholder trade wind)
+    for (const P of [PS, PG, PM]) P.mat.uniforms.uWind.value.set(-Math.sin(FX_WIND_FROM * Math.PI / 180) * FX_WIND, 0, Math.cos(FX_WIND_FROM * Math.PI / 180) * FX_WIND);
+    const D0 = { vx: 0, vy: 0, vz: 0, life: 1, s0: 1, s1: 1, sp: 1, k: 0, g: 0, rise: 0, wk: 0, fl: -1e5, c0: 0xffffff, c1: 0xffffff, a: 1, cp: 1, fin: 0, fp: 1, cell: 0, flat: 0, rot: 0, spin: 0, asp: 1, px: 0, lift: 0 };
+    function emit(P, x, y, z, t0, o) {                // writes straight into the pool's arrays: no per-particle objects or closures
+      const i = P.head, A = P.at, j = i * 4, d = D0, f = k => (o[k] !== undefined ? o[k] : d[k]);
+      let v = A[0].array; v[j] = x; v[j + 1] = y; v[j + 2] = z; v[j + 3] = t0;
+      v = A[1].array; v[j] = f('vx'); v[j + 1] = f('vy'); v[j + 2] = f('vz'); v[j + 3] = f('life');
+      v = A[2].array; v[j] = f('s0'); v[j + 1] = f('s1'); v[j + 2] = f('sp'); v[j + 3] = f('k');
+      v = A[3].array; v[j] = f('g'); v[j + 1] = f('rise'); v[j + 2] = f('wk'); v[j + 3] = f('fl');
+      v = A[4].array; v[j] = f('c0'); v[j + 1] = f('c1'); v[j + 2] = f('a'); v[j + 3] = f('cp');
+      v = A[5].array; v[j] = f('fin'); v[j + 1] = f('fp'); v[j + 2] = f('cell') + (o.flat ? 4 : 0); v[j + 3] = f('rot');
+      v = A[6].array; v[j] = f('spin'); v[j + 1] = f('asp'); v[j + 2] = f('px'); v[j + 3] = f('lift');
+      P.lo = Math.min(P.lo, i); P.hi = Math.max(P.hi, i);
+      P.head = (i + 1) % P.cap; P.geo.instanceCount = Math.max(P.geo.instanceCount, i + 1);
+    }
+    function fxFlush() {
+      for (const P of [PS, PG, PM]) { if (P.hi < 0) continue;
+        for (const b of P.at) { b.updateRange.offset = P.lo * 4; b.updateRange.count = (P.hi - P.lo + 1) * 4; b.needsUpdate = true; }
+        P.lo = Infinity; P.hi = -1; }
+    }
+    const wetAt = (x, z) => { const c = Math.round((x + HW) / CELL - 0.5), r = Math.round((z + HH) / CELL - 0.5);
+      return c < 0 || r < 0 || c >= NX || r >= NY || dm[r * NX + c] < 0 || H[r * NX + c] < 0.3; };
+    const floorY = (x, z) => Math.max(heightAt(x, z) * ex, wetAt(x, z) ? (Math.abs(x) > HW || Math.abs(z) > HH ? sea.position.y : 0) : -1e5);
+    // Families. Sizes are metres at visual size s = 1 (the 155 mm); the burst value in TYPES / QF / the UAS types scales them.
+    //   flash: flash width · ball: fireball puffs, ballK their size · col: smoke column puffs, colH how high (m) · smoke: column
+    //   colours young → old · dust: ground skirt puffs · deb: thrown chunks · ten: dirt jets (6 puffs each) · ring: shockwave
+    //   · spark: hot fragments · life: how long the smoke hangs (s)
+    const BFX = {
+      mortar: { flash: 26, ball: 2, ballK: 0.6, col: 4, colH: 30, smoke: [0x4f4b47, 0x9d988f], dust: 6, dustC: 0x857c6e, deb: 14, ten: 0, ring: 0, spark: 8, life: 30 },
+      arty:   { flash: 34, ball: 3, ballK: 0.8, col: 7, colH: 45, smoke: [0x4b3f33, 0x9a8f80], dust: 10, dustC: 0x8f7e66, deb: 24, ten: 4, ring: 0, spark: 12, life: 55 },
+      rocket: { flash: 44, ball: 4, ballK: 0.9, col: 8, colH: 55, smoke: [0x2c2926, 0x86817a], dust: 8, dustC: 0x958672, deb: 22, ten: 3, ring: 0.35, spark: 20, life: 50 },
+      bomb:   { flash: 60, ball: 9, ballK: 1.25, col: 14, colH: 50, smoke: [0x302923, 0x8e8475], dust: 16, dustC: 0x9a8a74, deb: 46, ten: 8, ring: 1, spark: 26, life: 110 },
+      uas:    { flash: 18, ball: 3, ballK: 0.9, col: 3, colH: 28, smoke: [0x1d1b19, 0x6e6a66], dust: 3, dustC: 0x8c7d68, deb: 6, ten: 0, ring: 0, spark: 12, life: 40 }
+    };
+    const FAMILY = { m777: 'arty', m119: 'arty', m120: 'mortar', m252: 'mortar', gmlrs: 'rocket', atacms: 'rocket', rt_mk15: 'rocket', rt_mk30: 'rocket', rt_mk45: 'rocket', mk81: 'bomb', mk82: 'bomb', mk83: 'bomb', mk84: 'bomb' };
+    function bfx(kind, x, y, z, t0, s, onBld) {
+      const F = BFX[FAMILY[kind] || (BFX[kind] ? kind : 'uas')], r = rng(((Math.round(x * 7) * 73856093) ^ (Math.round(z * 7) * 19349663) ^ Math.round(t0 * 1000)) >>> 0);
+      const wet = !onBld && wetAt(x, z), rs = Math.sqrt(s), sm = rs,   // sm: smoke and dust scale, compressed so small rounds still read
+        n = c => Math.max(c ? 1 : 0, Math.round(c * FXQ * (0.6 + 0.4 * rs)));
+      const R = (a, b) => a + (b - a) * r(), ang = () => r() * 6.2832, sg = () => (r() < 0.5 ? -1 : 1);
+      const gy = onBld ? y : floorY(x, z);                       // the surface the skirt and splash sit on
+      const dustC = wet ? 0xe9eef0 : onBld ? 0x8e8a83 : F.dustC, debC = wet ? 0xdfe8ec : onBld ? 0x5f5c58 : 0x2b241c;
+      // flash and glow
+      emit(PG, x, y + 3 * s, z, t0, { life: 0.14 + 0.05 * s, s0: F.flash * s * 0.5, s1: F.flash * s, c0: 0xffffff, c1: 0xffe2a0, fp: 1.5, px: 7 });
+      emit(PG, x, y + 4 * s, z, t0, { life: 0.7 + 0.2 * s, s0: F.flash * s * 1.1, s1: F.flash * s * 1.6, c0: 0xffb860, c1: 0x7a2a08, a: 0.35, fp: 2, px: 4 });
+      // fireball: hot billows that cool from white to deep red as they swell and lift
+      for (let k = 0, m = wet ? Math.ceil(F.ball / 2) : F.ball; k < m; k++) { const a = ang(), d = R(0, 4) * s;
+        emit(PG, x + Math.cos(a) * d, y + R(1, 5) * s, z + Math.sin(a) * d, t0 + R(0, 0.08), { vx: Math.cos(a) * R(2, 8) * rs, vy: R(4, 12) * rs, vz: Math.sin(a) * R(2, 8) * rs, k: 2.5,
+          life: R(0.6, 1.1) * Math.sqrt(rs) * (F === BFX.bomb ? 1.5 : 1), s0: 4 * s * F.ballK, s1: R(10, 16) * s * F.ballK, sp: 0.4, c0: 0xfff2c8, c1: 0x9a2e06, cp: 0.55, fp: 1.3, cell: 1, rot: ang(), spin: R(0.5, 1.5) * sg(), px: 2 }); }
+      // sparks: hot fragments on ballistic arcs
+      for (let k = 0, m = n(F.spark); k < m; k++) { const a = ang(), el = R(0.25, 1.35), v = R(28, 70) * rs;
+        emit(PG, x, y + 1.5, z, t0, { vx: Math.cos(a) * Math.cos(el) * v, vy: Math.sin(el) * v, vz: Math.sin(a) * Math.cos(el) * v, g: 9.8, fl: gy, life: R(0.5, 1.1),
+          s0: 2.2, s1: 1.2, c0: 0xffe7a8, c1: 0xff4a10, cp: 0.7, fp: 1.5, px: 1.6 }); }
+      // shockwave: a quick bright shell, then a dust ring racing out along the ground (unitary rockets, bombs)
+      if (F.ring) {
+        emit(PG, x, y + 6 * s, z, t0, { life: 0.35, s0: 10 * s, s1: 110 * s * F.ring, sp: 0.6, c0: 0xfff4dc, c1: 0xffd9a0, a: 0.45, fp: 1.2, cell: 3, px: 3 });
+        emit(PS, x, gy + 1.5, z, t0, { life: 1.1, s0: 8 * s, s1: 190 * rs * F.ring, sp: 0.5, c0: wet ? 0xf4f8fa : 0xe8dcc4, c1: dustC, a: 0.6, fp: 1.4, cell: 3, flat: 1 });
       }
+      // thrown chunks (white spray over water): land, lie there, fade
+      for (let k = 0, m = n(F.deb * (onBld ? 1.3 : 1)); k < m; k++) { const a = ang(), el = R(0.55, 1.4), v = R(14, 40) * Math.pow(s, 0.25), vx = Math.cos(a) * Math.cos(el) * v, vz = Math.sin(a) * Math.cos(el) * v, vy = Math.sin(el) * v, tl = 2 * vy / 9.8;
+        const lx = x + vx * tl, lz = z + vz * tl;
+        emit(PS, x, y + 1, z, t0, { vx, vy, vz, g: 9.8, fl: onBld ? Math.min(y, floorY(lx, lz)) : floorY(lx, lz), life: wet ? R(2, 4) : R(7, 12), s0: R(0.9, 2.2) * Math.pow(s, 0.3), s1: wet ? 0.3 : 1.6, sp: 3,
+          c0: debC, c1: debC, fp: wet ? 1 : 4, cell: wet ? 0 : 2, rot: ang(), spin: R(3, 10) * sg(), px: 1.7 }); }
+      // blast cloud: a dome of dust (or spray) punched out in every direction, braking hard; the body of the burst
+      for (let k = 0, m = Math.max(4, Math.round(9 * FXQ * (0.7 + 0.3 * rs))); k < m; k++) { const a = ang(), el = R(0.15, 1.45), v = R(18, 34) * rs;
+        emit(PS, x, y + 2 * sm, z, t0 + R(0, 0.06), { vx: Math.cos(a) * Math.cos(el) * v, vy: Math.sin(el) * v, vz: Math.sin(a) * Math.cos(el) * v, k: 2.4, fl: gy + 3 * sm, rise: 0.5, wk: 0.8,
+          life: R(12, 20) * (F === BFX.bomb ? 1.5 : 1), s0: 10 * sm, s1: R(32, 46) * sm, sp: 0.22, c0: wet ? 0xf2f6f8 : onBld ? 0x77736d : F.smoke[0], c1: dustC, cp: 0.35,
+          a: 1, fin: 0.04, fp: 1.3, cell: 1, rot: ang(), spin: R(0.05, 0.25) * sg(), lift: 0.3 }); }
+      // dirt jets / water column: each jet is 6 puffs on one path, born a beat apart, so they read as a trailing plume
+      const jets = wet ? n(5) + 2 : n(F.ten);
+      for (let k = 0; k < jets; k++) { const a = ang(), el = wet ? R(1.3, 1.52) : R(0.8, 1.3), v = (wet ? R(26, 44) : R(24, 40)) * rs;
+        for (let q = 0; q < 6; q++) emit(PS, x, y + 1, z, t0 + q * 0.07, { vx: Math.cos(a) * Math.cos(el) * v, vy: Math.sin(el) * v, vz: Math.sin(a) * Math.cos(el) * v, g: 9.8, k: 0.55, fl: gy + 2 * s, wk: 1,
+          life: wet ? R(5, 8) : R(9, 15), s0: 2.5 * sm, s1: R(9, 14) * sm, sp: 0.5, c0: wet ? 0xf6fafb : dustC, c1: wet ? 0xdfe6ea : dustC, a: 0.8 - q * 0.08, fin: 0.1, fp: 1.4, cell: 1, rot: ang(), spin: R(0.1, 0.4) * sg(), lift: 0.2 }); }
+      // smoke column: puffs flung up with drag, so they stop at different heights; then rise and drift on the wind
+      for (let k = 0, m = n(wet ? F.col / 2 : F.col); k < m; k++) { const a = ang(), d = R(0, 6) * s, hgt = R(0.15, 1) * F.colH * s, kk = 0.45;
+        emit(PS, x + Math.cos(a) * d, y + 3 * s, z + Math.sin(a) * d, t0 + R(0.05, 0.35), { vx: Math.cos(a) * R(1, 4), vy: hgt * kk, vz: Math.sin(a) * R(1, 4), k: kk, rise: R(0.8, 1.5), wk: 1,
+          life: F.life * R(0.6, 1), s0: 10 * sm, s1: R(28, 42) * sm, sp: 0.3, c0: wet ? 0xb9b6b0 : onBld ? 0x5d5a55 : F.smoke[0], c1: wet ? 0xd8d6d2 : F.smoke[1], cp: 0.6,
+          a: 1, fin: 0.25, fp: 1.2, cell: 1, rot: ang(), spin: R(0.02, 0.12) * sg(), lift: 0.25 }); }
+      emit(PS, x, y + 8 * s, z, t0 + 0.4, { vy: 4, k: 0.3, rise: 0.5, wk: 1, life: F.life * 1.4, s0: 20 * sm, s1: 62 * sm, sp: 0.5, c0: F.smoke[1], c1: 0xbdb8b0, a: 0.28, fin: 2, fp: 1.2, cell: 1, rot: ang() });   // the haze it leaves
+      // ground skirt: low dust (or foam) rolling out and settling
+      for (let k = 0, m = n(F.dust); k < m; k++) { const a = ang(), v = R(14, 30) * rs;
+        emit(PS, x, gy + 2 * s, z, t0 + R(0, 0.15), { vx: Math.cos(a) * v, vy: R(0.5, 2.5), vz: Math.sin(a) * v, k: 1.3, fl: gy + 1.5 * s, wk: 0.7, life: R(16, 28) * (F === BFX.bomb ? 1.4 : 1),
+          s0: 6 * sm, s1: R(18, 28) * sm, sp: 0.35, c0: dustC, c1: dustC, a: wet ? 0.55 : 0.75, fin: 0.15, fp: 1.6, cell: 1, rot: ang(), spin: R(0.05, 0.2) * sg(), lift: 0.3 }); }
+      if (wet) emit(PS, x, gy + 0.6, z, t0, { life: 14, s0: 6 * s, s1: 34 * s, sp: 0.5, c0: 0xf4f8fa, c1: 0xdde6ea, a: 0.55, fp: 1.2, cell: 3, flat: 1, rot: ang() });   // foam ring
+      // scorch: ten minutes on the ground, not on roofs or water
+      if (!onBld && !wet) { emit(PM, x, gy + 0.5, z, t0, { life: 600, s0: 15 * s * R(0.85, 1.15), s1: 15 * s, c0: 0x000000, c1: 0x000000, a: 0.6, cell: 1, flat: 1, rot: ang() });
+        emit(PM, x, gy + 0.55, z, t0, { life: 600, s0: 7 * s, s1: 7 * s, c0: 0x0b0806, c1: 0x0b0806, a: 0.55, flat: 1 }); }
     }
+    function burst(i, m) {
+      const kind = m.kind || (m.u && m.u.type) || m.mun || 'm777';
+      NET.emit('burst', { e: i.e, n: i.n, y: i.y, s: m.t.burst, k: kind });   // a room's students see every burst too
+      const p = toLocal(i.e, i.n), g0 = floorY(p.x, p.z);
+      const y = i.y !== undefined ? Math.max(i.y * ex, g0) : g0, onBld = i.what === 'building' && y > g0 + 1;   // a roof under the slope's ground (seen on hillsides): burst on the ground
+      bfx(kind, p.x, y, p.z, i.t, m.t.burst, onBld);
+      fx.push({ t0: i.t, x: p.x, z: p.z, kind }); if (fx.length > 600) fx.shift();
+    }
+    function animateFx() { for (const P of [PS, PG, PM]) P.mat.uniforms.uT.value = simT; fxFlush(); }
 
     // ---- the clock step
     const tmpV = new THREE.Vector3();
@@ -2196,7 +2345,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     let savedUnits = null; try { savedUnits = JSON.parse(localStorage.getItem(STORE.units)); } catch (e) {}
     if (Array.isArray(savedUnits) && !NET.client) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt, u.cs);
     drawUnits();
-    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size, y) { burst({ e, n, y, t: simT }, { t: { burst: size } }); }, netShot, log, setUnits, debug: { QF, quicks, quickFire, tick, unitList, units, get speed() { return speed; }, set speed(v) { speed = Math.max(0, +v || 0); }, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, fxGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size, y, kind) { burst({ e, n, y, t: simT }, { t: { burst: size }, kind }); }, netShot, log, setUnits, debug: { QF, quicks, quickFire, tick, unitList, units, get speed() { return speed; }, set speed(v) { speed = Math.max(0, +v || 0); }, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, fxGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -3962,15 +4111,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function burstAt(id, mun, x, z, t, y) {
       const O = OPFOR.debug, out = { hits: [], near: null, shielded: 0 }, wetB = O.waterAt(x, z), up = y !== undefined;
       const yb = up ? y : (wetB ? 0 : heightAt(x, z)) + 1;
-      for (const v of [...O.vehiclesAt(t), ...CIV.vehiclesAt(t)]) {
-        const vy = (O.waterAt(v.x, v.z) ? 0 : heightAt(v.x, v.z)) + 1.5;
-        const d = up ? Math.hypot(v.x - x, v.z - z, vy - y) : Math.hypot(v.x - x, v.z - z);
+      for (const v of [...O.vehiclesAt(t), ...CIV.vehiclesAt(t, x, z, 460)]) {   // civilians beyond 450 m can't be struck; the nearest report only cares within 30 m
+        const dh = Math.hypot(v.x - x, v.z - z), vyOf = () => (O.waterAt(v.x, v.z) ? 0 : heightAt(v.x, v.z)) + 1.5;   // height only when it's needed
+        const d = up && dh <= 450 ? Math.hypot(dh, vyOf() - y) : dh;
         if (!out.near || d < out.near.d) out.near = { v, d };
         if (v.struck || d > 450) continue;
         let p = pStrike(mun, v.type, d);
         if (p > 0 && TUBES[mun] && (wetB || O.waterAt(v.x, v.z))) p = 0;
-        if (p > 0 && CITY.ready && shielded(x, z, yb, v.x, v.z, vy)) { p = 0; out.shielded++; }
-        if (p > 0 && u01(id + '|' + v.key) < p && (v.civ ? CIV.strike(v.i, t, !!v.civ.boat) : O.strike(v.g, v.i, t, id))) {
+        if (!(p > 0) || u01(id + '|' + v.key) >= p) continue;                      // dice first: the costly building check only runs for a would-be hit (same results)
+        if (CITY.ready && shielded(x, z, yb, v.x, v.z, vyOf())) { out.shielded++; continue; }   // shielded now counts only would-be hits
+        if ((v.civ ? CIV.strike(v.i, t, !!v.civ.boat) : O.strike(v.g, v.i, t, id))) {
           out.hits.push({ v, d, p });
           NET.emit('strike', v.civ ? { civ: v.i, boat: !!v.civ.boat, t } : { g: v.g.id, i: v.i, t, cause: id });   // a room's students apply the same strike
         }
@@ -4068,10 +4218,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const TYPE = { hatch: 'hatchback', pickup: 'pickup', van: 'panel van', minivan: 'minivan', smallvan: 'small van', sedan: 'sedan' };
     const civName = c => 'civilian ' + specs[c.mi].colour + ' ' + (TYPE[specs[c.mi].type] || 'car');
     const hit = [];                              // struck cars, for the fire's visibility when the setting changes
-    function vehiclesAt(t) {                     // for DAMAGE: the civilians on the map at time t
-      const out = [];
-      for (let i = 0; i < N; i++) { const c = cars[i], p = posOf(c, t); out.push({ civ: c, i, type: 'civ', key: 'civ:' + i, x: p.x, z: p.z, hd: p.hd, struck: !!(c.st && t >= c.st.t), name: civName(c) }); }
-      for (let i = 0; i < NBt; i++) { const b = boats[i], p = boatPos(b, t); out.push({ civ: b, i, type: 'civ', key: 'boat:' + i, x: p.x, z: p.z, hd: p.hd, struck: !!(b.st && t >= b.st.t), name: 'civilian fishing boat' }); }
+    function vehiclesAt(t, x, z, R) {            // for DAMAGE: the civilians on the map at time t; given (x, z, R), only those within R m
+      const out = [], far = x === undefined ? () => false : p => Math.abs(p.x - x) > R || Math.abs(p.z - z) > R;   // records only for cars that can matter (was ~1,800 per burst)
+      for (let i = 0; i < N; i++) { const c = cars[i];
+        if (x !== undefined && c._pt !== undefined && !c.parked && !c.st) {   // a driving car is within v × |Δt| (+ lane offset) of where we last placed it:
+          const reach = c.v * Math.abs(t - c._pt) + 2;                         // skip it unplaced when even that can't bring it within R
+          if (Math.abs(c._px - x) - reach > R || Math.abs(c._pz - z) - reach > R) continue; }
+        const p = posOf(c, t); if (!c.parked) { c._px = p.x; c._pz = p.z; c._pt = t; } if (far(p)) continue; out.push({ civ: c, i, type: 'civ', key: 'civ:' + i, x: p.x, z: p.z, hd: p.hd, struck: !!(c.st && t >= c.st.t), name: civName(c) }); }
+      for (let i = 0; i < NBt; i++) { const b = boats[i], p = boatPos(b, t); if (far(p)) continue; out.push({ civ: b, i, type: 'civ', key: 'boat:' + i, x: p.x, z: p.z, hd: p.hd, struck: !!(b.st && t >= b.st.t), name: 'civilian fishing boat' }); }
       return out;
     }
     function strike(i, t, boat) {
@@ -4564,7 +4718,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     function impact(d, p) {
       const r = DAMAGE.uasImpact('U' + d.id, d.type, p.x, p.z, simT());
-      FIRES.blast(CE + r.x, CN - r.z, TYPES[d.type].burst);
+      FIRES.blast(CE + r.x, CN - r.z, TYPES[d.type].burst, undefined, 'uas');
       const O = OPFOR.debug, nm = v => v.civ ? v.name.toUpperCase() : O.vName(v.g, v.i);
       const res = r.hits.length ? 'STRUCK ' + r.hits.map(h => nm(h.v) + ' (' + Math.round(h.d) + ' m)').join(', ')
         : r.near && r.near.d <= 30 ? Math.round(r.near.d) + ' m from ' + nm(r.near.v) + (r.near.v.struck ? ' (already struck)' : '') + ', not struck'
@@ -5798,7 +5952,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       else if (m.type === 'opfor') O.applyNet(m.opfor);
       else if (m.type === 'units') FIRES.setUnits(m.units);
       else if (m.type === 'civ') CIV.set(m.civ);
-      else if (m.type === 'burst') FIRES.blast(m.e, m.n, m.s, m.y);
+      else if (m.type === 'burst') FIRES.blast(m.e, m.n, m.s, m.y, m.k);
       else if (m.type === 'shot') FIRES.netShot(m);
       else if (m.type === 'strike') strikeOne(m);
       else if (m.type === 'dmg') applyDmg(m.dmg);
