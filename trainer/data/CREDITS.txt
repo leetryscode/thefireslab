@@ -29,6 +29,27 @@ data/m13.bin (infantry soldier)
 licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
 Changes: pose baked into a static mesh, materials converted to vertex colours, geometry simplified, rescaled to 1.8 m (2026-11-04).
 
+data/m14.bin (ZTZ-96 main battle tank)
+"ZTZ96" (https://skfb.ly/oW6EA) by jzmhhhhh is licensed under Creative Commons Attribution 4.0
+(http://creativecommons.org/licenses/by/4.0/).
+Changes: glass parts removed, materials converted, geometry simplified, textures reduced to 1024 px,
+re-centred on the ground (2026-11-14).
+
+PLAN ships (2026-11-14). Each licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).
+Changes to all five: materials converted, glass removed, geometry simplified, textures reduced to 1024 px, rescaled, keel at the
+pivot. Two are other navies' ships standing in for Chinese ones, as noted.
+data/m15.bin (Type 055 destroyer): "CN TYPE 055 Nanchang v3.0"
+  (https://sketchfab.com/3d-models/cn-type-055-nanchang-v30-8850f8cf1eee409abe08519fd54809cd) by FeriseCAT.
+data/m16.bin (shown as Type 052D destroyer): "1:1 Low poly US NAVY DDG-51 USS Arleigh Burke."
+  (https://sketchfab.com/3d-models/11-low-poly-us-navy-ddg-51-uss-arleigh-burke-17be09c31c6047e4a5969b68c29eba03) by Yi Tsung Lee.
+data/m17.bin (Type 054A frigate): "Type-054A Class Frigate"
+  (https://sketchfab.com/3d-models/type-054a-class-frigate-948cca64a5274644a35e4600e023d61d) by Muhamad Mirza Arrafi.
+data/m18.bin (shown as Type 075 LHD): "USS WASP LHD-1"
+  (https://sketchfab.com/3d-models/uss-wasp-lhd-1-bf391bb56fbf44c4a924cb6a5bd8bf81) by nazidefenseforceofficial.
+  Also stretched to Type 075 proportions.
+data/m19.bin (Type 071 LPD): "Yuzhao-class landing ship Kunlun Shan"
+  (https://sketchfab.com/3d-models/yuzhao-class-landing-ship-kunlun-shan-a8cff1cad4604e32849f7ffe453866ea) by 42manako.
+
 data/m08.bin (ALTIUS-700M loitering munition, friendly; not used by the trainer yet)
 "Anduril ALTIUS 700M" (https://sketchfab.com/3d-models/anduril-altius-700m-4e7fe35b0279418d85af34d33faa9db5)
 by KillCaptureDestroy is licensed under Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/).

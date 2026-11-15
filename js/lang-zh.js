@@ -42,8 +42,8 @@ window.D3A_LANG_ZH = {
     zh: "多人連線「感測器到射擊單位」訓練"
   },
   "index.017": {
-    en: "Built for command post fires teams, forward observers, and one-way attack UAS targeting teams. Observe a moving, instructor-controlled enemy from OPs or UAS, then engage it with artillery and one-way attack UAS, in dense, 3D, urban terrain.",
-    zh: "專為指揮所火力小組、前進觀測官及攻擊型無人機目標選定小組設計。從觀測所或無人機觀測由教官操控的移動敵軍，再以砲兵與攻擊型無人機接戰，場景為密集的 3D 城市地形。"
+    en: "Built for command post fires teams, forward observers, and one-way attack UAS targeting teams. Observe a moving, instructor-controlled enemy from OPs or UAS, then engage it with artillery and one-way attack UAS.",
+    zh: "專為指揮所火力小組、前進觀測官及攻擊型無人機目標選定小組設計。從觀測所或無人機觀測由教官操控的移動敵軍，再以砲兵與攻擊型無人機接戰。"
   },
   "index.022": {
     en: "Launch the simulator",

@@ -865,7 +865,8 @@ vec3 gradeGround(vec3 base, vec3 lit){
   pair('vs-veh', 'vs-gnd', () => { VS.tgt = 2.5; }, () => { VS.tgt = 0; });
   pair('vs-5', 'vs-10', () => { VS.range = 5000; }, () => { VS.range = 10000; });
 
-  // ---- CITY: lidar buildings and trees (data/city.json, built by Trainer\pipeline\build_city.py + pack_city.py).
+  // ---- CITY: lidar buildings and trees (data/city.json, built by Trainer\pipeline\build_city.py, pack_city.py, then
+  //      simplify_city.py, which joins each building's height bands into one block: 40% fewer triangles, 2026-11-14).
   //      Loads after the terrain is up. Buildings: one mesh per 1 km square, light baked into vertex colours.
   //      Trees: one instanced crown each. Both feed the viewshed through HB when their layer is on.
   const CITY = (() => {
@@ -1282,6 +1283,17 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       { // trimmed edge (TRIM): drop buildings and trees out in the false land, where they would stand bright in the shadow
         d.b = d.b.filter(b => edgeAt(b[3][0] / 10, b[3][1] / 10) > 0.75);
         const t = []; for (let i = 0; i < d.t.length; i += 4) if (edgeAt(d.t[i] / 10, d.t[i + 1] / 10) > 0.75) t.push(d.t[i], d.t[i + 1], d.t[i + 2], d.t[i + 3]); d.t = t; }
+      { // OP clearing (Lee, 2026-11-14): a tree whose crown comes within OP_CLEAR m of an OP is cut, so it does not fill
+        //   the OP's view (one tree, 8.8 m in front of OP Volcano). Its cells in the tree sight grid (OT) go with it.
+        const OP_CLEAR = 6, ops = SKETCH.ops.map(o => toLocal(o.e, o.n)), t = [];
+        for (let i = 0; i < d.t.length; i += 4) {
+          const x = d.t[i] / 10, z = d.t[i + 1] / 10, r = d.t[i + 3] / 10;
+          if (!ops.some(p => Math.hypot(x - p.x, z - p.z) - r < OP_CLEAR)) { t.push(d.t[i], d.t[i + 1], d.t[i + 2], d.t[i + 3]); continue; }
+          const c0 = Math.round((x + HW) / CELL - 0.5), r0 = Math.round((z + HH) / CELL - 0.5), n = Math.ceil(r / CELL);
+          for (let rr = r0 - n; rr <= r0 + n; rr++) for (let cc = c0 - n; cc <= c0 + n; cc++)
+            if (rr >= 0 && cc >= 0 && rr < NY && cc < NX && Math.hypot((cc + 0.5) * CELL - HW - x, (rr + 0.5) * CELL - HH - z) <= r + CELL / 2) OT[rr * NX + cc] = 0;
+        }
+        d.t = t; }
       buildBuildings(d.b); cleanGround(); buildTrees(d.t);
       st.parts = d.b.length; st.trees_n = d.t.length / 4; st.ms = Math.round(performance.now() - t0);
       grp.scale.y = ex; grp.visible = true; bGrp.visible = st.buildings; tGrp.visible = st.trees;
@@ -2201,12 +2213,19 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       eng:  { name: 'Engineering', L: 8.0, W: 3.2, H: 3.2, amph: false, land: 30, water: 0,  gap: 50 },
       fuel: { name: 'Fuel Truck',  L: 9.0, W: 2.5, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },
       plz:  { name: 'PLZ-05 SPH',  L: 10.6, W: 3.3, H: 3.3, amph: false, land: 40, water: 0,  gap: 50 },   // 155 mm SP howitzer; model has 'turret' and 'gun' nodes for aiming
+      ztz96: { name: 'ZTZ-96 MBT', L: 10.2, W: 3.5, H: 2.6, amph: false, land: 40, water: 0,  gap: 50 },   // main battle tank; L with the gun forward
       hq17: { name: 'HQ-17 SAM',   L: 8.0, W: 3.1, H: 5.1, amph: false, land: 40, water: 0,  gap: 50 },   // tracked air defence, Tor-M1 family; H with the search radar up
       inf:  { name: 'Infantry',    L: 0.9, W: 0.9, H: 1.8, amph: false, land: 5,  water: 0,  gap: 5, foot: true, squad: 12 },   // count = soldiers; all drawn by one instanced mesh
       lcu:{ name: 'LCU',         L: 41,  W: 9,   H: 5,   ship: true,  land: 0,  water: 18, gap: 150, draft: 1.5, unload: 120 },
-      roro: { name: 'RoRo',        L: 150, W: 25,  H: 22,  ship: true,  land: 0,  water: 25, gap: 500, draft: 6,   unload: 600 }
+      roro: { name: 'RoRo',        L: 150, W: 25,  H: 22,  ship: true,  land: 0,  water: 25, gap: 500, draft: 6,   unload: 600 },
+      // PLAN ships (2026-11-14). draft = the model's keel depth below its painted waterline, so each floats on its own boot-topping.
+      type075:  { name: 'Type 075 LHD',       L: 237, W: 43, H: 30, ship: true, land: 0, water: 30, gap: 800, draft: 8,   unload: 300 },   // Yushen; model is a stretched Wasp
+      type071:  { name: 'Type 071 LPD',       L: 210, W: 28, H: 25, ship: true, land: 0, water: 30, gap: 800, draft: 6.5, unload: 300 },   // Yuzhao
+      type055:  { name: 'Type 055 destroyer', L: 180, W: 20, H: 22, ship: true, land: 0, water: 33, gap: 600, draft: 5.8, combat: true },   // Renhai; combat: a warship, carries no cargo
+      type052d: { name: 'Type 052D destroyer', L: 157, W: 18, H: 25, ship: true, land: 0, water: 33, gap: 600, draft: 10.8, combat: true }, // Luyang III; model is a Burke. 9.6 to its painted waterline showed the screws (Lee, 2026-11-14): +1.2
+      type054a: { name: 'Type 054A frigate',  L: 134, W: 16, H: 17, ship: true, land: 0, water: 33, gap: 600, draft: 5.4, combat: true }    // Jiangkai II; 3.9 to the file's waterline showed the screws and boot-topping (Lee, 2026-11-14): +1.5
     };
-    const LAND = ['zbd', 'ztd', 'eng', 'fuel', 'plz', 'hq17', 'inf'], SHIPS = ['lcu', 'roro'];
+    const LAND = ['zbd', 'ztd', 'ztz96', 'eng', 'fuel', 'plz', 'hq17', 'inf'], SHIPS = ['lcu', 'roro', 'type075', 'type071', 'type055', 'type052d', 'type054a'];
     const KEY = STORE.opfor;                               // v1 (straight-line test routes) dropped 2026-11-02
     try { localStorage.removeItem('fist-trainer-opfor-v1'); } catch (e) {}
     let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true;
@@ -2218,7 +2237,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (c < 0 || r < 0 || c >= NX || r >= NY) return true;
       return dm[r * NX + c] < 0 || H[r * NX + c] < 0.3;
     }
+    // water surface height: 0 on the map, the open-ocean plane (2 m down, under the map's own water) off it (2026-11-14)
+    const waterY = (x, z) => Math.abs(x) > HW || Math.abs(z) > HH ? sea.position.y : 0;
     const isShip = g => g.units.length > 0 && !!VT[g.units[0].type].ship;
+    const carries = g => g.units.some(u => !VT[u.type].combat);   // a group of warships only has no cargo or offload
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser; the Scenario panel writes the same data to a file)
@@ -2745,7 +2767,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const quad = (ax, az, bx, bz, cx, cz, dx, dz, a0, a1) => {      // a-b at one age, d-c at the next
         if (n + 6 > WAKE_SHIPS) return;
         for (const [x, z, a] of [[ax, az, a0], [bx, bz, a0], [cx, cz, a1], [ax, az, a0], [cx, cz, a1], [dx, dz, a1]]) {
-          wakePos[n * 3] = x; wakePos[n * 3 + 1] = 0.3; wakePos[n * 3 + 2] = z; wakeA[n] = a; n++;
+          wakePos[n * 3] = x; wakePos[n * 3 + 1] = waterY(x, z) + 0.3; wakePos[n * 3 + 2] = z; wakeA[n] = a; n++;
         }
       };
       for (const g of groups) {
@@ -2777,7 +2799,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           }
         });
       }
-      const vert = (x, z, a) => { wakePos[n * 3] = x; wakePos[n * 3 + 1] = 0.3; wakePos[n * 3 + 2] = z; wakeA[n] = a; n++; };
+      const vert = (x, z, a) => { wakePos[n * 3] = x; wakePos[n * 3 + 1] = waterY(x, z) + 0.3; wakePos[n * 3 + 2] = z; wakeA[n] = a; n++; };
       for (const g of groups) {                // swimming vehicles: a V from the bow
         if (isShip(g)) continue;
         const v = view.g.get(g.id); if (!v) continue;
@@ -2806,7 +2828,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // Real models replace a type's boxes once loaded; until then (or if loading fails) the box stays.
     // Files are glTF binaries (pivot at bottom centre, metres, nose toward +Z) under neutral names:
     // purchased models are licensed for use inside the trainer only and must not be offered as downloads.
-    const MODELS = { zbd: { url: 'data/m01.bin', yaw: -Math.PI / 2 }, fuel: { url: 'data/m02.bin', yaw: 0 }, lcu: { url: 'data/m03.bin', yaw: Math.PI }, roro: { url: 'data/m04.bin', yaw: 0 }, eng: { url: 'data/m05.bin', yaw: -Math.PI / 2 }, plz: { url: 'data/m06.bin', yaw: 0 }, ztd: { url: 'data/m07.bin', yaw: 0 }, hq17: { url: 'data/m12.bin', yaw: 0 }, inf: { url: 'data/m13.bin', yaw: 0 } }, tmpl = {};   // yaw turns the model's nose onto +Z
+    const MODELS = { zbd: { url: 'data/m01.bin', yaw: -Math.PI / 2 }, fuel: { url: 'data/m02.bin', yaw: 0 }, lcu: { url: 'data/m03.bin', yaw: Math.PI }, roro: { url: 'data/m04.bin', yaw: 0 }, type055: { url: 'data/m15.bin', yaw: Math.PI }, type052d: { url: 'data/m16.bin', yaw: 0 }, type054a: { url: 'data/m17.bin', yaw: Math.PI }, type075: { url: 'data/m18.bin', yaw: Math.PI }, type071: { url: 'data/m19.bin', yaw: Math.PI }, eng: { url: 'data/m05.bin', yaw: -Math.PI / 2 }, plz: { url: 'data/m06.bin', yaw: 0 }, ztd: { url: 'data/m07.bin', yaw: 0 }, hq17: { url: 'data/m12.bin', yaw: 0 }, ztz96: { url: 'data/m14.bin', yaw: 0 }, inf: { url: 'data/m13.bin', yaw: 0 } }, tmpl = {};   // yaw turns the model's nose onto +Z
     function makeBody(t) {
       if (VT[t].foot) return new THREE.Object3D();     // soldiers are drawn by footMesh; this is only their place in the column
       if (!tmpl[t]) return new THREE.Mesh(boxGeo[t], boxMat[t]);
@@ -3233,7 +3255,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         const f = w.fx; if (!f) continue;
         if (w.hidden) { f.g.visible = false; continue; }
         const a = t - w.t; f.g.visible = a >= 0; if (a < 0) continue;
-        const wet = waterAt(w.x, w.z), top = (wet ? 0 : heightAt(w.x, w.z) * ex) + f.T.H * (wet && f.T.amph ? 0.4 : 1);
+        const wet = waterAt(w.x, w.z), top = (wet ? waterY(w.x, w.z) : heightAt(w.x, w.z) * ex) + f.T.H * (wet && f.T.amph ? 0.4 : 1);
         const ph = (w.x * 0.37 + w.z * 0.11) % 6.28, burn = (a < BURN_FULL ? 1 : 0.6) * Math.min(1, 0.4 + a / 3) * f.big;
         f.flames.forEach((s, k) => {
           const fl = 0.85 + 0.12 * Math.sin(t * 11 + ph + k * 2) + 0.08 * Math.sin(t * 27 + ph * 3 + k);
@@ -3311,10 +3333,28 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       x.strokeStyle = '#d6b25a'; x.lineWidth = 6; x.beginPath(); x.arc(24, 24, 17, 0, Math.PI * 2); x.stroke();
       x.fillStyle = '#d6b25a'; x.fillRect(19, 15, 4, 18); x.fillRect(26, 15, 4, 18); return new THREE.CanvasTexture(c); })();
     let holdTags = [];
+    let routeView = 'dim';                     // while a group is selected: 'all', 'dim' (others faint) or 'only' (its family alone)
+    function focusSet(g) {                     // the selected group plus everything its route depends on or feeds
+      const S = new Set(), root = familyRoot(g);
+      for (const o of groups) if (familyRoot(o) === root) S.add(o);   // parent chain and every branch
+      for (const o of [...S]) {
+        const c = carrierOf(o); if (c) S.add(c);                       // the ship it rides
+        for (const k of groups) if (k.carrier === o.id) S.add(k);      // cargo it carries
+        if (o.join) { const t = groups.find(x => x.id === o.join.group); if (t) S.add(t); }   // the route it joins
+        for (const k of groups) if (k.join && k.join.group === o.id) S.add(k);              // routes that join it
+      }
+      return S;
+    }
     function rebuildLines() {
       for (const o of [...lines.children]) if (o.isLine2) dropFat(o); lines.clear(); handles.clear(); for (const h of holdTags) h.el.remove(); holdTags = [];
+      const foc = sel && routeView !== 'all' ? focusSet(sel) : null;
       for (const g of groups) {
         if (g.route.length < 2) continue;
+        if (foc && !foc.has(g)) {              // not part of the work in hand: faint thin line, or nothing
+          if (routeView === 'only') continue;
+          const f = fatLine(drape(routePath(g, g.route).pts, 4), fatMat(0xff6a55, 2, { dashed: true, dashSize: 60, gapSize: 40, opacity: 0.55 }));
+          f.renderOrder = 13; lines.add(f); continue;
+        }
         const on = sel && sel.id === g.id;
         g.route.forEach((p, k) => {
           if (!(+p.hold > 0) || k === g.route.length - 1) return;
@@ -3454,7 +3494,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (!p) { m.visible = false; return; }                             // aboard, or no route to stand on
           const T = VT[m.userData.t];
           charred(m, !!w);
-          const wet = m.userData.wet = waterAt(p.x, p.z), ground = wet ? 0 : heightAt(p.x, p.z) * ex;
+          const wet = m.userData.wet = waterAt(p.x, p.z), ground = wet ? waterY(p.x, p.z) : heightAt(p.x, p.z) * ex;
           const draft = T.draft || (wet && T.amph ? T.H * 0.6 : 0);          // swimming IFVs ride low, about 1 m showing
           m.position.set(p.x, ground + T.H / 2 - draft, p.z); m.rotation.y = p.hd; m.visible = true;
           if (T.foot) foot.add(p.x, ground, p.z, p.hd, !!w);
@@ -3727,7 +3767,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         <div class="row"><span class="lbl">Spacing m</span><input id="op-gap" style="width:60px" aria-label="Spacing in metres"></div>
         ${ship ? '' : `<div class="row"><span class="lbl">Movement</span><button id="op-loose" aria-pressed="${loose(g)}">Loose</button><span class="hint">${loose(g) ? 'uneven spacing, slight drift' : 'exact spacing'}</span></div>`}
         ${ship ? '' : `<div class="row"><span class="lbl">Roads</span><button id="op-roads" aria-pressed="${g.roads !== false}">Follow roads</button><span class="hint">${g.roads !== false ? 'between your points' : 'straight lines'}</span></div>`}
-        ${ship ? `<div class="row"><span class="lbl">Offload s</span><input id="op-offload" style="width:60px" aria-label="Seconds to offload each vehicle"><span class="hint">per vehicle, one at a time</span></div>${offloadPlan(g, kids)}` : ''}
+        ${ship && carries(g) ? `<div class="row"><span class="lbl">Offload s</span><input id="op-offload" style="width:60px" aria-label="Seconds to offload each vehicle"><span class="hint">per vehicle, one at a time</span></div>${offloadPlan(g, kids)}` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
         <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
         ${g.join ? `<div class="row"><span class="hint">Rejoins <b>${esc((groups.find(o => o.id === g.join.group) || {}).name || '?')}</b> at its point ${g.join.at + 1}, then follows its route.</span><button id="op-unjoin">Unjoin</button></div>`
@@ -3739,7 +3779,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
             <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || (!ship && formAt(g.route, selPt) === 'line' && selPt > 0 && formAt(g.route, selPt - 1) === 'line' ? 'half the line forms its own line here' : 'rear vehicles take a new road')}</span></div>
             ${branchesOf(g).filter(b => b.splitAt === selPt).map(b => `<div class="row"><button class="op-unsplit-b" data-id="${b.id}">Undo split</button><span class="hint">${esc(b.name)}</span></div>`).join('')}</div>` : ''}
         ${!editing && g.route.some((p, k) => +p.hold > 0 && k < g.route.length - 1) ? `<p class="hint">Holds: ${g.route.map((p, k) => +p.hold > 0 && k < g.route.length - 1 ? 'point ' + (k + 1) + ' for ' + fmt(p.hold).slice(2) : '').filter(Boolean).join(', ')}.</p>` : ''}
-        ${!ship ? '' : shipsSpread(g) ? cargoByShip(g, kids) : `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
+        ${!ship || !carries(g) ? '' : shipsSpread(g) ? cargoByShip(g, kids) : `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
                   <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '. Select one in the list above to edit it.' : 'Nothing aboard yet.'}</p>`}
         <div class="row"><button id="op-del" class="fire-btn">Delete group</button></div>`;
       $('op-name').value = g.name;
@@ -3834,6 +3874,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return h;
     }
     $('op-new').addEventListener('click', () => newGroup({ type: $('op-newtype').value }));
+    for (const b of $('op-rview').querySelectorAll('button')) b.addEventListener('click', () => {
+      routeView = b.dataset.v;
+      for (const o of $('op-rview').querySelectorAll('button')) o.setAttribute('aria-pressed', String(o === b));
+      rebuildLines();
+    });
     $('op-newtype').innerHTML = [...LAND, ...SHIPS].map(k => `<option value="${k}">${VT[k].name}${VT[k].ship ? ' (ship)' : ''}</option>`).join('');
     $('op-clearall').addEventListener('click', e => {
       if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = 'Confirm: remove all'; return; }
@@ -3856,7 +3901,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      EVERY NUMBER HERE IS A PLACEHOLDER. Artillery 155/105 rows are the sim's (accepted by Lee 2026-09-27);
   //      mortar and UAS rows are new guesses by Claude, unsourced. Tune them here.
   const DAMAGE = (() => {
-    const CLASS = { zbd: 'armor', ztd: 'armor', plz: 'armor', hq17: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft', inf: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
+    const CLASS = { zbd: 'armor', ztd: 'armor', ztz96: 'armor', plz: 'armor', hq17: 'armor', eng: 'eng', fuel: 'soft', civ: 'soft', inf: 'soft' };   // civilians: unarmoured, soft   // ships (LCU, RoRo) absent = immune
     const R = {
       m777:        { soft: 35, eng: 15, armor: 10 },             // = sim M109 155 mm
       m119:        { soft: 25, eng: 10, armor: 6 },              // = sim M101 105 mm
@@ -5478,7 +5523,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         ${tbl(['Type', 'L × W × H m', 'Land', 'Water', 'Gap', 'Damage class', 'Notes'],
           Object.entries(VT).map(([k, t]) => [t.name, t.L + ' × ' + t.W + ' × ' + t.H, t.land ? t.land + ' km/h' : '—', t.water ? t.water + ' km/h' : '—', t.gap + ' m',
             D.CLASS[k] ? CLS[D.CLASS[k]].split(' ')[0] : 'cannot be struck',
-            [t.amph ? 'amphibious' : '', t.ship ? 'draft ' + t.draft + ' m, offloads one vehicle at a time (30 s each unless set on the ship)' : ''].filter(Boolean).join(', ') || '—']), 'num')}
+            [t.amph ? 'amphibious' : '', t.ship ? 'draft ' + t.draft + ' m, ' + (t.combat ? 'warship, carries no cargo' : 'offloads one vehicle at a time (30 s each unless set on the ship)') : ''].filter(Boolean).join(', ') || '—']), 'num')}
         ${list([
           'Sizes and speeds are approximate public figures ' + PH + '; speed and gap are set per group in the editor.',
           'Water = no terrain data or ground below 0.3 m.',
