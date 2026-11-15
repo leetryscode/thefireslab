@@ -1719,6 +1719,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   gr.addEventListener('click', () => groundMode('relief'));
   toggle('tg-grid', on => { groups.grid.visible = on; });
   toggle('tg-enemy', on => { if (window.__opfor) window.__opfor.showEnemy = on; });
+  toggle('tg-esym', on => { if (window.__opfor) window.__opfor.showSyms = on; });   // vehicles stay; diamonds, pips and names go
   toggle('tg-eroutes', on => { if (window.__opfor) window.__opfor.showRoutes = on; });
   let friendlyOn = true;                // Display → Friendly: every friendly position — OPs, cameras, firing units, UAS launch points
   toggle('tg-sketch', on => { friendlyOn = on; groups.sketch.visible = on; labelBox.hidden = !(on && showLabels); if (window.__fires) window.__fires.unitGroup.visible = on; });
@@ -1995,7 +1996,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       missions.push(m); buildArc(m);
       NET.emit('shot', shotOut(m));                // a room's students draw the shells in flight (bursts come separately)
       const masked = impacts.filter(i => i.what).length;
-      log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${sh.per} rd × ${sh.n}, range ${(R / 1000).toFixed(1)} km, ${high ? 'HIGH' : 'LOW'} ch ${sol.ch} QE ${Math.round(sol.qe)} mils, ToF ${Math.round(tof)} s — SHOT`);
+      log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${sh.per} rd × ${sh.n}, range ${(R / 1000).toFixed(1)} km, ${high ? 'HIGH' : 'LOW'} ch ${sol.ch} QE ${Math.round(sol.qe)} mils, ToF ${Math.round(tof)} s — SHOT`, { k: 'shot', at: t0, end: m.endT });
       msg(fmMsg, `Mission ${id} away (${high ? 'high' : 'low'} angle, charge ${sol.ch}, QE ${Math.round(sol.qe)} mils). Splash in ${Math.round(tof + t0 - simT)} s.` + (masked ? ` ${masked} of ${impacts.length} rounds will hit a building or crest first.` : ''));
     }
     function parseTot(v) {                  // "T+05:30" or "5:30" (sim clock, minutes may pass 59) → seconds, or null
@@ -2017,7 +2018,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (tot - p.tof < simT) return msg(fmMsg, `Unable: time of flight ${Math.round(p.tof)} s. Earliest TOT is ${fmt(Math.ceil(simT + p.tof + 1))}.`, 'bad');
       }
       const id = nextMid++;
-      log(`M${id} CFF ${u.name}: ${MTYPES[spec.mt].label.toLowerCase()}, grid ${gridTxt(g.e, g.n)}, ${p.sh.per} rd × ${p.sh.n}, ${CTL[ctl]}${tot !== null ? ' ' + fmt(tot) : ''}`);
+      log(`M${id} CFF ${u.name}: ${MTYPES[spec.mt].label.toLowerCase()}, grid ${gridTxt(g.e, g.n)}, ${p.sh.per} rd × ${p.sh.n}, ${CTL[ctl]}${tot !== null ? ' ' + fmt(tot) : ''}`, { k: 'cff' });
       if (ctl === 'ready') return launch(id, p, simT);
       held.push({ id, spec, ctl, tot, fireAt: tot !== null ? tot - p.tof : null, name: u.name, label: MTYPES[spec.mt].label });
       msg(fmMsg, ctl === 'tot' ? `Mission ${id} laid. Fires at ${fmt(tot - p.tof)}, first rounds land at ${fmt(tot)}.`
@@ -2110,7 +2111,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
       const m = { tag: 'Q' + id, mun: k, t: { burst: q.burst }, impacts, endT: Math.max(simT, ...impacts.map(i => i.t)), logged: false };
       quicks.push(m);
-      log(`Q${id} quick fire ${cnt} × ${q.label} → ${gridTxt(e, n)}, spread ${sd} m`);
+      log(`Q${id} quick fire ${cnt} × ${q.label} → ${gridTxt(e, n)}, spread ${sd} m`, { k: 'shot', end: m.endT });
       msg(qfMsg, `Q${id}: ${cnt} × ${q.label} on ${gridTxt(e, n)}.` + (painting ? ' Click again to fire more; Esc stops.' : ''));
     }
     $('qf-fire').addEventListener('click', () => { const g = parseGrid($('qf-grid').value); if (g.err) return msg(qfMsg, g.err, 'bad'); quickFire(g.e, g.n); });
@@ -2349,7 +2350,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       simT += dt * speed; $('clock').textContent = fmt(simT);
       tickHeld();
       for (const m of missions) {
-        if (!m.splash && simT >= m.t0 + m.tof - 5) { m.splash = true; log(`M${m.id} SPLASH`); }
+        if (!m.splash && simT >= m.t0 + m.tof - 5) { m.splash = true; log(`M${m.id} SPLASH`, { k: 'splash' }); }
         m.impacts.forEach((i, k) => { if (!i.done && simT >= i.t) { i.done = true; burst(i, m); for (const f of impactFns) f(i, m, k); } });
         for (let k = 0; k < m.per; k++) {
           const f = (simT - (m.t0 + k * m.iv)) / m.tof, s = m.shells[k];
@@ -2367,15 +2368,17 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // ---- log
     // The Logbook (Lee, 2026-11-15): every entry is kept; the modal draws them only while it is open,
     // and adds one row per new entry while it stays open (no rebuild on each log line).
-    const entries = [], LOGBOOK = { open: false };
+    const entries = [], LOGBOOK = { open: false, ver: 0 };
     const logRow = e => { const d = document.createElement('div'); const a = document.createElement('span'); a.className = 't'; a.textContent = fmt(e.t); const b = document.createElement('span'); b.textContent = e.text; d.append(a, b); return d; };
     function drawLog() {
       const L = $('flog'); L.textContent = '';
       if (!entries.length) { L.appendChild(logRow({ t: 0, text: 'No entries yet.' })).firstChild.textContent = '—'; return; }
       const fr = document.createDocumentFragment(); for (const e of entries) fr.appendChild(logRow(e)); L.appendChild(fr);
     }
-    function log(text) {
-      const e = { t: simT, text }; entries.unshift(e);
+    // ev (optional) puts the entry on the timeline bar: { k: 'mark' | 'cff' | 'shot' | 'launch' | 'splash' | 'struck',
+    //   at: time if not now, end: rounds landed (draws time of flight), civ / hit: strike dot colour }
+    function log(text, ev) {
+      const e = { t: simT, text, ev: ev || null }; entries.unshift(e); LOGBOOK.ver++;
       if (!LOGBOOK.open) return;
       const L = $('flog'); if (entries.length === 1) L.textContent = ''; L.prepend(logRow(e));
     }
@@ -2395,7 +2398,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       head.addEventListener('pointerup', () => { drag = null; });
       head.addEventListener('pointercancel', () => { drag = null; });
       addEventListener('resize', () => { if (dlg.style.left) { const r = dlg.getBoundingClientRect(); place(r.left, r.top); } });
-      window.__logbook = { open, entries };
+      // jump to one entry (a click on a timeline marker): open, scroll to it, flash it
+      function show(e) {
+        if (dlg.hidden) open(true);
+        const row = $('flog').children[entries.indexOf(e)]; if (!row) return;
+        row.scrollIntoView({ block: 'center' }); row.classList.remove('hl'); void row.offsetWidth; row.classList.add('hl');
+      }
+      window.__logbook = { open, show, entries, get ver() { return LOGBOOK.ver; } };
     })();
 
     // ---- clock and view controls
@@ -2475,7 +2484,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const LAND = ['zbd', 'ztd', 'ztz96', 'eng', 'fuel', 'plz', 'hq17', 'inf'], SHIPS = ['lcu', 'roro', 'type075', 'type071', 'type055', 'type052d', 'type054a'];
     const KEY = STORE.opfor;                               // v1 (straight-line test routes) dropped 2026-11-02
     try { localStorage.removeItem('fist-trainer-opfor-v1'); } catch (e) {}
-    let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true;
+    let groups = [], sel = null, editing = false, nextId = 1, selPt = -1, showEnemy = true, showRoutes = true, showSyms = true;   // showSyms: Display → Enemy symbols (Lee, 2026-11-15)
     const simT = () => FIRES.debug.simT;
     const fmt = s => { s = Math.max(0, Math.round(s)); return 'T+' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
     const parseT = v => { const m = String(v).trim().replace(/^T\+/i, '').match(/^(\d+)(?::(\d{1,2}))?$/); return m ? (+m[1]) * 60 + (m[2] !== undefined ? +m[2] : 0) : null; };
@@ -3751,7 +3760,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         });
         if (s0 !== null) eachDismount(g, t, (i, x, z, hd, down) => { const y = waterAt(x, z) ? 0 : heightAt(x, z) * ex; foot.add(x, y, z, hd, down); pips.add(x, y + 1, z, down ? -PIP_FOOT : PIP_FOOT); });
         if (!leadPos) leadPos = anyPos;          // all struck: the symbol stays on the wrecks
-        const showSym = !!leadPos && !obs && showEnemy;
+        const showSym = !!leadPos && !obs && showEnemy && showSyms;
         v.sym.visible = showSym;
         if (showSym) v.sym.position.set(leadPos.x, leadPos.y + 30, leadPos.z);
         let showLab = showSym && !labelHidden();
@@ -3759,7 +3768,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (showLab) { v.label.style.left = ((pv.x + 1) / 2 * w) + 'px'; v.label.style.top = ((1 - pv.y) / 2 * h - 14) + 'px'; } }
         v.label.style.display = showLab ? '' : 'none';
       }
-      foot.end(); pips.end(!obs && showEnemy); identTick(); updateWakes(t); animFx(t);
+      foot.end(); pips.end(!obs && showEnemy && showSyms); identTick(); updateWakes(t); animFx(t);
       root.visible = showEnemy || (STUDENT && !!obs); lines.visible = !obs && showRoutes; handles.visible = !obs && showRoutes;
       const hideTags = obs || labelHidden() || !showRoutes;
       for (const h of holdTags) {
@@ -4133,7 +4142,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
 
     load(); refresh();
-    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, netState, applyNet, models: tmpl, view, lines, handles, pips: pips.obj, fxRoot, set showEnemy(v) { showEnemy = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, vehAt, placeAll, yld, yldDelay, yldCatchUp, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
+    return { tick, farTick, onExaggeration: rebuildLines, debug: { snapshot, netState, applyNet, models: tmpl, view, lines, handles, pips: pips.obj, fxRoot, set showEnemy(v) { showEnemy = !!v; }, set showSyms(v) { showSyms = !!v; }, set showRoutes(v) { showRoutes = !!v; }, get groups() { return groups; }, VT, waterAt, toLocal, splitHere, resolve, offsetOf, doJoin, unjoin, fullRoute, get joinPick() { return joinPick; }, halt, resume, isHalted, moveTime, struck, strike, vehiclesAt, vName, struckAt, burn, fxRules: { PUFFS, PUFF_LIFE, BURN_FULL, WIND_FROM }, routePath, pathEN: g => routePath(g, fullRoute(g)).pts.map(p => ({ e: CE + p.x, n: CN - p.z })), roadRules: { ROAD_W, ROAD_REACH }, realTimeAt, newGroup, refresh, sAt, posAt, vehAt, placeAll, yld, yldDelay, yldCatchUp, root, startOf, status, select(g) { sel = g; renderList(); renderEditor(); }, setEditing } };
   })();
   window.__opfor = OPFOR.debug;
 
@@ -4241,7 +4250,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // artillery: every round that lands
     FIRES.onImpact((imp, m, k) => {
       const tag = m.tag || 'M' + m.id, p = toLocal(imp.e, imp.n), r = burstAt(tag + '|' + k, m.mun || m.u.type, p.x, p.z, imp.t, imp.what ? imp.y : undefined);
-      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; if (h.v.civ) m.civ = (m.civ || 0) + 1; FIRES.log(`${tag} STRUCK ${h.v.civ ? h.v.name.toUpperCase() : OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`); }
+      for (const h of r.hits) { m.struck = (m.struck || 0) + 1; if (h.v.civ) m.civ = (m.civ || 0) + 1; FIRES.log(`${tag} STRUCK ${h.v.civ ? h.v.name.toUpperCase() : OPFOR.debug.vName(h.v.g, h.v.i)} (${Math.round(h.d)} m)`, { k: 'struck', civ: !!h.v.civ }); }
     });
     // UAS: aim point plus a little keyed guidance scatter
     function uasImpact(id, type, x, z, t) {
@@ -4742,7 +4751,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       d.obj = new THREE.Group(); const b = body(type); if (b) d.obj.add(b); models.add(d.obj);
       d.sym = sprite(d.name, false); d.foot = null; d.spiLine = null; d.taskLine = null;
       drones.push(d);
-      FIRES.log(d.name + ' launched from ' + lp.name + (T.gps ? ' on ' + gridAt(target.x, target.z) + ', time of flight about ' + fmt(eta(d)) : ''));
+      FIRES.log(d.name + ' launched from ' + lp.name + (T.gps ? ' on ' + gridAt(target.x, target.z) + ', time of flight about ' + fmt(eta(d)) : ''), { k: 'launch' });
       drawTask(d); draw(); return d;
     }
     function eta(d) {          // seconds to impact for a GPS drone: cruise to the dive point, then the dive
@@ -4799,7 +4808,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       } else if (k.kind === 'recover') d.taskLine = polyline([d.pos.clone(), new THREE.Vector3(d.lp.x, gy(d.lp.x, d.lp.z) + 20, d.lp.z)], BLUE, false, 3, { dashed: true, dashSize: 60, gapSize: 40 });
     }
     function clearOverlays(d) { dropObj(d.taskLine); dropObj(d.dropLine); dropObj(d.foot); dropObj(d.footFill); dropObj(d.spiLine); dropObj(d.scanLine); d.taskLine = d.dropLine = d.foot = d.footFill = d.spiLine = d.scanLine = null; d.obj.visible = false; d.sym.visible = false; }
-    function kill(d, why) { d.state = 'dead'; d.why = why; clearOverlays(d); FIRES.log(d.name + ' ' + why); draw(); }
+    // why: what the feed, the UAS list and students see; logWhy (optional): the fuller line for the instructor's Logbook
+    function kill(d, why, logWhy, ev) { d.state = 'dead'; d.why = why; clearOverlays(d); FIRES.log(d.name + ' ' + (logWhy || why), ev); draw(); }
     // out of endurance (Lee, 2026-11-02): power is lost and the airframe falls — gliding on briefly, then tumbling
     // nose-down to the ground while its feed breaks up; at the ground the feed shows static and SIGNAL LOST.
     // The warhead (600M/700M, Switchblade, LUCAS) is assumed safe — no detonation on the crash.
@@ -4840,7 +4850,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         : r.near && r.near.d <= 30 ? Math.round(r.near.d) + ' m from ' + nm(r.near.v) + (r.near.v.struck ? ' (already struck)' : '')
           + (!r.near.v.struck && DAMAGE.pStrike(d.type, 'ztz96', 0) === 0 && r.near.v.type === 'ztz96' ? ', no effect on the tank' : ', not struck')
         : 'no vehicle within 30 m';
-      kill(d, 'impact at ' + gridAt(r.x, r.z) + ': ' + res + '.');
+      kill(d, 'impact at ' + gridAt(r.x, r.z) + '.', 'impact at ' + gridAt(r.x, r.z) + ': ' + res + '.',
+        { k: 'splash', hit: r.hits.length ? (r.hits.some(h => h.v.civ) ? 'civ' : 'struck') : null });   // timeline: the impact, plus a strike dot   // no BDA/PID on the feed (Lee, 2026-11-15)
     }
     function strikePoint(d) {
       const k = d.task;
@@ -4854,7 +4865,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const trk = c.mode === 'track' ? c.trk : null;
       d.prevTask = d.task;
       setTask(d, { kind: 'strike', trk, lx: c.mode === 'track' && c.last ? c.last.x : c.sx, lz: c.mode === 'track' && c.last ? c.last.z : c.sz });
-      FIRES.log(d.name + ' committed: terminal dive on ' + gridAt(d.task.lx, d.task.lz) + (trk ? ' (tracked vehicle)' : ''));
+      FIRES.log(d.name + ' committed: terminal dive on ' + gridAt(d.task.lx, d.task.lz) + (trk ? ' (tracked vehicle)' : ''), { k: 'shot' });
     }
     function waveOff(d) {          // Switchblade: pull out of the dive and climb back to an orbit over the aim point
       const T = TYPES[d.type];
@@ -5489,7 +5500,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       mk.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true, sizeAttenuation: false }));
       mk.sprite.scale.set(0.03, 0.03, 1); mk.sprite.renderOrder = 13; mk.sprite.position.set(x, gy(x, z) + 10, z); ui.add(mk.sprite);
       marks.unshift(mk); if (from) return mk;
-      FIRES.log('MARK ' + mk.grid + ' (' + mk.by + ')' + (mk.note ? ': ' + mk.note : '')); draw(); return mk;
+      FIRES.log('MARK ' + mk.grid + ' (' + mk.by + ')' + (mk.note ? ': ' + mk.note : ''), { k: 'mark' }); draw(); return mk;
     }
 
     // ---- panel
@@ -5701,10 +5712,32 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   function setTbH() { document.documentElement.style.setProperty('--tb-h', topbar.offsetHeight + 'px'); }
   setTbH(); new ResizeObserver(setTbH).observe(topbar);
 
-  // ---- timeline: elapsed sim time on a scale that stretches as the exercise runs (events go here later)
+  // ---- timeline: elapsed sim time on a scale that stretches as the exercise runs, with the key events from the Logbook
+  //      (Lee, 2026-11-15): marks, calls for fire, UAS launches, shots (with their time of flight), splashes and strikes.
+  //      Redrawn only when the Logbook gains an entry or the scale stretches. Students never see strikes (truth).
   (function timeline() {
-    const ticks = document.getElementById('tl-ticks'), now = document.getElementById('tl-now'), done = document.getElementById('tl-done');
-    let span = 0;
+    const ticks = document.getElementById('tl-ticks'), now = document.getElementById('tl-now'), done = document.getElementById('tl-done'), evs = document.getElementById('tl-ev');
+    let span = 0, ver = -1;
+    const LANE = { mark: 'top', cff: 'top', launch: 'top', shot: 'full', splash: 'bot' };
+    const NAME = { mark: 'Mark', cff: 'Call for fire', launch: 'UAS launch', shot: 'Shot', splash: 'Splash', struck: 'Struck', civ: 'Civilian struck' };
+    const pct = s => (100 * Math.min(1, s / span)) + '%';
+    function drawEvents() {
+      const LB = window.__logbook; if (!LB) return;
+      const fr = document.createDocumentFragment(), add = (e, k, at, lane) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'ev ' + lane + ' ' + k; b.style.left = pct(at);
+        b.title = NAME[k] + ' · ' + e.text; b.setAttribute('aria-label', b.title);
+        b.addEventListener('click', () => LB.show(e)); fr.appendChild(b);
+      };
+      for (let i = LB.entries.length - 1; i >= 0; i--) {     // oldest first, so later marks sit on top
+        const e = LB.entries[i], v = e.ev; if (!v) continue;
+        const at = v.at !== undefined ? v.at : e.t;
+        if (v.k === 'shot' && v.end > at) { const bar = document.createElement('i'); bar.className = 'tof'; bar.style.left = pct(at); bar.style.width = `calc(${pct(v.end)} - ${pct(at)})`; fr.appendChild(bar); }
+        if (v.k === 'struck') { if (!STUDENT) add(e, v.civ ? 'civ' : 'struck', at, 'dot'); continue; }
+        if (LANE[v.k]) add(e, v.k, at, LANE[v.k]);
+        if (v.hit && !STUDENT) add(e, v.hit, at, 'dot');
+      }
+      evs.textContent = ''; evs.appendChild(fr);
+    }
     function draw() {
       ticks.textContent = '';
       const step = span <= 1200 ? 60 : span <= 3600 ? 300 : 600, major = step * 5;
@@ -5716,7 +5749,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     (function upd() {
       const t = window.__fires ? window.__fires.simT : 0;
       const want = Math.max(600, Math.ceil((t + 120) / 600) * 600);
-      if (want !== span) { span = want; draw(); }
+      if (want !== span) { span = want; draw(); ver = -1; }
+      if (window.__logbook && window.__logbook.ver !== ver) { ver = window.__logbook.ver; drawEvents(); }
       const f = Math.min(1, t / span); now.style.left = `calc(${100 * f}% - 1px)`; done.style.width = (100 * f) + '%';
       setTimeout(upd, 250);
     })();

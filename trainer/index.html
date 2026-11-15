@@ -27,7 +27,7 @@
     <span class="seg instr-only"><button id="ck-1" aria-pressed="true">1×</button><button id="ck-5" aria-pressed="false">5×</button><button id="ck-10" aria-pressed="false">10×</button></span>
     <span id="clock">T+00:00</span>
   </div>
-  <div class="tb-timeline" aria-hidden="true"><div class="tl-ticks" id="tl-ticks"></div><div class="tl-done" id="tl-done"></div><div class="tl-now" id="tl-now"></div></div>
+  <div class="tb-timeline"><div class="tl-ticks" id="tl-ticks" aria-hidden="true"></div><div class="tl-done" id="tl-done" aria-hidden="true"></div><div class="tl-ev" id="tl-ev" role="group" aria-label="Key events: click one to open it in the Logbook"></div><div class="tl-now" id="tl-now" aria-hidden="true"></div></div>
   <div class="tb-right">
     <button id="host-btn" class="instr-only" type="button">Host Live Session</button>
     <span class="seg instr-only" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
@@ -64,7 +64,7 @@
   <!-- Layout A (Lee, 2026-11-10): the common toggles up top at full weight, the rest folded under More. Tabled for later refinement. -->
   <div class="win-b">
     <div class="lbl">On the map</div>
-    <div class="row dmain"><button id="tg-enemy" class="instr-only" aria-pressed="true">Enemy</button><button id="tg-eroutes" class="instr-only" aria-pressed="true">Enemy routes</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-u-sym" aria-pressed="true" title="UAS symbols">UAS</button><button id="tg-labels" aria-pressed="true">Labels</button><button id="tg-grid" aria-pressed="true">1 km grid</button></div>
+    <div class="row dmain"><button id="tg-enemy" class="instr-only" aria-pressed="true">Enemy</button><button id="tg-esym" class="instr-only" aria-pressed="true" title="Enemy diamonds, vehicle pips and group names. Off: only the vehicles themselves show, so you must find them">Enemy symbols</button><button id="tg-eroutes" class="instr-only" aria-pressed="true">Enemy routes</button><button id="tg-sketch" aria-pressed="true" title="All friendly positions: OPs, cameras, firing units and UAS launch points">Friendly</button><button id="tg-u-sym" aria-pressed="true" title="UAS symbols">UAS</button><button id="tg-labels" aria-pressed="true">Labels</button><button id="tg-grid" aria-pressed="true">1 km grid</button></div>
     <div class="lbl instr-only">Civilians</div>
     <div class="row instr-only"><span class="seg" role="group" aria-label="Civilians"><button id="cv-off" aria-pressed="false">Off</button><button id="cv-sparse" aria-pressed="false">Sparse</button><button id="cv-normal" aria-pressed="true">Normal</button><button id="cv-rush" aria-pressed="false">Rush hour</button></span></div>
     <div class="dmore">
@@ -185,7 +185,6 @@
     <div class="fsec"><h3>Marks</h3>
       <div class="ulist" id="uas-marks"></div>
     </div>
-    <p class="hint">Speeds, endurance and heights are placeholders until real figures are set. Feeds open in their own windows (drag them to other monitors); allow pop-ups for this site. Strike from a feed: stare at a point or track a vehicle, then Strike and Confirm.</p>
   </div>
 </section>
 
@@ -261,6 +260,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js?v=2026-11-15k"></script>
+<script src="js/trainer.js?v=2026-11-15m"></script>
 </body>
 </html>

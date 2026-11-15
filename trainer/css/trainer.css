@@ -222,6 +222,26 @@ body.qf-armed::after { content: ''; position: fixed; inset: 0; pointer-events: n
 .tl-ticks b { position: absolute; top: 2px; transform: translateX(3px); font: 500 10px var(--font-mono); color: var(--dim); font-weight: 500; }
 .tl-done { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(214, 178, 90, .10); }
 .tl-now { position: absolute; top: 0; bottom: 0; width: 2px; left: 0; background: var(--brass); }
+/* Timeline key events (2026-11-15), drawn from the Logbook. Top lane = what we did (mark, call for fire, launch),
+   bottom lane = what it caused (splash, strike). A shot is a full-height line; its rounds in the air a thin bar to the last impact.
+   Each mark is a few px wide on screen, with a wider invisible hit area for hover and click. */
+.tl-ev { position: absolute; inset: 0; pointer-events: none; }
+.tl-ev .ev { position: absolute; width: 9px; margin-left: -4px; pointer-events: auto; cursor: pointer; background: none; border: 0; padding: 0; }
+.tl-ev .ev::after { content: ""; position: absolute; left: 4px; width: 1px; }
+.tl-ev .ev.top { top: 0; height: 12px; } .tl-ev .ev.top::after { top: 0; height: 8px; }
+.tl-ev .ev.bot { bottom: 0; height: 12px; } .tl-ev .ev.bot::after { bottom: 0; height: 8px; }
+.tl-ev .ev.full { top: 0; bottom: 0; } .tl-ev .ev.full::after { top: 0; bottom: 0; width: 2px; left: 3.5px; }
+.tl-ev .mark::after { background: #e6e9df; }
+.tl-ev .cff::after { background: var(--brass); }
+.tl-ev .launch::after { background: var(--friend, #6fa8ff); }
+.tl-ev .shot::after { background: #f0c860; box-shadow: 0 0 4px rgba(240, 200, 96, .6); }
+.tl-ev .splash::after { background: #ff9a3c; }
+.tl-ev .dot { width: 9px; height: 9px; margin-left: -4px; bottom: 1px; }
+.tl-ev .dot::after { left: 1.5px; bottom: 1.5px; width: 6px; height: 6px; border-radius: 50%; }
+.tl-ev .struck::after { background: #e0412b; }
+.tl-ev .civ::after { background: #ff8c1a; outline: 1px solid #fff; }
+.tl-ev .ev:hover::after, .tl-ev .ev:focus-visible::after { filter: brightness(1.4); outline: 1px solid #fff; }
+.tl-ev .tof { position: absolute; top: 12px; height: 2px; background: rgba(240, 200, 96, .45); pointer-events: none; }
 .tb-tools { display: flex; gap: 6px; flex-wrap: wrap; }
 .tb-tools button[aria-pressed="true"] { background: rgba(214, 178, 90, .12); }
 /* ---- control panels: open from the toolbar, drag by the title bar ---- */
@@ -435,3 +455,6 @@ a.tb-name:hover { color: var(--brass); }
 #ss-end { justify-self: start; border-color: #c8402c; color: #ffb3a5; }
 /* UAS launch guard (2026-11-15): a Launch button just pressed reads "Launched" in green for 1.5 s and takes no clicks */
 #w-uas button.sent, #w-uas button.sent:hover { background: rgba(80, 150, 80, .25); border-color: #6fbf6a; color: #bfe8b8; cursor: default; }
+/* a Logbook row reached from a timeline marker flashes once */
+.flog .hl { animation: flog-hl 1.6s ease-out; border-radius: 3px; }
+@keyframes flog-hl { from { background: rgba(214, 178, 90, .35); } to { background: transparent; } }
