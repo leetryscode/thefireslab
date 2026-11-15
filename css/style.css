@@ -2578,3 +2578,15 @@ main + .site-foot { margin-top: -64px; }
 .about-goals { margin: 0 0 8px; padding-left: 24px; }
 .about-goals li { margin: 6px 0; }
 .about-owner { margin: 26px 0 0; color: var(--muted); font-size: .95rem; }
+/* Header row under the masthead (index.html, about.html, 2026-11-14): language switch left, Contact Us right */
+.header-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.header-row .lang-toggle { margin: 0; align-self: center; }
+.header-link {
+  margin-left: auto;
+  font-family: var(--font-head); font-size: .95rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--gold-on-fill); background: var(--gold-fill); text-decoration: none;
+  border-radius: 999px; padding: 5px 16px; line-height: 1.5;
+}
+.header-link:hover { filter: brightness(1.08); }
+.header-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.header-link[aria-current="page"] { background: transparent; color: #d9e2cf; border: 1px solid rgba(255,255,255,.28); padding: 4px 15px; }
