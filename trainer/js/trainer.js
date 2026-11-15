@@ -1,6 +1,56 @@
 /* Kill Chain Simulator (renamed from FiST Trainer 2026-11-13; storage keys and the scenario format keep "fist") — instructor view: terrain, OPs and viewshed, fires, OPFOR editor, banner and panels.
    The Fires Lab, Catherine Lake Creations LLC. Data comes from data/ through load(). */
 (async function () {
+  // ---- BOOT screen (Lee, 2026-11-15): covers the page until it is ready to use. Before, the scene showed as soon as the
+  //      terrain was up, then stuttered while buildings, streets and shaders came in (streets visibly late, input finicky).
+  //      Lines type out one at a time; each real step ends in OK when its work is done (done(key)), WEATHER is set dressing.
+  //      'warm': a few smooth frames after everything is in the scene, so the first-draw shader compile happens under cover.
+  //      A safety timer lets the page through after BOOT_MAX ms whatever is still loading. Welcome screen sits above it.
+  const BOOT = (() => {
+    const box = document.getElementById('loading'), log = document.getElementById('bt-log'), BOOT_MAX = 25000;
+    const STEPS = [['terrain', 'Loading terrain'], ['imagery', 'Loading imagery'], ['city', 'Building city'], ['roads', 'Laying streets'],
+      ['friendly', 'Loading friendlies'], ['weather', 'Loading weather', 700], ['warm', 'Warming up sensors']];
+    const W = 30, quick = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const done = new Set(), waits = new Map(), after = [];
+    let frames = 0, finished = false, failed = false;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const until = k => done.has(k) ? Promise.resolve() : new Promise(r => waits.set(k, r));
+    const times = {};       // ms since page start that each step finished (debug: window.__boot.times)
+    function mark(k) { if (done.has(k)) return; done.add(k); times[k] = Math.round(performance.now()); const r = waits.get(k); if (r) { waits.delete(k); r(); }
+      if (document.hidden && done.has('city') && done.has('roads') && done.has('friendly')) mark('warm'); }   // a background tab draws no frames to wait for
+    async function type(el, text) {
+      if (quick || document.hidden) { el.textContent += text; return; }
+      for (const ch of text) { if (failed) return; el.textContent += ch; await sleep(14); }
+    }
+    (async () => {
+      log.textContent = '';
+      for (const [k, label, fake] of STEPS) {
+        if (failed) return;
+        const row = document.createElement('div'), txt = document.createElement('span'), cur = document.createElement('span');
+        cur.className = 'bt-cur'; row.append(txt, cur); log.appendChild(row);
+        await type(txt, '> ' + label.toUpperCase() + ' ');
+        if (fake) setTimeout(() => mark(k), fake);
+        await type(txt, '.'.repeat(Math.max(3, W - label.length - 3)));
+        await until(k); if (failed) return;
+        cur.remove(); const ok = document.createElement('b'); ok.className = 'ok'; ok.textContent = ' OK'; row.appendChild(ok);
+      }
+      const row = document.createElement('div'); row.className = 'bt-ready'; log.appendChild(row);
+      await type(row, '> READY'); await sleep(quick ? 0 : 400);
+      finished = true; times.shown = Math.round(performance.now()); box.classList.add('out'); for (const f of after) f();
+      setTimeout(() => { box.hidden = true; }, 600);
+    })();
+    setTimeout(() => { for (const [k] of STEPS) mark(k); }, BOOT_MAX);
+    return {
+      done: mark, times,
+      after(f) { if (finished) f(); else after.push(f); },
+      frame(ms) {           // from the render loop: once the city, streets and friendlies are in, wait for 4 smooth frames
+        if (done.has('warm') || !done.has('city') || !done.has('roads') || !done.has('friendly')) return;
+        frames = ms < 70 ? frames + 1 : 0; if (frames >= 4 || document.hidden) mark('warm');
+      },
+      fail(msg) { failed = true; box.hidden = false; box.classList.remove('out'); log.textContent = msg; }
+    };
+  })();
+  window.__boot = BOOT;
   // ---- data: every file the page needs comes through load(), so the loading method can change in one place
   //      (fetch today; script-wrapped files if the page must run from file:// or a USB stick later)
   const DATA_DIR = 'data/';
@@ -23,7 +73,7 @@
   // some servers unzip a .gz on the way out and some don't: unpack only if the bytes are still gzip (1f 8b)
   const gz = new Uint8Array(demGz, 0, 2), packed = gz[0] === 0x1f && gz[1] === 0x8b;
   const buf = packed ? await new Response(new Blob([demGz]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer() : demGz;
-  const dm = new Int16Array(buf);
+  const dm = new Int16Array(buf); BOOT.done('terrain');
   const H = new Float32Array(NX * NY);
   for (let i = 0; i < NX * NY; i++) H[i] = dm[i] < 0 ? 0 : dm[i] / 10;
   // Clip the terrain to the NAIP imagery footprint (outside it the photo is only a painted relief fill, and the
@@ -244,7 +294,7 @@ void main(){
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const reliefMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-  const tex = await new THREE.TextureLoader().loadAsync(PHOTO);
+  const tex = await new THREE.TextureLoader().loadAsync(PHOTO); BOOT.done('imagery');
   tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); tex.encoding = THREE.sRGBEncoding;
   const photoMat = new THREE.MeshLambertMaterial({ map: tex, vertexColors: true });
   // ---- WATER: one shader function used by the ground (where the elevation data says sea, harbour or canal) and the
@@ -524,7 +574,17 @@ vec3 gradeGround(vec3 base, vec3 lit){
     sh.fragmentShader = 'varying vec3 vWW;\n' + WATER_GLSL + HAZE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
       'outgoingLight = hazeOver(waterShade(outgoingLight, vWW, 0.0), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');
   };
-  const sea = new THREE.Mesh(new THREE.PlaneGeometry(160000, 160000, 1, 1), seaMat);
+  // A hole where the terrain grid is (Lee, 2026-11-15: the reef flashed green/blue while the camera moved). The plane sits
+  // 2 m under the sea-level ground, which at map range is inside the depth buffer's precision, so it poked through in
+  // patches; deep water hid it, the bright reef did not. The ground covers the grid itself, so the plane is only needed
+  // outside it. The hole stops 5 m inside the ground's edge, so no seam.
+  const seaGeo = (() => {
+    const S = 80000, hx = (NX - 1) * CELL / 2 - 5, hz = (NY - 1) * CELL / 2 - 5, sh = new THREE.Shape();
+    sh.moveTo(-S, -S); sh.lineTo(S, -S); sh.lineTo(S, S); sh.lineTo(-S, S); sh.closePath();
+    const hole = new THREE.Path(); hole.moveTo(-hx, -hz); hole.lineTo(-hx, hz); hole.lineTo(hx, hz); hole.lineTo(hx, -hz); hole.closePath();
+    sh.holes.push(hole); return new THREE.ShapeGeometry(sh);
+  })();
+  const sea = new THREE.Mesh(seaGeo, seaMat);
   sea.rotation.x = -Math.PI / 2; sea.position.y = -2; sea.renderOrder = 2; scene.add(sea);
   scene.add(new THREE.HemisphereLight(0xdfe6d8, 0x2a2a22, 0.55));
   const sun = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -566,10 +626,22 @@ vec3 gradeGround(vec3 base, vec3 lit){
   // map symbols share one look (Lee, 2026-11-02): friendly blue fill, dark outline; labels uppercase condensed in the
   // side's colour with a dark halo, no box — the same as the HTML .tag labels. SYM_K = sprite scale per canvas pixel.
   const SYM_K = 0.085 / 256, FRIEND = '#6fb4ff', SYM_FILL = 'rgba(111,180,255,0.92)', SYM_EDGE = '#0b1a2a';
-  function symLabel(g, text, x, y, maxW) {
-    let px = 46; text = String(text).toUpperCase(); g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
-    do { g.font = '700 ' + px + 'px "Barlow Condensed", "Arial Narrow", sans-serif'; } while (g.measureText(text).width > maxW && (px -= 2) > 22);
-    g.lineWidth = 9; g.strokeStyle = 'rgba(5,8,6,.9)'; g.strokeText(text, x, y); g.fillStyle = FRIEND; g.fillText(text, x, y);
+  // Names under friendly unit and UAS symbols (Lee, 2026-11-15): HTML .tag labels like the OP names, not text painted
+  // into the sprite, so every friendly label is the same size and face whatever the window height. Each follows its
+  // sprite: shown only while the sprite and all its parents are visible; dropped once the sprite leaves the scene.
+  const symTagBox = document.createElement('div'); symTagBox.id = 'symlabels'; document.body.insertBefore(symTagBox, document.getElementById('labels'));
+  const symTags = new Map();             // sprite -> div
+  function symTag(s, text) { const d = document.createElement('div'); d.className = 'tag symtag'; d.textContent = text; symTagBox.appendChild(d); symTags.set(s, d); }
+  const symTagV = new THREE.Vector3();
+  function symTagTick(cam, w, h) {
+    const ppy = cam.projectionMatrix.elements[5] * h / 2;     // screen px per unit of sprite scale
+    for (const [s, d] of symTags) {
+      let o = s, vis = true; for (; o.parent; o = o.parent) if (!o.visible) vis = false;
+      if (o.type !== 'Scene') { d.remove(); symTags.delete(s); continue; }
+      if (vis) { s.getWorldPosition(symTagV).project(cam); vis = symTagV.z < 1 && Math.abs(symTagV.x) < 1.1 && Math.abs(symTagV.y) < 1.1; }
+      d.style.display = vis ? '' : 'none';
+      if (vis) { d.style.left = ((symTagV.x + 1) / 2 * w) + 'px'; d.style.top = ((1 - symTagV.y) / 2 * h + s.scale.y * ppy * 6 / 128 + 1) + 'px'; }
+    }
   }
   const opTex = (() => {                // observation post: filled triangle with a dark centre dot
     const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -1277,7 +1349,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     async function init() {
       let d;
       try { d = await load('city.json', 'json'); }
-      catch (e) { console.warn('city.json not loaded:', e.message); if (metaEl) metaEl.textContent = 'Buildings and trees: data not found.'; return; }
+      catch (e) { console.warn('city.json not loaded:', e.message); if (metaEl) metaEl.textContent = 'Buildings and trees: data not found.'; BOOT.done('city'); return; }
       const t0 = performance.now();
       [OB, OT] = await Promise.all([grid(d.ob), grid(d.ot)]);
       { // trimmed edge (TRIM): drop buildings and trees out in the false land, where they would stand bright in the shadow
@@ -1297,7 +1369,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       buildBuildings(d.b); cleanGround(); buildTrees(d.t);
       st.parts = d.b.length; st.trees_n = d.t.length / 4; st.ms = Math.round(performance.now() - t0);
       grp.scale.y = ex; grp.visible = true; bGrp.visible = st.buildings; tGrp.visible = st.trees;
-      st.ready = true; blockers(); if (VS.op) runViewshed(); if (onCityReady) onCityReady();
+      st.ready = true; blockers(); if (VS.op) runViewshed(); if (onCityReady) onCityReady(); BOOT.done('city');
       if (metaEl) metaEl.textContent = 'Buildings and trees: lidar 2020 (NOAA, ~15 pts/m²), roof colour from NAIP; roads and bridges © OpenStreetMap contributors (ODbL). Sight is blocked on a 10 m grid.';
     }
     function setRoofs(style) {
@@ -1388,7 +1460,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const lin = v => Math.pow(v / 255, 2.2);
     const ASPH = [[86, 88, 92], [98, 99, 102], [116, 116, 114]].map(c => c.map(lin)), KERB = [184, 182, 174].map(lin);
     (async () => {
-      let d; try { d = await load('roads.json', 'json'); } catch (e) { console.warn('roads.json not loaded:', e.message); return; }
+      let d; try { d = await load('roads.json', 'json'); } catch (e) { console.warn('roads.json not loaded:', e.message); BOOT.done('roads'); return; }
       // trimmed edge (TRIM): cut each road where the false land begins, keeping the pieces in play
       d.r = d.r.flatMap(([wd, cls, f]) => {
         const out = []; let run = [];
@@ -1471,7 +1543,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       grp.visible = URBAN.on.value === 1;
       window.__roadsStat = { roads: d.r.length, verts: v, tris: I.length / 3 };
       ROADNET = buildRoadNet(d.r);
-      if (onRoadNet) onRoadNet();
+      if (onRoadNet) onRoadNet(); BOOT.done('roads');
     })();
     return { grp };
   })();
@@ -1708,7 +1780,6 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       g.fillRect(155, 10, 74, 50); g.strokeRect(155, 10, 74, 50);
       g.fillStyle = SYM_EDGE; g.beginPath(); g.arc(192, 37, 8, 0, Math.PI * 2); g.fill();
       if (t.angle === 'high') { g.lineWidth = 4; g.beginPath(); g.moveTo(192, 16); g.lineTo(192, 29); g.stroke(); g.beginPath(); g.moveTo(184, 23); g.lineTo(192, 15); g.lineTo(200, 23); g.stroke(); }
-      symLabel(g, name, 192, 104, 370);
       const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding; return tx;
     }
     const unitGroup = new THREE.Group(), fxGroup = new THREE.Group(), arcGroup = new THREE.Group();
@@ -1727,7 +1798,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const u = { id: nextId++, type, name, cs, e, n, alt: onMap(e, n) ? null : (alt || 0) };
       u.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: symbolTexture(t, name), depthTest: false, transparent: true }));
       u.sprite.scale.set(384 * SYM_K, 128 * SYM_K, 1); u.sprite.material.sizeAttenuation = false; u.sprite.renderOrder = 10;
-      unitGroup.add(u.sprite); placeSprite(u); units.push(u);
+      unitGroup.add(u.sprite); symTag(u.sprite, name); placeSprite(u); units.push(u);
       log('Placed ' + name + ' at ' + gridTxt(e, n) + (onMap(e, n) ? '' : ' (off map)'));
       drawUnits(); return u;
     }
@@ -4058,8 +4129,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       m252:        { soft: 15, eng: 5,  armor: 3 },              // guess
       altius_600m: { soft: 10, eng: 3,  armor: 2 },              // guesses from here down
       altius_700m: { soft: 15, eng: 5,  armor: 4 },
-      switchblade: { soft: 12, eng: 4,  armor: 3 },
-      lucas:       { soft: 30, eng: 12, armor: 8 },
+      switchblade_300: { soft: 8, eng: 3,  armor: 2 },
+      switchblade_600: { soft: 12, eng: 4,  armor: 3 },
+      lucas:      { soft: 30, eng: 12, armor: 8 },
       // Quick fire only (Claude, 2026-11-11, unsourced guesses for Lee to tune). Scaled from the 155 row by roughly the
       // cube root of explosive weight, softened for frag: blast reach grows slower than the bomb.
       gmlrs:       { soft: 50, eng: 22, armor: 14 },             // M31 unitary, ~90 kg warhead
@@ -4075,11 +4147,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const PDH = {                                                 // chance a burst ON the vehicle strikes it (missing = 1)
       altius_600m: { eng: 0.6, armor: 0.35 },
       altius_700m: { eng: 0.9, armor: 0.85 },
-      switchblade: { eng: 0.9, armor: 0.8 },
+      switchblade_300: { eng: 0.6, armor: 0.35 },
+      switchblade_600: { eng: 0.9, armor: 0.8 },
       lucas:       { armor: 0.9 }
     };
     const TUBES = { m777: true, m119: true, m120: true, m252: true };   // tube rounds do nothing in the water (sim rule)
-    const UAS_MISS = 1.0;                                         // guidance scatter, metres (1 sigma each axis), placeholder
+    const UAS_MISS = 0;                                           // guidance scatter, metres (1 sigma each axis). 0 = hits the aim point exactly (Lee, 2026-11-15; was 1.0)
     const SEED = 0xB1A57;
     function hash(str) {
       let h = 0x811c9dc5 ^ SEED;
@@ -4091,8 +4164,19 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const a = (hash(key) + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a);
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     }
+    // UAS rules (Lee, 2026-11-15: "way easier for UAS"). Tanks (ZTZ-96): only the anti-armour warheads (Altius 700M,
+    // Switchblade 600) can strike one; any other UAS bursts on it with no effect (it keeps going, no fire). Altius 600M/700M
+    // and Switchblade 300/600 strike every other vehicle for certain, and the anti-armour pair a tank, within UAS_SURE_R
+    // (or R if larger); past that the normal fall-off applies. LUCAS keeps the normal fall-off, and cannot strike a tank.
+    const UAS = { altius_600m: true, altius_700m: true, switchblade_300: true, switchblade_600: true, lucas: true };
+    const UAS_SURE = { altius_600m: true, altius_700m: true, switchblade_300: true, switchblade_600: true };
+    const ANTI_ARMOUR = { altius_700m: true, switchblade_600: true }, TANK = 'ztz96', UAS_SURE_R = 3;
     function pStrike(mun, type, d) {
       const c = CLASS[type], r = R[mun] && R[mun][c]; if (!(r > 0)) return 0;
+      if (UAS[mun]) {
+        if (type === TANK && !ANTI_ARMOUR[mun]) return 0;
+        if (UAS_SURE[mun] && d <= Math.max(r, UAS_SURE_R)) return 1;
+      }
       const pdh = PDH[mun] && typeof PDH[mun][c] === 'number' ? PDH[mun][c] : 1;
       return pdh * Math.exp(-(d / r) * (d / r));
     }
@@ -4138,7 +4222,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const px = x + g('mx') * UAS_MISS, pz = z + g('mz') * UAS_MISS;
       return Object.assign(burstAt(id, type, px, pz, t), { x: px, z: pz });
     }
-    return { burstAt, uasImpact, pStrike, shielded, R, PDH, CLASS, UAS_MISS };
+    return { burstAt, uasImpact, pStrike, shielded, R, PDH, CLASS, UAS_MISS, UAS_SURE_R };
   })();
   window.__damage = DAMAGE;
 
@@ -4450,12 +4534,18 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       altius_isr:  { fam: 'altius', label: 'Altius ISR',  short: 'ISR',  model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 0,  endur: 3.5 * 3600, alt: 610, r: 1000, turn: 12, cam: 'isr',    burst: 0,    recover: true },
       altius_600m: { fam: 'altius', label: 'Altius 600M', short: '600M', model: 'data/m08.bin', scale: S600, speed: 33, loiter: 22, dive: 60, endur: 90 * 60,    alt: 610, r: 700,  turn: 12, cam: 'attack', burst: 0.45 },
       altius_700m: { fam: 'altius', label: 'Altius 700M', short: '700M', model: 'data/m08.bin', scale: null, speed: 33, loiter: 22, dive: 65, endur: 75 * 60,    alt: 610, r: 700,  turn: 10, cam: 'attack', burst: 0.85 },
-      switchblade: { fam: 'switchblade', label: 'Switchblade', short: 'SB', model: 'data/m09.bin', scale: null, speed: 31, dive: 51, endur: 40 * 60, alt: 200, r: 350, turn: 18, cam: 'sb', burst: 0.6, waveoff: true },
+      // Switchblade 300 (anti-personnel) and 600 (anti-armour), split 2026-11-15. The 300: published ~101 km/h cruise
+      // (28 m/s), 160 km/h dash (44 m/s), ~20 min endurance, ~0.5 m long (model scaled 0.4); height, orbit, turn, burst guessed.
+      switchblade_300: { fam: 'switchblade', label: 'Switchblade 300', short: 'SB300', model: 'data/m09.bin', scale: [0.4, 0.4, 0.4], speed: 28, dive: 44, endur: 20 * 60, alt: 150, r: 250, turn: 22, cam: 'sb', burst: 0.35, waveoff: true },
+      switchblade_600: { fam: 'switchblade', label: 'Switchblade 600', short: 'SB600', model: 'data/m09.bin', scale: null, speed: 31, dive: 51, endur: 40 * 60, alt: 200, r: 350, turn: 18, cam: 'sb', burst: 0.6, waveoff: true },
       lucas:       { fam: 'lucas', label: 'LUCAS', short: 'LUCAS', model: 'data/m10.bin', scale: null, speed: 51, dive: 60, endur: 6 * 3600, alt: 1000, r: 0, turn: 8, cam: null, burst: 0.9, gps: true }
     };
     const FAMS = { altius: 'Altius', switchblade: 'Switchblade', lucas: 'LUCAS' };
     const famTypes = f => Object.keys(TYPES).filter(k => TYPES[k].fam === f);
-    const TURNAROUND = 10 * 60;            // a recovered ISR leaves the In Flight list after this long
+    // Easy mode (Lee, 2026-11-15; set false to undo): Strike needs a tracked vehicle, not a stare point.
+    const STRIKE_TRACK_ONLY = true;
+    const NEED_TRACK = 'Track a vehicle first: press Track, then click the vehicle in the video (or Shift-click it).';
+    const TURNAROUND = 10 * 60;           // a recovered ISR leaves the In Flight list after this long
     const FEED_W = 800, FEED_H = 500, MAX_FEEDS_PER_FRAME = 4;
     const lps = [], drones = [], marks = [];
     let nextId = 1, armed = null, routeDraft = null, rr = 0;
@@ -4489,12 +4579,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       g.fillStyle = SYM_FILL; g.strokeStyle = SYM_EDGE; g.lineWidth = 5;
       if (lp) { g.fillRect(162, 10, 60, 50); g.strokeRect(162, 10, 60, 50); g.beginPath(); g.moveTo(172, 50); g.lineTo(192, 22); g.lineTo(212, 50); g.stroke(); }
       else { g.beginPath(); g.moveTo(192, 10); g.lineTo(222, 58); g.lineTo(192, 46); g.lineTo(162, 58); g.closePath(); g.fill(); g.stroke(); }
-      symLabel(g, label, 192, 104, 370);
       const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
     }
     function sprite(label, lp) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: symTex(label, lp), depthTest: false, transparent: true, sizeAttenuation: false }));
-      const k = lp ? SYM_K : SYM_K * 0.88; s.scale.set(384 * k, 128 * k, 1); s.renderOrder = 12; ui.add(s); return s;
+      const k = lp ? SYM_K : SYM_K * 0.88; s.scale.set(384 * k, 128 * k, 1); s.renderOrder = 12; ui.add(s); symTag(s, label); return s;
     }
     // IDENT (Lee, 2026-11-02): pans the map to a UAS and flashes three expanding gold rings on its symbol, like a
     // radar ident. Runs on the real clock, so it works while paused.
@@ -4610,7 +4699,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     (NET.client ? Promise.resolve(null) : Array.isArray(savedLPs) ? Promise.resolve({ lps: savedLPs }) : fetch('data/uas.json').then(r => r.ok ? r.json() : null)).then(j => {
       if (!j || !Array.isArray(j.lps)) return;
       for (const l of j.lps) if (FAMS[l.fam]) { const p = toLocal(l.e, l.n); addLP(l.fam, p.x, p.z, l.name); }
-    }).catch(() => {}).then(() => { lpsReady = true; });
+    }).catch(() => {}).then(() => { lpsReady = true; BOOT.done('friendly'); });
 
     // ---- drones
     function launch(lp, type, target) {
@@ -4721,7 +4810,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       FIRES.blast(CE + r.x, CN - r.z, TYPES[d.type].burst, undefined, 'uas');
       const O = OPFOR.debug, nm = v => v.civ ? v.name.toUpperCase() : O.vName(v.g, v.i);
       const res = r.hits.length ? 'STRUCK ' + r.hits.map(h => nm(h.v) + ' (' + Math.round(h.d) + ' m)').join(', ')
-        : r.near && r.near.d <= 30 ? Math.round(r.near.d) + ' m from ' + nm(r.near.v) + (r.near.v.struck ? ' (already struck)' : '') + ', not struck'
+        : r.near && r.near.d <= 30 ? Math.round(r.near.d) + ' m from ' + nm(r.near.v) + (r.near.v.struck ? ' (already struck)' : '')
+          + (!r.near.v.struck && DAMAGE.pStrike(d.type, 'ztz96', 0) === 0 && r.near.v.type === 'ztz96' ? ', no effect on the tank' : ', not struck')
         : 'no vehicle within 30 m';
       kill(d, 'impact at ' + gridAt(r.x, r.z) + ': ' + res + '.');
     }
@@ -4733,7 +4823,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function commitStrike(d) {
       if (d.state !== 'fly' || !TYPES[d.type].burst) return;
       const c = d.cam;
-      if (c.mode !== 'stare' && c.mode !== 'track') return note(d, 'Stare at a point or track a vehicle first.');
+      if (STRIKE_TRACK_ONLY ? !(c.mode === 'track' && c.trk) : c.mode !== 'stare' && c.mode !== 'track') return note(d, STRIKE_TRACK_ONLY ? NEED_TRACK : 'Stare at a point or track a vehicle first.');
       const trk = c.mode === 'track' ? c.trk : null;
       d.prevTask = d.task;
       setTask(d, { kind: 'strike', trk, lx: c.mode === 'track' && c.last ? c.last.x : c.sx, lz: c.mode === 'track' && c.last ? c.last.z : c.sz });
@@ -5062,7 +5152,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       applyShow();
       identTick();
       ui.visible = !obs;
-      if (++uiTick % 15 === 0 && !$('w-uas').contains(document.activeElement)) draw();   // don't rebuild under a focused input or open select
+      // don't rebuild under a focused input or open select, or while a button in the panel is held down: a rebuild between
+      // press and release swaps the button out and the browser drops the click (Lee, 2026-11-15: Launch "didn't take")
+      if (++uiTick % 15 === 0 && !uasPress && !$('w-uas').contains(document.activeElement)) draw();
     }
 
     // ---- feeds: the main window renders every feed (terrain loaded once) and copies each into its pop-out
@@ -5084,6 +5176,30 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (!g.snowPat) g.snowPat = g.createPattern(noise, 'repeat');
       g.save(); g.globalAlpha = alpha; g.setTransform(scale, 0, 0, scale, -Math.random() * 256 * scale, -Math.random() * 256 * scale);
       g.fillStyle = g.snowPat; g.fillRect(0, 0, FEED_W / scale + 256, FEED_H / scale + 256); g.restore();
+    }
+    // ---- IR (Lee, 2026-11-15): white-hot thermal. The picture is the normal frame made grey and darker (IR_BASE); then a
+    //      second pass redraws only the hot things (enemy vehicles and soldiers, ships, civilian cars and boats, other drones)
+    //      in flat white, keeping the first pass's depth so buildings and terrain still hide them. One extra draw of small
+    //      objects per IR feed. Simplifications: every vehicle is equally hot, parked civilian cars included; the ground has
+    //      no heat of its own. Display only, per viewer: not sent to the room.
+    const IR_BASE = 'grayscale(1) brightness(0.5) contrast(1.2)';
+    const hotMat = new THREE.ShaderMaterial({
+      vertexShader: 'void main() { vec4 p = vec4(position, 1.0);\n#ifdef USE_INSTANCING\n p = instanceMatrix * p;\n#endif\n gl_Position = projectionMatrix * modelViewMatrix * p; }',
+      fragmentShader: 'void main() { gl_FragColor = vec4(1.0); }'
+    });
+    const irCC = new THREE.Color();
+    function irPass(d) {
+      const hot = new Set([OPFOR.debug.root, CIV.debug.grp, models]);
+      const vis = scene.children.map(o => o.visible), off = [];
+      for (const o of scene.children) if (!hot.has(o)) o.visible = false;
+      for (const r of hot) for (const o of r.children)          // not bodies: symbols, pips, rings, wakes
+        if (o.visible && (o.isSprite || o.isPoints || (o.material && !Array.isArray(o.material) && (o.material.transparent || o.material.isShaderMaterial)))) { o.visible = false; off.push(o); }
+      const bg = scene.background, ac = renderer.autoClear, ca = renderer.getClearAlpha(); renderer.getClearColor(irCC);
+      scene.background = null; renderer.autoClear = false; renderer.setClearColor(0x000000, 1); renderer.clear(true, false, false);   // colour only: keep the depth
+      scene.overrideMaterial = hotMat; renderer.render(scene, d.cam3); scene.overrideMaterial = null;
+      renderer.setClearColor(irCC, ca); renderer.autoClear = ac; scene.background = bg;
+      for (const o of off) o.visible = true;
+      scene.children.forEach((o, i) => { o.visible = vis[i]; });
     }
     function renderFeeds() {
       for (const d of drones) if (d.feed && d.feed.closed) d.feed = null;
@@ -5110,14 +5226,26 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (tier.drop && Math.random() < tier.drop) { hud(d); continue; }          // frozen frame
         updateCam(d, fw / fh); d.obj.visible = false;
         renderer.setViewport(0, 0, fw, fh); renderer.setScissor(0, 0, fw, fh); renderer.render(scene, d.cam3);
-        d.obj.visible = true;
         const sw = Math.max(80, Math.round(FEED_W * tier.res)), sh = Math.max(50, Math.round(FEED_H * tier.res));
-        if (tier.res < 1) {
-          if (small.width !== sw || small.height !== sh) { small.width = sw; small.height = sh; }
-          sctx.drawImage(canvas, 0, canvas.height - fh * pr, fw * pr, fh * pr, 0, 0, sw, sh);
-          g.filter = tier.blur ? 'blur(' + tier.blur + 'px)' : 'none'; g.imageSmoothingEnabled = true;
-          g.drawImage(small, 0, 0, sw, sh, 0, 0, FEED_W, FEED_H); g.filter = 'none';
-        } else g.drawImage(canvas, 0, canvas.height - fh * pr, fw * pr, fh * pr, 0, 0, FEED_W, FEED_H);
+        const ir = !!d.ir, base = ir ? IR_BASE + ' ' : '';
+        const put = (blur, extra) => {            // the frame just rendered -> the feed, at this camera's resolution and blur
+          const f = (extra || '') + (blur ? ' blur(' + blur + 'px)' : '');
+          if (tier.res < 1) {
+            if (small.width !== sw || small.height !== sh) { small.width = sw; small.height = sh; }
+            sctx.clearRect(0, 0, sw, sh); sctx.drawImage(canvas, 0, canvas.height - fh * pr, fw * pr, fh * pr, 0, 0, sw, sh);
+            g.filter = f.trim() || 'none'; g.imageSmoothingEnabled = true; g.drawImage(small, 0, 0, sw, sh, 0, 0, FEED_W, FEED_H);
+          } else { g.filter = f.trim() || 'none'; g.drawImage(canvas, 0, canvas.height - fh * pr, fw * pr, fh * pr, 0, 0, FEED_W, FEED_H); }
+          g.filter = 'none';
+        };
+        put(tier.blur, base);
+        if (ir) {                                 // thermal: vehicles, people and drones drawn white-hot over the dimmed grey picture
+          irPass(d);
+          g.save(); g.globalCompositeOperation = 'lighter';
+          g.globalAlpha = 0.55; put(Math.max(3, tier.blur * 3));      // glow
+          g.globalAlpha = 0.95; put(tier.blur);                      // the shape
+          g.restore();
+        }
+        d.obj.visible = true;
         if (tier.noise) { g.globalAlpha = tier.noise; g.drawImage(noise, -Math.random() * 200, -Math.random() * 200, 1024, 1024); g.globalAlpha = 1; }
         if (falling) {
           const jx = (Math.random() - 0.5) * 30 * fu, jy = (Math.random() - 0.5) * 20 * fu;      // shake and tearing
@@ -5130,10 +5258,31 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         }
         g.strokeStyle = 'rgba(230,233,223,.85)'; g.lineWidth = 1.5; const X = FEED_W / 2, Y = FEED_H / 2;
         g.beginPath(); g.moveTo(X - 30, Y); g.lineTo(X - 8, Y); g.moveTo(X + 8, Y); g.lineTo(X + 30, Y); g.moveTo(X, Y - 30); g.lineTo(X, Y - 8); g.moveTo(X, Y + 8); g.lineTo(X, Y + 30); g.stroke();
+        trackBox(d, g);
         hud(d);
       }
       rr = (rr + n) % Math.max(1, open.length);
       renderer.setScissorTest(false); renderer.setViewport(0, 0, cw, ch); hideForFeed(false, kept);
+    }
+    // track box (Lee, 2026-11-15): gold corner brackets round the tracked vehicle, sized to it; red once the dive is committed
+    const tbV = new THREE.Vector3();
+    function trackBox(d, g) {
+      const m = d.task.kind === 'strike' ? d.task.trk : d.cam.mode === 'track' ? d.cam.trk : null;
+      if (!m || !m.parent || !m.visible) return;
+      m.getWorldPosition(tbV); tbV.y += 1;
+      const dist = d.cam3.position.distanceTo(tbV); tbV.project(d.cam3);
+      if (tbV.z > 1 || Math.abs(tbV.x) > 1.2 || Math.abs(tbV.y) > 1.2) return;
+      const x = (tbV.x + 1) / 2 * FEED_W, y = (1 - tbV.y) / 2 * FEED_H;
+      const VT = OPFOR.debug.VT[m.userData.t], len = VT ? VT.L : 6;
+      if (d.tbMesh !== m) { d.tbMesh = m; d.tbN = (d.tbN || 0) + 1; }      // track number, per drone: no identity in the label (Lee, 2026-11-15)
+      const pxm = FEED_H / 2 / (dist * Math.tan(d.cam3.fov * Math.PI / 360));
+      const h = clamp(len * 0.65 * pxm, 12, FEED_H / 3), c = h * 0.4, hot = d.task.kind === 'strike';
+      g.save(); g.strokeStyle = hot ? '#ff5a3c' : '#ffd24a'; g.lineWidth = 2; g.shadowColor = '#000'; g.shadowBlur = 3;
+      g.beginPath();
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const px = x + sx * h, py = y + sy * h; g.moveTo(px - sx * c, py); g.lineTo(px, py); g.lineTo(px, py - sy * c); }
+      g.stroke();
+      g.fillStyle = g.strokeStyle; g.font = '600 13px monospace'; g.textAlign = 'left';
+      g.fillText((hot ? 'TERMINAL ' : 'TRK ') + String(d.tbN).padStart(2, '0'), x - h, y - h - 6); g.restore();
     }
     function hud(d) {
       const w = d.feed; if (!w || w.closed) return; const doc = w.document, T = TYPES[d.type];
@@ -5152,7 +5301,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       doc.getElementById('h-t').textContent = 'T+' + fmt(simT());
       if (NET.room) { doc.getElementById('h-ctlw').hidden = false; doc.getElementById('h-ctl').textContent = flier(d) ? (flier(d) === NET.cs ? 'YOU' : flier(d)) : NET.host ? 'YOU (free)' : 'INSTRUCTOR';
         doc.body.classList.toggle('watch', !mine(d)); }
-      for (const m of ['scan', 'stare', 'track']) doc.getElementById('m-' + m).setAttribute('aria-pressed', String(d.cam.mode === m));
+      for (const m of ['scan', 'stare', 'track']) doc.getElementById('m-' + m).setAttribute('aria-pressed', String(d.cam.mode === m || (m === 'track' && !!d.pickTrack)));
+      doc.getElementById('m-ir').setAttribute('aria-pressed', String(!!d.ir)); doc.getElementById('m-tv').setAttribute('aria-pressed', String(!d.ir));
+      doc.getElementById('m-track').classList.toggle('pick', !!d.pickTrack); doc.getElementById('fv').classList.toggle('pick', !!d.pickTrack);
       const sb = doc.getElementById('f-strike');
       if (sb) { sb.disabled = !fly || d.task.kind === 'strike' || d.task.kind === 'recover';
         if (d.armedStrike && performance.now() > d.armedStrike) { d.armedStrike = 0; sb.textContent = 'Strike'; sb.classList.remove('armed'); } }
@@ -5176,22 +5327,29 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       #f-msg{color:#9aa39a;flex-basis:100%;min-height:1.2em}
       .sep{width:1px;height:20px;background:#2c3a2f}
       body.watch #bar button:not(#f-mark),body.watch #f-pp{opacity:.35}
+      #m-track{border-color:#d6b25a;color:#ffd24a;font-weight:600} #m-track.pick{background:#4a3c12} #fv.pick{cursor:cell}
+      #f-msg b{color:#ffd24a;font-weight:600}
+      #m-sensor{display:inline-flex;border:1px solid #6a7a6d;border-radius:14px;padding:2px;background:#070a08}
+      #m-sensor button{border:0;border-radius:11px;padding:3px 12px;font-weight:700;letter-spacing:.06em;background:transparent;color:#8a948b}
+      #m-sensor button[aria-pressed=true]{background:#e6e9df;color:#0b0f0c}
+      #m-sensor #m-ir[aria-pressed=true]{background:#fff;color:#000;box-shadow:0 0 8px rgba(255,255,255,.55)}
     </style></head><body><div id="wrap">
       <div style="position:relative;flex:1 1 auto;min-height:0;display:flex"><canvas id="fv" width="${FEED_W}" height="${FEED_H}"></canvas>
       <div id="hud"><span><b>UAS</b><span id="h-name"></span></span><span><b>MODE</b><span id="h-mode"></span></span><span><b>POS</b><span id="h-pos"></span></span><span><b>ALT</b><span id="h-alt"></span></span>
       <span><b>SPI</b><span id="h-spi"></span></span><span><b>RNG</b><span id="h-rng"></span></span><span><b>FOV</b><span id="h-fov"></span></span>
       <span><b>END</b><span id="h-end"></span></span><span id="h-t"></span><span id="h-ctlw" hidden><b>FLOWN BY</b><span id="h-ctl"></span></span></div></div>
       <div id="bar">
-        <button id="m-scan" title="Hands-off sweep of the orbit area">Scan</button>
-        <button id="m-stare" title="Click the video: lock on that ground point">Stare</button><button id="m-track" title="Shift-click a vehicle in the video to follow it">Track</button>
+        <div id="m-sensor" role="group" aria-label="Sensor"><button id="m-tv" title="Daylight colour camera">TV</button><button id="m-ir" title="Thermal (white-hot): vehicles, people and drones glow">IR</button></div>
+        <span class="sep"></span><button id="m-scan" title="Hands-off sweep of the orbit area">Scan</button>
+        <button id="m-stare" title="Click the video: lock on that ground point">Stare</button><button id="m-track" title="Press, then click a vehicle in the video to follow it (or Shift-click a vehicle any time)">⌖ Track vehicle</button>
         <span class="sep"></span><button id="z-in" title="Zoom in (or mouse wheel)">Zoom +</button><button id="z-out" title="Zoom out">Zoom −</button>
         <button id="f-orbit" title="Move the orbit to the point under the crosshair">Orbit here</button>
         ${T.fam === 'altius' ? '<span class="sep"></span><input id="f-pp" value="4Q FJ " size="17" spellcheck="false" aria-label="Prepoint grid" title="Grid to slew the camera to (Enter)"><button id="f-ppgo" title="Slew the camera to this grid and hold it">Prepoint</button>' : ''}
         <span class="sep"></span><input id="f-note" placeholder="note for the mark (what you see)"><button id="f-mark" title="Mark the grid under the crosshair">Mark</button>
-        ${T.burst ? '<button id="f-strike" title="Dive on the stare point or tracked vehicle (click twice)">Strike</button>' : ''}
+        ${T.burst ? '<button id="f-strike" title="Dive on the tracked vehicle (click twice)">Strike</button>' : ''}
         ${T.waveoff ? '<button id="f-abort" hidden title="Pull out of the dive and climb back to orbit">Wave off</button>' : ''}
         ${T.recover ? '<button id="f-recover" title="Fly back to the launch point and land">Recover</button>' : ''}
-        <div id="f-msg">Click: stare at a point. Shift-click: track a vehicle. Drag or arrow keys: slew (Shift: faster). Wheel or +/−: zoom.</div>
+        <div id="f-msg"><b>To strike: press ⌖ Track vehicle, click the vehicle, then Strike.</b> Click: stare at a point. Shift-click: track. Drag or arrows: slew. Wheel: zoom.</div>
       </div></div></body></html>`;
     // reminder before the first feed (and again if the browser blocks one): feeds open as pop-up windows
     let modal = null, skipModal = false;
@@ -5242,10 +5400,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       cv.addEventListener('pointerup', e => {
         const was = drag; drag = null; if (!was || was.moved || d.state !== 'fly' || !fly()) return;
         const [nx, ny] = ndc(e); updateCam(d); const p = groundThrough(d, nx, ny); if (!p) return note(d, 'No ground there.');
-        if (e.shiftKey) {
+        if (e.shiftKey || d.pickTrack) {
+          d.pickTrack = false;
           const v = vehiclesNear(p.x, p.z, 40).find(o => { const w = new THREE.Vector3(); o.m.getWorldPosition(w); return los(d.cam3.position, w.setY(w.y + 1.5)); });
-          if (v) { d.cam.mode = 'track'; d.cam.trk = v.m; d.cam.last = { x: p.x, z: p.z }; note(d, 'Tracking.'); return; }
-          note(d, 'No vehicle there to track; staring at the point instead.');
+          if (v) { d.cam.mode = 'track'; d.cam.trk = v.m; d.cam.last = { x: p.x, z: p.z }; note(d, 'Tracking' + (TYPES[d.type].burst ? ': Strike is ready.' : '.')); return; }
+          note(d, 'No vehicle there to track; staring at the point instead. Press ⌖ Track vehicle and click closer to one.');
         }
         d.cam.mode = 'stare'; d.cam.sx = p.x; d.cam.sz = p.z; d.cam.trk = null;
       });
@@ -5253,14 +5412,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const B = id => doc.getElementById(id);
       B('m-scan').addEventListener('click', () => { if (!fly()) return; d.cam.mode = 'scan'; d.cam.trk = null; });
       B('m-stare').addEventListener('click', () => { if (fly() && d.spi) { d.cam.mode = 'stare'; d.cam.sx = d.spi.x; d.cam.sz = d.spi.z; d.cam.trk = null; } });
-      B('m-track').addEventListener('click', () => note(d, 'Shift-click a vehicle in the video to track it.'));
+      B('m-track').addEventListener('click', () => { if (!fly()) return; d.pickTrack = !d.pickTrack; note(d, d.pickTrack ? 'Click a vehicle in the video to track it.' : ''); });
+      B('m-tv').addEventListener('click', () => { d.ir = false; d.hudN = 5; hud(d); });   // display only: anyone watching may switch it, no control needed
+      B('m-ir').addEventListener('click', () => { d.ir = true; d.hudN = 5; hud(d); });    // hudN 5: hud() runs on its next count
       B('z-in').addEventListener('click', () => zoom(1 / 1.5));
       B('z-out').addEventListener('click', () => zoom(1.5));
       B('f-orbit').addEventListener('click', () => { if (fly() && d.spi && d.state === 'fly' && d.task.kind !== 'strike') { cmd('orbit', { d: d.id, x: d.spi.x, z: d.spi.z }); note(d, 'Orbit moved to ' + gridAt(d.spi.x, d.spi.z) + '.'); } });
       B('f-mark').addEventListener('click', () => { if (!d.spi) return; cmd('mark', { d: d.id, x: d.spi.x, z: d.spi.z, note: B('f-note').value.trim() }); B('f-note').value = ''; note(d, 'Marked ' + gridAt(d.spi.x, d.spi.z) + '.'); });
       if (B('f-strike')) B('f-strike').addEventListener('click', e => {
         if (!fly()) return;
-        if (!d.armedStrike) { if (d.cam.mode !== 'stare' && d.cam.mode !== 'track') return note(d, 'Stare at a point or track a vehicle first.'); d.armedStrike = performance.now() + 5000; e.target.textContent = 'Confirm strike'; e.target.classList.add('armed'); return; }
+        if (!d.armedStrike) { if (STRIKE_TRACK_ONLY ? !(d.cam.mode === 'track' && d.cam.trk) : d.cam.mode !== 'stare' && d.cam.mode !== 'track') return note(d, STRIKE_TRACK_ONLY ? NEED_TRACK : 'Stare at a point or track a vehicle first.'); d.armedStrike = performance.now() + 5000; e.target.textContent = 'Confirm strike'; e.target.classList.add('armed'); return; }
         d.armedStrike = 0; e.target.textContent = 'Strike'; e.target.classList.remove('armed'); cmd('strike', { d: d.id });
       });
       if (B('f-abort')) B('f-abort').addEventListener('click', () => { if (fly()) cmd('waveoff', { d: d.id }); });
@@ -5318,6 +5479,19 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       addLP(armed.fam, p.x, p.z); armed = null; msg('uas-msg', 'Placed.');
     });
     function btn(text, title, fn, cls) { const b = document.createElement('button'); b.textContent = text; if (title) b.title = title; if (cls) b.className = cls; b.addEventListener('click', fn); return b; }
+    // Launch guard (Lee, 2026-11-15: repeat clicks during a hitch spawned 6 drones). After a launch from a launch point,
+    // that button reads "Launched" and ignores clicks for LAUNCH_COOL ms; it survives the panel's rebuilds (kept by key).
+    // Clicks queued while the page was busy all land inside the window, so they are dropped too.
+    const LAUNCH_COOL = 1500, launchedAt = new Map();
+    let uasPress = false;      // a pointer is held down in the UAS panel: the periodic rebuild in tick() waits
+    $('w-uas').addEventListener('pointerdown', () => { uasPress = true; });
+    for (const ev of ['pointerup', 'pointercancel']) addEventListener(ev, () => { uasPress = false; });
+    const cooling = key => performance.now() - (launchedAt.get(key) || -1e9) < LAUNCH_COOL;
+    function launchBtn(text, title, key, go) {
+      const b = btn(text, title, () => { if (cooling(key)) return; if (go() === false) return; launchedAt.set(key, performance.now()); draw(); setTimeout(draw, LAUNCH_COOL + 30); });
+      if (cooling(key)) { b.disabled = true; b.textContent = 'Launched'; b.classList.add('sent'); }
+      return b;
+    }
     function sel(title, opts, cur, fn, fmtO) {
       const s = document.createElement('select'); s.title = title;
       if (!opts.includes(cur)) opts = [...opts, cur].sort((a, b) => a - b);
@@ -5336,12 +5510,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           const inp = document.createElement('input'); inp.className = 'grid-in'; inp.placeholder = 'target grid'; inp.value = lp.draft != null ? lp.draft : '4Q FJ ';
           inp.addEventListener('focus', () => { const n = inp.value.length; inp.setSelectionRange(n, n); }); inp.addEventListener('input', () => { lp.draft = inp.value; });
           bar.appendChild(inp);
-          bar.appendChild(btn('Launch', 'Fly to the grid and strike it. No camera.', () => {
-            const g = FIRES.debug.parseGrid(inp.value); if (g.err) return msg('uas-lmsg', g.err, 'bad');
-            const p = toLocal(g.e, g.n); if (!inPlay(p.x, p.z)) return msg('uas-lmsg', 'Target must be on the map.', 'bad');
+          bar.appendChild(launchBtn('Launch', 'Fly to the grid and strike it. No camera.', lp.id + ':lucas', () => {
+            const g = FIRES.debug.parseGrid(inp.value); if (g.err) { msg('uas-lmsg', g.err, 'bad'); return false; }
+            const p = toLocal(g.e, g.n); if (!inPlay(p.x, p.z)) { msg('uas-lmsg', 'Target must be on the map.', 'bad'); return false; }
             lp.draft = null; msg('uas-lmsg', ''); cmd('launch', { lp: lp.id, type: 'lucas', target: { x: p.x, z: p.z } });
           }));
-        } else for (const k of famTypes(lp.fam)) bar.appendChild(btn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', () => cmd('launch', { lp: lp.id, type: k })));
+        } else for (const k of famTypes(lp.fam)) bar.appendChild(launchBtn((famTypes(lp.fam).length > 1 ? TYPES[k].short : 'Launch'), 'Launch one ' + TYPES[k].label + '; it orbits over the launch point until tasked', lp.id + ':' + k, () => { cmd('launch', { lp: lp.id, type: k }); }));
         if (!STUDENT) bar.appendChild(lpRemoveBtn(lp, (t, c) => msg('uas-lmsg', t, c)));   // launch points are the instructor's
         row.appendChild(bar); L.appendChild(row);
       }
@@ -5358,6 +5532,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           T.gps ? 'impact in about ' + fmt(eta(d)) + ' · ' + gridAt(k.kind === 'gps' ? k.tx : k.lx, k.kind === 'gps' ? k.tz : k.lz)
             : 'cam ' + d.cam.mode + ' · ' + fmt(Math.max(0, T.endur - (simT() - d.t0))) + ' left · ' + ftStr(d.alt) + ' AGL';
         row.appendChild(nm);
+        if (d.state === 'dead' || d.state === 'landed') {        // nothing left to do: a small grey feed button beside the name, no button row (Lee, 2026-11-15)
+          if (T.cam) row.appendChild(btn('Feed', 'Open this drone\'s last picture', () => openFeed(d), 'feed-off'));
+          D.appendChild(row); continue;
+        }
         const bar = document.createElement('div'); bar.className = 'row';
         if (NET.room && d.state === 'fly' && !T.gps) {           // who flies it, and Take control / Release
           const f = flier(d), who = document.createElement('span'); who.className = 'ug ctl';
@@ -5608,7 +5786,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           'Tube rounds (artillery, mortars) do nothing if the round <b>or</b> the vehicle is in the water.',
           'Ships (LCU, RoRo) cannot be struck; nor can cargo still aboard.',
           'A struck vehicle is not rolled again. The rest of its column drives on past it (no bypass logic yet).',
-          'UAS impacts get ' + D.UAS_MISS + ' m (1σ, each axis) guidance scatter around the aim point.',
+          D.UAS_MISS ? 'UAS impacts get ' + D.UAS_MISS + ' m (1σ, each axis) guidance scatter around the aim point.' : 'UAS impacts land exactly on the aim point (no guidance scatter); a strike needs a tracked vehicle.',
+          'UAS vs tanks (ZTZ-96): only the anti-armour Altius 700M and Switchblade 600 can strike one. Other UAS burst with no effect; the tank drives on.',
+          'Altius 600M/700M and Switchblade 300/600 strike any other vehicle for certain within ' + D.UAS_SURE_R + ' m (or R if larger); the 700M and SB600 a tank too. LUCAS: the table below.',
           'Artillery rounds burst on the first building or terrain crest in their path (see Artillery); a burst on a building uses 3D distance.',
           'A building between a burst and a vehicle shields the vehicle completely (artillery and UAS).',
           'Drone flight paths ignore buildings (the operator steers to the end).'])}
@@ -5749,7 +5929,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
   // ---- render loop with label projection
   const v = new THREE.Vector3();
-  document.getElementById('loading').hidden = true; liteNote();
+  BOOT.after(liteNote);                // the boot screen (BOOT, at the top) lifts itself once everything is in and drawing smoothly
   let lastT = performance.now(), lastFrameAt = performance.now();   // lastFrameAt: when the render loop last ran
   // ---- step the sim without drawing (step 4, 2026-11-14). A hidden tab gets no animation frames, so while hosting the
   //      instructor's clock, fires, enemy and drones would stop for everyone the moment they switched to ATAK or slides.
@@ -6116,8 +6296,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const veiled = STUDENT && !obs ? studentVeil() : null;     // the student's map hides what only the sensors may show
     PERF.time('render', () => { if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera); });
     if (veiled) for (const [o, v] of veiled) o.visible = v;
-    PERF.frame(now - lastFrameStart); lastFrameStart = now; lastFrameAt = performance.now();
+    BOOT.frame(now - lastFrameStart); PERF.frame(now - lastFrameStart); lastFrameStart = now; lastFrameAt = performance.now();
     MAPGRID.tick();
+    symTagTick(camera, canvas.clientWidth, canvas.clientHeight);
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
       for (const t of tags) {
@@ -6131,4 +6312,5 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // testing aid: window.__frame() runs one frame by hand (a page in a hidden window gets no animation frames)
     if (!window.__frame) window.__frame = () => loop(performance.now(), true);
   })();
-})().catch(err => { const l = document.getElementById('loading'); l.hidden = false; l.textContent = 'The terrain could not load in this browser: ' + err.message; });
+})().catch(err => { const m = 'The terrain could not load in this browser: ' + err.message;
+  if (window.__boot) window.__boot.fail(m); else { const l = document.getElementById('loading'); l.hidden = false; l.textContent = m; } });

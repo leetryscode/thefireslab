@@ -80,6 +80,8 @@ body { background: var(--ground); color: var(--ink); font-family: var(--font-bod
   font: 700 13px var(--font-head); letter-spacing: .06em; text-transform: uppercase; padding: 0;
   text-shadow: 0 0 2px rgba(5, 8, 6, .95), 0 0 4px rgba(5, 8, 6, .9), 0 1px 2px #000; }
 .tag.op { color: var(--friend); }
+#symlabels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.tag.symtag { color: var(--friend); transform: translate(-50%, 0); }   /* under a unit or UAS symbol (top = symbol's foot) */
 /* Map view grid margins (2026-11-11): line numbers along the screen edges, like a printed map's neatline */
 #mapgrid { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 #mapgrid .gl { position: absolute; font: 700 14px var(--font-head); letter-spacing: .04em; color: var(--brass);
@@ -170,7 +172,20 @@ body.qf-armed::after { content: ''; position: fixed; inset: 0; pointer-events: n
 @media (prefers-reduced-motion: reduce) { #qf-armed .dot { animation: none; } }
 .win #qf-paint[aria-pressed="true"] { background: #c8402c; border-color: #ff4a32; color: #fff; }
 #loading[hidden] { display: none; }
-#loading { position: fixed; inset: 0; display: grid; place-items: center; font: 500 13px var(--font-mono); color: var(--dim); pointer-events: none; }
+/* boot screen (2026-11-15): covers the page until buildings, streets and shaders are in; lines type out, OK when done */
+#loading { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(ellipse at 50% 45%, #161c13 0%, #080a07 70%); transition: opacity .5s ease; }
+#loading.out { opacity: 0; pointer-events: none; }
+.bt-card { width: min(440px, 100%); display: grid; gap: 14px; }
+.bt-title { font: 700 22px var(--font-head); letter-spacing: .14em; text-transform: uppercase; color: var(--brass);
+  padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+#bt-log { min-height: 13em; font: 500 13px/1.75 var(--font-mono); color: var(--dim); white-space: pre; overflow: hidden; }
+#bt-log .ok { color: #8fd08a; font-weight: 600; }
+#bt-log .bt-ready { color: var(--brass); font-weight: 600; }
+.bt-cur { display: inline-block; width: .6em; height: 1.05em; margin-left: 2px; vertical-align: -.15em; background: var(--brass); animation: btblink 1s steps(1) infinite; }
+@keyframes btblink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bt-cur { animation: none; } #loading { transition: none; } }
+@media (max-width: 380px) { #bt-log { font-size: 11.5px; } }
 /* ---- exercise banner ---- */
 #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20;
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
@@ -241,6 +256,9 @@ a.tb-name:hover { color: var(--brass); }
 .drow .row { gap: 4px; flex-wrap: wrap; }
 .drow button, .drow select { padding: 2px 6px; font-size: 12px; }
 .drow.dead .dn { color: var(--dim); }
+.drow.dead { grid-template-columns: 1fr auto; align-items: start; padding: 2px 0; }
+.drow .feed-off { padding: 1px 6px; font-size: 11px; color: var(--dim); background: transparent; border-color: rgba(255,255,255,.12); opacity: .7; }
+.drow .feed-off:hover { opacity: 1; }
 .urow.mrow .un { white-space: normal; }
 
 /* UAS: prominent feed button, custom launch point fold, pop-up reminder */
@@ -364,3 +382,5 @@ a.tb-name:hover { color: var(--brass); }
 #ss-pin p { margin: 6px 0; font-size: 12px; color: var(--dim); }
 #ss-pin code { display: block; font: 500 11px var(--font-mono); word-break: break-all; color: var(--ink); user-select: all; }
 #ss-end { justify-self: start; border-color: #c8402c; color: #ffb3a5; }
+/* UAS launch guard (2026-11-15): a Launch button just pressed reads "Launched" in green for 1.5 s and takes no clicks */
+#w-uas button.sent, #w-uas button.sent:hover { background: rgba(80, 150, 80, .25); border-color: #6fbf6a; color: #bfe8b8; cursor: default; }

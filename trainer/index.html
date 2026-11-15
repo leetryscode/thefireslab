@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kill Chain Simulator — Fires Lab</title>
-<link rel="stylesheet" href="css/trainer.css?v=2026-11-13b">
+<link rel="stylesheet" href="css/trainer.css?v=2026-11-15h">
 </head>
 <body>
 <canvas id="view" aria-label="3D terrain of the Honolulu battlespace with the scenario sketch"></canvas>
 <div id="labels"></div>
-<div id="loading">Loading terrain…</div>
+<div id="loading" role="status" aria-live="polite"><div class="bt-card"><div class="bt-title">Kill Chain Simulator</div><div id="bt-log">Loading terrain…</div></div></div>
 <canvas id="reticle" hidden></canvas>
 <div id="obsbar" hidden role="region" aria-label="Observer">
   <span class="where" id="obswhere">OP</span>
@@ -249,6 +249,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js?v=2026-11-15a"></script>
+<script src="js/trainer.js?v=2026-11-15h"></script>
 </body>
 </html>
