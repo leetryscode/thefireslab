@@ -1910,6 +1910,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       }
       const m = { id, u, t, g, R, tof, per: sh.per, iv: sh.iv, t0, impacts, splash: false, endT: Math.max(...impacts.map(i => i.t)), arc: null, shells: [], sol, G, gH, volEnd };
       missions.push(m); buildArc(m);
+      NET.emit('shot', shotOut(m));                // a room's students draw the shells in flight (bursts come separately)
       const masked = impacts.filter(i => i.what).length;
       log(`M${id} ${u.name} → ${gridTxt(g.e, g.n)}, ${sh.per} rd × ${sh.n}, range ${(R / 1000).toFixed(1)} km, ${high ? 'HIGH' : 'LOW'} ch ${sol.ch} QE ${Math.round(sol.qe)} mils, ToF ${Math.round(tof)} s — SHOT`);
       msg(fmMsg, `Mission ${id} away (${high ? 'high' : 'low'} angle, charge ${sol.ch}, QE ${Math.round(sol.qe)} mils). Splash in ${Math.round(tof + t0 - simT)} s.` + (masked ? ` ${masked} of ${impacts.length} rounds will hit a building or crest first.` : ''));
@@ -2057,6 +2058,21 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const tp = toLocal(m.g.e, m.g.n), L = Math.hypot(tp.x - m.G.x, tp.z - m.G.z) || 1, s = x / (m.sol.R || 1) * L;
       return out.set(m.G.x + (tp.x - m.G.x) / L * s, (m.gH + y) * ex + 3, m.G.z + (tp.z - m.G.z) / L * s);
     }
+    // ---- room (step 4, 2026-11-14): a mission's flight as plain data, for students to draw the arc and shells. The path is
+    //      thinned to about 64 points; impacts are not sent (each burst arrives on its own), so a student's copy never logs.
+    const r2 = v => Math.round(v * 100) / 100;
+    function shotOut(m) {
+      const P = m.sol.pts, step = Math.max(1, Math.ceil(P.length / 64)), pts = [];
+      for (let i = 0; i < P.length; i += step) pts.push([r2(P[i].t), r2(P[i].x), r2(P[i].y)]);
+      const L = P[P.length - 1]; if (pts[pts.length - 1][0] !== r2(L.t)) pts.push([r2(L.t), r2(L.x), r2(L.y)]);
+      return { id: m.id, t0: m.t0, tof: m.tof, per: m.per, iv: m.iv, volEnd: m.volEnd, g: m.g, G: { x: r2(m.G.x), z: r2(m.G.z) }, gH: m.gH, R: m.sol.R, pts };
+    }
+    function netShot(o) {
+      if (missions.some(m => m.id === o.id)) return;
+      const m = { id: o.id, net: true, tof: o.tof, per: o.per, iv: o.iv, t0: o.t0, g: o.g, G: o.G, gH: o.gH, volEnd: o.volEnd,
+        sol: { R: o.R, pts: o.pts.map(([t, x, y]) => ({ t, x, y })) }, impacts: [], splash: true, endT: Math.max(o.t0, ...o.volEnd), arc: null, shells: [] };
+      missions.push(m); buildArc(m);
+    }
     function buildArc(m) {
       const pts = []; const tmp = new THREE.Vector3();
       for (let i = 0; i <= 128; i++) pts.push(arcPoint(m, i / 128, tmp).clone());
@@ -2108,6 +2124,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           s.visible = arcsOn && f > 0 && f < 1 && simT < m.volEnd[k];
           if (s.visible) { arcPoint(m, f, tmpV); s.position.copy(tmpV); const d = camera.position.distanceTo(tmpV) * 0.004; s.scale.setScalar(Math.max(2, d)); }
         }
+        if (m.arc && simT > m.endT + 20 && m.net) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; continue; }   // a student's copy: no log
         if (m.arc && simT > m.endT + 20) { arcGroup.remove(m.arc); m.arc.geometry.dispose(); m.arc = null; const nb = m.impacts.filter(i => i.what === 'building').length, nt = m.impacts.filter(i => i.what === 'terrain').length;
           log(`M${m.id} rounds complete, ${m.impacts.length} rds, ${m.struck || 0} struck` + (m.civ ? ` (${m.civ} civilian)` : '') + (nb ? `, ${nb} hit buildings` : '') + (nt ? `, ${nt} hit terrain` : '')); }
       }
@@ -2167,7 +2184,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     let savedUnits = null; try { savedUnits = JSON.parse(localStorage.getItem(STORE.units)); } catch (e) {}
     if (Array.isArray(savedUnits) && !NET.client) for (const u of savedUnits) if (TYPES[u.type]) addUnit(u.type, u.e, u.n, u.alt, u.cs);
     drawUnits();
-    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size, y) { burst({ e, n, y, t: simT }, { t: { burst: size } }); }, log, setUnits, debug: { QF, quicks, quickFire, tick, unitList, units, get speed() { return speed; }, set speed(v) { speed = Math.max(0, +v || 0); }, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, fxGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
+    return { tick, linkUAS(api) { UL = api; }, lpsChanged: drawUnits, onImpact: f => impactFns.push(f), onExaggeration() { for (const u of units) placeSprite(u); }, blast(e, n, size, y) { burst({ e, n, y, t: simT }, { t: { burst: size } }); }, netShot, log, setUnits, debug: { QF, quicks, quickFire, tick, unitList, units, get speed() { return speed; }, set speed(v) { speed = Math.max(0, +v || 0); }, missions, fx, parseGrid, toGrid, addUnit, TYPES, BAL, maskRound, syncAngle, unitGroup, arcGroup, fxGroup, get simT() { return simT; }, set simT(v) { simT = Math.max(0, +v || 0); } } };
   })();
   window.__fires = FIRES.debug; window.__view = { camera, controls, toLocal, heightAt, renderer, scene }; window.__firesHook = () => { FIRES.onExaggeration(); if (typeof OPFOR !== 'undefined') OPFOR.onExaggeration(); };
 
@@ -4625,6 +4642,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       d.sym = sprite(d.name, false); d.foot = null; d.spiLine = null; d.taskLine = null;
       drones.push(d); drawTask(d); return d;
     }
+    function unmirror(d) {
+      clearOverlays(d); dropObj(d.sym); models.remove(d.obj);
+      if (d.feed && !d.feed.closed) d.feed.close();
+      ctl.delete(d.id); camLast.delete(d.id); drones.splice(drones.indexOf(d), 1); draw();
+    }
     let lastLPs = '', lastMarks = '';
     function applyNet(o) {
       const lj = JSON.stringify(o.lps);
@@ -4636,6 +4658,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         FIRES.lpsChanged();
       }
       const now = performance.now();
+      // a mirror the host no longer has, or whose id now names another drone (a different launch): remove it (step 4)
+      const want = new Map(o.drones.map(s => [s.id, s]));
+      for (const d of drones.slice()) { const s = want.get(d.id); if (!s || s.type !== d.type || s.t0 !== d.t0) unmirror(d); }
       for (const s of o.drones) {
         let d = droneById(s.id); if (!d) d = mirror(s);
         d.net = { pos: new THREE.Vector3(s.pos[0], s.pos[1], s.pos[2]), t: o.t, prev: d.net, at: now };
@@ -5526,7 +5551,36 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   // ---- render loop with label projection
   const v = new THREE.Vector3();
   document.getElementById('loading').hidden = true; liteNote();
-  let lastT = performance.now();
+  let lastT = performance.now(), lastFrameAt = performance.now();   // lastFrameAt: when the render loop last ran
+  // ---- step the sim without drawing (step 4, 2026-11-14). A hidden tab gets no animation frames, so while hosting the
+  //      instructor's clock, fires, enemy and drones would stop for everyone the moment they switched to ATAK or slides.
+  //      ROOM calls this from PULSE whenever the render loop has not run for a while; the loop picks up from here.
+  function simStep(now) {
+    const dt = Math.max(0, Math.min(0.25, (now - lastT) / 1000)); lastT = Math.max(lastT, now);
+    FIRES.tick(dt); OPFOR.tick(); UAS.tick();
+  }
+  // ---- PULSE: repeating timers that keep time in a hidden tab. A page's own setInterval drops to once a second when the
+  //      tab is hidden, and to once a minute after about 5 minutes; a worker's timer does not, and its messages are not
+  //      timers. One 100 ms beat from a tiny inline worker runs every job that is due. The worker exists only while a
+  //      session needs it, so solo stays as it was. Falls back to setInterval if a worker can't be made.
+  const PULSE = (() => {
+    const jobs = new Set(); let w = null, iv = null;
+    function beat() { const now = performance.now(); for (const j of jobs) if (now >= j.next) { j.next = Math.max(j.next + j.ms, now - j.ms); try { j.f(now); } catch (e) { console.error(e); } } }
+    function start() {
+      if (w || iv) return;
+      try {
+        const src = 'let h=setInterval(()=>postMessage(0),100);onmessage=()=>{clearInterval(h);close();}';
+        const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+        w = new Worker(url); URL.revokeObjectURL(url); w.onmessage = beat; w.onerror = () => { w = null; iv = setInterval(beat, 100); };
+      } catch { w = null; iv = setInterval(beat, 100); }
+    }
+    function stopAll() { if (w) { w.postMessage(0); w = null; } if (iv) { clearInterval(iv); iv = null; } }
+    return {
+      every(f, ms) { const j = { f, ms, next: performance.now() + ms }; jobs.add(j); start(); return () => { jobs.delete(j); if (!jobs.size) stopAll(); }; },
+      get worker() { return !!w; }
+    };
+  })();
+  window.__pulse = PULSE;
   // ---- performance readout (Display → Diagnostics → Performance; Lee, 2026-11-03): what each frame costs, so a
   //      feature's weight can be seen by switching it on and off. Frame time, fps, JS time per module, GPU work.
   const PERF = (() => {
@@ -5602,14 +5656,14 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return { post: o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }, close: () => { shut = true; if (ws) ws.close(1000); } };
     })();
     const send = (type, o) => link.post(Object.assign({ type, from: me, cs: NET.cs }, o || {}));
-    const timers = [], every = (f, ms) => timers.push(setInterval(f, ms));
+    const timers = [], every = (f, ms) => timers.push(PULSE.every(f, ms));   // PULSE: keeps time in a hidden tab
     const F = FIRES.debug, O = OPFOR.debug, badge = document.getElementById('room-badge');
     const say = (text, cls, title) => { badge.hidden = false; badge.textContent = text; badge.className = cls || ''; badge.title = title || ''; };
     const struckList = () => [...O.struck].map(([k, w]) => { const [g, i] = k.split(':').map(Number); return { g, i, t: w.t, cause: w.cause }; });
     const onUnload = () => send(NET.host ? 'hostbye' : 'bye');
     addEventListener('beforeunload', onUnload);
     function stop() {
-      onUnload(); link.close(); for (const t of timers) clearInterval(t);
+      onUnload(); link.close(); for (const off of timers) off();
       removeEventListener('beforeunload', onUnload);
       NET.emit = () => {}; badge.hidden = true;
       if (NET.host) { NET.room = null; NET.host = false; }
@@ -5639,6 +5693,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         else if (m.type === 'cmd') UAS.runCmd(m.op, m.a || {}, m.cs);
         else if (m.type === 'cam') { const d = UAS.droneById(m.d); if (d && UAS.debug.ctl.get(d.id) === m.cs) UAS.applyCam(d, m.cam); }
       };
+      every(now => { if (now - lastFrameAt > 300) simStep(now); }, 100);   // tab hidden: no frames, so step the sim here
       every(() => send('uas', Object.assign(UAS.netState(), { clock: { t: F.simT, speed: F.speed } })), 200);   // one message: the relay bills per message
       const last = {};
       const changed = (k, v) => { const j = JSON.stringify(v); if (j === last[k]) return false; last[k] = j; return true; };
@@ -5656,7 +5711,17 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       return { send, students, stop, get pin() { return pin; } };
     }
     // ---- student
-    let joined = false, lastHost = 0, paused = false;
+    let joined = false, lastHost = 0, paused = false, hostId = null, lost = false;
+    const HOST_TYPES = new Set(['full', 'uas', 'clock', 'opfor', 'units', 'civ', 'burst', 'shot', 'strike', 'dmg', 'hostbye']);
+    // a message from a different instructor page than the one this student joined (the instructor reloaded, or hosts from
+    // another computer) means a fresh sim: missions, wrecks and drones from the old one would be stale, so start clean
+    function sameHost(m) {
+      if (!m.from || !HOST_TYPES.has(m.type)) return true;    // relay notices, and other students' messages over a tab link
+      if (!hostId) { hostId = m.from; return true; }
+      if (m.from === hostId) return true;
+      say('Session ' + code + ' · the instructor restarted, rejoining…', 'lost');
+      stop(); setTimeout(() => location.reload(), 300); return false;
+    }
     const status = () => say('Session ' + code + ' · ' + NET.cs + (paused ? ' · PAUSED BY INSTRUCTOR' : ''), paused ? 'paused' : 'ok');
     function strikeOne(s) {
       if (s.g !== undefined) { const g = O.groups.find(o => o.id === s.g); return !!g && O.strike(g, s.i, s.t, s.cause); }
@@ -5664,7 +5729,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     const applyDmg = d => { for (const s of d.opfor || []) strikeOne(s); for (const s of d.civ || []) strikeOne(s); };   // already-struck ones are skipped
     function clock(c) {
-      lastHost = performance.now(); F.speed = c.speed;
+      lastHost = performance.now(); lost = false; F.speed = c.speed;
       if (Math.abs(F.simT - c.t) > 0.3) F.simT = c.t;
       const p = c.speed === 0; if (p !== paused || !badge.textContent.includes(NET.cs)) { paused = p; status(); }
     }
@@ -5674,6 +5739,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     };
     handle = m => {
       if (!m || m.from === me) return;
+      if (!sameHost(m)) return;
       if (m.type === 'nohost') { if (!joined) say('Session ' + code + ' · waiting for the instructor…', 'lost'); return; }
       if (m.type === 'full') {
         if (m.to !== me) return;
@@ -5688,16 +5754,22 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       else if (m.type === 'units') FIRES.setUnits(m.units);
       else if (m.type === 'civ') CIV.set(m.civ);
       else if (m.type === 'burst') FIRES.blast(m.e, m.n, m.s, m.y);
+      else if (m.type === 'shot') FIRES.netShot(m);
       else if (m.type === 'strike') strikeOne(m);
       else if (m.type === 'dmg') applyDmg(m.dmg);
-      else if (m.type === 'hostbye') { lastHost = 0; joined = false; say('Session ' + code + ' · the instructor left', 'lost'); }
+      else if (m.type === 'hostbye') { lastHost = 0; joined = false; F.speed = 0; say('Session ' + code + ' · the instructor left', 'lost'); }
     };
     UAS.setSend((op, a) => send('cmd', { op, a }));
     say('Session ' + code + ' · joining as ' + NET.cs + '…', 'lost');
     send('hello');
     every(() => { if (!joined) send('hello'); else send('ping'); }, 1500);
     every(() => { if (joined) for (const c of UAS.camOut()) send('cam', c); }, 200);
-    every(() => { if (joined && performance.now() - lastHost > 5000 && !badge.className.includes('lost')) say('Session ' + code + ' · lost the instructor, waiting…', 'lost'); else if (joined && performance.now() - lastHost < 5000 && badge.className === 'lost') status(); }, 1000);
+    every(() => {                                  // no word from the instructor for 5 s: say so and hold the clock, so the
+      if (!joined) return;                         // enemy doesn't drive on here while the instructor's sim has stopped
+      const quiet = performance.now() - lastHost > 5000;
+      if (quiet && !lost) { lost = true; F.speed = 0; say('Session ' + code + ' · lost the instructor, waiting…', 'lost'); }
+      else if (!quiet && badge.className === 'lost') status();
+    }, 1000);
     return { send, stop };
   }
 
@@ -5832,7 +5904,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     return { tick };
   })();
   (function loop(now, once) {
-    now = now || performance.now(); const dt = Math.min(0.25, (now - lastT) / 1000); lastT = now;
+    now = now || performance.now(); const dt = Math.max(0, Math.min(0.25, (now - lastT) / 1000)); lastT = Math.max(lastT, now);   // simStep may have run since this frame's timestamp
     const fs = performance.now();
     PERF.time('fires', () => FIRES.tick(dt));
     PERF.time('opfor', () => OPFOR.tick());
@@ -5845,7 +5917,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     const veiled = STUDENT && !obs ? studentVeil() : null;     // the student's map hides what only the sensors may show
     PERF.time('render', () => { if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera); });
     if (veiled) for (const [o, v] of veiled) o.visible = v;
-    PERF.frame(now - lastFrameStart); lastFrameStart = now;
+    PERF.frame(now - lastFrameStart); lastFrameStart = now; lastFrameAt = performance.now();
     MAPGRID.tick();
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
