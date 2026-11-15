@@ -2575,3 +2575,6 @@ main + .site-foot { margin-top: -64px; }
 .modal-box.cf-bad { border-top: 6px solid var(--bad); }
 .modal-box.cf-ok h4 { color: var(--ok); }
 .modal-box.cf-bad h4 { color: var(--bad); }
+.about-goals { margin: 0 0 8px; padding-left: 24px; }
+.about-goals li { margin: 6px 0; }
+.about-owner { margin: 26px 0 0; color: var(--muted); font-size: .95rem; }
