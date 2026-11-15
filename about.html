@@ -1,0 +1,197 @@
+<!DOCTYPE html><!--
+  The Fires Lab — About and contact
+  Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.
+  Build reference: CLC-RG-7F61363DDFE5
+
+  English only, outside the course translation machinery (no data-i18n keys,
+  not in tools/tag-i18n.js PAGES), like trainer/. The form posts to Web3Forms;
+  the access key below is public by design (it only lets someone send mail to
+  the inbox it was issued for).
+--><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About The Fires Lab</title>
+<meta name="description" content="About The Fires Lab, built by Catherine Lake Creations LLC. Request a feature, report a problem, or ask about using it with your unit.">
+<meta name="author" content="Catherine Lake Creations LLC">
+<meta name="copyright" content="Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved.">
+<link rel="stylesheet" href="css/style.css?v=2026-11-14b">
+</head>
+<body>
+
+<header class="site">
+  <div class="header-inner header-inner-splash">
+    <a class="brand-link" href="index.html">
+      <div class="header-top">
+        <div class="site-titles">
+          <p class="site-title">The Fires Lab</p>
+          <p class="site-strap">Master Targeting Through Practical Application</p>
+        </div>
+        <p class="site-sub">Commander's Objectives → Fires → Mission Success</p>
+      </div>
+    </a>
+  </div>
+</header>
+
+<main class="about">
+  <div class="panel" id="contact">
+    <h1>Contact</h1>
+
+    <form class="contact-form" id="contact-form" novalidate>
+      <!-- Web3Forms access key: replace with the key issued for the contact inbox at web3forms.com -->
+      <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
+      <input type="hidden" name="from_name" value="The Fires Lab website">
+      <input type="hidden" name="subject" value="The Fires Lab: new message">
+      <!-- spam trap: real people never see or fill this -->
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <label for="cf-topic">What is this about?</label>
+      <select id="cf-topic" name="topic" required>
+        <option value="Feature request">Feature request</option>
+        <option value="Bug or problem">Bug or problem</option>
+        <option value="Unit or school interest">My unit or school wants to use it</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <div class="cf-pair">
+        <div>
+          <label for="cf-name">Name <span class="opt">(optional)</span></label>
+          <input id="cf-name" name="name" type="text" autocomplete="name" maxlength="120">
+        </div>
+        <div>
+          <label for="cf-email">Email</label>
+          <input id="cf-email" name="email" type="email" autocomplete="email" required maxlength="200">
+        </div>
+      </div>
+
+      <label for="cf-role">Role or unit <span class="opt">(optional)</span></label>
+      <input id="cf-role" name="role" type="text" maxlength="160" placeholder="e.g. FDC chief, FiST, targeting officer, instructor">
+
+      <label for="cf-message">Message</label>
+      <textarea id="cf-message" name="message" rows="7" required maxlength="5000"></textarea>
+
+      <div class="btn-row">
+        <button class="btn" type="submit" id="cf-send">Send message</button>
+        <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+
+    <p class="cf-alt">Prefer email? Write to <a id="cf-mail" href="#contact">contact [at] thefireslab.com</a>.</p>
+  </div>
+
+  <div class="panel">
+    <h2>About The Fires Lab</h2>
+    <p class="about-lede">The Fires Lab builds free, hands-on training tools for the fires community: the
+      <a href="trainer/index.html">Kill Chain Simulator</a>, the <a href="battle.html">D3A Targeting Course</a>, and the
+      <a href="sim.html">Fire Mission Sim</a>.</p>
+    <p>The goal is simple: give fires teams, forward observers and targeting cells a place to practice
+      finding, deciding and communicating, without a range, a simulator bay, or a login.</p>
+
+    <h2>Who builds it</h2>
+    <p>The Fires Lab is designed and built by <strong>Catherine Lake Creations LLC</strong>.</p>
+
+    <h2>Help shape it</h2>
+    <p>The Fires Lab is actively developed, and what gets built next comes from the people using it.
+      If your unit needs a scenario, a weapon system, a feature, or a fix, tell us.</p>
+  </div>
+
+  <p class="disclaimer">The Fires Lab is not affiliated with or endorsed by the U.S. Army, the Department of Defense,
+    or any government agency. Content is derived from publicly released doctrine.</p>
+</main>
+
+<div class="modal" id="cf-modal" role="dialog" aria-modal="true" aria-labelledby="cf-modal-title">
+  <div class="modal-box">
+    <h4 id="cf-modal-title"></h4>
+    <p id="cf-modal-text"></p>
+    <div class="btn-row"><button class="btn modal-close" type="button" id="cf-modal-close">Close</button></div>
+  </div>
+</div>
+
+<footer class="site-foot">
+  <p>© 2026 Catherine Lake Creations LLC · <a href="index.html">Home</a> · <a href="about.html">About &amp; Contact</a></p>
+</footer>
+
+<script>
+(function () {
+  /* Build the address in script so plain-HTML scrapers never see it. */
+  const user = 'contact', host = 'thefireslab.com';
+  const mail = document.getElementById('cf-mail');
+  mail.textContent = user + '@' + host;
+  mail.href = 'mailto:' + user + '@' + host;
+
+  const form = document.getElementById('contact-form');
+  const status = document.getElementById('cf-status');
+  const send = document.getElementById('cf-send');
+
+  /* ?topic=feature|bug|unit|other preselects the dropdown (the simulator's
+     "Suggest a feature" link uses ?topic=feature). */
+  const TOPICS = { feature: 'Feature request', bug: 'Bug or problem', unit: 'Unit or school interest', other: 'Other' };
+  const want = TOPICS[new URLSearchParams(location.search).get('topic')];
+  if (want) form.topic.value = want;
+
+  function say(text, kind) {
+    status.textContent = text;
+    status.className = 'cf-status' + (kind ? ' ' + kind : '');
+  }
+
+  /* Result popup: success or failure, closed by the button, a click outside, or Esc. */
+  const modal = document.getElementById('cf-modal');
+  const closeBtn = document.getElementById('cf-modal-close');
+  let lastFocus = null;
+  function popup(ok, title, text) {
+    say('');
+    modal.querySelector('.modal-box').classList.toggle('cf-ok', ok);
+    modal.querySelector('.modal-box').classList.toggle('cf-bad', !ok);
+    document.getElementById('cf-modal-title').textContent = title;
+    document.getElementById('cf-modal-text').textContent = text;
+    lastFocus = document.activeElement;
+    modal.classList.add('show');
+    closeBtn.focus();
+  }
+  function closePopup() {
+    modal.classList.remove('show');
+    if (lastFocus) lastFocus.focus();
+  }
+  closeBtn.addEventListener('click', closePopup);
+  modal.addEventListener('click', e => { if (e.target === modal) closePopup(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('show')) closePopup(); });
+  const FALLBACK = 'Please try again, or email ' + user + '@' + host + ' directly.';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      say('Please add your email and a message.', 'bad');
+      form.reportValidity();
+      return;
+    }
+    if (form.access_key.value.startsWith('YOUR_')) {
+      popup(false, 'Message not sent', 'The contact form is not connected yet. Please email ' + user + '@' + host + ' directly.');
+      return;
+    }
+    const data = Object.fromEntries(new FormData(form));
+    data.subject = 'The Fires Lab: ' + data.topic;
+    if (data.email) data.replyto = data.email;
+    send.disabled = true;
+    say('Sending…');
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.success) {
+        form.reset();
+        if (want) form.topic.value = want;
+        popup(true, 'Message sent', 'Thanks for reaching out. We read every message and will reply to the email address you gave.');
+      } else {
+        popup(false, 'Message not sent', (out.message ? out.message + ' ' : '') + FALLBACK);
+      }
+    } catch (err) {
+      popup(false, 'Message not sent', 'Could not reach the mail service. Check your connection. ' + FALLBACK);
+    } finally {
+      send.disabled = false;
+    }
+  });
+})();
+</script>
+</body></html>
