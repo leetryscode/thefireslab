@@ -2365,11 +2365,38 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
 
     // ---- log
-    const entries = [];
-    function log(text) {
-      entries.unshift({ t: simT, text }); const L = $('flog'); L.textContent = '';
-      for (const e of entries.slice(0, 40)) { const d = document.createElement('div'); const a = document.createElement('span'); a.className = 't'; a.textContent = fmt(e.t); const b = document.createElement('span'); b.textContent = e.text; d.append(a, b); L.appendChild(d); }
+    // The Logbook (Lee, 2026-11-15): every entry is kept; the modal draws them only while it is open,
+    // and adds one row per new entry while it stays open (no rebuild on each log line).
+    const entries = [], LOGBOOK = { open: false };
+    const logRow = e => { const d = document.createElement('div'); const a = document.createElement('span'); a.className = 't'; a.textContent = fmt(e.t); const b = document.createElement('span'); b.textContent = e.text; d.append(a, b); return d; };
+    function drawLog() {
+      const L = $('flog'); L.textContent = '';
+      if (!entries.length) { L.appendChild(logRow({ t: 0, text: 'No entries yet.' })).firstChild.textContent = '—'; return; }
+      const fr = document.createDocumentFragment(); for (const e of entries) fr.appendChild(logRow(e)); L.appendChild(fr);
     }
+    function log(text) {
+      const e = { t: simT, text }; entries.unshift(e);
+      if (!LOGBOOK.open) return;
+      const L = $('flog'); if (entries.length === 1) L.textContent = ''; L.prepend(logRow(e));
+    }
+    (function logbook() {
+      const btn = $('log-btn'), dlg = $('logbook');
+      // floating, not modal: opening it leaves focus and the map alone; Esc closes it only while focus is inside it
+      function open(on) { LOGBOOK.open = on; if (on) drawLog(); dlg.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) $('flog').scrollTop = 0; else if (dlg.contains(document.activeElement)) btn.focus(); }
+      btn.addEventListener('click', () => open(dlg.hidden));
+      $('logbook-x').addEventListener('click', () => open(false));
+      addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.hidden && dlg.contains(document.activeElement)) { e.stopPropagation(); open(false); } }, true);
+      // drag by the header; kept on screen, and re-clamped when the window shrinks
+      const head = $('logbook-h'); let drag = null;
+      const clamp = (x, y) => [Math.max(0, Math.min(innerWidth - dlg.offsetWidth, x)), Math.max(0, Math.min(innerHeight - 40, y))];
+      const place = (x, y) => { [x, y] = clamp(x, y); Object.assign(dlg.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };
+      head.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; const r = dlg.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; head.setPointerCapture(e.pointerId); e.preventDefault(); });
+      head.addEventListener('pointermove', e => { if (drag) place(e.clientX - drag.dx, e.clientY - drag.dy); });
+      head.addEventListener('pointerup', () => { drag = null; });
+      head.addEventListener('pointercancel', () => { drag = null; });
+      addEventListener('resize', () => { if (dlg.style.left) { const r = dlg.getBoundingClientRect(); place(r.left, r.top); } });
+      window.__logbook = { open, entries };
+    })();
 
     // ---- clock and view controls
     // Play/Pause is separate from the rate, so pausing keeps the chosen 1x/5x/10x
@@ -5742,7 +5769,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     let before = null;
     const right = document.querySelector('.tb-right');
     function observer(on) {
-      document.getElementById('rules-btn').hidden = on;
+      document.getElementById('rules-btn').hidden = on; document.getElementById('log-btn').hidden = on;
       if (on) { before = wins.filter(w => !w.hidden); for (const w of wins) w.hidden = true; right.hidden = true; }
       else { for (const w of before || []) w.hidden = false; before = null; right.hidden = false; sync(); }
     }
@@ -5995,12 +6022,74 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      code); another instructor is refused while the session is held. The Live Session panel shows a link carrying it.
   //      openRoom() starts the link from NET (at load, or when an instructor hosts or a student gives a callsign: SESSION
   //      below); ROOM.stop() ends a hosted session and leaves the sim as it is (solo again).
+  // ---- CHAT (Lee, 2026-11-15): one group chat for everyone in a live session, for announcements ("pausing for lunch").
+  //      No private messages, nothing stored: the instructor's page keeps the last CHAT_KEEP lines and sends them to anyone
+  //      who joins or reconnects (in 'full'). A student's line goes to the instructor as 'say'; the instructor's page stamps
+  //      it (id, sim time) and sends it to everyone as 'chat'. The instructor's pause / resume posts a line by itself.
+  //      The icon sits beside Rules and Assumptions, shown only while a session is open (CHAT.room from openRoom / stop).
+  const CHAT = (() => {
+    const CHAT_KEEP = 100, MAX = 300;
+    const $ = id => document.getElementById(id);
+    const btn = $('chat-btn'), win = $('chat'), log = $('chat-log'), form = $('chat-f'), inp = $('chat-in'), num = $('chat-n'), toast = $('chat-toast');
+    let lines = [], seen = new Set(), unread = 0, toastT = 0, nextId = 1;
+    const clean = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, MAX);
+    const tstr = t => { t = Math.max(0, Math.floor(t || 0)); return 'T+' + String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+    function row(l) {
+      const d = document.createElement('div'); d.className = 'cl' + (l.host ? ' host' : '') + (l.sys ? ' sys' : '');
+      const t = document.createElement('span'); t.className = 'ct'; t.textContent = tstr(l.t); d.appendChild(t);
+      if (!l.sys) { const c = document.createElement('span'); c.className = 'cs'; c.textContent = l.cs; d.appendChild(c); }
+      d.appendChild(document.createTextNode(l.text)); return d;
+    }
+    function draw() {
+      log.textContent = '';
+      if (!lines.length) { const p = document.createElement('div'); p.className = 'empty'; p.textContent = 'No messages yet. Everyone in the session sees what is written here.'; log.appendChild(p); }
+      for (const l of lines) log.appendChild(row(l));
+      log.scrollTop = log.scrollHeight;
+    }
+    function badge() { num.hidden = true; btn.classList.toggle('unread', !!unread); btn.title = unread ? 'Session chat: new messages' : 'Session chat'; }   // no count (Lee): the icon lights up instead
+    function showToast(l) {
+      toast.textContent = ''; const b = document.createElement('b'); b.textContent = l.sys ? 'SESSION' : l.cs; toast.append(b, document.createTextNode(l.text));
+      toast.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { toast.hidden = true; }, 6000);
+    }
+    function add(l, quiet) {                         // one line from the instructor's page (or made there)
+      if (!l || seen.has(l.id)) return;
+      seen.add(l.id); lines.push(l); if (lines.length > CHAT_KEEP) lines.splice(0, lines.length - CHAT_KEEP);
+      if (!win.hidden) { draw(); return; }
+      if (quiet || l.cs === NET.cs && !l.sys) return;
+      unread++; badge(); showToast(l);
+    }
+    function load(arr) { lines = []; seen = new Set(); for (const l of arr || []) { seen.add(l.id); lines.push(l); } if (!win.hidden) draw(); }
+    function open(on) {
+      win.hidden = !on; btn.setAttribute('aria-expanded', String(on));
+      if (on) { unread = 0; badge(); toast.hidden = true; draw(); inp.focus(); }
+    }
+    // the instructor's page: stamp a line, keep it, send it to everyone
+    function post(cs, text, opt) {
+      text = clean(text); if (!text || !NET.host || !ROOM) return;
+      const l = Object.assign({ id: NET.room + ':' + (nextId++) + ':' + Date.now().toString(36), t: FIRES.debug.simT, cs: clean(cs).slice(0, 20) || '?', text }, opt || {});
+      add(l, cs === NET.cs || !!(opt && opt.sys)); ROOM.send('chat', { line: l });   // the instructor isn't told of their own lines or pauses
+    }
+    form.addEventListener('submit', e => {
+      e.preventDefault(); const text = clean(inp.value); if (!text || !ROOM) return; inp.value = '';
+      if (NET.host) post(NET.cs, text, { host: true }); else ROOM.send('say', { text });
+    });
+    inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') open(false); });   // typing never drives the sim
+    btn.addEventListener('click', () => open(win.hidden));
+    $('chat-x').addEventListener('click', () => open(false));
+    toast.addEventListener('click', () => open(true));
+    return {
+      room(on) { btn.hidden = !on; if (!on) { open(false); toast.hidden = true; lines = []; seen = new Set(); unread = 0; badge(); } },
+      add, load, post, get lines() { return lines; }, clean
+    };
+  })();
+  window.__chat = CHAT;
+
   const RELAY_URL = 'wss://fist-relay.fireslab.workers.dev';   // deployed 2026-11-13 (`npx wrangler deploy` in relay\)
   let ROOM = null;
   const roomHooks = { roster() {}, refused() {} };             // filled in by SESSION
   function openRoom() {
     if (ROOM || !NET.room || !NET.cs) return ROOM;
-    ROOM = makeRoom(); window.__room = ROOM;
+    ROOM = makeRoom(); window.__room = ROOM; CHAT.room(true);
     return ROOM;
   }
   function makeRoom() {
@@ -6046,7 +6135,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       removeEventListener('beforeunload', onUnload);
       NET.emit = () => {}; badge.hidden = true;
       if (NET.host) { NET.room = null; NET.host = false; }
-      ROOM = null; window.__room = null;
+      ROOM = null; window.__room = null; CHAT.room(false);
     }
     if (NET.host) {
       const students = new Map();                 // tab id -> { cs, seen }
@@ -6054,7 +6143,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         say('Session ' + code + ' · ' + n + ' student' + (n === 1 ? '' : 's'), 'host', who.length ? 'In the session: ' + who.join(', ') : 'Nobody has joined yet');
         roomHooks.roster(who, pin); };
       const dmg = () => ({ opfor: struckList(), civ: CIV.hits() });
-      const full = to => send('full', { to, opfor: O.netState(), units: F.unitList(), civ: CIV.debug.level, clock: { t: F.simT, speed: F.speed }, dmg: dmg(), uas: UAS.netState() });
+      const full = to => send('full', { to, opfor: O.netState(), units: F.unitList(), civ: CIV.debug.level, clock: { t: F.simT, speed: F.speed }, dmg: dmg(), uas: UAS.netState(), chat: CHAT.lines });
       NET.emit = (type, o) => send(type, o);
       onLink = st => {
         if (st === 'open') roster();
@@ -6069,6 +6158,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           if (m.type === 'hello') { full(m.from); if (isNew) FIRES.log(m.cs + ' joined the session'); }
           if (isNew) roster();
         } else if (m.type === 'bye') { const s = students.get(m.from); if (s) { students.delete(m.from); FIRES.log(s.cs + ' left the session'); roster(); } }
+        else if (m.type === 'say') { if (students.has(m.from)) CHAT.post(m.cs, m.text); }   // a student's chat line: stamp it, send to all
         else if (m.type === 'cmd') UAS.runCmd(m.op, m.a || {}, m.cs);
         else if (m.type === 'cam') { const d = UAS.droneById(m.d); if (d && UAS.debug.ctl.get(d.id) === m.cs) UAS.applyCam(d, m.cam); }
       };
@@ -6077,7 +6167,10 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const last = {};
       const changed = (k, v) => { const j = JSON.stringify(v); if (j === last[k]) return false; last[k] = j; return true; };
       changed('opfor', O.netState()); changed('units', F.unitList()); changed('civ', CIV.debug.level);
+      let wasPaused = F.speed === 0;
       every(() => {
+        const p = F.speed === 0;                   // pause / resume: say so in the chat (seen within a second)
+        if (p !== wasPaused) { wasPaused = p; CHAT.post('SESSION', p ? 'Instructor paused the sim.' : 'Instructor resumed the sim.', { sys: true }); }
         const op = O.netState(), un = F.unitList();
         if (changed('opfor', op)) send('opfor', { opfor: op });
         if (changed('units', un)) send('units', { units: un });
@@ -6091,7 +6184,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
     // ---- student
     let joined = false, lastHost = 0, paused = false, hostId = null, lost = false;
-    const HOST_TYPES = new Set(['full', 'uas', 'clock', 'opfor', 'units', 'civ', 'burst', 'shot', 'strike', 'dmg', 'hostbye']);
+    const HOST_TYPES = new Set(['full', 'uas', 'clock', 'opfor', 'units', 'civ', 'burst', 'shot', 'strike', 'dmg', 'hostbye', 'chat']);
     // a message from a different instructor page than the one this student joined (the instructor reloaded, or hosts from
     // another computer) means a fresh sim: missions, wrecks and drones from the old one would be stale, so start clean
     function sameHost(m) {
@@ -6123,7 +6216,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (m.type === 'full') {
         if (m.to !== me) return;
         joined = true; clock(m.clock);
-        CIV.set(m.civ); FIRES.setUnits(m.units); O.applyNet(m.opfor); UAS.applyNet(m.uas); applyDmg(m.dmg);
+        CIV.set(m.civ); FIRES.setUnits(m.units); O.applyNet(m.opfor); UAS.applyNet(m.uas); applyDmg(m.dmg); CHAT.load(m.chat);
         status(); return;
       }
       if (!joined) return;
@@ -6136,6 +6229,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       else if (m.type === 'shot') FIRES.netShot(m);
       else if (m.type === 'strike') strikeOne(m);
       else if (m.type === 'dmg') applyDmg(m.dmg);
+      else if (m.type === 'chat') CHAT.add(m.line);
       else if (m.type === 'hostbye') { lastHost = 0; joined = false; F.speed = 0; say('Session ' + code + ' · the instructor left', 'lost'); }
     };
     UAS.setSend((op, a) => send('cmd', { op, a }));

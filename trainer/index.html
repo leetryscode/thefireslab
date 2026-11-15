@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kill Chain Simulator — Fires Lab</title>
-<link rel="stylesheet" href="css/trainer.css?v=2026-11-15h">
+<link rel="stylesheet" href="css/trainer.css?v=2026-11-15k">
 </head>
 <body>
 <canvas id="view" aria-label="3D terrain of the Honolulu battlespace with the scenario sketch"></canvas>
@@ -151,10 +151,6 @@
       <p class="msg" id="fm-msg"></p>
       <div class="ulist" id="fm-held"></div>
     </div>
-    <div class="fsec">
-      <h3>Fires log</h3>
-      <div class="flog" id="flog"><div><span class="t">—</span><span>No missions yet.</span></div></div>
-    </div>
     <p class="hint">Unit figures (range, time of flight, dispersion, rate) are unclassified placeholders until replaced with real values. Trajectories are drawn for the eye, not ballistic.</p>
   </div>
 </section>
@@ -238,7 +234,23 @@
 </div>
 
 <pre id="perf" hidden></pre>
-<button id="rules-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="rules">Rules and Assumptions</button>
+<div id="br-dock">
+  <div id="chat-toast" hidden></div>
+  <button id="chat-btn" type="button" hidden aria-expanded="false" aria-controls="chat" aria-label="Session chat" title="Session chat"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="chat-n" hidden>0</span></button>
+  <button id="log-btn" class="instr-only" type="button" aria-expanded="false" aria-controls="logbook">Logbook</button>
+  <button id="rules-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="rules">Rules and Assumptions</button>
+</div>
+<section id="chat" hidden aria-label="Session chat">
+  <header class="chat-h"><h2>Session chat</h2><button id="chat-x" type="button" aria-label="Close chat">×</button></header>
+  <div id="chat-log" role="log" aria-live="polite"></div>
+  <form id="chat-f" autocomplete="off"><input id="chat-in" maxlength="300" placeholder="Message everyone in the session" aria-label="Chat message"><button type="submit">Send</button></form>
+</section>
+<!-- Logbook (Lee, 2026-11-15): the truth log, moved out of the Fires window. Instructor only: it names struck vehicles.
+     A floating panel, not a modal: the map stays usable behind it. Drag it by its header. -->
+<section id="logbook" class="instr-only" hidden aria-labelledby="logbook-title">
+  <header class="rules-h log-h" id="logbook-h"><h2 id="logbook-title">Logbook</h2><button id="logbook-x" type="button" aria-label="Close logbook">×</button></header>
+  <div class="flog" id="flog" role="log" aria-live="polite"><div><span class="t">—</span><span>No entries yet.</span></div></div>
+</section>
 <div id="rules" hidden role="dialog" aria-modal="true" aria-labelledby="rules-title">
   <div class="rules-card">
     <div class="rules-h"><h2 id="rules-title">Rules and Assumptions</h2><button id="rules-x" type="button" aria-label="Close">×</button></div>
@@ -249,6 +261,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js?v=2026-11-15h"></script>
+<script src="js/trainer.js?v=2026-11-15k"></script>
 </body>
 </html>
