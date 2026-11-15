@@ -317,8 +317,9 @@ vec3 waveNormal(vec2 q, float px){
   vec2 g = vec2(0.0); float t = uTime, ph = wnoise(q * 0.012) * 6.0 + wnoise(q * 0.05) * 1.5;
   #define WAVE(dx, dy, L, s) { vec2 d = normalize(vec2(dx, dy)); float k = 6.2832 / L, w = sqrt(9.8 * k); \
     float f = 1.0 - smoothstep(0.2, 0.4, px / L); g += d * (s * f * cos(dot(d, q) * k - w * t + ph)); }
-  WAVE(0.8, 0.6, 60.0, 0.09) WAVE(0.55, 0.85, 31.0, 0.09) WAVE(0.97, 0.25, 18.0, 0.08)
-  WAVE(0.4, 0.92, 11.0, 0.07) WAVE(0.92, -0.15, 7.0, 0.06) WAVE(0.7, 0.72, 4.3, 0.05)
+  // (dx, dy) is the way the crests travel in world x/z: +x east, +z south, so negative dy runs north-east onto the beaches
+  WAVE(0.8, -0.6, 60.0, 0.09) WAVE(0.55, -0.85, 31.0, 0.09) WAVE(0.97, -0.25, 18.0, 0.08)
+  WAVE(0.4, -0.92, 11.0, 0.07) WAVE(0.92, 0.15, 7.0, 0.06) WAVE(0.7, -0.72, 4.3, 0.05)
   return normalize(vec3(-g.x, 1.0, -g.y));
 }
 float wPx;   // metres of water per screen pixel; set first thing in main, outside the land/water branch
