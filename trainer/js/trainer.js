@@ -55,11 +55,22 @@
   //      (fetch today; script-wrapped files if the page must run from file:// or a USB stick later)
   const DATA_DIR = 'data/';
   async function load(name, as) {
-    const r = await fetch(DATA_DIR + name);
+    // no-cache: always ask the server whether the file changed (a 304 if not), so a rebuilt city.json or ops.json is never
+    // stuck behind an old cached copy. A hard refresh does not reach these, because they are fetched after the page loads
+    // (2026-11-16: a stale pre-simplification city.json put the Beach camera on the ground).
+    const r = await fetch(DATA_DIR + name, { cache: 'no-cache' });
     if (!r.ok) throw new Error(name + ' (' + r.status + ')');
     return as === 'json' ? r.json() : as === 'url' ? URL.createObjectURL(await r.blob()) : r.arrayBuffer();
   }
-  const [demJ, SKETCH, PHOTO] = await Promise.all([load('dem.json', 'json'), load('ops.json', 'json'), load('photo.jpg', 'url')]);
+  const [demJ, SKETCH, PHOTO, SHORE] = await Promise.all([load('dem.json', 'json'), load('ops.json', 'json'), load('photo.jpg', 'url'), load('shore.png', 'url')]);
+  // Friendly positions ride with the scenario (Lee, 2026-11-15): the working scenario's list when it has one, else
+  // data/ops.json. Each: { name, note, e, n, h, kind, look } — kind 'camera' is a fixed pan/zoom camera instead of an
+  // observer; look (optional) is the direction the view starts in, mils grid (else the centre of the battlespace).
+  const OPS_KEY = 'fist-trainer-ops-v1';
+  const validOps = a => Array.isArray(a) && a.every(o => o && typeof o.name === 'string' && isFinite(o.e) && isFinite(o.n));
+  let setOps = () => {};                // replaced once the OP list and viewshed menu exist
+  // a student waits for the instructor's list
+  if (!(q => q.get('role') === 'student' || q.has('join'))(new URLSearchParams(location.search))) try { const s = JSON.parse(localStorage.getItem(OPS_KEY)); if (validOps(s)) SKETCH.ops = s; } catch (e) {}
   const demGz = Uint8Array.from(atob(demJ.data), c => c.charCodeAt(0)).buffer;
   const OCEAN = 'rgb(19,71,106)';     // the photo's deep-water colour, for sea beyond the data
   // ---- terrain: NX x NY heights in decimetres, row 0 = north, -1 = no data (sea)
@@ -343,31 +354,25 @@ vec3 waterShade(vec3 base, vec3 P, float foam){
 }
 `;
   const WATER_MAIN = 'void main() {\n  wPx = max(length(fwidth(vWW.xz)), 0.01);';
-  // water mask on the terrain grid: R = water, slightly softened; G = a shore band for the foam (water within ~25 m
-  // of land). Water = sea no-data, or ground under 0.4 m (harbour, canal) where the photo also looks like water
-  // (blue or turquoise, not the grey/white of piers, car parks and boats) - the marina flooded without that check.
-  const waterTex = (() => {
-    const c = document.createElement('canvas'); c.width = NX; c.height = NY; const g = c.getContext('2d');
-    g.drawImage(tex.image, 0, 0, NX, NY); const ph = g.getImageData(0, 0, NX, NY).data;
-    const img = g.createImageData(NX, NY), d = img.data;
-    for (let i = 0; i < NX * NY; i++) {
-      const R = ph[i * 4], G = ph[i * 4 + 1], B = ph[i * 4 + 2];
-      const wet = B > R + 12 && G > R && R + G + B < 560;
-      const w = dm[i] < 0 || (H[i] < 0.4 && wet);
-      d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = w ? 255 : 0; d[i * 4 + 3] = 255;
-    }
-    g.putImageData(img, 0, 0);
-    const a = document.createElement('canvas'); a.width = NX; a.height = NY; const ag = a.getContext('2d');
-    ag.filter = 'blur(1px)'; ag.drawImage(c, 0, 0);
-    const b = document.createElement('canvas'); b.width = NX; b.height = NY; const bg = b.getContext('2d');
-    bg.filter = 'blur(2.5px)'; bg.drawImage(c, 0, 0);
-    const A = ag.getImageData(0, 0, NX, NY).data, Bd = bg.getImageData(0, 0, NX, NY).data, out = g.createImageData(NX, NY), o = out.data;
-    for (let i = 0; i < NX * NY; i++) {
-      const w = A[i * 4], wb = Bd[i * 4] / 255;
-      o[i * 4] = w; o[i * 4 + 1] = d[i * 4] ? Math.round(255 * Math.max(0, 1 - Math.abs(wb - 0.62) / 0.3)) : 0; o[i * 4 + 2] = 0; o[i * 4 + 3] = 255;
-    }
-    g.putImageData(out, 0, 0);
-    const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; return t;
+  // ---- SHORE (2026-11-16): where the ground is drawn as water, at the photo's own ~2.9 m, from OpenStreetMap
+  //      (Trainer\pipeline\make_shore.py -> data/shore.png; the old mask was the 10 m grid, so harbour and marina edges
+  //      faded over 10-20 m and got the beach's surf). shore.png R = signed distance to the shoreline (m, + over water,
+  //      128 + 4d), G = exposure (0 sheltered harbour/marina/canal, 1 open to the swell). Split here into two one-byte
+  //      textures: the distance at full size (half on Lite), the exposure at a quarter (it's smooth). Display only: the
+  //      rules (vehicles, swimming, tube rounds) still use the 10 m grid's water.
+  //      SHORE_FOAM: surf band (m out from the edge, exposed shores only). QUAY_SHADOW / QUAY_LIP: on sheltered shores,
+  //      a dark band in the water under the wall and a pale lip on the land side (m). SHORE_PULL: near sheltered edges the
+  //      water takes its photo colour from this far out, past the land's blur in the photo.
+  const SHORE_FOAM = [3, 8, 26], QUAY_SHADOW = 2.5, QUAY_LIP = 1.2, SHORE_PULL = 8;
+  const shoreTex = await (async () => {
+    const img = await new THREE.ImageLoader().loadAsync(SHORE); URL.revokeObjectURL(SHORE);
+    const k = LITE ? 2 : 1, w = img.width / k | 0, h = img.height / k | 0, c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = k > 1; g.drawImage(img, 0, 0, w, h);
+    const px = g.getImageData(0, 0, w, h).data, ew = w >> 2, eh = h >> 2, D = new Uint8Array(w * h), E = new Uint8Array(ew * eh);
+    for (let r = 0; r < h; r++) { const o = (h - 1 - r) * w, s = r * w; for (let x = 0; x < w; x++) D[o + x] = px[(s + x) * 4]; }   // row 0 = north = top (v = 1)
+    for (let r = 0; r < eh; r++) { const o = (eh - 1 - r) * ew, s = r * 4 * w; for (let x = 0; x < ew; x++) E[o + x] = px[(s + x * 4) * 4 + 1]; }
+    const mk = (a, tw, th) => { const t = new THREE.DataTexture(a, tw, th, THREE.LuminanceFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.unpackAlignment = 1; t.needsUpdate = true; return t; };
+    return { d: mk(D, w, h), e: mk(E, ew, eh), w, h };
   })();
   // ---- SHADOW + HAZE (Lee, 2026-11-10): how the false land looks. hazeTex R = haze, a soft patchy veil in the horizon
   //      colour over the line where play ends (spreads onto the water beside it, thins inland, gone before the grid's edge);
@@ -465,15 +470,56 @@ vec3 gradeGround(vec3 base, vec3 lit){
   // Hybrid ground: in built-up blocks the photo (leaning walls, frozen shadows, blur) fades to plain pavement and the
   // map roads are drawn on top; open ground keeps the photo. URBAN.map is a quarter-size mask made by CITY.
   const URBAN = { map: { value: new THREE.DataTexture(new Uint8Array(4), 1, 1) }, on: { value: 1 } };
+  // shore shading for the ground (see SHORE): sdM / exM are read once, before the lighting, and used again at the end
+  const f1 = v => Number(v).toFixed(4);
+  const SHORE_GLSL = `
+uniform sampler2D shoreMap; uniform sampler2D expMap; uniform vec4 uShore;   // strengths: colour pull, quay shadow, quay lip, surf
+float sdM; float exM;
+float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25; }   // metres, + over water
+#if __VERSION__ >= 300
+#define PHOTO_GRAD(uv, gx, gy) textureGrad(map, uv, gx, gy)
+#else
+#define PHOTO_GRAD(uv, gx, gy) texture2D(map, uv)
+#endif
+`;
+  const SHORE_PRE = `
+  sdM = shoreD(vUv); exM = texture2D(expMap, vUv).r;
+  { vec2 gx = dFdx(vUv), gy = dFdy(vUv);                 // taken here, outside the branch, for the photo read inside it
+    if (sdM > 0.0 && sdM < ${f1(SHORE_PULL)} && exM < 0.98) {   // sheltered water near the edge: photo colour from further out
+      vec2 tu = vec2(${f1(1 / shoreTex.w)}, 0.0), tv = vec2(0.0, ${f1(1 / shoreTex.h)});
+      vec2 gr = vec2((shoreD(vUv + tu) - shoreD(vUv - tu)) / ${f1(2 * (NX - 1) * CELL / shoreTex.w)}, (shoreD(vUv + tv) - shoreD(vUv - tv)) / ${f1(2 * (NY - 1) * CELL / shoreTex.h)});
+      float gln = length(gr);
+      if (gln > 0.2) {
+        vec2 uv2 = vUv + gr / gln * (${f1(SHORE_PULL)} - sdM) / vec2(${(NX - 1) * CELL}.0, ${(NY - 1) * CELL}.0);
+        float open = smoothstep(${f1(SHORE_PULL * 0.5)}, ${f1(SHORE_PULL * 0.9)}, shoreD(uv2));   // only if that point is open water, not across a slip
+        diffuseColor.rgb = mix(diffuseColor.rgb, mapTexelToLinear(PHOTO_GRAD(uv2, gx, gy)).rgb, (1.0 - exM) * open * uShore.x);
+      }
+    }
+  }
+`;
+  const SHORE_K = { value: new THREE.Vector4(1, 1, 1, 1) }; window.__shore = SHORE_K.value;   // debug: x pull, y shadow, z lip, w surf (0..1)
+  const SHORE_POST = `
+  { float aa = max(fwidth(sdM), 0.02), w = smoothstep(-aa, aa, sdM);   // a crisp edge, one pixel wide at any range
+    float fine = 1.0 - smoothstep(0.6, 2.0, aa), shel = (1.0 - exM) * fine;   // quay details fade once a pixel is ~1-2 m
+    if (w > 0.0) {
+      float foam = uShore.w * exM * smoothstep(0.0, ${f1(SHORE_FOAM[0])}, sdM) * (1.0 - smoothstep(${f1(SHORE_FOAM[1])}, ${f1(SHORE_FOAM[2])}, sdM));
+      vec3 wc = waterShade(outgoingLight, vWW, foam);
+      wc *= 1.0 - 0.45 * uShore.y * shel * (1.0 - smoothstep(0.0, ${f1(QUAY_SHADOW)}, sdM));
+      outgoingLight = mix(outgoingLight, wc, w);
+    }
+    float lip = shel * (1.0 - w) * (1.0 - smoothstep(${f1(QUAY_LIP * 0.5)}, ${f1(QUAY_LIP)}, -sdM));
+    outgoingLight = mix(outgoingLight, vec3(dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722))) * 0.6 + vec3(0.2), lip * 0.6 * uShore.z);
+  }
+`;
   photoMat.onBeforeCompile = sh => {
-    sh.uniforms.fadeMap = { value: fadeTex }; sh.uniforms.waterMap = { value: waterTex }; waterUniforms(sh);
+    sh.uniforms.fadeMap = { value: fadeTex }; sh.uniforms.shoreMap = { value: shoreTex.d }; sh.uniforms.expMap = { value: shoreTex.e }; sh.uniforms.uShore = SHORE_K; waterUniforms(sh);
     sh.uniforms.urbanMap = URBAN.map; sh.uniforms.urbanOn = URBAN.on;
     sh.vertexShader = 'varying vec3 vWW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D waterMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + HAZE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>',
+    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + HAZE_GLSL + SHORE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>', SHORE_PRE +
       '#ifdef USE_COLOR\n  diffuseColor.rgb = mix(vColor, diffuseColor.rgb, texture2D(fadeMap, vUv).r);\n#endif\n' +
       '  { float u = texture2D(urbanMap, vUv).r * urbanOn; float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));\n' +
       '    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.24, 0.235, 0.22), vec3(lum), 0.2), u * 0.92); }')
-      .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n  { vec4 wm = texture2D(waterMap, vUv); if (wm.r > 0.004) outgoingLight = mix(outgoingLight, waterShade(outgoingLight, vWW, wm.g), wm.r); }\n  outgoingLight = hazeOver(shadeOver(outgoingLight, vWW), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
+      .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n' + SHORE_POST + '  outgoingLight = hazeOver(shadeOver(outgoingLight, vWW), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
   };
   // Terrain in tiles (perf, 2026-11-03): the same one grid and the same shared vertex data, split into ~1.5 km tiles so
   // the renderer skips tiles outside the view. Nothing changes on screen. Each tile's bounds are set by hand
@@ -792,16 +838,21 @@ vec3 gradeGround(vec3 base, vec3 lit){
     camera.position.set(p.x + away.x * 1300, g + 700, p.z + away.z * 1300);
   }
   const list = document.getElementById('oplist');
-  SKETCH.ops.forEach((o, i) => {
-    const row = document.createElement('div'); row.className = 'oprow';
-    const b = document.createElement('button'); b.id = 'op' + i;
-    const n = document.createElement('span'); n.textContent = o.name;
-    const h = document.createElement('span'); h.textContent = o.h == null ? '' : Math.round(o.h) + ' m';
-    b.append(n, h); b.title = o.note || ''; b.addEventListener('click', () => { if (obs) leaveObserver(); lookAt(o); });
-    const s = document.createElement('button'); s.id = 'stand' + i; s.className = 'stand'; s.textContent = 'Stand';
-    s.title = 'Stand at ' + o.name + ' at eye height'; s.addEventListener('click', () => enterObserver(o));
-    row.append(b, s); list.appendChild(row);
-  });
+  function fillOpList() {
+    list.textContent = '';
+    SKETCH.ops.forEach((o, i) => {
+      const row = document.createElement('div'); row.className = 'oprow';
+      const b = document.createElement('button'); b.id = 'op' + i;
+      const n = document.createElement('span'); n.textContent = o.name;
+      const h = document.createElement('span'); h.textContent = o.h == null ? '' : Math.round(o.h) + ' m';
+      b.append(n, h); b.title = o.note || ''; b.addEventListener('click', () => { if (obs) leaveObserver(); lookAt(o); });
+      const cam = o.kind === 'camera';
+      const s = document.createElement('button'); s.id = 'stand' + i; s.className = 'stand'; s.textContent = cam ? 'View' : 'Stand';
+      s.title = cam ? 'Watch ' + o.name + ' (pan and zoom camera)' : 'Stand at ' + o.name + ' at eye height'; s.addEventListener('click', () => enterObserver(o));
+      row.append(b, s); list.appendChild(row);
+    });
+  }
+  fillOpList();
   document.getElementById('home').addEventListener('click', () => { if (obs) leaveObserver(); home(); });
 
   // thick screen-space lines (vendor/fatlines.js): plain WebGL lines are always 1 px, too faint on the imagery
@@ -927,8 +978,18 @@ vec3 gradeGround(vec3 base, vec3 lit){
     vsMesh.visible = true; coverage();
   }
   const vsSel = document.getElementById('vs-op');
-  SKETCH.ops.forEach((o, i) => { const opt = document.createElement('option'); opt.value = String(i); opt.textContent = o.name; vsSel.appendChild(opt); });
+  function fillVsSel() {
+    for (const o of [...vsSel.options]) if (o.value !== '') o.remove();
+    SKETCH.ops.forEach((o, i) => { const opt = document.createElement('option'); opt.value = String(i); opt.textContent = o.name; vsSel.appendChild(opt); });
+  }
+  fillVsSel();
   vsSel.addEventListener('change', () => { VS.op = vsSel.value === '' ? null : SKETCH.ops[+vsSel.value]; runViewshed(); });
+  // a new list of friendly positions (a room's student gets the instructor's): redraw the symbols, the OP list and the viewshed menu
+  setOps = a => {
+    if (!validOps(a) || JSON.stringify(a) === JSON.stringify(SKETCH.ops)) return;
+    if (obs) leaveObserver();
+    SKETCH.ops = a; buildSketch(); fillOpList(); fillVsSel(); vsSel.value = ''; VS.op = null; runViewshed();
+  };
   function pair(a, b, onA, onB) {
     const A = document.getElementById(a), B = document.getElementById(b);
     A.addEventListener('click', () => { A.setAttribute('aria-pressed', 'true'); B.setAttribute('aria-pressed', 'false'); onA(); runViewshed(); });
@@ -1559,63 +1620,259 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 
   // ---- observer mode: stand at a position at eye height, look around, raise the binoculars
   // Mils: 6400 to the circle. Binocular true field 7.5 deg is an assumed value for an 8x30 (not from the M30r spec).
+  // No rangefinder (Lee, 2026-11-15): the observer gets no range, grid or height under the cursor, only the direction the
+  // view faces (a compass). Locating a target is terrain association; a laser (PLDR, CLRF) comes later as a tool to use.
+  // Walking (Lee, 2026-11-15): arrow keys walk at an OP (Shift+arrows turn), within WALK_MAX of the post and, when the post
+  // is on a roof, on that roof only, so an observer can step to the edge or round a parapet.
+  // Cameras (kind 'camera' in the OP list): a fixed mount that pans and zooms (wheel, +/−), with TV and white-hot IR.
   const MIL = 2 * Math.PI / 6400, EYE = 1.8, NAKED_FOV = 55, BINO_FIELD_DEG = 7.5;
-  let obs = null, yaw = 0, pitch = 0, binos = false;
+  const WALK_MAX = 40, WALK_SPEED = 1.4, ROOF_STEP = 1.5, CAM_FOV_MAX = 50, CAM_FOV_MIN = 1.5;
+  let obs = null, yaw = 0, pitch = 0, binos = false, camOP = false, camFov = CAM_FOV_MAX, camIR = false;
+  const walk = { x: 0, z: 0, x0: 0, z0: 0, roof0: null, keys: new Set() };
   const obsbar = document.getElementById('obsbar'), reticle = document.getElementById('reticle'), rctx = reticle.getContext('2d');
-  const binoBtn = document.getElementById('bino');
+  const binoBtn = document.getElementById('bino'), camCtl = document.getElementById('camctl'), obsHint = document.getElementById('obshint');
+  const camTv = document.getElementById('cam-tv'), camIr = document.getElementById('cam-ir'), camFovEl = document.getElementById('cam-fov');
+  const mapReadout = [...document.querySelectorAll('.readout .map-only')], dirEl = document.getElementById('dir');
   function setEx1() { if (ex !== 1) { ex = 1; exBtns.forEach((o, j) => o.setAttribute('aria-pressed', String(j === 0))); rebuild(); } }
   function applyLook() {
     const d = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
     camera.lookAt(camera.position.clone().add(d));
+    let az = yaw % (2 * Math.PI); if (az < 0) az += 2 * Math.PI;      // the compass: where the view faces, never where the cursor is
+    dirEl.textContent = String(Math.round(az / MIL) % 6400).padStart(4, '0') + ' mils grid';
   }
   function setFov() {
     // binoculars: the circular field fills 92% of the screen height
-    camera.fov = binos ? BINO_FIELD_DEG / 0.92 : NAKED_FOV;
+    camera.fov = quad ? Q_FOV : camOP ? camFov : binos ? BINO_FIELD_DEG / 0.92 : NAKED_FOV;
     camera.near = 0.5; camera.updateProjectionMatrix();
     reticle.hidden = !binos; binoBtn.setAttribute('aria-pressed', String(binos));
-    labelBox.hidden = binos || !(showLabels && groups.sketch.visible);
+    labelBox.hidden = binos || camOP || !!quad || !(showLabels && groups.sketch.visible);
+    if (camOP) camFovEl.textContent = camFov.toFixed(1) + '°';
     drawReticle();
   }
+  function setIR(on) {
+    camIR = on; camTv.setAttribute('aria-pressed', String(!on)); camIr.setAttribute('aria-pressed', String(on));
+    canvas.style.filter = on ? 'grayscale(1) contrast(1.2)' : '';      // the dimming and the white-hot pass happen in the render loop
+  }
+  // the roof under an observer counts even with Display → Buildings off (the post is on the building, seen or not)
+  function standH(x, z) { const g = heightAt(x, z), r = CITY.roofAt(x, z, true); return r !== null && r > g ? r : g; }
+  function placeObserver() { camera.position.set(walk.x, standH(walk.x, walk.z) + EYE, walk.z); applyLook(); }
   function enterObserver(o) {
     setEx1();
     const p = toLocal(o.e, o.n);
-    obs = o; controls.enabled = false;
-    camera.position.set(p.x, standAt(p.x, p.z) + EYE, p.z);   // on the roof when the position is in a building
+    obs = o; controls.enabled = false; camOP = o.kind === 'camera'; binos = false; camFov = CAM_FOV_MAX; setIR(false);
+    Object.assign(walk, { x: p.x, z: p.z, x0: p.x, z0: p.z, roof0: CITY.roofAt(p.x, p.z, true), city: CITY.ready }); walk.keys.clear();
     // face the centre of the battlespace to start, level
     const c = SKETCH.border.reduce((a, q) => [a[0] + q[0] / SKETCH.border.length, a[1] + q[1] / SKETCH.border.length], [0, 0]);
     const cl = toLocal(c[0], c[1]);
-    yaw = Math.atan2(cl.x - p.x, -(cl.z - p.z)); pitch = -0.02;
-    binos = false; setFov(); applyLook();
+    yaw = isFinite(o.look) ? o.look * MIL : Math.atan2(cl.x - p.x, -(cl.z - p.z)); pitch = -0.02;   // look: the post's own start direction, mils grid
+    placeObserver(); setFov();          // on the roof when the position is in a building
     document.getElementById('obswhere').textContent = o.name;
-    obsbar.hidden = false; document.getElementById('rngbox').hidden = false; document.getElementById('dirbox').hidden = false;
+    camCtl.hidden = !camOP; quadUI();      // the bino and sUAS buttons and the hint
+    obsbar.hidden = false; document.getElementById('dirbox').hidden = false; for (const s of mapReadout) s.hidden = true;
     // daylight sky and haze while standing; the map panel and the sketch step aside
     scene.fog.near = 3000; scene.fog.far = 28000;
-    if (window.__wins) window.__wins.observer(true); groups.sketch.visible = false; groups.grid.visible = false; ovl.setAttribute('aria-pressed', 'false');
+    if (window.__wins) window.__wins.observer(true); groups.sketch.visible = false; groups.grid.visible = false;
+    if (window.__fires) window.__fires.unitGroup.visible = false;     // firing units are part of the friendly overlay
     labelBox.hidden = true;
   }
   function leaveObserver() {
-    obs = null; binos = false; controls.enabled = true;
+    if (quad) quadEnd();                 // leaving while it flies brings it home (no airframe is ever lost)
+    obs = null; binos = false; camOP = false; setIR(false); walk.keys.clear(); controls.enabled = true;
     scene.fog.near = 12000; scene.fog.far = 55000;
     if (window.__wins) window.__wins.observer(false);
     groups.sketch.visible = document.getElementById('tg-sketch').getAttribute('aria-pressed') === 'true';
     groups.grid.visible = document.getElementById('tg-grid').getAttribute('aria-pressed') === 'true';
+    if (window.__fires) window.__fires.unitGroup.visible = friendlyOn;
     camera.fov = 45; camera.near = 10; camera.updateProjectionMatrix();
     reticle.hidden = true; obsbar.hidden = true; labelBox.hidden = !(showLabels && groups.sketch.visible);
-    document.getElementById('rngbox').hidden = true; document.getElementById('dirbox').hidden = true;
+    document.getElementById('dirbox').hidden = true; for (const s of mapReadout) s.hidden = false;
     home();
   }
-  binoBtn.addEventListener('click', () => { if (obs) { binos = !binos; setFov(); } });
-  const ovl = document.getElementById('ovl');
-  ovl.addEventListener('click', () => {
-    const on = ovl.getAttribute('aria-pressed') !== 'true'; ovl.setAttribute('aria-pressed', String(on));
-    groups.sketch.visible = on; labelBox.hidden = binos || !(on && showLabels);
-  });
+  // where an observer may stand: near the post, and on the post's own roof (or on the ground, if the post is on the ground)
+  function canStand(x, z) {
+    if (Math.hypot(x - walk.x0, z - walk.z0) > WALK_MAX) return false;
+    const r = CITY.roofAt(x, z, true);
+    if (walk.roof0 !== null) return r !== null && Math.abs(r - walk.roof0) < ROOF_STEP;
+    return r === null || r <= heightAt(x, z) + 0.5;
+  }
+  function obsTick(dt) {                // from the render loop: held arrow keys walk, sliding along an edge rather than stopping
+    if (obs && !walk.city && CITY.ready) {      // stood at the post before the buildings loaded: step up onto the roof now
+      walk.city = true; walk.roof0 = CITY.roofAt(walk.x0, walk.z0, true); walk.x = walk.x0; walk.z = walk.z0; placeObserver();
+    }
+    if (quad) { quadTick(dt); return; }
+    if (!obs || camOP || !walk.keys.size) return;
+    const K = walk.keys, f = (K.has('ArrowUp') ? 1 : 0) - (K.has('ArrowDown') ? 1 : 0), s = (K.has('ArrowRight') ? 1 : 0) - (K.has('ArrowLeft') ? 1 : 0);
+    if (!f && !s) return;
+    const L = Math.hypot(f, s), step = WALK_SPEED * dt / L;
+    const dx = (Math.sin(yaw) * f + Math.cos(yaw) * s) * step, dz = (-Math.cos(yaw) * f + Math.sin(yaw) * s) * step;
+    if (canStand(walk.x + dx, walk.z + dz)) { walk.x += dx; walk.z += dz; }
+    else if (dx && canStand(walk.x + dx, walk.z)) walk.x += dx;
+    else if (dz && canStand(walk.x, walk.z + dz)) walk.z += dz;
+    else return;
+    placeObserver();
+  }
+  function camZoom(f) { if (!obs || !camOP) return; camFov = Math.max(CAM_FOV_MIN, Math.min(CAM_FOV_MAX, camFov * f)); setFov(); }
+  binoBtn.addEventListener('click', () => { if (obs && !camOP) { binos = !binos; setFov(); } });
+  camTv.addEventListener('click', () => setIR(false));
+  camIr.addEventListener('click', () => setIR(true));
+  document.getElementById('cam-zin').addEventListener('click', () => camZoom(1 / 1.5));
+  document.getElementById('cam-zout').addEventListener('click', () => camZoom(1.5));
+  canvas.addEventListener('wheel', e => { if (!obs || !camOP) return; e.preventDefault(); camZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
+  // no friendly overlay at an OP or camera (Lee, 2026-11-16): OP symbols, labels and firing units stay hidden there
   document.getElementById('obsexit').addEventListener('click', leaveObserver);
+
+  // ---- sUAS (Lee, 2026-11-16): a small quadcopter launched from a (walking) OP, not from a fixed camera. Its feed takes
+  //      over the main view, as standing at the OP does, so the scene is still drawn once a frame: no extra draw like the
+  //      pop-out UAS feeds. QFX draws that picture small and scales it up with grain, worse with slant range from the
+  //      controller (the OP post): clean out to Q_CLEAR, breaking up to Q_LOST, no video beyond. Telemetry (grid, distance,
+  //      battery) stays readable past Q_LOST so it can be flown home. Battery Q_ENDUR seconds of sim time. Recover works from
+  //      any distance (Lee, 2026-11-16). The battery running out ends the flight: landed within Q_REC_R of the post, crashed
+  //      beyond it. Unlimited airframes for now: Launch is always available again. No camera footprint, IR or zoom; can't
+  //      sink into roofs or ground.
+  //      Local to this viewer: not sent to the room, not drawn on the map. Speeds and limits are training choices.
+  const Q_SPEED = 15, Q_CLIMB = 5, Q_TURN = 1.0, Q_LAUNCH_AGL = 60, Q_LAUNCH_RATE = 15, Q_MAX_AGL = 300, Q_MIN_AGL = 2, Q_FOV = 70;
+  const Q_CLEAR = 2000, Q_LOST = 5000, Q_ENDUR = 20 * 60, Q_WARN = 3 * 60, Q_REC_R = 50;
+  const Q_KEYS = { arrowup: 'F', w: 'F', arrowdown: 'B', s: 'B', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R',
+    r: 'U', pageup: 'U', f: 'D', pagedown: 'D', q: 'TL', e: 'TR' };
+  const quadGo = document.getElementById('quad-go'), quadRec = document.getElementById('quad-rec'), obsExit = document.getElementById('obsexit');
+  const quadHud = document.getElementById('quadhud'), qhMsg = document.getElementById('qh-msg');
+  const qhGps = document.getElementById('qh-gps'), qhDist = document.getElementById('qh-dist'), qhBatt = document.getElementById('qh-batt');
+  const qKeys = new Set();
+  let quad = null;                       // { x, y, z, g0, used, last, phase: 'launch' | 'fly' | 'down', k, dist, ... }
+  const simNow = () => (window.__fires ? window.__fires.simT : 0);
+  const ctlY = () => standH(walk.x0, walk.z0) + EYE;      // the controller, standing at the post
+  function quadUI() {
+    const f = !!quad;
+    quadHud.hidden = !f; quadRec.hidden = !f; binoBtn.hidden = f || camOP; quadGo.hidden = f || camOP;
+    obsExit.textContent = f ? 'Back to map' : 'Back to map (Esc)';
+    obsHint.textContent = f ? 'WASD or arrows: fly · Q/E: turn · R/F: climb/descend · Drag: turn, tilt camera'
+      : camOP ? 'Drag or arrows: pan · Wheel or +/−: zoom' : 'Arrows: walk · Shift+arrows or drag: turn';
+    qhMsg.hidden = true;
+  }
+  function quadNote(text, sec) { if (quad) { quad.note = text; quad.noteUntil = performance.now() + sec * 1000; quad.hudN = 0; } }
+  function quadLaunch() {
+    if (!obs || camOP || quad) return;
+    quad = { x: walk.x, z: walk.z, y: camera.position.y, g0: standH(walk.x, walk.z), used: 0, last: simNow(), phase: 'launch',
+      k: 0, dist: 0, opYaw: yaw, opPitch: pitch, hudN: 0, warned: false, note: '', noteUntil: 0 };
+    binos = false; pitch = -0.2; walk.keys.clear(); qKeys.clear();
+    quadUI(); setFov(); quadTick(0);
+  }
+  function quadEnd() {
+    if (!quad) return;
+    yaw = quad.opYaw; pitch = quad.opPitch; quad = null; qKeys.clear();
+    if (obs) { placeObserver(); setFov(); }
+    quadUI();
+  }
+  function quadRecover() {
+    if (!quad || quad.phase === 'down') return;
+    quadEnd();
+  }
+  quadGo.addEventListener('click', quadLaunch);
+  quadRec.addEventListener('click', quadRecover);
+  function quadTick(dt) {
+    const q = quad, now = simNow(), ds = now - q.last; q.last = now;
+    if (ds > 0 && ds < 600) q.used += ds;                      // sim time; a clock reset never refunds the battery
+    if (q.phase === 'down') { if (performance.now() > q.downT) quadEnd(); return; }
+    if (q.used >= Q_ENDUR) {             // out of battery: home if it made it back to the post, a crash anywhere else
+      const home = Math.hypot(q.x - walk.x0, q.z - walk.z0) <= Q_REC_R;
+      q.phase = 'down'; q.downT = performance.now() + 3500; qKeys.clear(); quadNote(home ? 'BATTERY DEPLETED · LANDED' : 'BATTERY DEPLETED · sUAS CRASHED', 3.5);
+    }
+    else if (!q.warned && Q_ENDUR - q.used <= Q_WARN) { q.warned = true; quadNote('LOW BATTERY', 3); }
+    if (q.phase === 'launch') { q.y += Q_LAUNCH_RATE * dt; if (q.y >= q.g0 + Q_LAUNCH_AGL) { q.y = q.g0 + Q_LAUNCH_AGL; q.phase = 'fly'; } }
+    else if (q.phase === 'fly') {
+      const K = qKeys, h = c => (K.has(c) ? 1 : 0), f = h('F') - h('B'), s = h('R') - h('L'), u = h('U') - h('D'), t = h('TR') - h('TL');
+      if (t) yaw += t * Q_TURN * dt;
+      if (f || s) {                      // along the ground where the camera faces; slide along a wall taller than the aircraft
+        const L = Math.hypot(f, s), st = Q_SPEED * dt / L, ok = (x, z) => standH(x, z) + Q_MIN_AGL <= q.y;
+        const dx = (Math.sin(yaw) * f + Math.cos(yaw) * s) * st, dz = (-Math.cos(yaw) * f + Math.sin(yaw) * s) * st;
+        if (ok(q.x + dx, q.z + dz)) { q.x += dx; q.z += dz; } else if (dx && ok(q.x + dx, q.z)) q.x += dx; else if (dz && ok(q.x, q.z + dz)) q.z += dz;
+      }
+      if (u) q.y += u * Q_CLIMB * dt;
+    }
+    q.y = Math.max(standH(q.x, q.z) + Q_MIN_AGL, Math.min(heightAt(q.x, q.z) + Q_MAX_AGL, q.y));
+    camera.position.set(q.x, q.y, q.z); applyLook();
+    q.dist = Math.hypot(q.x - walk.x0, q.y - ctlY(), q.z - walk.z0);
+    q.k = Math.max(0, Math.min(1, (q.dist - Q_CLEAR) / (Q_LOST - Q_CLEAR)));
+    if (q.hudN-- > 0) return;            // the readout, about 10 times a second
+    q.hudN = 6;
+    const F = window.__fires, g = F && F.toGrid(CE + q.x, CN - q.z), left = Math.max(0, Q_ENDUR - q.used);
+    qhGps.textContent = g || '—';
+    qhDist.textContent = q.dist < 1000 ? Math.round(q.dist) + ' m' : (q.dist / 1000).toFixed(2) + ' km';
+    qhBatt.textContent = Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0'); qhBatt.classList.toggle('low', left <= Q_WARN);
+    const msg = performance.now() < q.noteUntil ? q.note : q.phase === 'fly' && q.k >= 1 ? 'NO VIDEO LINK' : '';
+    qhMsg.hidden = !msg; if (msg && qhMsg.textContent !== msg) qhMsg.textContent = msg;
+    quadHud.classList.toggle('nolink', q.phase === 'down' || q.k >= 1);
+  }
+  // The feed picture. The scene is drawn into a small target — Q_RES of the screen in CSS pixels close in, falling to
+  // Q_RES_FAR at Q_LOST — then one full-screen pass scales it up with grain, washed-out colour, faint scan lines and a
+  // vignette; past Q_CLEAR, torn lines and dropped frames (the last picture shown again under new grain). No video, or
+  // landed on a dead battery: snow only, and the scene is not drawn at all. Cheaper than the OP view it replaces.
+  const Q_RES = 0.6, Q_RES_FAR = 0.25;
+  const QFX = (() => {
+    const rt = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false, encoding: THREE.sRGBEncoding });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
+    const U = { t: { value: rt.texture }, k: { value: 0 }, seed: { value: 0 }, snow: { value: 0 }, pr: { value: 1 } };
+    const mat = new THREE.ShaderMaterial({
+      depthTest: false, depthWrite: false, toneMapped: false, uniforms: U,
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: `
+uniform sampler2D t; uniform float k, seed, snow, pr; varying vec2 vUv;
+float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main(){
+  vec2 uv = vUv;
+  float row = floor(uv.y * 180.0);                                       // torn lines, more and wider with range
+  uv.x += step(1.0 - 0.08 * k * k, h(vec2(row, seed))) * (h(vec2(seed, row)) - 0.5) * 0.08 * k;
+  vec3 c = texture2D(t, uv).rgb;
+  c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.2 + 0.5 * k);     // colour washes out
+  vec2 cell = floor(gl_FragCoord.xy / (pr * (1.0 + 2.0 * k)));          // grain, coarser with range
+  c += (h(cell + seed) - 0.5) * (0.07 + 0.45 * k);
+  c *= 0.96 + 0.04 * sin(gl_FragCoord.y / pr * 3.14159);                // faint scan lines
+  vec2 v = vUv - 0.5; c *= 1.0 - dot(v, v) * 0.7;                       // vignette
+  c = mix(c, vec3(0.08 + 0.5 * h(floor(gl_FragCoord.xy / (pr * 2.0)) + seed * 1.7)), snow);   // snow, dim enough to read the telemetry over
+  gl_FragColor = vec4(c, 1.0);
+}`
+    });
+    const tri = new THREE.Mesh(g, mat); tri.frustumCulled = false;
+    const sc = new THREE.Scene(); sc.add(tri);
+    const oc = new THREE.Camera(), size = new THREE.Vector2();
+    let fresh = false;
+    return {
+      render(scene, cam, k, snow) {
+        const pr = renderer.getPixelRatio(); renderer.getDrawingBufferSize(size);
+        const res = Math.round((Q_RES + (Q_RES_FAR - Q_RES) * k) * 20) / 20 / pr;     // steps of 0.05, so the target is not resized every frame
+        const w = Math.max(64, Math.round(size.x * res)), h = Math.max(48, Math.round(size.y * res));
+        if (rt.width !== w || rt.height !== h) { rt.setSize(w, h); fresh = true; }
+        const drop = Math.random() < 0.35 * k * k;
+        if (!snow && (!drop || fresh)) {
+          UAS.feedHide(true); renderer.setRenderTarget(rt); renderer.render(scene, cam); renderer.setRenderTarget(null); UAS.feedHide(false); fresh = false;
+        }
+        U.k.value = k; U.seed.value = Math.random() * 100; U.snow.value = snow; U.pr.value = pr;
+        renderer.render(sc, oc);
+      },
+      debug: { rt, U }
+    };
+  })();
+  function quadRender() {                // from the render loop: true when it drew the frame
+    if (!quad) return false;
+    QFX.render(scene, camera, quad.k, quad.phase === 'down' || quad.k >= 1 ? 1 : 0);
+    return true;
+  }
+  window.__quad = { get q() { return quad; }, launch: quadLaunch, recover: quadRecover, end: quadEnd, QFX };
+  const typingNow = () => { const a = document.activeElement; return !!a && /INPUT|TEXTAREA|SELECT/.test(a.tagName); };
   addEventListener('keydown', e => {
-    if (!obs) return;
-    const step = (binos ? 0.004 : 0.04);
-    if (e.key === 'b' || e.key === 'B') { binos = !binos; setFov(); }
+    if (!obs || typingNow()) return;
+    if (quad) {                         // flying: the sUAS keys, held (quadTick); Esc recovers
+      if (e.key === 'Escape') quadRecover();
+      else { const m = Q_KEYS[e.key.toLowerCase()]; if (!m || e.ctrlKey || e.metaKey || e.altKey) return; qKeys.add(m); }
+      e.preventDefault(); return;
+    }
+    const step = camOP ? THREE.MathUtils.degToRad(camFov) * 0.05 : binos ? 0.004 : 0.04;
+    const arrow = /^Arrow(Up|Down|Left|Right)$/.test(e.key);
+    if ((e.key === 'b' || e.key === 'B') && !camOP) { binos = !binos; setFov(); }
     else if (e.key === 'Escape') leaveObserver();
+    else if (camOP && (e.key === '+' || e.key === '=')) camZoom(1 / 1.25);
+    else if (camOP && e.key === '-') camZoom(1.25);
+    else if (arrow && !camOP && !e.shiftKey) walk.keys.add(e.key);       // walk while held (obsTick)
     else if (e.key === 'ArrowLeft') { yaw -= step; applyLook(); }
     else if (e.key === 'ArrowRight') { yaw += step; applyLook(); }
     else if (e.key === 'ArrowUp') { pitch = Math.min(1.3, pitch + step); applyLook(); }
@@ -1623,6 +1880,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     else return;
     e.preventDefault();
   });
+  addEventListener('keyup', e => { walk.keys.delete(e.key); qKeys.delete(Q_KEYS[e.key.toLowerCase()]); });
+  addEventListener('blur', () => { walk.keys.clear(); qKeys.clear(); });
   let drag = null;
   canvas.addEventListener('pointerdown', e => { if (obs) { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); } });
   canvas.addEventListener('pointerup', () => { drag = null; });
@@ -1630,7 +1889,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     if (!obs || !drag) return;
     // one screen height of drag turns the view by one field of view, so binoculars pan finely
     const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight;
-    yaw -= (e.clientX - drag.x) * k; pitch = Math.max(-1.3, Math.min(1.3, pitch + (e.clientY - drag.y) * k));
+    yaw -= (e.clientX - drag.x) * k; pitch = Math.max(quad ? -1.5 : -1.3, Math.min(quad ? 0.35 : 1.3, pitch + (e.clientY - drag.y) * k));   // sUAS gimbal: near straight down to a little above level
     drag = { x: e.clientX, y: e.clientY }; applyLook();
   });
   function drawReticle() {
@@ -1662,14 +1921,6 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     }
   }
   addEventListener('resize', drawReticle);
-  const rngEl = document.getElementById('rng'), dirEl = document.getElementById('dir');
-  function obsReadout(p) {
-    if (!obs || !p) { rngEl.textContent = '—'; dirEl.textContent = '—'; return; }
-    const dx = p.x - camera.position.x, dz = p.z - camera.position.z;
-    rngEl.textContent = Math.round(Math.hypot(dx, dz)) + ' m';
-    let az = Math.atan2(dx, -dz); if (az < 0) az += 2 * Math.PI;
-    dirEl.textContent = String(Math.round(az / MIL) % 6400).padStart(4, '0') + ' mils grid';
-  }
 
   // ---- hover readout: march the mouse ray against the height grid
   const gEl = document.getElementById('g'), hEl = document.getElementById('h');
@@ -1696,8 +1947,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   }
   const pad = v => String(Math.round(v)).padStart(5, '0');
   canvas.addEventListener('pointermove', e => {
+    if (obs) return;                    // no grid or height under the cursor at an OP: that would be a free rangefinder
     const p = pick(e.clientX, e.clientY);
-    obsReadout(p);
     if (!p) { gEl.textContent = '—'; hEl.textContent = '—'; return; }
     const E = CE + p.x, N = CN - p.z;
     gEl.textContent = '4Q FJ ' + pad(E - 600000) + ' ' + pad(N - 2300000);
@@ -4733,7 +4984,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     // Default set (Lee's KML v1.2 converted): { lps: [{ fam, name, e, n }] } (an old rounds field is ignored)
     let savedLPs = null; try { savedLPs = JSON.parse(localStorage.getItem(STORE.lps)); } catch (e) {}
     // a room's student starts with none: it gets the host's
-    (NET.client ? Promise.resolve(null) : Array.isArray(savedLPs) ? Promise.resolve({ lps: savedLPs }) : fetch('data/uas.json').then(r => r.ok ? r.json() : null)).then(j => {
+    (NET.client ? Promise.resolve(null) : Array.isArray(savedLPs) ? Promise.resolve({ lps: savedLPs }) : fetch('data/uas.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null)).then(j => {
       if (!j || !Array.isArray(j.lps)) return;
       for (const l of j.lps) if (FAMS[l.fam]) { const p = toLocal(l.e, l.n); addLP(l.fam, p.x, p.z, l.name); }
     }).catch(() => {}).then(() => { lpsReady = true; BOOT.done('friendly'); });
@@ -5207,7 +5458,8 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       if (on) { keep.realV = real.map(o => o.visible); for (const o of real) o.visible = true; }
       else if (keep.realV) real.forEach((o, i) => { o.visible = keep.realV[i]; });
     }
-    const kept = [];
+    const kept = [], qKept = [];
+    const feedHide = on => hideForFeed(on, qKept);     // the sUAS feed (main view) sees what the feeds see
     const noise = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), im = g.createImageData(256, 256);
       for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); return c; })();
     const small = document.createElement('canvas'), sctx = small.getContext('2d');
@@ -5237,6 +5489,23 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       scene.background = null; renderer.autoClear = false; renderer.setClearColor(0x000000, 1); renderer.clear(true, false, false);   // colour only: keep the depth
       scene.overrideMaterial = hotMat; renderer.render(scene, d.cam3); scene.overrideMaterial = null;
       renderer.setClearColor(irCC, ca); renderer.autoClear = ac; scene.background = bg;
+      for (const o of off) o.visible = true;
+      scene.children.forEach((o, i) => { o.visible = vis[i]; });
+    }
+    // IR on the main view (a camera OP, 2026-11-15): after the normal render, a black veil dims the frame, then the hot
+    // things are drawn white over it with the frame's own depth. The canvas's CSS filter makes the rest grey.
+    const dimScene = new THREE.Scene(), dimCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    dimScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.5, depthTest: false, depthWrite: false })));
+    function irOver(cam) {
+      const ac = renderer.autoClear; renderer.autoClear = false;
+      renderer.render(dimScene, dimCam);
+      const hot = new Set([OPFOR.debug.root, CIV.debug.grp, models]), vis = scene.children.map(o => o.visible), off = [];
+      for (const o of scene.children) if (!hot.has(o)) o.visible = false;
+      for (const r of hot) for (const o of r.children)
+        if (o.visible && (o.isSprite || o.isPoints || (o.material && !Array.isArray(o.material) && (o.material.transparent || o.material.isShaderMaterial)))) { o.visible = false; off.push(o); }
+      const bg = scene.background; scene.background = null;
+      scene.overrideMaterial = hotMat; renderer.render(scene, cam); scene.overrideMaterial = null;
+      scene.background = bg; renderer.autoClear = ac;
       for (const o of off) o.visible = true;
       scene.children.forEach((o, i) => { o.visible = vis[i]; });
     }
@@ -5639,12 +5908,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     draw();
     const feedCams = () => drones.filter(d => d.feed && (d.state === 'fly' || d.state === 'falling')).map(d => d.cam3);
     const feedFocus = () => drones.filter(d => d.feed && d.spi && d.state === 'fly').map(d => ({ x: d.spi.x, z: d.spi.z, r: 350, cam: d.cam3.position }));
-    return { tick, renderFeeds, feedFocus, feedCams, cmd, runCmd, netState, applyNet, applyCam, droneById, setSend(f) { sendCmd = f; }, camOut, debug: { cmd, OPS, ctl, mine, lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
+    return { tick, renderFeeds, irOver, feedHide, feedFocus, feedCams, cmd, runCmd, netState, applyNet, applyCam, droneById, setSend(f) { sendCmd = f; }, camOut, debug: { cmd, OPS, ctl, mine, lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
   })();
   window.__uas = UAS.debug;
 
   // ---- SCENARIO: export the working scenario to a file; load a built-in one (data/scenarios/index.json) or a file.
-  //      File: { format: 'fist-scenario', version: 1, name, opfor: { nextId, groups }, units: [...], lps: [...] }
+  //      File: { format: 'fist-scenario', version: 1, name, opfor: { nextId, groups }, units: [...], lps: [...], ops: [...] }
+  //      ops (friendly positions, 2026-11-15) is optional: a file without it gets data/ops.json.
   (function scenario() {
     const $ = id => document.getElementById(id), list = $('sc-list'), loadBtn = $('sc-load'), nameIn = $('sc-name'), fileIn = $('sc-filein');
     const msg = (text, cls) => { $('sc-msg').textContent = text; $('sc-msg').className = 'msg' + (cls ? ' ' + cls : ''); };
@@ -5669,6 +5939,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function isValid(s) {
       const VT = OPFOR.debug.VT;
       return !!s && s.format === 'fist-scenario' && s.version === 1 && Array.isArray(s.units) && Array.isArray(s.lps) && !!s.opfor && Array.isArray(s.opfor.groups) &&
+        (s.ops === undefined || validOps(s.ops)) &&
         s.opfor.groups.every(g => Array.isArray(g.route) && Array.isArray(g.units) && g.units.every(u => VT[u.type]));
     }
     function apply(s) {       // the reload gives a clean start: clock at zero, no missions, drones or damage left over
@@ -5678,6 +5949,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         localStorage.setItem(STORE.units, JSON.stringify(s.units));
         localStorage.setItem(STORE.lps, JSON.stringify(s.lps));
         localStorage.setItem(STORE.name, s.name || '');
+        if (s.ops) localStorage.setItem(OPS_KEY, JSON.stringify(s.ops)); else localStorage.removeItem(OPS_KEY);   // none: data/ops.json
       } catch (e) { return msg('This browser would not store the scenario.', 'bad'); }
       location.reload();
     }
@@ -5699,7 +5971,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     });
     $('sc-export').addEventListener('click', () => {
       const name = nameIn.value.trim() || 'Untitled scenario';
-      const body = JSON.stringify({ format: 'fist-scenario', version: 1, name, opfor: OPFOR.debug.snapshot(), units: FIRES.debug.unitList(), lps: UAS.debug.lpList() }, null, 1);
+      const body = JSON.stringify({ format: 'fist-scenario', version: 1, name, opfor: OPFOR.debug.snapshot(), units: FIRES.debug.unitList(), lps: UAS.debug.lpList(), ops: SKETCH.ops }, null, 1);
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
       a.download = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.json';
       a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -6178,7 +6450,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         say('Session ' + code + ' · ' + n + ' student' + (n === 1 ? '' : 's'), 'host', who.length ? 'In the session: ' + who.join(', ') : 'Nobody has joined yet');
         roomHooks.roster(who, pin); };
       const dmg = () => ({ opfor: struckList(), civ: CIV.hits() });
-      const full = to => send('full', { to, opfor: O.netState(), units: F.unitList(), civ: CIV.debug.level, clock: { t: F.simT, speed: F.speed }, dmg: dmg(), uas: UAS.netState(), chat: CHAT.lines });
+      const full = to => send('full', { to, opfor: O.netState(), units: F.unitList(), civ: CIV.debug.level, clock: { t: F.simT, speed: F.speed }, dmg: dmg(), uas: UAS.netState(), chat: CHAT.lines, ops: SKETCH.ops });
       NET.emit = (type, o) => send(type, o);
       onLink = st => {
         if (st === 'open') roster();
@@ -6252,6 +6524,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         if (m.to !== me) return;
         joined = true; clock(m.clock);
         CIV.set(m.civ); FIRES.setUnits(m.units); O.applyNet(m.opfor); UAS.applyNet(m.uas); applyDmg(m.dmg); CHAT.load(m.chat);
+        if (m.ops) setOps(m.ops);
         status(); return;
       }
       if (!joined) return;
@@ -6418,12 +6691,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     PERF.time('opfor', () => OPFOR.tick());
     PERF.time('uas', () => UAS.tick());
     PERF.time('civ', () => CIV.tick(FIRES.debug.simT, UAS.feedFocus()));
-    if (!obs) { navTick(dt); controls.update(); } reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000;
+    if (!obs) { navTick(dt); controls.update(); } else obsTick(dt); reticleTick(); sky.position.copy(camera.position); WATER.time.value = now / 1000;
     const cams = [camera, ...UAS.feedCams()];
     PERF.time('trees', () => { CITY.treeTick(cams); GROUND.update(cams); OPFOR.farTick(cams); });
     PERF.time('feeds', () => UAS.renderFeeds());
     const veiled = STUDENT && !obs ? studentVeil() : null;     // the student's map hides what only the sensors may show
-    PERF.time('render', () => { if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera); });
+    PERF.time('render', () => {
+      if (quadRender()) { /* the sUAS feed: drawn small with grain (QFX) */ }
+      else if (obs && camOP && camIR) { renderer.render(scene, camera); UAS.irOver(camera); }   // a camera OP in IR: straight to screen, so the hot pass keeps the depth
+      else if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera);
+    });
     if (veiled) for (const [o, v] of veiled) o.visible = v;
     BOOT.frame(now - lastFrameStart); PERF.frame(now - lastFrameStart); lastFrameStart = now; lastFrameAt = performance.now();
     MAPGRID.tick();

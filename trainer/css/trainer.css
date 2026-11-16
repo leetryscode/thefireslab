@@ -126,11 +126,30 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .ops .stand { color: var(--brass); }
 #obsbar[hidden], #binos[hidden], #reticle[hidden], .win[hidden] { display: none; }
 #obsbar { position: fixed; top: calc(var(--tb-h, 56px) + 10px); right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; max-width: calc(100% - 32px);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; max-width: min(500px, calc(100% - 32px));
   background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 #obsbar .where { font: 600 14px var(--font-head); letter-spacing: .06em; text-transform: uppercase; color: var(--friend); margin-right: 6px; }
+#obsbar [hidden] { display: none !important; }
+#camctl { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#obsbar .camseg { display: inline-flex; border: 1px solid var(--line); border-radius: 14px; padding: 2px; }
+#obsbar .camseg button { border: 0; border-radius: 11px; padding: 3px 12px; font-weight: 700; letter-spacing: .06em; background: transparent; }
+#obsbar .camseg button[aria-pressed=true] { background: var(--ink); color: var(--panel); }
+#obsbar .camfov { font: 500 12px var(--font-mono); color: var(--muted, var(--ink)); }
+#obsbar .hint { flex-basis: 100%; text-align: right; font: 500 11px var(--font-mono); opacity: .75; }
 #binos { position: fixed; inset: 0; pointer-events: none; }
 #reticle { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* sUAS feed (Lee, 2026-11-16): symbology on the glass like the sim's POV — thin white lines, dark halo, no plates */
+#quadhud[hidden], #quadhud [hidden] { display: none !important; }
+#quadhud { position: fixed; inset: 0; pointer-events: none; color: #fff; font: 500 15px var(--font-mono); font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2px #000, 0 0 4px #000; }
+#quadhud .qh-br { position: absolute; left: 50%; top: 50%; width: min(300px, 60vw); transform: translate(-50%, -50%); overflow: visible; }
+#quadhud .qh-br path { fill: none; stroke: #fff; stroke-width: 1.5; opacity: .85; filter: drop-shadow(0 0 1.5px #000); vector-effect: non-scaling-stroke; }
+#quadhud .qh-read { position: absolute; top: calc(var(--tb-h, 56px) + 14px); left: max(18px, env(safe-area-inset-left, 0px)); display: grid; gap: 4px; opacity: .92; }
+#quadhud .qh-read b { display: inline-block; width: 4.2em; font-weight: 600; letter-spacing: .08em; }
+#quadhud .qh-read .low { color: #ffb347; }
+#quadhud.nolink .qh-read { background: rgba(0,0,0,.6); padding: 6px 10px; margin: -6px -10px; }   /* over the snow: still readable, to fly it home */
+#quadhud .qh-msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 600 26px var(--font-mono); letter-spacing: .1em; text-align: center;
+  background: rgba(0,0,0,.55); padding: 14px 26px; }
 .vs { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
 .vs select { font: 500 12px var(--font-mono); color: var(--ink); background: var(--ground); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; }
 .vs select:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }

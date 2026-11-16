@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kill Chain Simulator — Fires Lab</title>
-<link rel="stylesheet" href="css/trainer.css?v=2026-11-15k">
+<link rel="stylesheet" href="css/trainer.css?v=2026-11-16c">
 </head>
 <body>
 <canvas id="view" aria-label="3D terrain of the Honolulu battlespace with the scenario sketch"></canvas>
@@ -14,8 +14,20 @@
 <div id="obsbar" hidden role="region" aria-label="Observer">
   <span class="where" id="obswhere">OP</span>
   <button id="bino" aria-pressed="false">Binoculars (B)</button>
-  <button id="ovl" aria-pressed="false">Friendly overlay</button>
+  <button id="quad-go" title="Launch a small quadcopter from this OP and fly its camera">Launch sUAS</button>
+  <button id="quad-rec" hidden title="Bring the quadcopter home and land it">Recover (Esc)</button>
+  <span id="camctl" hidden>
+    <span class="camseg" role="group" aria-label="Sensor"><button id="cam-tv" aria-pressed="true" title="Daylight colour camera">TV</button><button id="cam-ir" aria-pressed="false" title="Thermal (white-hot): vehicles and people glow">IR</button></span>
+    <button id="cam-zin" title="Zoom in (wheel or +)">Zoom +</button><button id="cam-zout" title="Zoom out (wheel or −)">Zoom −</button>
+    <span class="camfov">FOV <b id="cam-fov">—</b></span>
+  </span>
+  <span class="hint" id="obshint"></span>
   <button id="obsexit">Back to map (Esc)</button>
+</div>
+<div id="quadhud" hidden>
+  <svg class="qh-br" viewBox="0 0 300 220" aria-hidden="true"><path d="M0 34V0H34M266 0H300V34M300 186V220H266M34 220H0V186M132 110H142M158 110H168M150 102V92M150 118V128"/></svg>
+  <div class="qh-read"><div><b>GPS</b><span id="qh-gps">—</span></div><div><b>DIST</b><span id="qh-dist">—</span></div><div><b>BATT</b><span id="qh-batt">—</span></div></div>
+  <div class="qh-msg" id="qh-msg" hidden></div>
 </div>
 <div id="qf-armed" hidden role="status"><span class="dot"></span><span id="qf-armed-t">Fire on click</span><button id="qf-stop" type="button">Stop (Esc)</button></div>
 
@@ -189,10 +201,9 @@
 </section>
 
 <div class="readout" aria-live="polite">
-  <span><b>GRID</b><span id="g">—</span></span>
-  <span><b>ELEV</b><span id="h">—</span></span>
-  <span id="rngbox" hidden><b>RANGE</b><span id="rng">—</span></span>
-  <span id="dirbox" hidden><b>DIR</b><span id="dir">—</span></span>
+  <span class="map-only"><b>GRID</b><span id="g">—</span></span>
+  <span class="map-only"><b>ELEV</b><span id="h">—</span></span>
+  <span id="dirbox" hidden><b>FACING</b><span id="dir">—</span></span>
 </div>
 
 <section class="win instr-only" id="w-session" aria-label="Live session" hidden>
@@ -260,6 +271,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js?v=2026-11-15n"></script>
+<script src="js/trainer.js?v=2026-11-16e"></script>
 </body>
 </html>

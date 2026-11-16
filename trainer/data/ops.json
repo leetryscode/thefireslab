@@ -1,5 +1,5 @@
 {
- "note": "Friendly positions and the battlespace border (UTM 4N, NAD83). The border only sets the first look direction when standing; it is not drawn.",
+ "note": "Default friendly positions and the battlespace border (UTM 4N, NAD83). A scenario file's own 'ops' list replaces these. kind 'camera' is a fixed pan/zoom camera. The border only sets the first look direction when standing; it is not drawn.",
  "ops": [
   {
    "name": "OP Volcano",
@@ -17,17 +17,19 @@
   },
   {
    "name": "OP Harbor",
-   "note": "in a building in position to oberserve the harbour",
-   "e": 617980.5,
-   "n": 2356441.1,
-   "h": 2.9
+   "note": "on a roof above the harbour, at its southwest edge, overlooking the piers",
+   "e": 617968.5,
+   "n": 2356425.4,
+   "h": 2.7
   },
   {
    "name": "Beach camera",
-   "note": "maybe a pannable, zoomable camera placed in this building overlooking this beach for amphibious landing",
-   "e": 620484.7,
-   "n": 2353821.0,
-   "h": 1.3
+   "note": "pan and zoom camera at the southwest corner of a roof, the corner nearest the beach; starts looking out to sea",
+   "e": 620480.3,
+   "n": 2353791.7,
+   "h": 1.6,
+   "kind": "camera",
+   "look": 3750
   },
   {
    "name": "OP Hill",
