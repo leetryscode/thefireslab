@@ -62,7 +62,7 @@
     if (!r.ok) throw new Error(name + ' (' + r.status + ')');
     return as === 'json' ? r.json() : as === 'url' ? URL.createObjectURL(await r.blob()) : r.arrayBuffer();
   }
-  const [demJ, SKETCH, PHOTO, SHORE] = await Promise.all([load('dem.json', 'json'), load('ops.json', 'json'), load('photo.jpg', 'url'), load('shore.png', 'url')]);
+  const [demJ, SKETCH, PHOTO] = await Promise.all([load('dem.json', 'json'), load('ops.json', 'json'), load('photo.jpg', 'url')]);
   // Friendly positions ride with the scenario (Lee, 2026-11-15): the working scenario's list when it has one, else
   // data/ops.json. Each: { name, note, e, n, h, kind, look } — kind 'camera' is a fixed pan/zoom camera instead of an
   // observer; look (optional) is the direction the view starts in, mils grid (else the centre of the battlespace).
@@ -227,6 +227,12 @@
   window.__aa = AA;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: AA === 'msaa' });
   renderer.setPixelRatio(LITE ? 1 : Math.min(devicePixelRatio, 2));
+  const PR_U = { value: renderer.getPixelRatio() };   // shared uniform for shaders sized in screen pixels; RES (by the render loop) changes it
+  // Instanced meshes are sized for the most they may ever hold, but most frames fill a fraction. Without a range,
+  // needsUpdate re-sends the whole buffer: the tree LOD sent ~15 MB on each camera move, the traffic more every frame
+  // (2026-11-17, spike log). Send only the slots in use; nothing at all when empty (a zero range means "all" in WebGL2).
+  const sendUsed = (a, n) => { if (!a || n <= 0) return; a.updateRange.offset = 0; a.updateRange.count = n * a.itemSize; a.needsUpdate = true; };
+  const sendInst = (m, n = m.count) => { sendUsed(m.instanceMatrix, n); sendUsed(m.instanceColor, n); };
   // FXAA: the main view is drawn into a texture, already sRGB-encoded, and this pass smooths its edges onto the canvas.
   // UAS feeds render straight to the canvas as before, so they are unsmoothed in this mode.
   const FXAA = AA !== 'fxaa' ? null : (() => {
@@ -319,7 +325,8 @@ void main(){
   };
   const WATER_GLSL = `
 uniform float uTime; uniform vec3 uSun; uniform vec3 uHz; uniform vec3 uZn;
-float wh21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+// hash without sin (2026-11-16): sin of a large argument is coarse on Direct3D and drew the sea in blocks; cheaper too
+float wh21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float wnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(wh21(i), wh21(i + vec2(1, 0)), f.x), mix(wh21(i + vec2(0, 1)), wh21(i + vec2(1, 1)), f.x), f.y); }
 // surface normal from six directional waves (lengths 4-60 m, mostly running one way, like a trade-wind sea);
@@ -327,7 +334,8 @@ float wnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
 vec3 waveNormal(vec2 q, float px){
   vec2 g = vec2(0.0); float t = uTime, ph = wnoise(q * 0.012) * 6.0 + wnoise(q * 0.05) * 1.5;
   #define WAVE(dx, dy, L, s) { vec2 d = normalize(vec2(dx, dy)); float k = 6.2832 / L, w = sqrt(9.8 * k); \
-    float f = 1.0 - smoothstep(0.2, 0.4, px / L); g += d * (s * f * cos(dot(d, q) * k - w * t + ph)); }
+    float f = 1.0 - smoothstep(0.2, 0.4, px / L), a = dot(d, q) * k - w * t + ph; a -= 6.2832 * floor(a / 6.2832); \
+    g += d * (s * f * cos(a)); }   /* angle wrapped to 0-2pi first: cos of thousands of radians is coarse on Direct3D */
   // (dx, dy) is the way the crests travel in world x/z: +x east, +z south, so negative dy runs north-east onto the beaches
   WAVE(0.8, -0.6, 60.0, 0.09) WAVE(0.55, -0.85, 31.0, 0.09) WAVE(0.97, -0.25, 18.0, 0.08)
   WAVE(0.4, -0.92, 11.0, 0.07) WAVE(0.92, 0.15, 7.0, 0.06) WAVE(0.7, -0.72, 4.3, 0.05)
@@ -354,25 +362,31 @@ vec3 waterShade(vec3 base, vec3 P, float foam){
 }
 `;
   const WATER_MAIN = 'void main() {\n  wPx = max(length(fwidth(vWW.xz)), 0.01);';
-  // ---- SHORE (2026-11-16): where the ground is drawn as water, at the photo's own ~2.9 m, from OpenStreetMap
-  //      (Trainer\pipeline\make_shore.py -> data/shore.png; the old mask was the 10 m grid, so harbour and marina edges
-  //      faded over 10-20 m and got the beach's surf). shore.png R = signed distance to the shoreline (m, + over water,
-  //      128 + 4d), G = exposure (0 sheltered harbour/marina/canal, 1 open to the swell). Split here into two one-byte
-  //      textures: the distance at full size (half on Lite), the exposure at a quarter (it's smooth). Display only: the
-  //      rules (vehicles, swimming, tube rounds) still use the 10 m grid's water.
-  //      SHORE_FOAM: surf band (m out from the edge, exposed shores only). QUAY_SHADOW / QUAY_LIP: on sheltered shores,
-  //      a dark band in the water under the wall and a pale lip on the land side (m). SHORE_PULL: near sheltered edges the
-  //      water takes its photo colour from this far out, past the land's blur in the photo.
-  const SHORE_FOAM = [3, 8, 26], QUAY_SHADOW = 2.5, QUAY_LIP = 1.2, SHORE_PULL = 8;
-  const shoreTex = await (async () => {
-    const img = await new THREE.ImageLoader().loadAsync(SHORE); URL.revokeObjectURL(SHORE);
-    const k = LITE ? 2 : 1, w = img.width / k | 0, h = img.height / k | 0, c = document.createElement('canvas'); c.width = w; c.height = h;
-    const g = c.getContext('2d'); g.imageSmoothingEnabled = k > 1; g.drawImage(img, 0, 0, w, h);
-    const px = g.getImageData(0, 0, w, h).data, ew = w >> 2, eh = h >> 2, D = new Uint8Array(w * h), E = new Uint8Array(ew * eh);
-    for (let r = 0; r < h; r++) { const o = (h - 1 - r) * w, s = r * w; for (let x = 0; x < w; x++) D[o + x] = px[(s + x) * 4]; }   // row 0 = north = top (v = 1)
-    for (let r = 0; r < eh; r++) { const o = (eh - 1 - r) * ew, s = r * 4 * w; for (let x = 0; x < ew; x++) E[o + x] = px[(s + x * 4) * 4 + 1]; }
-    const mk = (a, tw, th) => { const t = new THREE.DataTexture(a, tw, th, THREE.LuminanceFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.unpackAlignment = 1; t.needsUpdate = true; return t; };
-    return { d: mk(D, w, h), e: mk(E, ew, eh), w, h };
+  // water mask on the terrain grid: R = water, slightly softened; G = a shore band for the foam (water within ~25 m
+  // of land). Water = sea no-data, or ground under 0.4 m (harbour, canal) where the photo also looks like water
+  // (blue or turquoise, not the grey/white of piers, car parks and boats) - the marina flooded without that check.
+  const waterTex = (() => {
+    const c = document.createElement('canvas'); c.width = NX; c.height = NY; const g = c.getContext('2d');
+    g.drawImage(tex.image, 0, 0, NX, NY); const ph = g.getImageData(0, 0, NX, NY).data;
+    const img = g.createImageData(NX, NY), d = img.data;
+    for (let i = 0; i < NX * NY; i++) {
+      const R = ph[i * 4], G = ph[i * 4 + 1], B = ph[i * 4 + 2];
+      const wet = B > R + 12 && G > R && R + G + B < 560;
+      const w = dm[i] < 0 || (H[i] < 0.4 && wet);
+      d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = w ? 255 : 0; d[i * 4 + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const a = document.createElement('canvas'); a.width = NX; a.height = NY; const ag = a.getContext('2d');
+    ag.filter = 'blur(1px)'; ag.drawImage(c, 0, 0);
+    const b = document.createElement('canvas'); b.width = NX; b.height = NY; const bg = b.getContext('2d');
+    bg.filter = 'blur(2.5px)'; bg.drawImage(c, 0, 0);
+    const A = ag.getImageData(0, 0, NX, NY).data, Bd = bg.getImageData(0, 0, NX, NY).data, out = g.createImageData(NX, NY), o = out.data;
+    for (let i = 0; i < NX * NY; i++) {
+      const w = A[i * 4], wb = Bd[i * 4] / 255;
+      o[i * 4] = w; o[i * 4 + 1] = d[i * 4] ? Math.round(255 * Math.max(0, 1 - Math.abs(wb - 0.62) / 0.3)) : 0; o[i * 4 + 2] = 0; o[i * 4 + 3] = 255;
+    }
+    g.putImageData(out, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; return t;
   })();
   // ---- SHADOW + HAZE (Lee, 2026-11-10): how the false land looks. hazeTex R = haze, a soft patchy veil in the horizon
   //      colour over the line where play ends (spreads onto the water beside it, thins inland, gone before the grid's edge);
@@ -470,62 +484,21 @@ vec3 gradeGround(vec3 base, vec3 lit){
   // Hybrid ground: in built-up blocks the photo (leaning walls, frozen shadows, blur) fades to plain pavement and the
   // map roads are drawn on top; open ground keeps the photo. URBAN.map is a quarter-size mask made by CITY.
   const URBAN = { map: { value: new THREE.DataTexture(new Uint8Array(4), 1, 1) }, on: { value: 1 } };
-  // shore shading for the ground (see SHORE): sdM / exM are read once, before the lighting, and used again at the end
-  const f1 = v => Number(v).toFixed(4);
-  const SHORE_GLSL = `
-uniform sampler2D shoreMap; uniform sampler2D expMap; uniform vec4 uShore;   // strengths: colour pull, quay shadow, quay lip, surf
-float sdM; float exM;
-float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25; }   // metres, + over water
-#if __VERSION__ >= 300
-#define PHOTO_GRAD(uv, gx, gy) textureGrad(map, uv, gx, gy)
-#else
-#define PHOTO_GRAD(uv, gx, gy) texture2D(map, uv)
-#endif
-`;
-  const SHORE_PRE = `
-  sdM = shoreD(vUv); exM = texture2D(expMap, vUv).r;
-  { vec2 gx = dFdx(vUv), gy = dFdy(vUv);                 // taken here, outside the branch, for the photo read inside it
-    if (sdM > 0.0 && sdM < ${f1(SHORE_PULL)} && exM < 0.98) {   // sheltered water near the edge: photo colour from further out
-      vec2 tu = vec2(${f1(1 / shoreTex.w)}, 0.0), tv = vec2(0.0, ${f1(1 / shoreTex.h)});
-      vec2 gr = vec2((shoreD(vUv + tu) - shoreD(vUv - tu)) / ${f1(2 * (NX - 1) * CELL / shoreTex.w)}, (shoreD(vUv + tv) - shoreD(vUv - tv)) / ${f1(2 * (NY - 1) * CELL / shoreTex.h)});
-      float gln = length(gr);
-      if (gln > 0.2) {
-        vec2 uv2 = vUv + gr / gln * (${f1(SHORE_PULL)} - sdM) / vec2(${(NX - 1) * CELL}.0, ${(NY - 1) * CELL}.0);
-        float open = smoothstep(${f1(SHORE_PULL * 0.5)}, ${f1(SHORE_PULL * 0.9)}, shoreD(uv2));   // only if that point is open water, not across a slip
-        diffuseColor.rgb = mix(diffuseColor.rgb, mapTexelToLinear(PHOTO_GRAD(uv2, gx, gy)).rgb, (1.0 - exM) * open * uShore.x);
-      }
-    }
-  }
-`;
-  const SHORE_K = { value: new THREE.Vector4(1, 1, 1, 1) }; window.__shore = SHORE_K.value;   // debug: x pull, y shadow, z lip, w surf (0..1)
-  const SHORE_POST = `
-  { float aa = max(fwidth(sdM), 0.02), w = smoothstep(-aa, aa, sdM);   // a crisp edge, one pixel wide at any range
-    float fine = 1.0 - smoothstep(0.6, 2.0, aa), shel = (1.0 - exM) * fine;   // quay details fade once a pixel is ~1-2 m
-    if (w > 0.0) {
-      float foam = uShore.w * exM * smoothstep(0.0, ${f1(SHORE_FOAM[0])}, sdM) * (1.0 - smoothstep(${f1(SHORE_FOAM[1])}, ${f1(SHORE_FOAM[2])}, sdM));
-      vec3 wc = waterShade(outgoingLight, vWW, foam);
-      wc *= 1.0 - 0.45 * uShore.y * shel * (1.0 - smoothstep(0.0, ${f1(QUAY_SHADOW)}, sdM));
-      outgoingLight = mix(outgoingLight, wc, w);
-    }
-    float lip = shel * (1.0 - w) * (1.0 - smoothstep(${f1(QUAY_LIP * 0.5)}, ${f1(QUAY_LIP)}, -sdM));
-    outgoingLight = mix(outgoingLight, vec3(dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722))) * 0.6 + vec3(0.2), lip * 0.6 * uShore.z);
-  }
-`;
   photoMat.onBeforeCompile = sh => {
-    sh.uniforms.fadeMap = { value: fadeTex }; sh.uniforms.shoreMap = { value: shoreTex.d }; sh.uniforms.expMap = { value: shoreTex.e }; sh.uniforms.uShore = SHORE_K; waterUniforms(sh);
+    sh.uniforms.fadeMap = { value: fadeTex }; sh.uniforms.waterMap = { value: waterTex }; waterUniforms(sh);
     sh.uniforms.urbanMap = URBAN.map; sh.uniforms.urbanOn = URBAN.on;
     sh.vertexShader = 'varying vec3 vWW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + HAZE_GLSL + SHORE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>', SHORE_PRE +
+    sh.fragmentShader = 'uniform sampler2D fadeMap;\nuniform sampler2D waterMap;\nuniform sampler2D urbanMap;\nuniform float urbanOn;\nvarying vec3 vWW;\n' + GRADE_GLSL + WATER_GLSL + HAZE_GLSL + sh.fragmentShader.replace('void main() {', WATER_MAIN).replace('#include <color_fragment>',
       '#ifdef USE_COLOR\n  diffuseColor.rgb = mix(vColor, diffuseColor.rgb, texture2D(fadeMap, vUv).r);\n#endif\n' +
       '  { float u = texture2D(urbanMap, vUv).r * urbanOn; float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));\n' +
       '    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.24, 0.235, 0.22), vec3(lum), 0.2), u * 0.92); }')
-      .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n' + SHORE_POST + '  outgoingLight = hazeOver(shadeOver(outgoingLight, vWW), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
+      .replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', 'outgoingLight = gradeGround(diffuseColor.rgb, outgoingLight);\n  { vec4 wm = texture2D(waterMap, vUv); if (wm.r > 0.004) outgoingLight = mix(outgoingLight, waterShade(outgoingLight, vWW, wm.g), wm.r); }\n  outgoingLight = hazeOver(shadeOver(outgoingLight, vWW), vWW);\n  gl_FragColor = vec4( outgoingLight, diffuseColor.a );');   // r128 has no output_fragment chunk
   };
   // Terrain in tiles (perf, 2026-11-03): the same one grid and the same shared vertex data, split into ~1.5 km tiles so
   // the renderer skips tiles outside the view. Nothing changes on screen. Each tile's bounds are set by hand
   // (three's own bounds would cover the whole grid) and refreshed when the exaggeration changes.
   const TILE = 150;                                         // quads per tile side (10 m cells)
-  const ground = new THREE.Group(); ground.material = photoMat; scene.add(ground);
+  const ground = new THREE.Group(); ground.name = 'ground'; ground.material = photoMat; scene.add(ground);
   const tiles = [];
   for (let ty = 0; ty < NY - 1; ty += TILE) for (let tx = 0; tx < NX - 1; tx += TILE) {
     const x1 = Math.min(NX - 1, tx + TILE), y1 = Math.min(NY - 1, ty + TILE);
@@ -612,7 +585,7 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
   }
   Object.defineProperty(ground, 'material', { get() { return tiles[0].material; }, set(v) { for (const m of tiles) m.material = v; } });
   // open ocean beyond the data, in the photo's deep-water colour, so the horizon is sea rather than void
-  scene.add(sky);
+  sky.name = 'sky'; scene.add(sky);
   const seaMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(OCEAN).convertSRGBToLinear() });
   seaMat.extensions = { derivatives: true };
   seaMat.onBeforeCompile = sh => {
@@ -632,7 +605,7 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
     sh.holes.push(hole); return new THREE.ShapeGeometry(sh);
   })();
   const sea = new THREE.Mesh(seaGeo, seaMat);
-  sea.rotation.x = -Math.PI / 2; sea.position.y = -2; sea.renderOrder = 2; scene.add(sea);
+  sea.rotation.x = -Math.PI / 2; sea.position.y = -2; sea.renderOrder = 2; sea.name = 'open sea'; scene.add(sea);
   scene.add(new THREE.HemisphereLight(0xdfe6d8, 0x2a2a22, 0.55));
   const sun = new THREE.DirectionalLight(0xffffff, 0.9);
   sun.position.set(-6000, 7000, -4000);
@@ -642,7 +615,7 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
   let mapView = false;                 // 2D Map view (set by the Fires module's setMap): grid margin labels show
   let ex = 1, onExCity = null;          // onExCity: the CITY module's exaggeration hook (set once it exists)
   const groups = { grid: new THREE.Group(), sketch: new THREE.Group() };
-  scene.add(groups.grid, groups.sketch);
+  groups.grid.name = '1 km grid'; groups.sketch.name = 'friendly/OP marks'; scene.add(groups.grid, groups.sketch);
   function drape(pts, lift, step) {      // densify a polyline (local x/z) and lay it on the ground
     const out = [];
     for (let k = 0; k < pts.length - 1; k++) {
@@ -661,7 +634,33 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
     clear(groups.grid);
     const pts = [], sea = [], keep = (x, z) => edgeAt(x, z) > 0.75 || heightAt(x, z) <= 0;   // not over the hazy edge band
     const E0 = CE + PLAY.x0, E1 = CE + PLAY.x1, N0 = CN - PLAY.z1, N1 = CN - PLAY.z0;
-    const add = v => { for (let k = 0; k < v.length - 1; k++) { const x = (v[k].x + v[k + 1].x) / 2, z = (v[k].z + v[k + 1].z) / 2; if (keep(x, z)) (heightAt(x, z) > 0 ? pts : sea).push(v[k], v[k + 1]); } };
+    // perf (2026-11-16): draped every 10 m the grid was ~280k segments and cost ~6 ms of GPU a frame, mostly over flat sea.
+    // Each run is simplified so a line bends only where the ground does: a point is dropped while the straight line from
+    // the last kept point stays within GRID_TOL m of it (slope window, one pass). The lines ride 4 m up, so they stay clear.
+    const GRID_TOL = 1.5;
+    const simplify = r => {
+      const out = [r[0]]; let a = 0, lo = -Infinity, hi = Infinity;
+      for (let j = a + 1; j < r.length; j++) {
+        const d = j - a, s = (r[j].y - r[a].y) / d;
+        if (s < lo || s > hi) { out.push(r[j - 1]); a = j - 1; lo = -Infinity; hi = Infinity; j--; continue; }   // j-1 becomes the anchor; recheck j
+        lo = Math.max(lo, (r[j].y - GRID_TOL - r[a].y) / d); hi = Math.min(hi, (r[j].y + GRID_TOL - r[a].y) / d);
+      }
+      if (out[out.length - 1] !== r[r.length - 1]) out.push(r[r.length - 1]);
+      return out;
+    };
+    const add = v => {
+      let run = [], cls = null;
+      const flush = () => { if (run.length > 1) { const s = simplify(run); for (let k = 0; k < s.length - 1; k++) (cls ? pts : sea).push(s[k], s[k + 1]); } run = []; };
+      for (let k = 0; k < v.length - 1; k++) {
+        const x = (v[k].x + v[k + 1].x) / 2, z = (v[k].z + v[k + 1].z) / 2;
+        if (!keep(x, z)) { flush(); continue; }
+        const c = heightAt(x, z) > 0;
+        if (run.length && c !== cls) flush();
+        if (!run.length) run.push(v[k]);
+        run.push(v[k + 1]); cls = c;
+      }
+      flush();
+    };
     for (let e = Math.ceil(E0 / 1000) * 1000; e <= E1; e += 1000) add(drape([toLocal(e, N1 - 5), toLocal(e, N0 + 5)], 4, CELL));
     for (let n = Math.ceil(N0 / 1000) * 1000; n <= N1; n += 1000) add(drape([toLocal(E0 + 5, n), toLocal(E1 - 5, n)], 4, CELL));
     groups.grid.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),
@@ -844,7 +843,9 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
       const row = document.createElement('div'); row.className = 'oprow';
       const b = document.createElement('button'); b.id = 'op' + i;
       const n = document.createElement('span'); n.textContent = o.name;
-      const h = document.createElement('span'); h.textContent = o.h == null ? '' : Math.round(o.h) + ' m';
+      // the height the observer stands at (roof or ground, m above sea level); o.h is only the ground under a roof post
+      let ht = o.h; try { const p = toLocal(o.e, o.n), r = CITY.ready ? CITY.roofAt(p.x, p.z, true) : null; ht = r !== null && r > heightAt(p.x, p.z) ? r : (o.h ?? heightAt(p.x, p.z)); } catch (e) { /* buildings not set up yet: refilled when they load */ }
+      const h = document.createElement('span'); h.textContent = ht == null ? '' : Math.round(ht) + ' m'; h.title = 'Standing height above sea level';
       b.append(n, h); b.title = o.note || ''; b.addEventListener('click', () => { if (obs) leaveObserver(); lookAt(o); });
       const cam = o.kind === 'camera';
       const s = document.createElement('button'); s.id = 'stand' + i; s.className = 'stand'; s.textContent = cam ? 'View' : 'Stand';
@@ -881,7 +882,7 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
   const vsTex = new THREE.CanvasTexture(vsCanvas); vsTex.magFilter = THREE.NearestFilter;
   const vsMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: vsTex, alphaMap: clipTex, alphaTest: 0.5, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-  vsMesh.visible = false; scene.add(vsMesh);
+  vsMesh.visible = false; vsMesh.name = 'viewshed'; scene.add(vsMesh);
   const R_EARTH = 6371000, K_REFR = 0.13, NEAR = 60;
   // HB = what blocks sight: the ground, raised to building roofs and tree tops where those layers are on (CITY sets it)
   const HB = new Float32Array(H);
@@ -1004,8 +1005,8 @@ float shoreD(vec2 uv){ return (texture2D(shoreMap, uv).r * 255.0 - 128.0) * 0.25
   //      Loads after the terrain is up. Buildings: one mesh per 1 km square, light baked into vertex colours.
   //      Trees: one instanced crown each. Both feed the viewshed through HB when their layer is on.
   const CITY = (() => {
-    const grp = new THREE.Group(); grp.visible = false; scene.add(grp);
-    const bGrp = new THREE.Group(), tGrp = new THREE.Group(); grp.add(bGrp, tGrp);
+    const grp = new THREE.Group(); grp.name = 'city'; grp.visible = false; scene.add(grp);
+    const bGrp = new THREE.Group(), tGrp = new THREE.Group(); bGrp.name = 'buildings'; tGrp.name = 'trees'; grp.add(bGrp, tGrp);
     const st = { buildings: true, trees: true, ready: false, parts: 0, trees_n: 0, ms: 0 };
     let roofStyle = 'plain';   // Display > Roofs: Plain (default) or Photo
     let OB = null, OT = null;                       // 10 m blocking grids, metres (0 = nothing)
@@ -1296,7 +1297,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
           }
         }
         for (const c of cats) for (const { mesh: m } of c.tiers) if (m) {
-          m.count = m._n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+          m.count = m._n; sendInst(m);
         }
       }
       return { update, cells: cells.length };
@@ -1431,7 +1432,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       buildBuildings(d.b); cleanGround(); buildTrees(d.t);
       st.parts = d.b.length; st.trees_n = d.t.length / 4; st.ms = Math.round(performance.now() - t0);
       grp.scale.y = ex; grp.visible = true; bGrp.visible = st.buildings; tGrp.visible = st.trees;
-      st.ready = true; blockers(); if (VS.op) runViewshed(); if (onCityReady) onCityReady(); BOOT.done('city');
+      st.ready = true; blockers(); if (VS.op) runViewshed(); if (onCityReady) onCityReady(); fillOpList(); BOOT.done('city');
       if (metaEl) metaEl.textContent = 'Buildings and trees: lidar 2020 (NOAA, ~15 pts/m²), roof colour from NAIP; roads and bridges © OpenStreetMap contributors (ODbL). Sight is blocked on a 10 m grid.';
     }
     function setRoofs(style) {
@@ -1456,6 +1457,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   //      prefer bigger roads a little. No one-way streets (OSM direction not kept) — military traffic, accepted.
   let ROADNET = null, onRoadNet = null, onCityReady = null;
   const ROAD_W = [1.0, 1.1, 1.3];       // cost per metre by road class (0 major, 1 mid, 2 minor) — placeholder
+  const ROAD_LIFT = [0.42, 0.36, 0.3];  // m the drawn road surface sits above the terrain, by class; vehicles on a road ride on it (Lee, 2026-11-16)
   const ROAD_REACH = 300;               // a clicked point snaps to a road only if one is within this many metres
   function buildRoadNet(R) {
     const key = new Map(), X = [], Z = [], E = [], WD = [];  // E: [a, b, cls]; WD: road width m per edge
@@ -1483,6 +1485,16 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
         }
       }
       return best;
+    }
+    function liftAt(x, z) {                                     // the drawn road's height above the terrain here (0 off the road)
+      const i0 = Math.floor((x - 8) / SEG), i1 = Math.floor((x + 8) / SEG), j0 = Math.floor((z - 8) / SEG), j1 = Math.floor((z + 8) / SEG);   // a wide road reaches into the next bucket
+      let up = 0;
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) for (const s of seg.get(i + ',' + j) || []) {
+        const a = E[s * 3], b = E[s * 3 + 1], dx = X[b] - X[a], dz = Z[b] - Z[a], L2 = dx * dx + dz * dz || 1;
+        const t = Math.max(0, Math.min(1, ((x - X[a]) * dx + (z - Z[a]) * dz) / L2)), d = Math.hypot(x - X[a] - dx * t, z - Z[a] - dz * t);
+        if (d <= WD[s] / 2 + 0.5) up = Math.max(up, ROAD_LIFT[E[s * 3 + 2]]);
+      }
+      return up;
     }
     // shortest road path between two points; null if either is more than ROAD_REACH from a road or no road path joins them.
     // pen (optional): nodes a sibling already used; each is 50 % dearer, so a line spreads over parallel streets but never
@@ -1513,11 +1525,11 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       P.push(...mid.reverse(), { x: B.x, z: B.z }, { x: bx, z: bz });
       const out = P.filter((p, k) => !k || Math.hypot(p.x - P[k - 1].x, p.z - P[k - 1].z) > 0.5); out.nodes = ids; return out;
     }
-    return { path, nearest, nodes: n, edges: E.length / 3, X, Z, E, WD, deg, to, eid };
+    return { path, nearest, liftAt, nodes: n, edges: E.length / 3, X, Z, E, WD, deg, to, eid };
   }
 
   const ROADS = (() => {
-    const grp = new THREE.Group(); scene.add(grp); window.__roads = grp;
+    const grp = new THREE.Group(); grp.name = 'roads'; scene.add(grp); window.__roads = grp;
     const prevEx = onExCity; onExCity = () => { if (prevEx) prevEx(); grp.scale.y = ex; };
     const lin = v => Math.pow(v / 255, 2.2);
     const ASPH = [[86, 88, 92], [98, 99, 102], [116, 116, 114]].map(c => c.map(lin)), KERB = [184, 182, 174].map(lin);
@@ -1536,7 +1548,7 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const P = [], C = [], I = [], RA = [];   // RA: across (-1..1 asphalt, +-1.5 kerb), along (m), half-width (m)
       let v = 0;
       for (const [wd, cls, f] of d.r) {
-        const hw = wd / 20, kerb = cls < 2 ? Math.min(0.45, hw * 0.12) : 0, lift = [0.42, 0.36, 0.3][cls];
+        const hw = wd / 20, kerb = cls < 2 ? Math.min(0.45, hw * 0.12) : 0, lift = ROAD_LIFT[cls];
         // densify to <= 10 m so the ribbon follows the 10 m terrain
         const pts = [];
         for (let i = 0; i < f.length - 2; i += 2) {
@@ -1642,7 +1654,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   }
   function setFov() {
     // binoculars: the circular field fills 92% of the screen height
-    camera.fov = quad ? Q_FOV : camOP ? camFov : binos ? BINO_FIELD_DEG / 0.92 : NAKED_FOV;
+    camera.fov = quad ? quad.fov : camOP ? camFov : binos ? BINO_FIELD_DEG / 0.92 : NAKED_FOV;
     camera.near = 0.5; camera.updateProjectionMatrix();
     reticle.hidden = !binos; binoBtn.setAttribute('aria-pressed', String(binos));
     labelBox.hidden = binos || camOP || !!quad || !(showLabels && groups.sketch.visible);
@@ -1717,25 +1729,26 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   camIr.addEventListener('click', () => setIR(true));
   document.getElementById('cam-zin').addEventListener('click', () => camZoom(1 / 1.5));
   document.getElementById('cam-zout').addEventListener('click', () => camZoom(1.5));
-  canvas.addEventListener('wheel', e => { if (!obs || !camOP) return; e.preventDefault(); camZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
+  canvas.addEventListener('wheel', e => { if (quad) { e.preventDefault(); quadZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15); return; } if (!obs || !camOP) return; e.preventDefault(); camZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15); }, { passive: false });
   // no friendly overlay at an OP or camera (Lee, 2026-11-16): OP symbols, labels and firing units stay hidden there
   document.getElementById('obsexit').addEventListener('click', leaveObserver);
 
   // ---- sUAS (Lee, 2026-11-16): a small quadcopter launched from a (walking) OP, not from a fixed camera. Its feed takes
   //      over the main view, as standing at the OP does, so the scene is still drawn once a frame: no extra draw like the
-  //      pop-out UAS feeds. QFX draws that picture small and scales it up with grain, worse with slant range from the
+  //      pop-out UAS feeds. QFX hazes it, and breaks it up like weak-link video with slant range from the
   //      controller (the OP post): clean out to Q_CLEAR, breaking up to Q_LOST, no video beyond. Telemetry (grid, distance,
   //      battery) stays readable past Q_LOST so it can be flown home. Battery Q_ENDUR seconds of sim time. Recover works from
   //      any distance (Lee, 2026-11-16). The battery running out ends the flight: landed within Q_REC_R of the post, crashed
-  //      beyond it. Unlimited airframes for now: Launch is always available again. No camera footprint, IR or zoom; can't
+  //      beyond it. Unlimited airframes for now: Launch is always available again. Zoom Q_FOV to Q_FOV_MIN. No camera footprint or IR; can't
   //      sink into roofs or ground.
   //      Local to this viewer: not sent to the room, not drawn on the map. Speeds and limits are training choices.
-  const Q_SPEED = 15, Q_CLIMB = 5, Q_TURN = 1.0, Q_LAUNCH_AGL = 60, Q_LAUNCH_RATE = 15, Q_MAX_AGL = 300, Q_MIN_AGL = 2, Q_FOV = 70;
+  const Q_SPEED = 15, Q_CLIMB = 5, Q_TURN = 1.0, Q_LAUNCH_AGL = 60, Q_LAUNCH_RATE = 15, Q_MAX_AGL = 300, Q_MIN_AGL = 2, Q_FOV = 70, Q_FOV_MIN = 8;
   const Q_CLEAR = 2000, Q_LOST = 5000, Q_ENDUR = 20 * 60, Q_WARN = 3 * 60, Q_REC_R = 50;
   const Q_KEYS = { arrowup: 'F', w: 'F', arrowdown: 'B', s: 'B', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R',
     r: 'U', pageup: 'U', f: 'D', pagedown: 'D', q: 'TL', e: 'TR' };
   const quadGo = document.getElementById('quad-go'), quadRec = document.getElementById('quad-rec'), obsExit = document.getElementById('obsexit');
   const quadHud = document.getElementById('quadhud'), qhMsg = document.getElementById('qh-msg');
+  const quadZoomEl = document.getElementById('quadzoom'), qhZoom = document.getElementById('qh-zoom');
   const qhGps = document.getElementById('qh-gps'), qhDist = document.getElementById('qh-dist'), qhBatt = document.getElementById('qh-batt');
   const qKeys = new Set();
   let quad = null;                       // { x, y, z, g0, used, last, phase: 'launch' | 'fly' | 'down', k, dist, ... }
@@ -1743,9 +1756,9 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   const ctlY = () => standH(walk.x0, walk.z0) + EYE;      // the controller, standing at the post
   function quadUI() {
     const f = !!quad;
-    quadHud.hidden = !f; quadRec.hidden = !f; binoBtn.hidden = f || camOP; quadGo.hidden = f || camOP;
+    quadHud.hidden = !f; quadRec.hidden = !f; quadZoomEl.hidden = !f; binoBtn.hidden = f || camOP; quadGo.hidden = f || camOP;
     obsExit.textContent = f ? 'Back to map' : 'Back to map (Esc)';
-    obsHint.textContent = f ? 'WASD or arrows: fly · Q/E: turn · R/F: climb/descend · Drag: turn, tilt camera'
+    obsHint.textContent = f ? 'WASD or arrows: fly · Q/E: turn · R/F: climb/descend · Wheel or +/−: zoom · Drag: turn, tilt camera'
       : camOP ? 'Drag or arrows: pan · Wheel or +/−: zoom' : 'Arrows: walk · Shift+arrows or drag: turn';
     qhMsg.hidden = true;
   }
@@ -1753,7 +1766,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   function quadLaunch() {
     if (!obs || camOP || quad) return;
     quad = { x: walk.x, z: walk.z, y: camera.position.y, g0: standH(walk.x, walk.z), used: 0, last: simNow(), phase: 'launch',
-      k: 0, dist: 0, opYaw: yaw, opPitch: pitch, hudN: 0, warned: false, note: '', noteUntil: 0 };
+      k: 0, dist: 0, fov: Q_FOV, opYaw: yaw, opPitch: pitch, hudN: 0, warned: false, note: '', noteUntil: 0 };
     binos = false; pitch = -0.2; walk.keys.clear(); qKeys.clear();
     quadUI(); setFov(); quadTick(0);
   }
@@ -1781,7 +1794,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     if (q.phase === 'launch') { q.y += Q_LAUNCH_RATE * dt; if (q.y >= q.g0 + Q_LAUNCH_AGL) { q.y = q.g0 + Q_LAUNCH_AGL; q.phase = 'fly'; } }
     else if (q.phase === 'fly') {
       const K = qKeys, h = c => (K.has(c) ? 1 : 0), f = h('F') - h('B'), s = h('R') - h('L'), u = h('U') - h('D'), t = h('TR') - h('TL');
-      if (t) yaw += t * Q_TURN * dt;
+      if (t) yaw += t * Q_TURN * dt * Math.min(1, q.fov / Q_FOV);     // slower turns when zoomed in
       if (f || s) {                      // along the ground where the camera faces; slide along a wall taller than the aircraft
         const L = Math.hypot(f, s), st = Q_SPEED * dt / L, ok = (x, z) => standH(x, z) + Q_MIN_AGL <= q.y;
         const dx = (Math.sin(yaw) * f + Math.cos(yaw) * s) * st, dz = (-Math.cos(yaw) * f + Math.sin(yaw) * s) * st;
@@ -1797,37 +1810,52 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     q.hudN = 6;
     const F = window.__fires, g = F && F.toGrid(CE + q.x, CN - q.z), left = Math.max(0, Q_ENDUR - q.used);
     qhGps.textContent = g || '—';
+    qhZoom.textContent = (Math.tan(THREE.MathUtils.degToRad(Q_FOV / 2)) / Math.tan(THREE.MathUtils.degToRad(q.fov / 2))).toFixed(1) + '×';
     qhDist.textContent = q.dist < 1000 ? Math.round(q.dist) + ' m' : (q.dist / 1000).toFixed(2) + ' km';
     qhBatt.textContent = Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0'); qhBatt.classList.toggle('low', left <= Q_WARN);
     const msg = performance.now() < q.noteUntil ? q.note : q.phase === 'fly' && q.k >= 1 ? 'NO VIDEO LINK' : '';
     qhMsg.hidden = !msg; if (msg && qhMsg.textContent !== msg) qhMsg.textContent = msg;
     quadHud.classList.toggle('nolink', q.phase === 'down' || q.k >= 1);
   }
-  // The feed picture. The scene is drawn into a small target — Q_RES of the screen in CSS pixels close in, falling to
-  // Q_RES_FAR at Q_LOST — then one full-screen pass scales it up with grain, washed-out colour, faint scan lines and a
-  // vignette; past Q_CLEAR, torn lines and dropped frames (the last picture shown again under new grain). No video, or
-  // landed on a dead battery: snow only, and the scene is not drawn at all. Cheaper than the OP view it replaces.
-  const Q_RES = 0.6, Q_RES_FAR = 0.25;
+  // The feed picture (reworked 2026-11-16, Lee: the old low-res grain read as bad graphics, not bad video).
+  //  - Haze, always: the feed's fog closes in (Q_HAZE_NEAR..Q_HAZE_FAR), so distant things lose contrast and detail first,
+  //    as through a small camera in humid air. Swapped in for the main draw only; free.
+  //  - Inside Q_CLEAR: clean. Drawn straight to the screen at full resolution, like the OP view: no extra pass.
+  //  - Q_CLEAR to Q_LOST, a weak link: the scene is drawn once into a target at one CSS pixel per pixel (so never more
+  //    pixels than the screen) and one full-screen pass breaks it up like starved video: compression blocks that keep the
+  //    big shapes and lose fine detail and colour, some blocks worse than others; slices that miss an update and keep the
+  //    old picture (a scissored draw, so cheaper, not dearer); whole frames dropped; torn lines near the edge of range.
+  //  - No video, or down on a dead battery: snow only, and the scene is not drawn at all.
+  const Q_HAZE_NEAR = 250, Q_HAZE_FAR = 11000;
   const QFX = (() => {
     const rt = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false, encoding: THREE.sRGBEncoding });
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
-    const U = { t: { value: rt.texture }, k: { value: 0 }, seed: { value: 0 }, snow: { value: 0 }, pr: { value: 1 } };
+    const U = { t: { value: rt.texture }, k: { value: 0 }, seed: { value: 0 }, key: { value: 0 }, snow: { value: 0 }, pr: { value: 1 }, res: { value: new THREE.Vector2(1, 1) } };
     const mat = new THREE.ShaderMaterial({
       depthTest: false, depthWrite: false, toneMapped: false, uniforms: U,
       vertexShader: 'varying vec2 vUv; void main(){ vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `
-uniform sampler2D t; uniform float k, seed, snow, pr; varying vec2 vUv;
+uniform sampler2D t; uniform float k, seed, key, snow, pr; uniform vec2 res; varying vec2 vUv;
 float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+const vec3 LUM = vec3(0.299, 0.587, 0.114);
 void main(){
   vec2 uv = vUv;
-  float row = floor(uv.y * 180.0);                                       // torn lines, more and wider with range
-  uv.x += step(1.0 - 0.08 * k * k, h(vec2(row, seed))) * (h(vec2(seed, row)) - 0.5) * 0.08 * k;
-  vec3 c = texture2D(t, uv).rgb;
-  c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.2 + 0.5 * k);     // colour washes out
-  vec2 cell = floor(gl_FragCoord.xy / (pr * (1.0 + 2.0 * k)));          // grain, coarser with range
-  c += (h(cell + seed) - 0.5) * (0.07 + 0.45 * k);
-  c *= 0.96 + 0.04 * sin(gl_FragCoord.y / pr * 3.14159);                // faint scan lines
-  vec2 v = vUv - 0.5; c *= 1.0 - dot(v, v) * 0.7;                       // vignette
+  float row = floor(uv.y * 120.0);                                        // torn lines, only near the edge of range
+  float kt = max(0.0, k - 0.5) * 2.0;
+  uv.x += step(1.0 - 0.1 * kt, h(vec2(row, seed))) * (h(vec2(seed, row)) - 0.5) * 0.06 * kt;
+  vec3 full = texture2D(t, uv).rgb;
+  float B = k > 0.85 ? 16.0 : 8.0;                                        // compression blocks, in feed pixels
+  vec2 blk = floor(uv * res / B), o = B / res;
+  vec3 mean = 0.25 * (texture2D(t, (blk + vec2(0.25, 0.25)) * o).rgb + texture2D(t, (blk + vec2(0.75, 0.25)) * o).rgb
+                    + texture2D(t, (blk + vec2(0.25, 0.75)) * o).rgb + texture2D(t, (blk + vec2(0.75, 0.75)) * o).rgb);
+  float q = clamp(0.1 + 0.8 * k + (h(blk + key) - 0.5) * 1.0 * k, 0.0, 1.0);   // how starved this block is
+  vec3 c = mix(full, mean, q);                                             // fine detail goes first, the big shapes stay
+  float y = dot(c, LUM);
+  c = vec3(y) + (mean - dot(mean, LUM)) * (1.0 - 0.5 * k);                 // colour only per block, and fading
+  float lv = mix(48.0, 7.0, k * k);                                        // banding when it is starved
+  c = floor(c * lv + 0.5) / lv;
+  c += (h(floor(gl_FragCoord.xy / pr) + seed) - 0.5) * (0.03 + 0.08 * k);    // sensor noise, fine
+  vec2 v = vUv - 0.5; c *= 1.0 - dot(v, v) * 0.5;
   c = mix(c, vec3(0.08 + 0.5 * h(floor(gl_FragCoord.xy / (pr * 2.0)) + seed * 1.7)), snow);   // snow, dim enough to read the telemetry over
   gl_FragColor = vec4(c, 1.0);
 }`
@@ -1835,18 +1863,30 @@ void main(){
     const tri = new THREE.Mesh(g, mat); tri.frustumCulled = false;
     const sc = new THREE.Scene(); sc.add(tri);
     const oc = new THREE.Camera(), size = new THREE.Vector2();
-    let fresh = false;
+    let fresh = true, hold = 0, keyN = 0;
+    function draw(scene, cam, target) {
+      const f = scene.fog, n = f.near, fa = f.far;
+      f.near = Q_HAZE_NEAR; f.far = Q_HAZE_FAR; UAS.feedHide(true);
+      renderer.setRenderTarget(target); renderer.render(scene, cam); renderer.setRenderTarget(null);
+      UAS.feedHide(false); f.near = n; f.far = fa;
+    }
     return {
       render(scene, cam, k, snow) {
+        if (!snow && k <= 0) { draw(scene, cam, null); fresh = true; return; }     // clean: straight to the screen
         const pr = renderer.getPixelRatio(); renderer.getDrawingBufferSize(size);
-        const res = Math.round((Q_RES + (Q_RES_FAR - Q_RES) * k) * 20) / 20 / pr;     // steps of 0.05, so the target is not resized every frame
-        const w = Math.max(64, Math.round(size.x * res)), h = Math.max(48, Math.round(size.y * res));
+        const w = Math.max(64, Math.round(size.x / pr)), h = Math.max(48, Math.round(size.y / pr));
         if (rt.width !== w || rt.height !== h) { rt.setSize(w, h); fresh = true; }
-        const drop = Math.random() < 0.35 * k * k;
-        if (!snow && (!drop || fresh)) {
-          UAS.feedHide(true); renderer.setRenderTarget(rt); renderer.render(scene, cam); renderer.setRenderTarget(null); UAS.feedHide(false); fresh = false;
+        if (!snow) {
+          if (hold > 0) hold--;                                   // a frozen picture, held a few frames
+          else if (!fresh && Math.random() < 0.25 * k * k) hold = 1 + Math.floor(Math.random() * 6 * k);
+          else {
+            const cut = !fresh && Math.random() < 0.3 * k;          // a slice missed: only the part above the cut updates
+            if (cut) { const y = Math.round(h * (0.2 + 0.6 * Math.random())); rt.scissor.set(0, y, w, h - y); rt.scissorTest = true; }
+            draw(scene, cam, rt); rt.scissorTest = false; fresh = false;
+          }
         }
-        U.k.value = k; U.seed.value = Math.random() * 100; U.snow.value = snow; U.pr.value = pr;
+        if (++keyN >= 8) { keyN = 0; U.key.value = Math.random() * 100; }     // which blocks are worst changes a few times a second
+        U.k.value = k; U.seed.value = Math.random() * 100; U.snow.value = snow; U.pr.value = pr; U.res.value.set(w, h);
         renderer.render(sc, oc);
       },
       debug: { rt, U }
@@ -1857,12 +1897,20 @@ void main(){
     QFX.render(scene, camera, quad.k, quad.phase === 'down' || quad.k >= 1 ? 1 : 0);
     return true;
   }
+  function quadZoom(f) {                 // the sUAS camera's zoom: Q_FOV wide to Q_FOV_MIN
+    if (!quad) return;
+    quad.fov = Math.max(Q_FOV_MIN, Math.min(Q_FOV, quad.fov * f)); setFov(); quad.hudN = 0;
+  }
+  document.getElementById('quad-zin').addEventListener('click', () => quadZoom(1 / 1.5));
+  document.getElementById('quad-zout').addEventListener('click', () => quadZoom(1.5));
   window.__quad = { get q() { return quad; }, launch: quadLaunch, recover: quadRecover, end: quadEnd, QFX };
   const typingNow = () => { const a = document.activeElement; return !!a && /INPUT|TEXTAREA|SELECT/.test(a.tagName); };
   addEventListener('keydown', e => {
     if (!obs || typingNow()) return;
     if (quad) {                         // flying: the sUAS keys, held (quadTick); Esc recovers
       if (e.key === 'Escape') quadRecover();
+      else if (e.key === '+' || e.key === '=') quadZoom(1 / 1.25);
+      else if (e.key === '-') quadZoom(1.25);
       else { const m = Q_KEYS[e.key.toLowerCase()]; if (!m || e.ctrlKey || e.metaKey || e.altKey) return; qKeys.add(m); }
       e.preventDefault(); return;
     }
@@ -2036,7 +2084,7 @@ void main(){
       const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding; return tx;
     }
     const unitGroup = new THREE.Group(), fxGroup = new THREE.Group(), arcGroup = new THREE.Group();
-    scene.add(unitGroup, fxGroup, arcGroup);
+    unitGroup.name = 'fires: units'; fxGroup.name = 'fires: bursts'; arcGroup.name = 'fires: trajectories'; scene.add(unitGroup, fxGroup, arcGroup);
     function placeSprite(u) {
       const onm = onMap(u.e, u.n);
       let p = toLocal(u.e, u.n), y = (onm ? heightAt(p.x, p.z) * ex : 0) + 60;
@@ -3255,7 +3303,7 @@ void main(){
     function vehicles(g) { const out = []; for (const u of g.units) for (let i = 0; i < u.n; i++) out.push(u.type); return out; }
 
     // ---- 3D: one model (or placeholder box) per vehicle, a hostile diamond and label per group, draped route lines
-    const root = new THREE.Group(); scene.add(root);
+    const root = new THREE.Group(); root.name = 'enemy'; scene.add(root);
     // ---- wakes: each moving ship leaves a foam trail (widening, fading over a minute) and two Kelvin arms (~19 deg).
     //      Worked out from where the ship was over the last minute, so pause, 10x, halts and scrubbing just work.
     //      A swimming vehicle gets only a V (Lee, 2026-11-04): two fading wedges fixed to it, 6 vertices and no history, so
@@ -3324,10 +3372,10 @@ void main(){
           }
         });
       }
-      wakeGeo.setDrawRange(0, n); wakeGeo.attributes.position.needsUpdate = true; wakeGeo.attributes.a.needsUpdate = true;
+      wakeGeo.setDrawRange(0, n); sendUsed(wakeGeo.attributes.position, n); sendUsed(wakeGeo.attributes.a, n);   // the used part only: the full buffer is 144 kB, every frame
     }
-    const lines = new THREE.Group(); scene.add(lines);
-    const handles = new THREE.Group(); scene.add(handles);
+    const lines = new THREE.Group(); lines.name = 'enemy routes'; scene.add(lines);
+    const handles = new THREE.Group(); handles.name = 'route handles'; scene.add(handles);
     const boxGeo = {}, boxMat = {};
     for (const k of Object.keys(VT)) {
       boxGeo[k] = new THREE.BoxGeometry(VT[k].W, VT[k].H, VT[k].L);
@@ -3386,7 +3434,7 @@ void main(){
         farD.position.copy(m.position); farD.rotation.set(0, m.rotation.y, 0); farD.scale.set(T.W, T.H, T.L); farD.updateMatrix(); farMesh.setMatrixAt(n, farD.matrix);
         farC.copy(farColour(m.userData.t)); if (m.userData.charred) farC.multiplyScalar(0.18); farMesh.setColorAt(n, farC); n++;
       }
-      farMesh.count = n; farMesh.instanceMatrix.needsUpdate = true; farMesh.instanceColor.needsUpdate = true;
+      farMesh.count = n; sendInst(farMesh);
     }
     // models load on first use (perf/memory, 2026-11-03): a type's file is fetched when a group first contains it
     const asked = new Set();
@@ -3415,7 +3463,7 @@ void main(){
           if (n === cap) { cap *= 2; make(); }
           dummy.position.set(x, y, z); dummy.rotation.set(down ? -Math.PI / 2 : 0, hd, 0, 'YXZ'); dummy.updateMatrix(); mesh.setMatrixAt(n++, dummy.matrix);
         },
-        end() { mesh.count = n; if (n) mesh.instanceMatrix.needsUpdate = true; }
+        end() { mesh.count = n; sendInst(mesh); }
       };
     })();
     // ---- pips (Lee, 2026-11-04): a small screen-sized diamond on every enemy vehicle and soldier, so the instructor sees the
@@ -3428,7 +3476,7 @@ void main(){
       const geo = new THREE.BufferGeometry();
       const obj = new THREE.Points(geo, new THREE.ShaderMaterial({
         depthTest: false, depthWrite: false, transparent: true,
-        uniforms: { uPR: { value: renderer.getPixelRatio() } },
+        uniforms: { uPR: PR_U },
         vertexShader: `attribute float aS; uniform float uPR; varying float vDead, vFade, vPx;
           void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
             vDead = aS < 0.0 ? 1.0 : 0.0; vFade = clamp((-mv.z - 250.0) / 250.0, 0.0, 1.0); vPx = abs(aS) * uPR; gl_PointSize = vPx; }`,
@@ -3730,7 +3778,7 @@ void main(){
       }
       return out;
     }
-    const fxRoot = new THREE.Group(); scene.add(fxRoot);   // world effects: seen whatever the Enemy switch says
+    const fxRoot = new THREE.Group(); fxRoot.name = 'world effects'; scene.add(fxRoot);   // world effects: seen whatever the Enemy switch says
     const puffTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
       const gr = x.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
@@ -3780,6 +3828,11 @@ void main(){
           s.material.color.setRGB(0.07 + 0.30 * u, 0.065 + 0.29 * u, 0.06 + 0.28 * u);   // black at the fire, greying as it thins
         });
       }
+    }
+    function roadLift(m, x, z) {              // on a road the vehicle rides on the drawn surface; looked up again only after moving 2 m
+      const u = m.userData; if (!ROADNET) return 0;
+      if (u.rlx === undefined || Math.abs(x - u.rlx) + Math.abs(z - u.rlz) > 2) { u.rlx = x; u.rlz = z; u.rl = ROADNET.liftAt(x, z); }
+      return u.rl;
     }
     function charred(m, on) {                  // dark, burnt-out look on a struck vehicle's own copy of its materials
       if (!!m.userData.charred === on) return; m.userData.charred = on;
@@ -4002,7 +4055,7 @@ void main(){
           if (!p) { m.visible = false; return; }                             // aboard, or no route to stand on
           const T = VT[m.userData.t];
           charred(m, !!w);
-          const wet = m.userData.wet = waterAt(p.x, p.z), ground = wet ? waterY(p.x, p.z) : heightAt(p.x, p.z) * ex;
+          const wet = m.userData.wet = waterAt(p.x, p.z), ground = wet ? waterY(p.x, p.z) : (heightAt(p.x, p.z) + roadLift(m, p.x, p.z)) * ex;
           const draft = T.draft || (wet && T.amph ? T.H * 0.6 : 0);          // swimming IFVs ride low, about 1 m showing
           m.position.set(p.x, ground + T.H / 2 - draft, p.z); m.rotation.y = p.hd; m.visible = true;
           if (T.foot) foot.add(p.x, ground, p.z, p.hd, !!w);
@@ -4529,7 +4582,7 @@ void main(){
     const COLOURS = { white: 0xe8e8e4, silver: 0xa9adb0, black: 0x1d1e20, 'dark blue': 0x1f2c48, red: 0x9e2222, 'dark green': 0x24402c, brown: 0x5a3f2a,
       grey: 0x6f7274, navy: 0x1d2640, cream: 0xd9d2b8, 'dark grey': 0x46484a, maroon: 0x5c1d22, rust: 0x8a4a2a, olive: 0x5e5f33, taupe: 0x8a7f70, 'off-white': 0xdcd8cc, 'dark teal': 0x1f4a4c };
     let level = LITE ? 'sparse' : 'normal', specs = null, N = 0, built = false; const cars = [];
-    const grp = new THREE.Group(); scene.add(grp);
+    const grp = new THREE.Group(); grp.name = 'civilians'; scene.add(grp);
     function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
     // ---- placement: weighted pick of a road edge, then a spot on it
@@ -4547,7 +4600,7 @@ void main(){
       cars.length = 0;
       for (let i = 0; i < max; i++) {
         const parked = r() < PARKED, e = pickEdge(parked ? cumP : cumD, r()), mi = Math.floor(r() * specs.length), dir = r() < 0.5 ? 1 : -1, t = parked ? 0.15 + 0.7 * r() : r();
-        const c = { i, mi, parked, seed: (0xC1F1A + i * 7919) >>> 0 };
+        const c = { i, mi, parked, seed: (0xC1F1A + i * 7919) >>> 0, cl: E[e * 3 + 2] };
         const a = E[e * 3], b = E[e * 3 + 1], hw = R.WD[e] / 2;
         const [ax, az, bx, bz] = dir > 0 ? [X[a], Z[a], X[b], Z[b]] : [X[b], Z[b], X[a], Z[a]];
         const L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L;
@@ -4569,7 +4622,7 @@ void main(){
     function resetPath(c) { c.r = rng(c.seed); c.seg = []; c.base = 0; c.prevN = c.from; c.curN = c.to; addSeg(c, c.e0, c.from, c.to); }
     function addSeg(c, e, a, b) {
       const R = ROADNET, L = Math.hypot(R.X[b] - R.X[a], R.Z[b] - R.Z[a]) || 0.1, s = c.seg.length ? c.seg[c.seg.length - 1].s1 : 0;
-      c.seg.push({ ax: R.X[a], az: R.Z[a], bx: R.X[b], bz: R.Z[b], s0: s, s1: s + L, off: Math.min(1.8, Math.max(1, R.WD[e] / 4)) });
+      c.seg.push({ ax: R.X[a], az: R.Z[a], bx: R.X[b], bz: R.Z[b], s0: s, s1: s + L, off: Math.min(1.8, Math.max(1, R.WD[e] / 4)), cl: R.E[e * 3 + 2] });
     }
     function extend(c) {                         // next edge from the current node: never straight back unless it is a dead end
       const R = ROADNET, n = c.curN, opts = [];
@@ -4584,7 +4637,7 @@ void main(){
       while (c.seg.length > 6 && c.seg[1].s1 < s) c.seg.shift();            // forget road far behind
       let g = c.seg[0]; for (const q of c.seg) if (q.s1 >= s) { g = q; break; }
       const L = g.s1 - g.s0, f = Math.min(1, Math.max(0, (s - g.s0) / L)), ux = (g.bx - g.ax) / L, uz = (g.bz - g.az) / L;
-      return { x: g.ax + ux * L * f - uz * g.off, z: g.az + uz * L * f + ux * g.off, hd: Math.atan2(ux, uz) };
+      return { x: g.ax + ux * L * f - uz * g.off, z: g.az + uz * L * f + ux * g.off, hd: Math.atan2(ux, uz), cl: g.cl };
     }
     const posOf = (c, t) => c.st && t >= c.st.t ? c.st : c.parked ? c : drivePos(c, t);
     const TYPE = { hatch: 'hatchback', pickup: 'pickup', van: 'panel van', minivan: 'minivan', smallvan: 'small van', sedan: 'sedan' };
@@ -4604,7 +4657,7 @@ void main(){
       if (boat) { const b = boats[i]; if (!b || b.st) return false; const p = boatPos(b, t); b.st = { t, x: p.x, z: p.z, hd: p.hd }; hit.push(b);
         OPFOR.debug.burn.add('boat:' + i, p.x, p.z, t, { W: 5, H: 2.5, amph: false }); return true; }
       const c = cars[i]; if (!c || c.st) return false;
-      const p = posOf(c, t), sp = specs[c.mi]; c.st = { t, x: p.x, z: p.z, hd: p.hd }; hit.push(c);
+      const p = posOf(c, t), sp = specs[c.mi]; c.st = { t, x: p.x, z: p.z, hd: p.hd, cl: p.cl }; hit.push(c);
       OPFOR.debug.burn.add('civ:' + i, p.x, p.z, t, { W: sp.W, H: sp.H, amph: false }); return true;
     }
 
@@ -4658,7 +4711,7 @@ void main(){
       for (let i = 0; i < N; i++) {
         const c = cars[i], p = posOf(c, t);
         let best = Infinity; for (const f of focus) { const d = Math.hypot(p.x - f.x, p.z - f.z) / f.r; if (d < best) best = d; }
-        c.cx = p.x; c.cz = p.z; c.chd = p.hd;
+        c.cx = p.x; c.cz = p.z; c.chd = p.hd; if (p.cl !== undefined) c.cl = p.cl;
         if (best <= 1) { near.push([best, c]); continue; }
         let far = true; for (const k of cams) if (Math.hypot(p.x - k.x, p.z - k.z) < FAR_R) { far = false; break; }
         if (far) continue;
@@ -4671,14 +4724,14 @@ void main(){
         place(c); const burnt = c.st && t >= c.st.t;
         for (const q of pp) { M2.multiplyMatrices(M, q.local); q.mesh.setColorAt(q.mesh.count, burnt ? BURNT : WHITE); q.mesh.setMatrixAt(q.mesh.count++, M2); }
       });
-      for (const m of parts) for (const q of m) { q.mesh.visible = q.mesh.count > 0; if (q.mesh.count) { q.mesh.instanceMatrix.needsUpdate = true; if (q.mesh.instanceColor) q.mesh.instanceColor.needsUpdate = true; } }
+      for (const m of parts) for (const q of m) { q.mesh.visible = q.mesh.count > 0; sendInst(q.mesh); }
       if (frame % 30 === 0) for (const c of hit) OPFOR.debug.burn.hide((c.boat ? 'boat:' : 'civ:') + c.i, c.i >= (c.boat ? NBt : N));   // a lower setting hides its wrecks' fires too
       drawBoats(t);
-      boxes.count = nb; boxes.visible = nb > 0; boxes.instanceMatrix.needsUpdate = true; if (boxes.instanceColor) boxes.instanceColor.needsUpdate = true;
+      boxes.count = nb; boxes.visible = nb > 0; sendInst(boxes);
     }
-    function place(c) { P.set(c.cx, heightAt(c.cx, c.cz) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(1, 1, 1); M.compose(P, Q, S); }
+    function place(c) { P.set(c.cx, (heightAt(c.cx, c.cz) + ROAD_LIFT[c.cl]) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(1, 1, 1); M.compose(P, Q, S); }
     function drawBox(k, c, t) {
-      const sp = specs[c.mi]; P.set(c.cx, heightAt(c.cx, c.cz) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(sp.W * 0.85, sp.H, sp.L);
+      const sp = specs[c.mi]; P.set(c.cx, (heightAt(c.cx, c.cz) + ROAD_LIFT[c.cl]) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(sp.W * 0.85, sp.H, sp.L);
       M.compose(P, Q, S); boxes.setMatrixAt(k, M); boxes.setColorAt(k, c.st && t >= c.st.t ? BURNT : C.setHex(COLOURS[sp.colour] || 0x888888));
     }
     // ---- boats (Lee, 2026-11-03): fishing boats offshore, under the same Civilians setting. About half lie at anchor
@@ -4755,8 +4808,8 @@ void main(){
           P.set(p.x - fx * 7.5, 0.3, p.z - fz * 7.5); Q.setFromAxisAngle(Y, p.hd + Math.PI); M.compose(P, Q, S); wakes.setMatrixAt(wakes.count++, M);
         }
       }
-      wakes.visible = wakes.count > 0; wakes.instanceMatrix.needsUpdate = true;
-      for (const q of boatParts) { q.mesh.visible = q.mesh.count > 0; if (q.mesh.count) { q.mesh.instanceMatrix.needsUpdate = true; if (q.mesh.instanceColor) q.mesh.instanceColor.needsUpdate = true; } }
+      wakes.visible = wakes.count > 0; sendInst(wakes);
+      for (const q of boatParts) { q.mesh.visible = q.mesh.count > 0; sendInst(q.mesh); }
     }
 
     // ---- for UAS tracking: civilians near a point, as stand-ins the camera can follow like an enemy vehicle
@@ -4856,7 +4909,7 @@ void main(){
 
     // ---- 3D: models (loaded once, cloned per drone), map overlays (hidden from feeds)
     const tmpl = {};
-    const models = new THREE.Group(), ui = new THREE.Group(); scene.add(models, ui);
+    const models = new THREE.Group(), ui = new THREE.Group(); models.name = 'UAS models'; ui.name = 'UAS overlays'; scene.add(models, ui);
     function body(type) { const T = TYPES[type], m = tmpl[T.model]; if (!m) return null; const c = m.clone(); if (T.scale) c.scale.set(T.scale[0], T.scale[1], T.scale[2]); return c; }
     if (THREE.GLTFLoader) for (const url of new Set(Object.values(TYPES).map(t => t.model))) new THREE.GLTFLoader().load(url, gl => {
       tmpl[url] = gl.scene;
@@ -6299,23 +6352,179 @@ void main(){
   const PERF = (() => {
     const el = document.getElementById('perf'), btn = document.getElementById('tg-perf');
     let on = false, acc = {}, frames = 0, t0 = performance.now(), frameMs = 0, worst = 0;
+    // GPU time (2026-11-16): a timer query around each frame's GL work, read back a few frames later, so the readout
+    // shows what the graphics card spends, not just the JS. Spikes: any gap between frames over SPIKE_MS is logged
+    // with what the frame before it spent (JS by module, GPU) and how much ran outside the loop (GC, timers, layout).
+    const gl = renderer.getContext(), TQ = renderer.capabilities.isWebGL2 ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : null;
+    const SPIKE_MS = 70;
+    const gpuTaps = new Set();                            // extra listeners for each GPU reading (BENCH)
+    let qs = [], curQ = null, gpuAcc = 0, gpuN = 0, gpuWorst = 0, lastGpu = 0, loopT0 = 0, cur = {}, prev = null, spikes = [], big = null, made0 = [0, 0, 0];   // big: the worst spike of the last 30 s, kept so it can be read
     renderer.info.autoReset = false;                       // count every render in a frame (main view + UAS feeds)
-    if (btn) btn.addEventListener('click', () => { on = !on; btn.setAttribute('aria-pressed', String(on)); el.hidden = !on; });
-    function time(name, fn) { if (!on) return fn(); const a = performance.now(); const r = fn(); acc[name] = (acc[name] || 0) + performance.now() - a; return r; }
+    if (btn) btn.addEventListener('click', () => { on = !on; btn.setAttribute('aria-pressed', String(on)); el.hidden = !on; spikes = []; big = null; });
+    function time(name, fn) { if (!on) return fn(); const a = performance.now(); const r = fn(); const d = performance.now() - a; acc[name] = (acc[name] || 0) + d; cur[name] = (cur[name] || 0) + d; return r; }
+    function begin() {                                     // first thing in the loop; the GPU timer runs always (RES uses it)
+      loopT0 = performance.now(); cur = {}; made0 = madeNow();
+      if (TQ && !curQ && qs.length < 4) { curQ = gl.createQuery(); gl.beginQuery(TQ.TIME_ELAPSED_EXT, curQ); }
+    }
+    function pollGpu() {
+      if (!TQ) return;
+      const dis = gl.getParameter(TQ.GPU_DISJOINT_EXT);
+      while (qs.length && gl.getQueryParameter(qs[0], gl.QUERY_RESULT_AVAILABLE)) {
+        const q = qs.shift();
+        if (!dis) { const v = gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6; lastGpu = v; gpuAcc += v; gpuN++; gpuWorst = Math.max(gpuWorst, v); RES.gpu(v); for (const f of gpuTaps) f(v); }
+        gl.deleteQuery(q);
+      }
+    }
     function frame(ms) {
       const inf = renderer.info.render, mem = renderer.info.memory;
-      if (on) { frameMs += ms; worst = Math.max(worst, ms); frames++; acc.calls = (acc.calls || 0) + inf.calls; acc.tris = (acc.tris || 0) + inf.triangles; }
+      if (curQ) { gl.endQuery(TQ.TIME_ELAPSED_EXT); qs.push(curQ); curQ = null; }
+      pollGpu();
+      if (!TQ && prev) RES.frame(ms, prev.js);              // no GPU timer (Safari, iOS): judge from the frame gap instead
+      if (!on) { gpuAcc = 0; gpuN = 0; gpuWorst = 0; }
+      if (on) {
+        frameMs += ms; worst = Math.max(worst, ms); frames++; acc.calls = (acc.calls || 0) + inf.calls; acc.tris = (acc.tris || 0) + inf.triangles;
+        if (ms > SPIKE_MS && prev) {                       // this gap = the last frame's loop + whatever ran after it
+          const parts = Object.entries(prev.parts).filter(([, v]) => v >= 2).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ' + v.toFixed(0)).join(', ');
+          const line = `${ms.toFixed(0)} ms: loop JS ${prev.js.toFixed(0)}${parts ? ' (' + parts + ')' : ''} · outside loop ${Math.max(0, ms - prev.js).toFixed(0)} · GPU ${lastGpu.toFixed(0)}${prev.made ? ' · sent ' + prev.made : ''}`;
+          spikes.unshift(line);
+          const tn = performance.now(); if (!big || ms >= big.ms || tn - big.t > 30000) big = { ms, line, t: tn };
+          spikes.length = Math.min(spikes.length, 4);
+        }
+      }
       renderer.info.reset();
       const now = performance.now(); if (!on || now - t0 < 1000) return;
       const n = frames || 1, f = k => ((acc[k] || 0) / n).toFixed(1);
       const heap = performance.memory ? ' · JS heap ' + Math.round(performance.memory.usedJSHeapSize / 1e6) + ' MB' : '';
-      el.textContent = `${Math.round(n * 1000 / (now - t0))} fps · frame ${(frameMs / n).toFixed(1)} ms (worst ${worst.toFixed(0)})\n` +
+      const gpu = !TQ ? ' · GPU time n/a in this browser' : gpuN ? ` · GPU ${(gpuAcc / gpuN).toFixed(1)} ms (worst ${gpuWorst.toFixed(0)})` : '';
+      el.textContent = `${Math.round(n * 1000 / (now - t0))} fps · frame ${(frameMs / n).toFixed(1)} ms (worst ${worst.toFixed(0)})${gpu} · res ${RES.label()}\n` +
         `JS ms/frame: fires ${f('fires')} · enemy ${f('opfor')} · UAS ${f('uas')} · civilians ${f('civ')} · trees ${f('trees')} · feeds ${f('feeds')} · draw ${f('render')}\n` +
-        `GPU/frame: ${Math.round((acc.calls || 0) / n)} draw calls · ${((acc.tris || 0) / n / 1e6).toFixed(2)} M triangles · ${mem.geometries} geometries · ${mem.textures} textures${heap}`;
-      acc = {}; frames = 0; frameMs = 0; worst = 0; t0 = now;
+        `GPU/frame: ${Math.round((acc.calls || 0) / n)} draw calls · ${((acc.tris || 0) / n / 1e6).toFixed(2)} M triangles · ${mem.geometries} geometries · ${mem.textures} textures${heap}` +
+        (big ? `\nWorst spike, last 30 s (${Math.round((now - big.t) / 1000)} s ago):\n  ${big.line}` : '') +
+        (spikes.length ? '\nSpikes (newest first):\n  ' + spikes.join('\n  ') : '') +
+        (el.dataset.bench ? '\n' + el.dataset.bench : '');
+      acc = {}; frames = 0; frameMs = 0; worst = 0; t0 = now; gpuAcc = 0; gpuN = 0; gpuWorst = 0;
     }
-    return { time, frame };
+    // what the frame sent to the graphics card (2026-11-16): shader links (compile on first sight) and upload bytes
+    // (textures, buffers), counted at the GL calls so re-uploads of existing textures and buffers show too.
+    const up = { link: 0, tex: 0, buf: 0 };
+    const wrap = (name, f) => { const o = gl[name]; gl[name] = function () { f(arguments); return o.apply(gl, arguments); }; };
+    const srcPx = s => s ? (s.videoWidth || s.naturalWidth || s.width || 0) * (s.videoHeight || s.naturalHeight || s.height || 0) * 4 : 0;
+    wrap('linkProgram', () => up.link++);
+    wrap('texImage2D', a => { up.tex += a.length >= 9 ? a[3] * a[4] * 4 : srcPx(a[5]); });
+    wrap('texSubImage2D', a => { up.tex += a.length >= 9 ? a[4] * a[5] * 4 : srcPx(a[6]); });
+    wrap('bufferData', a => { up.buf += typeof a[1] === 'number' ? a[1] : (a[1] ? a[1].byteLength : 0); });
+    wrap('bufferSubData', a => { up.buf += !a[2] ? 0 : a.length >= 5 && a[4] ? a[4] * a[2].BYTES_PER_ELEMENT : a.length >= 4 ? a[2].byteLength - (a[3] || 0) * a[2].BYTES_PER_ELEMENT : a[2].byteLength; });
+    function madeNow() { return [up.link, up.tex, up.buf]; }
+    const mb = v => v >= 1e6 ? (v / 1e6).toFixed(1) + ' MB' : Math.round(v / 1e3) + ' kB';
+    function end() {                                       // last thing in the loop
+      const d = madeNow().map((v, i) => v - made0[i]);
+      const made = [d[0] ? d[0] + (d[0] > 1 ? ' shaders' : ' shader') : '', d[1] >= 1e5 ? 'textures ' + mb(d[1]) : '', d[2] >= 1e5 ? 'buffers ' + mb(d[2]) : ''].filter(Boolean).join(', ');
+      prev = { js: performance.now() - loopT0, parts: cur, made };
+    }
+    return { time, frame, begin, end, gpuTaps, get timer() { return !!TQ; } };
   })();
+  // ---- RES: automatic resolution (Lee, 2026-11-16: performance first, any device). The GPU cost follows the pixels drawn
+  //      (measured: ?lite=1 at 1x took GPU from ~26 to ~15 ms), so the render scale moves to keep the GPU inside a budget:
+  //      over GPU_HI ms a frame it draws fewer pixels, under GPU_LO more, never above the screen's own (MAX) or below MIN.
+  //      Steps at most every RES_GAP ms; each change costs one buffer resize. Uses the GPU timer (PERF); without one
+  //      (Safari, iOS) the gap between frames less our JS. ?res=auto (default) or ?res=1 / 1.5 / ... fixes it.
+  //      Display -> Ground and city -> Picture (Lee, 2026-11-16): Smooth = this auto scale (default); Sharp = the screen's
+  //      full resolution always (~10-15 ms more GPU on a laptop: for demos and screenshots). Kept per browser (RES_KEY).
+  const RES_KEY = 'fist-trainer-picture';
+  const RES = (() => {
+    const q = new URLSearchParams(location.search).get('res');
+    const MAX = LITE ? 1 : Math.min(devicePixelRatio, 2), MIN = Math.min(MAX, LITE ? 0.6 : 1);   // never under 1 CSS pixel on a laptop: below that the city goes soft (Lee) for ~6 ms
+    const GPU_HI = 16, GPU_LO = 10, GAP_HI = 22, GAP_LO = 15, RES_GAP = 1500;
+    const forced = q && q !== 'auto' && isFinite(parseFloat(q)) ? Math.max(0.25, Math.min(2, parseFloat(q))) : null;
+    let sharp = false; try { sharp = localStorage.getItem(RES_KEY) === 'sharp'; } catch (e) {}
+    let fixed = forced || (sharp ? MAX : null);
+    let pr = renderer.getPixelRatio(), acc = 0, n = 0, t0 = performance.now(), last = 0;
+    function set(v) {
+      v = Math.round(v * 20) / 20; if (Math.abs(v - pr) < 0.01) return;
+      pr = v; renderer.setPixelRatio(v); resize(); PR_U.value = v; last = performance.now();
+    }
+    if (fixed) set(fixed);
+    let hold = false;                                      // BENCH holds the scale still while it measures
+    function judge(val, hi, lo) {                         // one reading a frame; acts once a second
+      if (fixed || hold || document.hidden) return;
+      acc += val; n++; const now = performance.now();
+      if (now - t0 < 1000 || n < 8) return;
+      const avg = acc / n; acc = 0; n = 0; t0 = now;
+      if (now - last < RES_GAP) return;                   // let a change settle before judging again
+      if (avg > hi && pr > MIN) set(Math.max(MIN, pr * Math.max(0.8, Math.sqrt(hi / avg))));   // pixels ~ pr²
+      else if (avg < lo && pr < MAX) set(Math.min(MAX, pr * 1.1));
+    }
+    return {
+      gpu(ms) { judge(ms, GPU_HI, GPU_LO); },
+      frame(ms, js) { judge(Math.max(0, ms - js), GAP_HI, GAP_LO); },
+      label() { return pr.toFixed(2) + '×' + (forced ? ' fixed' : sharp ? ' sharp' : ' auto'); },
+      get sharp() { return sharp; },
+      setSharp(on) {                                       // the Picture switch
+        sharp = !!on; if (!NOSAVE) try { localStorage.setItem(RES_KEY, sharp ? 'sharp' : 'smooth'); } catch (e) {}
+        if (forced) return;                                // ?res= in the address wins
+        fixed = sharp ? MAX : null; if (sharp) set(MAX); acc = 0; n = 0; t0 = performance.now(); last = 0;
+      },
+      set hold(v) { hold = v; }, setScale: set,
+      get pr() { return pr; }
+    };
+  })();
+  window.__res = RES;
+  { const bs = document.getElementById('rs-sharp'), bm = document.getElementById('rs-smooth');
+    const show = () => { if (bs) bs.setAttribute('aria-pressed', String(RES.sharp)); if (bm) bm.setAttribute('aria-pressed', String(!RES.sharp)); };
+    if (bs) bs.addEventListener('click', () => { RES.setSharp(true); show(); });
+    if (bm) bm.addEventListener('click', () => { RES.setSharp(false); show(); });
+    show(); }
+
+  // ---- BENCH (2026-11-16): what each layer costs the GPU at the current view. Diagnostics -> GPU cost by layer (or
+  //      window.__bench()). Hides one layer at a time and times the GPU against the full scene, measured just before
+  //      and after each case so drift cancels. Also times half resolution, to show how much of the cost is pixels.
+  //      Takes ~1 min; keep the camera still. Results go in the Performance readout box (and the console).
+  const BENCH = (() => {
+    let running = false;
+    const sample = n => new Promise(res => {               // median of n GPU readings, after 3 warm-up frames
+      const v = []; let skip = 3;
+      const tap = ms => { if (skip > 0) { skip--; return; } v.push(ms); if (v.length >= n) { PERF.gpuTaps.delete(tap); v.sort((a, b) => a - b); res(v[v.length >> 1]); } };
+      PERF.gpuTaps.add(tap);
+    });
+    function cases() {
+      const out = [], skip = new Set(['sky']);
+      for (const c of scene.children) {
+        if (!c.visible || c.isLight || skip.has(c.name)) continue;
+        let tris = 0; c.traverse(o => { if (o.geometry && o.visible) { const g = o.geometry, k = g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0); tris += (o.isInstancedMesh ? o.count : 1) * k / 3; } });
+        if (!tris) continue;
+        const name = c.name || ('unnamed ' + c.type);
+        if (c.name === 'city') { for (const k of c.children) if (k.visible) out.push({ name: k.name, obj: k }); }
+        else out.push({ name, obj: c });
+      }
+      return out;
+    }
+    async function run() {
+      if (running) return; if (!PERF.timer) { alert('This browser has no GPU timer; the benchmark needs one (try Chrome or Edge).'); return; }
+      running = true; RES.hold = true;
+      const el = document.getElementById('perf'), btn = document.getElementById('tg-perf');
+      if (el.hidden && btn) btn.click();
+      const say = t => { el.dataset.bench = t; };
+      const rows = [], N = 15, list = cases();
+      try {
+        const base0 = await sample(N);
+        for (let i = 0; i < list.length; i++) {
+          const c = list[i]; say(`benchmark ${i + 1}/${list.length + 1}: ${c.name}`);
+          const a = await sample(N); c.obj.visible = false; const off = await sample(N); c.obj.visible = true; const b = await sample(N);
+          rows.push([c.name, (a + b) / 2 - off]);
+        }
+        say('benchmark: half resolution');
+        const pr = RES.pr, a = await sample(N); RES.setScale(pr / 2); const half = await sample(N); RES.setScale(pr); const b = await sample(N + 5);
+        rows.sort((x, y) => y[1] - x[1]);
+        const txt = `GPU cost by layer at this view (full scene ${base0.toFixed(1)} ms, res ${pr.toFixed(2)}×):\n` +
+          rows.map(([n, d]) => `  ${n.padEnd(22)} ${d >= 0 ? '−' : '+'}${Math.abs(d).toFixed(1)} ms`).join('\n') +
+          `\n  half resolution        −${Math.max(0, (a + b) / 2 - half).toFixed(1)} ms (pixels' share of the cost)`;
+        console.log(txt); say(txt);
+      } finally { running = false; RES.hold = false; }
+    }
+    return { run };
+  })();
+  window.__bench = () => BENCH.run();
+  { const b = document.getElementById('tg-bench'); if (b) b.addEventListener('click', () => BENCH.run()); }
   // ---- ROOM (multiplayer; plan in Trainer/notes/trainer-multiplayer.md). The host (instructor) runs the sim and sends: the
   //      enemy groups and halts, firing units, civilian level and damage when they change; every drone, launch point, mark,
   //      who flies what, and the clock 5x a second; each burst and strike as it happens. A student moves the enemy and
@@ -6686,7 +6895,7 @@ void main(){
   })();
   (function loop(now, once) {
     now = now || performance.now(); const dt = Math.max(0, Math.min(0.25, (now - lastT) / 1000)); lastT = Math.max(lastT, now);   // simStep may have run since this frame's timestamp
-    const fs = performance.now();
+    PERF.begin();
     PERF.time('fires', () => FIRES.tick(dt));
     PERF.time('opfor', () => OPFOR.tick());
     PERF.time('uas', () => UAS.tick());
@@ -6697,14 +6906,13 @@ void main(){
     PERF.time('feeds', () => UAS.renderFeeds());
     const veiled = STUDENT && !obs ? studentVeil() : null;     // the student's map hides what only the sensors may show
     PERF.time('render', () => {
-      if (quadRender()) { /* the sUAS feed: drawn small with grain (QFX) */ }
+      if (quadRender()) { /* the sUAS feed: hazed, and broken up past Q_CLEAR (QFX) */ }
       else if (obs && camOP && camIR) { renderer.render(scene, camera); UAS.irOver(camera); }   // a camera OP in IR: straight to screen, so the hot pass keeps the depth
       else if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera);
     });
     if (veiled) for (const [o, v] of veiled) o.visible = v;
     BOOT.frame(now - lastFrameStart); PERF.frame(now - lastFrameStart); lastFrameStart = now; lastFrameAt = performance.now();
-    MAPGRID.tick();
-    symTagTick(camera, canvas.clientWidth, canvas.clientHeight);
+    PERF.time('labels', () => { MAPGRID.tick(); symTagTick(camera, canvas.clientWidth, canvas.clientHeight); });
     if (!labelBox.hidden) {
       const w = canvas.clientWidth, h = canvas.clientHeight;
       for (const t of tags) {
@@ -6714,6 +6922,7 @@ void main(){
         if (show) { t.d.style.left = ((v.x + 1) / 2 * w) + 'px'; t.d.style.top = ((1 - v.y) / 2 * h) + 'px'; }
       }
     }
+    PERF.end();
     if (!once) requestAnimationFrame(loop);
     // testing aid: window.__frame() runs one frame by hand (a page in a hidden window gets no animation frames)
     if (!window.__frame) window.__frame = () => loop(performance.now(), true);

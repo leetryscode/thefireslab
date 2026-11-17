@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kill Chain Simulator — Fires Lab</title>
-<link rel="stylesheet" href="css/trainer.css?v=2026-11-16c">
+<link rel="stylesheet" href="css/trainer.css?v=2026-11-16d">
 </head>
 <body>
 <canvas id="view" aria-label="3D terrain of the Honolulu battlespace with the scenario sketch"></canvas>
@@ -16,6 +16,7 @@
   <button id="bino" aria-pressed="false">Binoculars (B)</button>
   <button id="quad-go" title="Launch a small quadcopter from this OP and fly its camera">Launch sUAS</button>
   <button id="quad-rec" hidden title="Bring the quadcopter home and land it">Recover (Esc)</button>
+  <span id="quadzoom" hidden><button id="quad-zin" title="Zoom in (wheel or +)">Zoom +</button><button id="quad-zout" title="Zoom out (wheel or −)">Zoom −</button></span>
   <span id="camctl" hidden>
     <span class="camseg" role="group" aria-label="Sensor"><button id="cam-tv" aria-pressed="true" title="Daylight colour camera">TV</button><button id="cam-ir" aria-pressed="false" title="Thermal (white-hot): vehicles and people glow">IR</button></span>
     <button id="cam-zin" title="Zoom in (wheel or +)">Zoom +</button><button id="cam-zout" title="Zoom out (wheel or −)">Zoom −</button>
@@ -26,7 +27,7 @@
 </div>
 <div id="quadhud" hidden>
   <svg class="qh-br" viewBox="0 0 300 220" aria-hidden="true"><path d="M0 34V0H34M266 0H300V34M300 186V220H266M34 220H0V186M132 110H142M158 110H168M150 102V92M150 118V128"/></svg>
-  <div class="qh-read"><div><b>GPS</b><span id="qh-gps">—</span></div><div><b>DIST</b><span id="qh-dist">—</span></div><div><b>BATT</b><span id="qh-batt">—</span></div></div>
+  <div class="qh-read"><div><b>GPS</b><span id="qh-gps">—</span></div><div><b>DIST</b><span id="qh-dist">—</span></div><div><b>BATT</b><span id="qh-batt">—</span></div><div><b>ZOOM</b><span id="qh-zoom">1.0×</span></div></div>
   <div class="qh-msg" id="qh-msg" hidden></div>
 </div>
 <div id="qf-armed" hidden role="status"><span class="dot"></span><span id="qf-armed-t">Fire on click</span><button id="qf-stop" type="button">Stop (Esc)</button></div>
@@ -86,6 +87,7 @@
         <div class="row"><span class="lbl">Height</span><button id="ex1" aria-pressed="true" title="Terrain exaggeration">1×</button><button id="ex2" aria-pressed="false" title="Terrain exaggeration">2×</button><button id="ex3" aria-pressed="false" title="Terrain exaggeration">3×</button></div>
         <div class="row"><span class="lbl">City</span><button id="tg-bldg" aria-pressed="true">Buildings</button><button id="tg-trees" aria-pressed="true">Trees</button></div>
         <div class="row"><span class="lbl">Roofs</span><button id="rf-plain" aria-pressed="true">Plain</button><button id="rf-photo" aria-pressed="false">Photo</button></div>
+        <div class="row"><span class="lbl">Picture</span><button id="rs-smooth" aria-pressed="true" title="Resolution adjusts to keep the frame rate up (recommended for exercises and phones)">Smooth</button><button id="rs-sharp" aria-pressed="false" title="Always the screen's full resolution: crisper buildings and photo, slower on laptops (demos, screenshots)">Sharp</button></div>
       </div></details>
       <details><summary>UAS detail</summary><div class="dfold">
         <div class="row"><span class="lbl">Marks</span><button id="tg-u-marks" aria-pressed="true">Marks</button></div>
@@ -96,7 +98,7 @@
         <div class="row"><button id="tg-arcs" aria-pressed="true">Trajectories</button></div>
       </div></details>
       <details><summary>Diagnostics</summary><div class="dfold">
-        <div class="row"><button id="tg-perf" aria-pressed="false" title="Frame time, fps, JS time per module, draw calls and triangles">Performance</button></div>
+        <div class="row"><button id="tg-perf" aria-pressed="false" title="Frame time, fps, JS time per module, draw calls and triangles">Performance</button> <button id="tg-bench" title="Hide each layer in turn and time the GPU at this view (about a minute; keep the camera still)">GPU cost by layer</button></div>
       </div></details>
       <details><summary>Data sources and keys</summary><div class="dfold">
         <p class="meta">Ground: USGS 3DEP 1 m, thinned to 10 m. Photo: NAIP 2021–2023 via NOAA, 0.6 m, shown here at about 3 m. 12 × 10 km, UTM 4N.</p>
@@ -271,6 +273,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js?v=2026-11-16e"></script>
+<script src="js/trainer.js?v=2026-11-17a"></script>
 </body>
 </html>

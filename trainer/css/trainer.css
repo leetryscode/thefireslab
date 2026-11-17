@@ -130,6 +130,8 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
   background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 #obsbar .where { font: 600 14px var(--font-head); letter-spacing: .06em; text-transform: uppercase; color: var(--friend); margin-right: 6px; }
 #obsbar [hidden] { display: none !important; }
+#quadzoom { display: inline-flex; gap: 6px; }
+#quadzoom[hidden] { display: none; }
 #camctl { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 #obsbar .camseg { display: inline-flex; border: 1px solid var(--line); border-radius: 14px; padding: 2px; }
 #obsbar .camseg button { border: 0; border-radius: 11px; padding: 3px 12px; font-weight: 700; letter-spacing: .06em; background: transparent; }
