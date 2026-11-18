@@ -1752,14 +1752,39 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   const quadZoomEl = document.getElementById('quadzoom'), qhZoom = document.getElementById('qh-zoom');
   const qhGps = document.getElementById('qh-gps'), qhDist = document.getElementById('qh-dist'), qhBatt = document.getElementById('qh-batt');
   const qKeys = new Set();
-  let quad = null;                       // { x, y, z, g0, used, last, phase: 'launch' | 'fly' | 'down', k, dist, ... }
+  // touch flight (2026-11-18): two thumbsticks, shown only on touch screens while flying. Left: up/down climbs, left/right
+  // turns. Right: forward/back and sideways. Analog, added to the keys (qSt, -1..1), so a half push flies at half speed.
+  const TOUCH_UI = matchMedia('(pointer: coarse)').matches;
+  const qSt = { f: 0, s: 0, u: 0, t: 0 };
+  const qSticks = document.createElement('div'); qSticks.id = 'qsticks'; qSticks.hidden = true;
+  qSticks.innerHTML = '<div class="qstick" data-x="t" data-y="u" aria-label="Climb and turn"><span>CLIMB · TURN</span><i></i></div>' +
+    '<div class="qstick" data-x="s" data-y="f" aria-label="Fly forward, back and sideways"><span>MOVE</span><i></i></div>';
+  document.body.appendChild(qSticks);
+  for (const pad of qSticks.querySelectorAll('.qstick')) {
+    const nub = pad.querySelector('i'), kx = pad.dataset.x, ky = pad.dataset.y, dz = v => (Math.abs(v) < 0.12 ? 0 : v);
+    let id = null;
+    const set = e => {
+      const r = pad.getBoundingClientRect(), R = r.width / 2;
+      let x = (e.clientX - r.left - R) / R, y = (e.clientY - r.top - R) / R; const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+      qSt[kx] = dz(x); qSt[ky] = dz(-y); nub.style.transform = 'translate(' + (x * R * 0.55).toFixed(1) + 'px,' + (y * R * 0.55).toFixed(1) + 'px)';
+    };
+    const end = e => { if (e.pointerId !== id) return; id = null; qSt[kx] = qSt[ky] = 0; nub.style.transform = ''; };
+    pad.addEventListener('pointerdown', e => { if (id !== null) return; id = e.pointerId; try { pad.setPointerCapture(id); } catch (err) {} set(e); e.preventDefault(); });
+    pad.addEventListener('pointermove', e => { if (e.pointerId === id) set(e); });
+    pad.addEventListener('pointerup', end); pad.addEventListener('pointercancel', end);
+  }
+  const qStop = () => { qKeys.clear(); qSt.f = qSt.s = qSt.u = qSt.t = 0; for (const n of qSticks.querySelectorAll('i')) n.style.transform = ''; };
+  let quad = null;                      // { x, y, z, g0, used, last, phase: 'launch' | 'fly' | 'down', k, dist, ... }
   const simNow = () => (window.__fires ? window.__fires.simT : 0);
   const ctlY = () => standH(walk.x0, walk.z0) + EYE;      // the controller, standing at the post
   function quadUI() {
     const f = !!quad;
     quadHud.hidden = !f; quadRec.hidden = !f; quadZoomEl.hidden = !f; binoBtn.hidden = f || camOP; quadGo.hidden = f || camOP;
-    obsExit.textContent = f ? 'Back to map' : 'Back to map (Esc)';
-    obsHint.textContent = f ? 'WASD or arrows: fly · Q/E: turn · R/F: climb/descend · Wheel or +/−: zoom · Drag: turn, tilt camera'
+    qSticks.hidden = !(f && TOUCH_UI); if (!f) qStop();
+    obsExit.textContent = f || TOUCH_UI ? 'Back to map' : 'Back to map (Esc)';
+    quadRec.textContent = TOUCH_UI ? 'Recover' : 'Recover (Esc)';
+    obsHint.textContent = TOUCH_UI ? (f ? 'Sticks: fly · Drag: look, tilt camera · Pinch: zoom' : camOP ? 'Drag: pan · Pinch: zoom' : 'Drag: look around')
+      : f ? 'WASD or arrows: fly · Q/E: turn · R/F: climb/descend · Wheel or +/−: zoom · Drag: turn, tilt camera'
       : camOP ? 'Drag or arrows: pan · Wheel or +/−: zoom' : 'Arrows: walk · Shift+arrows or drag: turn';
     qhMsg.hidden = true;
   }
@@ -1768,12 +1793,12 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     if (!obs || camOP || quad) return;
     quad = { x: walk.x, z: walk.z, y: camera.position.y, g0: standH(walk.x, walk.z), used: 0, last: simNow(), phase: 'launch',
       k: 0, dist: 0, fov: Q_FOV, opYaw: yaw, opPitch: pitch, hudN: 0, warned: false, note: '', noteUntil: 0 };
-    binos = false; pitch = -0.2; walk.keys.clear(); qKeys.clear();
+    binos = false; pitch = -0.2; walk.keys.clear(); qStop();
     quadUI(); setFov(); quadTick(0);
   }
   function quadEnd() {
     if (!quad) return;
-    yaw = quad.opYaw; pitch = quad.opPitch; quad = null; qKeys.clear();
+    yaw = quad.opYaw; pitch = quad.opPitch; quad = null; qStop();
     if (obs) { placeObserver(); setFov(); }
     quadUI();
   }
@@ -1789,15 +1814,16 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     if (q.phase === 'down') { if (performance.now() > q.downT) quadEnd(); return; }
     if (q.used >= Q_ENDUR) {             // out of battery: home if it made it back to the post, a crash anywhere else
       const home = Math.hypot(q.x - walk.x0, q.z - walk.z0) <= Q_REC_R;
-      q.phase = 'down'; q.downT = performance.now() + 3500; qKeys.clear(); quadNote(home ? 'BATTERY DEPLETED · LANDED' : 'BATTERY DEPLETED · sUAS CRASHED', 3.5);
+      q.phase = 'down'; q.downT = performance.now() + 3500; qStop(); quadNote(home ? 'BATTERY DEPLETED · LANDED' : 'BATTERY DEPLETED · sUAS CRASHED', 3.5);
     }
     else if (!q.warned && Q_ENDUR - q.used <= Q_WARN) { q.warned = true; quadNote('LOW BATTERY', 3); }
     if (q.phase === 'launch') { q.y += Q_LAUNCH_RATE * dt; if (q.y >= q.g0 + Q_LAUNCH_AGL) { q.y = q.g0 + Q_LAUNCH_AGL; q.phase = 'fly'; } }
     else if (q.phase === 'fly') {
-      const K = qKeys, h = c => (K.has(c) ? 1 : 0), f = h('F') - h('B'), s = h('R') - h('L'), u = h('U') - h('D'), t = h('TR') - h('TL');
+      const K = qKeys, h = c => (K.has(c) ? 1 : 0), cl = v => Math.max(-1, Math.min(1, v));   // keys plus the touch sticks (qSt)
+      const f = cl(h('F') - h('B') + qSt.f), s = cl(h('R') - h('L') + qSt.s), u = cl(h('U') - h('D') + qSt.u), t = cl(h('TR') - h('TL') + qSt.t);
       if (t) yaw += t * Q_TURN * dt * Math.min(1, q.fov / Q_FOV);     // slower turns when zoomed in
       if (f || s) {                      // along the ground where the camera faces; slide along a wall taller than the aircraft
-        const L = Math.hypot(f, s), st = Q_SPEED * dt / L, ok = (x, z) => standH(x, z) + Q_MIN_AGL <= q.y;
+        const L = Math.hypot(f, s), st = Q_SPEED * dt * Math.min(1, L) / L, ok = (x, z) => standH(x, z) + Q_MIN_AGL <= q.y;   // a part push: part speed
         const dx = (Math.sin(yaw) * f + Math.cos(yaw) * s) * st, dz = (-Math.cos(yaw) * f + Math.sin(yaw) * s) * st;
         if (ok(q.x + dx, q.z + dz)) { q.x += dx; q.z += dz; } else if (dx && ok(q.x + dx, q.z)) q.x += dx; else if (dz && ok(q.x, q.z + dz)) q.z += dz;
       }
@@ -1931,10 +1957,18 @@ void main(){
   });
   addEventListener('keyup', e => { walk.keys.delete(e.key); qKeys.delete(Q_KEYS[e.key.toLowerCase()]); });
   addEventListener('blur', () => { walk.keys.clear(); qKeys.clear(); });
-  let drag = null;
-  canvas.addEventListener('pointerdown', e => { if (obs) { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); } });
-  canvas.addEventListener('pointerup', () => { drag = null; });
+  let drag = null, pinch = 0;                // pinch (2026-11-18): two fingers zoom the sUAS or a camera OP
+  const touches = new Map(), spread = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+  canvas.addEventListener('pointerdown', e => {
+    if (!obs) return;
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    if (touches.size === 2) { pinch = spread(); drag = null; } else if (touches.size === 1) drag = { x: e.clientX, y: e.clientY };
+  });
+  const lift = e => { touches.delete(e.pointerId); pinch = 0; drag = null; };
+  canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);
   canvas.addEventListener('pointermove', e => {
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (obs && touches.size >= 2) { if (pinch) { const s = spread(), f = pinch / s; if (quad) quadZoom(f); else if (camOP) camZoom(f); pinch = s; } return; }
     if (!obs || !drag) return;
     // one screen height of drag turns the view by one field of view, so binoculars pan finely
     const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight;
@@ -5673,8 +5707,18 @@ void main(){
       const rb = doc.getElementById('f-recover'); if (rb) rb.disabled = !fly || d.task.kind === 'recover';
     }
     function note(d, text) { const w = d.feed; if (w && !w.closed) { const el = w.document.getElementById('f-msg'); el.textContent = text; } }
-    const FEED_HTML = (name, T) => `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${name} — UAS feed</title><style>
+    // touch (phones, tablets; 2026-11-18): bigger buttons, no text under the close button, and tap / drag / pinch instead of click / wheel
+    const FEED_TOUCH = matchMedia('(pointer: coarse)').matches;
+    const FEED_HTML = (name, T) => `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${name} — UAS feed</title><style>
       html,body{margin:0;background:#0b0f0c;color:#e6e9df;font:13px ui-monospace,Menlo,Consolas,monospace;height:100%}
+      #fv{touch-action:none}
+      body.touch #hud{right:58px;font-size:12px;gap:2px 10px}
+      body.touch #bar{gap:6px;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+      body.touch button,body.touch input{font-size:14px;min-height:40px;padding:6px 12px}
+      body.touch #m-sensor button{min-height:34px;padding:4px 16px}
+      body.touch .sep{display:none}
+      body.touch #f-note{flex:1 1 120px}
+      body.touch #f-msg{font-size:12px}
       #wrap{display:flex;flex-direction:column;height:100%}
       #fv{display:block;width:100%;flex:1 1 auto;min-height:0;object-fit:contain;background:#000;cursor:crosshair}
       #hud{position:absolute;top:6px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:4px 14px;pointer-events:none;text-shadow:0 0 3px #000}
@@ -5695,7 +5739,7 @@ void main(){
       #m-sensor button{border:0;border-radius:11px;padding:3px 12px;font-weight:700;letter-spacing:.06em;background:transparent;color:#8a948b}
       #m-sensor button[aria-pressed=true]{background:#e6e9df;color:#0b0f0c}
       #m-sensor #m-ir[aria-pressed=true]{background:#fff;color:#000;box-shadow:0 0 8px rgba(255,255,255,.55)}
-    </style></head><body><div id="wrap">
+    </style></head><body${FEED_TOUCH ? ' class="touch"' : ''}><div id="wrap">
       <div style="position:relative;flex:1 1 auto;min-height:0;display:flex"><canvas id="fv" width="${FEED_W}" height="${FEED_H}"></canvas>
       <div id="hud"><span><b>UAS</b><span id="h-name"></span></span><span><b>MODE</b><span id="h-mode"></span></span><span><b>POS</b><span id="h-pos"></span></span><span><b>ALT</b><span id="h-alt"></span></span>
       <span><b>SPI</b><span id="h-spi"></span></span><span><b>RNG</b><span id="h-rng"></span></span><span><b>FOV</b><span id="h-fov"></span></span>
@@ -5711,7 +5755,8 @@ void main(){
         ${T.burst ? '<button id="f-strike" title="Dive on the tracked vehicle (click twice)">Strike</button>' : ''}
         ${T.waveoff ? '<button id="f-abort" hidden title="Pull out of the dive and climb back to orbit">Wave off</button>' : ''}
         ${T.recover ? '<button id="f-recover" title="Fly back to the launch point and land">Recover</button>' : ''}
-        <div id="f-msg"><b>To strike: press ⌖ Track vehicle, click the vehicle, then Strike.</b> Click: stare at a point. Shift-click: track. Drag or arrows: slew. Wheel: zoom.</div>
+        <div id="f-msg">${FEED_TOUCH ? '<b>To strike: press ⌖ Track vehicle, tap the vehicle, then Strike.</b> Tap: stare at a point. Drag: slew. Pinch: zoom.'
+          : '<b>To strike: press ⌖ Track vehicle, click the vehicle, then Strike.</b> Click: stare at a point. Shift-click: track. Drag or arrows: slew. Wheel: zoom.'}</div>
       </div></div></body></html>`;
     // reminder before the first feed (and again if the browser blocks one): feeds open as pop-up windows
     let modal = null, skipModal = false;
@@ -5767,15 +5812,25 @@ void main(){
       // in a room only the flier steers the camera or gives orders; watchers get a note (marks are open to everyone)
       const fly = () => { if (mine(d)) return true; note(d, (flier(d) ? 'Flown by ' + flier(d) : 'Flown by the instructor') + '. Take control in the UAS panel to fly it.'); return false; };
       const zoom = f => { if (!fly()) return; d.cam.fov *= f; updateCam(d); };
-      let drag = null;
-      cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+      let drag = null, pinch = 0;
+      const pts = new Map(), spread = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+      cv.addEventListener('pointerdown', e => {
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+        if (pts.size === 2) { pinch = spread(); if (drag) drag.moved = true; return; }      // two fingers: a pinch, never a tap
+        if (pts.size === 1) drag = { x: e.clientX, y: e.clientY, moved: false };
+      });
+      const lift = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = 0; };
+      cv.addEventListener('pointercancel', e => { lift(e); drag = null; });
       cv.addEventListener('pointermove', e => {
+        if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pts.size >= 2) { if (pinch && mine(d)) { const s = spread(); d.cam.fov *= pinch / s; updateCam(d); pinch = s; } return; }   // fov is clamped in updateCam
         if (!drag || d.state !== 'fly' || !mine(d)) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         if (!drag.moved && Math.hypot(dx, dy) < 4) return; drag.moved = true; drag.x = e.clientX; drag.y = e.clientY;
         const k = d.cam.fov * Math.PI / 180 / cv.getBoundingClientRect().height;
         slewBy(d, dx * k, dy * k);           // the picture follows the hand on both axes (sideways used to run backwards)
       });
       cv.addEventListener('pointerup', e => {
+        const two = pts.size > 1; lift(e); if (two || pts.size) { if (drag) drag.moved = true; return; }   // the last finger up ends it
         const was = drag; drag = null; if (!was || was.moved || d.state !== 'fly' || !fly()) return;
         const [nx, ny] = ndc(e); updateCam(d); const p = groundThrough(d, nx, ny); if (!p) return note(d, 'No ground there.');
         if (e.shiftKey || d.pickTrack) {
@@ -5790,7 +5845,7 @@ void main(){
       const B = id => doc.getElementById(id);
       B('m-scan').addEventListener('click', () => { if (!fly()) return; d.cam.mode = 'scan'; d.cam.trk = null; });
       B('m-stare').addEventListener('click', () => { if (fly() && d.spi) { d.cam.mode = 'stare'; d.cam.sx = d.spi.x; d.cam.sz = d.spi.z; d.cam.trk = null; } });
-      B('m-track').addEventListener('click', () => { if (!fly()) return; d.pickTrack = !d.pickTrack; note(d, d.pickTrack ? 'Click a vehicle in the video to track it.' : ''); });
+      B('m-track').addEventListener('click', () => { if (!fly()) return; d.pickTrack = !d.pickTrack; note(d, d.pickTrack ? (FEED_TOUCH ? 'Tap' : 'Click') + ' a vehicle in the video to track it.' : ''); });
       B('m-tv').addEventListener('click', () => { d.ir = false; d.hudN = 5; hud(d); });   // display only: anyone watching may switch it, no control needed
       B('m-ir').addEventListener('click', () => { d.ir = true; d.hudN = 5; hud(d); });    // hudN 5: hud() runs on its next count
       B('z-in').addEventListener('click', () => zoom(1 / 1.5));

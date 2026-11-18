@@ -487,3 +487,16 @@ a.tb-name:hover { color: var(--brass); }
 .feed-page iframe { display: block; width: 100%; height: 100%; border: 0; }
 .feed-page-x { position: absolute; top: max(6px, env(safe-area-inset-top, 0px)); right: max(6px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px;
   font: 600 26px/1 var(--font-mono, monospace); color: #e6e9df; background: rgba(11, 15, 12, .8); border: 1px solid #3a4a3d; border-radius: 6px; cursor: pointer; }
+/* sUAS thumbsticks on touch screens (2026-11-18): bottom corners, over the feed; the knob follows the thumb */
+#qsticks[hidden] { display: none; }
+#qsticks { position: fixed; left: 0; right: 0; bottom: calc(58px + env(safe-area-inset-bottom, 0px)); z-index: 11; pointer-events: none;
+  display: flex; justify-content: space-between; padding: 0 max(14px, env(safe-area-inset-left, 0px)) 0 max(14px, env(safe-area-inset-right, 0px)); }
+.qstick { pointer-events: auto; touch-action: none; position: relative; width: min(132px, 34vw); aspect-ratio: 1; border-radius: 50%;
+  background: rgba(10, 14, 11, .38); border: 1.5px solid rgba(230, 233, 223, .55); display: grid; place-items: center; user-select: none; -webkit-user-select: none; }
+.qstick span { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font: 600 10.5px var(--font-mono, monospace); letter-spacing: .08em; color: #fff; text-shadow: 0 0 3px #000; opacity: .85; }
+.qstick i { width: 42%; aspect-ratio: 1; border-radius: 50%; background: rgba(230, 233, 223, .55); border: 1.5px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,.5); }
+/* phones in portrait: the sUAS readout sits above the sticks, clear of the OP bar at the top */
+@media (pointer: coarse) and (max-width: 700px) {
+  #quadhud .qh-read { top: auto; bottom: calc(58px + min(132px, 34vw) + 34px + env(safe-area-inset-bottom, 0px)); font-size: 13px; gap: 2px; }
+}
