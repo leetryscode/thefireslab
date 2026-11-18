@@ -186,6 +186,7 @@
     const $ = id => document.getElementById(id), wl = $('welcome'), form = $('wl-form');
     const setQuery = p => { const u = new URL(location.href); for (const [k, v] of Object.entries(p)) { if (v == null) u.searchParams.delete(k); else u.searchParams.set(k, v); } history.replaceState(null, '', u); };
     const base = () => location.origin + location.pathname;
+    const relayQ = (r => r ? '&relay=' + encodeURIComponent(r) : '')(new URLSearchParams(location.search).get('relay'));   // links carry &relay= on
     let act = null, run = null;
     const want = a => { if (run) run(a); else act = a; };
     let lastCs = ''; try { lastCs = localStorage.getItem('fist-callsign') || ''; } catch {}
@@ -204,19 +205,19 @@
     $('wl-start').addEventListener('click', close);
     $('wl-host').addEventListener('click', () => { close(); want('host'); });
     $('wl-join').addEventListener('click', () => show('join'));
-    $('wl-back').addEventListener('click', () => { if (STUDENT) location.href = base(); else show('main'); });
+    $('wl-back').addEventListener('click', () => { if (STUDENT) location.href = base() + (relayQ ? '?' + relayQ.slice(1) : ''); else show('main'); });
     form.addEventListener('submit', e => {
       e.preventDefault();
       const cs = NET_CS($('wl-cs').value), code = STUDENT ? NET.room : NET_CODE($('wl-code').value);
       if (!code) { $('wl-msg').textContent = 'Enter the session code your instructor gave you.'; $('wl-code').focus(); return; }
       if (!cs) { $('wl-msg').textContent = 'Enter a callsign, so others know who you are.'; $('wl-cs').focus(); return; }
       try { localStorage.setItem('fist-callsign', cs); } catch {}
-      if (!STUDENT) { location.href = base() + '?join=' + encodeURIComponent(code) + '&cs=' + encodeURIComponent(cs); return; }   // the student screen needs a fresh load
+      if (!STUDENT) { location.href = base() + '?join=' + encodeURIComponent(code) + '&cs=' + encodeURIComponent(cs) + relayQ; return; }   // the student screen needs a fresh load
       NET.cs = cs; setQuery({ cs }); close(); want('join');
     });
     if (STUDENT && NET.room && !NET.cs) show('callsign');
     else if (!STUDENT && !NET.room) show('main');
-    return { setQuery, base, show, ready(f) { run = f; if (act) { const a = act; act = null; f(a); } } };
+    return { setQuery, base, relayQ, show, ready(f) { run = f; if (act) { const a = act; act = null; f(a); } } };
   })();
   const NOSAVE = NET.client;
   window.__net = NET;
@@ -6396,7 +6397,7 @@ void main(){
       const n = frames || 1, f = k => ((acc[k] || 0) / n).toFixed(1);
       const heap = performance.memory ? ' · JS heap ' + Math.round(performance.memory.usedJSHeapSize / 1e6) + ' MB' : '';
       const gpu = !TQ ? ' · GPU time n/a in this browser' : gpuN ? ` · GPU ${(gpuAcc / gpuN).toFixed(1)} ms (worst ${gpuWorst.toFixed(0)})` : '';
-      el.textContent = `${Math.round(n * 1000 / (now - t0))} fps · frame ${(frameMs / n).toFixed(1)} ms (worst ${worst.toFixed(0)})${gpu} · res ${RES.label()}\n` +
+      txt.textContent = `${Math.round(n * 1000 / (now - t0))} fps · frame ${(frameMs / n).toFixed(1)} ms (worst ${worst.toFixed(0)})${gpu} · res ${RES.label()}\n` +
         `JS ms/frame: fires ${f('fires')} · enemy ${f('opfor')} · UAS ${f('uas')} · civilians ${f('civ')} · trees ${f('trees')} · feeds ${f('feeds')} · draw ${f('render')}\n` +
         `GPU/frame: ${Math.round((acc.calls || 0) / n)} draw calls · ${((acc.tris || 0) / n / 1e6).toFixed(2)} M triangles · ${mem.geometries} geometries · ${mem.textures} textures${heap}` +
         (big ? `\nWorst spike, last 30 s (${Math.round((now - big.t) / 1000)} s ago):\n  ${big.line}` : '') +
@@ -6767,14 +6768,14 @@ void main(){
   //      as before), Host Live Session (solo plus a session code: hostSession) or Join Live Session (code + callsign, then
   //      the page reloads as ?join=CODE&cs=CALLSIGN). A student link ?join=CODE without &cs asks only for the callsign.
   //      An instructor can also host later from the topbar's Host Live Session button. The Live Session panel (w-session)
-  //      shows the code, the join link and its QR code (qrcode-generator, loaded from cdnjs only when needed, so solo stays
-  //      offline-safe), who has joined, the link for hosting from another computer, and End session.
+  //      shows the code, the join link and its QR code (qrcode-generator, bundled in vendor/ and loaded only when needed),
+  //      who has joined, the link for hosting from another computer, and End session.
   //      The callsign is remembered in localStorage ('fist-callsign'): the one thing a student writes, a preference only.
   const SESSION = (() => {
     const $ = id => document.getElementById(id);
     const WORDS = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL', 'INDIA', 'KILO', 'LIMA', 'MIKE', 'OSCAR', 'PAPA', 'ROMEO', 'SIERRA', 'TANGO', 'VICTOR', 'WHISKEY', 'YANKEE', 'ZULU'];
     const newCode = () => WORDS[Math.floor(Math.random() * WORDS.length)] + (10 + Math.floor(Math.random() * 90));
-    const { setQuery, base } = WELCOME;
+    const { setQuery, base, relayQ } = WELCOME;
     const hostBtn = $('host-btn'), win = $('w-session');
     let retries = 0;
 
@@ -6799,18 +6800,18 @@ void main(){
     let qrFor = '';
     function draw(who, pin) {
       if (!NET.host) return;
-      const link = base() + '?join=' + NET.room;
+      const link = base() + '?join=' + NET.room + relayQ;
       $('ss-code').textContent = NET.room;
       $('ss-link').value = link;
       $('ss-who').textContent = who && who.length ? 'Joined: ' + who.join(', ') : 'No one has joined yet.';
-      if (pin !== undefined) { $('ss-pinlink').textContent = base() + '?room=' + NET.room + '&pin=' + pin; $('ss-pin').hidden = !pin; }
+      if (pin !== undefined) { $('ss-pinlink').textContent = base() + '?room=' + NET.room + '&pin=' + pin + relayQ; $('ss-pin').hidden = !pin; }
       if (qrFor !== link) { qrFor = link; qr(link); }
     }
     let qrLib = null;
     function qr(text) {
       const box = $('ss-qr'); box.textContent = '';
       qrLib = qrLib || new Promise((ok, bad) => { if (window.qrcode) return ok(window.qrcode);
-        const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+        const s = document.createElement('script'); s.src = 'vendor/qrcode.min.js';   // bundled (MIT), so the QR works on an offline local session
         s.onload = () => window.qrcode ? ok(window.qrcode) : bad(); s.onerror = bad; document.head.appendChild(s); });
       qrLib.then(lib => { if (qrFor !== text) return; const c = lib(0, 'M'); c.addData(text); c.make(); box.innerHTML = c.createSvgTag(4, 0); box.hidden = false; })
         .catch(() => { qrLib = null; box.hidden = true; });
