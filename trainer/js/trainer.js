@@ -5737,11 +5737,27 @@ void main(){
       modal.querySelector('.umodal-c').hidden = blocked;
       modal.hidden = false; modal.querySelector('.umodal-go').focus();
     }
+    // phones and tablets (2026-11-18): the feed opens inside this page, full screen. A pop-up there is a new tab, which hides this
+    // one, and a hidden tab draws no frames, so the feed (drawn from this page's loop) went black or froze. One feed at a time.
+    // ?feed=page / ?feed=window force either way. inPage() is the stand-in the rest of the feed code treats as the window.
+    const FEED_INPAGE = (q => q === 'page' || (q !== 'window' && matchMedia('(pointer: coarse)').matches))(new URLSearchParams(location.search).get('feed'));
+    function inPage(d) {
+      for (const o of drones) if (o !== d && o.feed && !o.feed.closed) o.feed.close();
+      const box = document.createElement('div'); box.className = 'feed-page';
+      const fr = document.createElement('iframe'); fr.title = d.name + ' feed';
+      const x = document.createElement('button'); x.className = 'feed-page-x'; x.type = 'button'; x.textContent = '×'; x.title = 'Close feed'; x.setAttribute('aria-label', 'Close ' + d.name + ' feed');
+      box.append(fr, x); document.body.appendChild(box);
+      const shut = () => { box.remove(); d.slewKeys && d.slewKeys.clear(); };
+      x.addEventListener('click', shut);
+      return { get closed() { return !box.isConnected; }, close: shut, focus() {}, inPage: true,
+        get document() { return fr.contentDocument; }, addEventListener: (...a) => fr.contentWindow.addEventListener(...a) };
+    }
+    const feedCovers = () => FEED_INPAGE && drones.some(d => d.feed && d.feed.inPage && !d.feed.closed);
     function openFeed(d, confirmed) {
       if (!TYPES[d.type].cam) return;
       if (d.feed && !d.feed.closed) { d.feed.focus(); return; }
-      if (!confirmed && !skipModal) return feedModal(d, false);
-      const w = window.open('', 'uas-feed-' + d.id, 'width=860,height=640');
+      if (!confirmed && !skipModal && !FEED_INPAGE) return feedModal(d, false);
+      const w = FEED_INPAGE ? inPage(d) : window.open('', 'uas-feed-' + d.id, 'width=860,height=640');
       if (!w) return feedModal(d, true);
       w.document.open(); w.document.write(FEED_HTML(d.name, TYPES[d.type])); w.document.close();
       const doc = w.document, cv = doc.getElementById('fv');
@@ -5962,7 +5978,7 @@ void main(){
     draw();
     const feedCams = () => drones.filter(d => d.feed && (d.state === 'fly' || d.state === 'falling')).map(d => d.cam3);
     const feedFocus = () => drones.filter(d => d.feed && d.spi && d.state === 'fly').map(d => ({ x: d.spi.x, z: d.spi.z, r: 350, cam: d.cam3.position }));
-    return { tick, renderFeeds, irOver, feedHide, feedFocus, feedCams, cmd, runCmd, netState, applyNet, applyCam, droneById, setSend(f) { sendCmd = f; }, camOut, debug: { cmd, OPS, ctl, mine, lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
+    return { tick, renderFeeds, irOver, feedHide, feedFocus, feedCams, feedCovers, cmd, runCmd, netState, applyNet, applyCam, droneById, setSend(f) { sendCmd = f; }, camOut, debug: { cmd, OPS, ctl, mine, lpList, TYPES, CAM, lps, drones, marks, addLP, launch, setTask, openFeed, commitStrike, waveOff, recover, addMark, eta, models: tmpl, updateCam, groundThrough, los, rayGround } };
   })();
   window.__uas = UAS.debug;
 
@@ -6907,7 +6923,8 @@ void main(){
     PERF.time('feeds', () => UAS.renderFeeds());
     const veiled = STUDENT && !obs ? studentVeil() : null;     // the student's map hides what only the sensors may show
     PERF.time('render', () => {
-      if (quadRender()) { /* the sUAS feed: hazed, and broken up past Q_CLEAR (QFX) */ }
+      if (UAS.feedCovers()) { /* a full-screen in-page feed (phones) hides the main view: don't draw it */ }
+      else if (quadRender()) { /* the sUAS feed: hazed, and broken up past Q_CLEAR (QFX) */ }
       else if (obs && camOP && camIR) { renderer.render(scene, camera); UAS.irOver(camera); }   // a camera OP in IR: straight to screen, so the hot pass keeps the depth
       else if (FXAA) FXAA.render(scene, camera); else renderer.render(scene, camera);
     });

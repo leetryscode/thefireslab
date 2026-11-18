@@ -479,3 +479,8 @@ a.tb-name:hover { color: var(--brass); }
 /* a Logbook row reached from a timeline marker flashes once */
 .flog .hl { animation: flog-hl 1.6s ease-out; border-radius: 3px; }
 @keyframes flog-hl { from { background: rgba(214, 178, 90, .35); } to { background: transparent; } }
+/* in-page UAS feed on phones and tablets (2026-11-18): full screen over the sim, the page's own close button top right */
+.feed-page { position: fixed; inset: 0; z-index: 900; background: #0b0f0c; }
+.feed-page iframe { display: block; width: 100%; height: 100%; border: 0; }
+.feed-page-x { position: absolute; top: max(6px, env(safe-area-inset-top, 0px)); right: max(6px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px;
+  font: 600 26px/1 var(--font-mono, monospace); color: #e6e9df; background: rgba(11, 15, 12, .8); border: 1px solid #3a4a3d; border-radius: 6px; cursor: pointer; }
