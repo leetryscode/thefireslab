@@ -6367,7 +6367,8 @@ void main(){
   // ---- performance readout (Display → Diagnostics → Performance; Lee, 2026-11-03): what each frame costs, so a
   //      feature's weight can be seen by switching it on and off. Frame time, fps, JS time per module, GPU work.
   const PERF = (() => {
-    const el = document.getElementById('perf'), btn = document.getElementById('tg-perf');
+    const el = document.getElementById('perf'), txt = document.getElementById('perf-txt'), btn = document.getElementById('tg-perf');
+    document.getElementById('perf-x').addEventListener('click', () => { if (on) btn.click(); });   // the X: same as switching Performance off
     let on = false, acc = {}, frames = 0, t0 = performance.now(), frameMs = 0, worst = 0;
     // GPU time (2026-11-16): a timer query around each frame's GL work, read back a few frames later, so the readout
     // shows what the graphics card spends, not just the JS. Spikes: any gap between frames over SPIKE_MS is logged

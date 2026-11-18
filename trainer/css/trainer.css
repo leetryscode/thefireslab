@@ -412,7 +412,10 @@ a.tb-name:hover { color: var(--brass); }
 /* performance readout (Display → Diagnostics → Performance) */
 #perf { position: fixed; z-index: 12; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(46px + env(safe-area-inset-bottom, 0px)); margin: 0;
   font: 500 11.5px/1.5 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: pre;
-  background: rgba(18, 22, 16, 0.78); border: 1px solid var(--line); border-radius: 4px; padding: 6px 9px; pointer-events: none; }
+  background: rgba(18, 22, 16, 0.78); border: 1px solid var(--line); border-radius: 4px; padding: 6px 36px 6px 9px; pointer-events: none; }
+#perf { max-width: calc(100vw - 32px); box-sizing: border-box; overflow: hidden; }   /* narrow screens clip the long lines, never the X */
+#perf pre { margin: 0; font: inherit; white-space: pre; }
+#perf-x { position: absolute; top: 4px; right: 4px; pointer-events: auto; }   /* the panel lets clicks through to the map; only the X takes them */
 
 /* lite (demo) mode notice on phones and tablets */
 #lite-note { position: fixed; z-index: 50; left: 50%; top: calc(var(--tb-h, 56px) + 12px); transform: translateX(-50%); width: min(420px, calc(100% - 24px));
