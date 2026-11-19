@@ -500,3 +500,59 @@ a.tb-name:hover { color: var(--brass); }
 @media (pointer: coarse) and (max-width: 700px) {
   #quadhud .qh-read { top: auto; bottom: calc(58px + min(132px, 34vw) + 34px + env(safe-area-inset-bottom, 0px)); font-size: 13px; gap: 2px; }
 }
+/* standing at a walking OP on a touch screen: only the right stick shows, and it walks */
+#qsticks.walk .qstick[data-x="t"] { visibility: hidden; }
+
+/* ===== Phones (2026-11-18). Touch screens only, so the laptop layout is untouched. =====
+   Bigger targets, a compact top bar with the panel buttons on one scrolling row, panels as a sheet from the bottom
+   (one at a time, see SHEET in trainer.js), and a slimmer OP bar. */
+@media (pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-height: 500px) {
+  button { min-height: 38px; font-size: 13px; padding: 6px 11px; }
+  .tl-ev .ev { min-height: 0; }   /* timeline marks keep their own small size */
+  .win input, .win select { min-height: 38px; font-size: 14px; }   /* 14px+ also stops iOS zooming into a field */
+  .lbl { font-size: 12px; }
+  .hint, .win .msg, .grow .gt, .grow .gs, .drow .dn .ug { font-size: 12.5px; }
+  .drow button, .drow select, .dfold button, .drow .feed-off, .urow button, .ghalt { min-height: 36px; padding: 5px 10px; font-size: 13px; }
+  .dmain button { padding: 8px 12px; }
+
+  /* top bar: name, badge and clock on one line; the timeline; then every panel button on one row that scrolls sideways */
+  #topbar { gap: 6px 8px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: 6px; }
+  .tb-name { font-size: 14px; }
+  .tb-clock { gap: 6px; flex-wrap: nowrap; }
+  .tb-clock button { min-height: 34px; padding: 4px 9px; }
+  .tb-play { min-width: 58px; }
+  #clock { font-size: 15px; min-width: 0; }
+  .tb-timeline { flex: 1 1 140px; height: 24px; }   /* beside the clock when it fits (students), else its own line */
+  .tb-right { flex: 1 1 100%; margin-left: 0; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; gap: 6px; }
+  .tb-right::-webkit-scrollbar { display: none; }
+  .tb-right > *, .tb-tools button { flex: 0 0 auto; }
+  .tb-tools { flex-wrap: nowrap; }
+
+  /* the OP bar: full width under the top bar, left to right */
+  #obsbar { left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); top: calc(var(--tb-h, 56px) + 6px);
+    max-width: none; justify-content: flex-start; gap: 6px; padding: 6px 8px; }
+  #obsbar .where { flex-basis: 100%; font-size: 13px; }
+  #obsbar .hint { text-align: left; font-size: 11.5px; order: 9; }
+  #obsbar .camseg button { min-height: 32px; }
+  #obsexit { margin-left: auto; }
+  #quadzoom, #cam-zin, #cam-zout { display: none !important; }   /* pinch zooms; the hint says so */
+  .dmore summary, .custom-lp summary, details > summary { padding-top: 10px; padding-bottom: 10px; }
+
+  .readout { font-size: 12px; gap: 6px 8px; }
+  .win-x { min-width: 44px; }
+  .win-h { cursor: default; }
+}
+/* phones upright: a panel is a sheet across the bottom, up to about 60% of the screen, and scrolls */
+@media (pointer: coarse) and (max-width: 700px) {
+  .win { left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; max-height: 60vh; max-height: 60dvh;
+    border-radius: 12px 12px 0 0; border-left: 0; border-right: 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -6px 24px rgba(0,0,0,.45); }
+  .win-h { padding: 4px 6px 4px 14px; }
+  .win-b { overscroll-behavior: contain; }
+}
+/* phones on their side: a panel is a sheet down the right-hand side, below the top bar */
+@media (pointer: coarse) and (max-height: 500px) and (min-width: 701px) {
+  .win { left: auto !important; right: 0; top: var(--tb-h, 56px) !important; bottom: 0; width: min(360px, 48vw); max-height: none;
+    border-radius: 10px 0 0 0; border-right: 0; border-bottom: 0; padding-right: env(safe-area-inset-right, 0px); }
+  .win-b { overscroll-behavior: contain; }
+}

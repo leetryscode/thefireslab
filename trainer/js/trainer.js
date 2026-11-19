@@ -1690,7 +1690,7 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   }
   function leaveObserver() {
     if (quad) quadEnd();                 // leaving while it flies brings it home (no airframe is ever lost)
-    obs = null; binos = false; camOP = false; setIR(false); walk.keys.clear(); controls.enabled = true;
+    obs = null; binos = false; camOP = false; setIR(false); walk.keys.clear(); controls.enabled = true; quadUI();
     scene.fog.near = 12000; scene.fog.far = 55000;
     if (window.__wins) window.__wins.observer(false);
     groups.sketch.visible = document.getElementById('tg-sketch').getAttribute('aria-pressed') === 'true';
@@ -1713,10 +1713,11 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       walk.city = true; walk.roof0 = CITY.roofAt(walk.x0, walk.z0, true); walk.x = walk.x0; walk.z = walk.z0; placeObserver();
     }
     if (quad) { quadTick(dt); return; }
-    if (!obs || camOP || !walk.keys.size) return;
-    const K = walk.keys, f = (K.has('ArrowUp') ? 1 : 0) - (K.has('ArrowDown') ? 1 : 0), s = (K.has('ArrowRight') ? 1 : 0) - (K.has('ArrowLeft') ? 1 : 0);
+    if (!obs || camOP) return;
+    const K = walk.keys, cl = v => Math.max(-1, Math.min(1, v));      // arrow keys plus the touch walk stick (qSt), part push = part speed
+    const f = cl((K.has('ArrowUp') ? 1 : 0) - (K.has('ArrowDown') ? 1 : 0) + qSt.f), s = cl((K.has('ArrowRight') ? 1 : 0) - (K.has('ArrowLeft') ? 1 : 0) + qSt.s);
     if (!f && !s) return;
-    const L = Math.hypot(f, s), step = WALK_SPEED * dt / L;
+    const L = Math.hypot(f, s), step = WALK_SPEED * dt * Math.min(1, L) / L;
     const dx = (Math.sin(yaw) * f + Math.cos(yaw) * s) * step, dz = (-Math.cos(yaw) * f + Math.sin(yaw) * s) * step;
     if (canStand(walk.x + dx, walk.z + dz)) { walk.x += dx; walk.z += dz; }
     else if (dx && canStand(walk.x + dx, walk.z)) walk.x += dx;
@@ -1780,10 +1781,13 @@ float rnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
   function quadUI() {
     const f = !!quad;
     quadHud.hidden = !f; quadRec.hidden = !f; quadZoomEl.hidden = !f; binoBtn.hidden = f || camOP; quadGo.hidden = f || camOP;
-    qSticks.hidden = !(f && TOUCH_UI); if (!f) qStop();
+    // touch: both sticks while flying; standing at a walking OP, the right stick alone walks
+    qStop(); qSticks.hidden = !(TOUCH_UI && obs && (f || !camOP)); qSticks.classList.toggle('walk', !f);
+    qSticks.querySelector('[data-y="f"] span').textContent = f ? 'MOVE' : 'WALK';
     obsExit.textContent = f || TOUCH_UI ? 'Back to map' : 'Back to map (Esc)';
     quadRec.textContent = TOUCH_UI ? 'Recover' : 'Recover (Esc)';
-    obsHint.textContent = TOUCH_UI ? (f ? 'Sticks: fly · Drag: look, tilt camera · Pinch: zoom' : camOP ? 'Drag: pan · Pinch: zoom' : 'Drag: look around')
+    binoBtn.textContent = TOUCH_UI ? 'Binoculars' : 'Binoculars (B)';
+    obsHint.textContent = TOUCH_UI ? (f ? 'Sticks: fly · Drag: look, tilt camera · Pinch: zoom' : camOP ? 'Drag: pan · Pinch: zoom' : 'Stick: walk · Drag: look around')
       : f ? 'WASD or arrows: fly · Q/E: turn · R/F: climb/descend · Wheel or +/−: zoom · Drag: turn, tilt camera'
       : camOP ? 'Drag or arrows: pan · Wheel or +/−: zoom' : 'Arrows: walk · Shift+arrows or drag: turn';
     qhMsg.hidden = true;
@@ -5719,6 +5723,10 @@ void main(){
       body.touch .sep{display:none}
       body.touch #f-note{flex:1 1 120px}
       body.touch #f-msg{font-size:12px}
+      body.touch #z-in,body.touch #z-out{display:none}
+      body.touch:not(.more) .xtra{display:none!important}
+      #f-more{display:none} body.touch #f-more{display:inline-block} body.touch.more #f-more{border-color:#d6b25a;color:#d6b25a}
+      @media (max-width:700px){body.touch #bar{gap:5px} body.touch button{padding:6px 10px} body.touch #f-msg{line-height:1.35}}
       #wrap{display:flex;flex-direction:column;height:100%}
       #fv{display:block;width:100%;flex:1 1 auto;min-height:0;object-fit:contain;background:#000;cursor:crosshair}
       #hud{position:absolute;top:6px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:4px 14px;pointer-events:none;text-shadow:0 0 3px #000}
@@ -5747,15 +5755,16 @@ void main(){
       <div id="bar">
         <div id="m-sensor" role="group" aria-label="Sensor"><button id="m-tv" title="Daylight colour camera">TV</button><button id="m-ir" title="Thermal (white-hot): vehicles, people and drones glow">IR</button></div>
         <span class="sep"></span><button id="m-scan" title="Hands-off sweep of the orbit area">Scan</button>
-        <button id="m-stare" title="Click the video: lock on that ground point">Stare</button><button id="m-track" title="Press, then click a vehicle in the video to follow it (or Shift-click a vehicle any time)">⌖ Track vehicle</button>
+        <button id="m-stare" title="Click the video: lock on that ground point">Stare</button><button id="m-track" title="Press, then click a vehicle in the video to follow it (or Shift-click a vehicle any time)">${FEED_TOUCH ? '⌖ Track' : '⌖ Track vehicle'}</button>
         <span class="sep"></span><button id="z-in" title="Zoom in (or mouse wheel)">Zoom +</button><button id="z-out" title="Zoom out">Zoom −</button>
         <button id="f-orbit" title="Move the orbit to the point under the crosshair">Orbit here</button>
-        ${T.fam === 'altius' ? '<span class="sep"></span><input id="f-pp" value="4Q FJ " size="17" spellcheck="false" aria-label="Prepoint grid" title="Grid to slew the camera to (Enter)"><button id="f-ppgo" title="Slew the camera to this grid and hold it">Prepoint</button>' : ''}
-        <span class="sep"></span><input id="f-note" placeholder="note for the mark (what you see)"><button id="f-mark" title="Mark the grid under the crosshair">Mark</button>
+        ${T.fam === 'altius' ? '<span class="sep"></span><input id="f-pp" class="xtra" value="4Q FJ " size="17" spellcheck="false" aria-label="Prepoint grid" title="Grid to slew the camera to (Enter)"><button id="f-ppgo" class="xtra" title="Slew the camera to this grid and hold it">Prepoint</button>' : ''}
+        <span class="sep"></span><input id="f-note" class="xtra" placeholder="note for the mark (what you see)"><button id="f-mark" title="Mark the grid under the crosshair">Mark</button>
         ${T.burst ? '<button id="f-strike" title="Dive on the tracked vehicle (click twice)">Strike</button>' : ''}
         ${T.waveoff ? '<button id="f-abort" hidden title="Pull out of the dive and climb back to orbit">Wave off</button>' : ''}
         ${T.recover ? '<button id="f-recover" title="Fly back to the launch point and land">Recover</button>' : ''}
-        <div id="f-msg">${FEED_TOUCH ? '<b>To strike: press ⌖ Track vehicle, tap the vehicle, then Strike.</b> Tap: stare at a point. Drag: slew. Pinch: zoom.'
+        <button id="f-more" aria-pressed="false" title="Prepoint grid and mark note" onclick="this.setAttribute('aria-pressed',document.body.classList.toggle('more'))">More</button>
+        <div id="f-msg">${FEED_TOUCH ? '<b>To strike: ⌖ Track, tap the vehicle, then Strike.</b> Tap: stare. Drag: slew. Pinch: zoom.'
           : '<b>To strike: press ⌖ Track vehicle, click the vehicle, then Strike.</b> Click: stare at a point. Shift-click: track. Drag or arrows: slew. Wheel: zoom.'}</div>
       </div></div></body></html>`;
     // reminder before the first feed (and again if the browser blocks one): feeds open as pop-up windows
@@ -6159,9 +6168,12 @@ void main(){
   window.__wins = (function () {
     const KEY = 'fist-trainer-panels-v1', wins = [...document.querySelectorAll('.win')];
     const tools = [...document.querySelectorAll('#tools [data-win]')];
+    const SHEET = matchMedia('(pointer: coarse) and (max-width: 700px), (pointer: coarse) and (max-height: 500px)');   // phones: panels are sheets, one at a time
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { saved = {}; }
     if (LITE) for (const k of Object.keys(saved)) saved[k].open = false;   // phones: start with the view clear; the toolbar opens panels
-    const save = () => { try { const o = {}; for (const w of wins) o[w.id] = { x: w.offsetLeft, y: w.offsetTop, open: !w.hidden }; localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+    const save = () => { try { const o = {}; for (const w of wins) {   // as sheets (phones) the place isn't the panel's own: keep the saved one
+      const sv = SHEET.matches && saved[w.id]; o[w.id] = { x: sv ? sv.x : w.offsetLeft, y: sv ? sv.y : w.offsetTop, open: !w.hidden }; }
+      saved = o; localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
     let z = 10;
     const tbH = () => topbar.offsetHeight;
     function defaults(w) {
@@ -6178,7 +6190,10 @@ void main(){
     }
     function sync() { for (const b of tools) b.setAttribute('aria-pressed', String(!document.getElementById(b.dataset.win).hidden)); }
     function front(w) { w.style.zIndex = ++z; }
-    function show(w, on) { w.hidden = !on; if (on) { front(w); clamp(w, w.offsetLeft, w.offsetTop); } sync(); save(); }
+    function show(w, on) {
+      if (on && SHEET.matches) for (const o of wins) if (o !== w) o.hidden = true;
+      w.hidden = !on; if (on) { front(w); clamp(w, w.offsetLeft, w.offsetTop); } sync(); save();
+    }
     for (const w of wins) {
       const s = saved[w.id] || defaults(w);
       w.hidden = !s.open; w.style.left = s.x + 'px'; w.style.top = s.y + 'px';
