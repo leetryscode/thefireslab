@@ -150,7 +150,7 @@
   // ---- scene
   const canvas = document.getElementById('view');
   // ---- LITE (demo) mode for phones and tablets (Lee, 2026-11-03): phone browsers kill tabs that use too much memory.
-  //      Lite = 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes (no car models), trees simplified at half the distance.
+  //      Lite = 1x resolution, no anti-aliasing, civilians Sparse with untextured car silhouettes, trees simplified at half the distance.
   //      ?lite=1 / ?lite=0 in the address forces it on or off (testing on a laptop, or a capable tablet).
   const LITE = (() => { const q = new URLSearchParams(location.search).get('lite'); if (q === '1') return true; if (q === '0') return false;
     return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); })();
@@ -2854,7 +2854,7 @@ void main(){
     const carrierOf = g => g.carrier ? groups.find(o => o.id === g.carrier) : null;
 
     // ---- persistence (this browser; the Scenario panel writes the same data to a file)
-    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, offShip: g.offShip, unload: g.unload, offload: g.offload, q: g.q, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
+    const snapshot = () => ({ nextId, groups: groups.map(g => ({ id: g.id, name: g.name, folder: g.folder || undefined, units: g.units, route: g.route, start: g.start, land: g.land, water: g.water, gap: g.gap, carrier: g.carrier, offShip: g.offShip, unload: g.unload, offload: g.offload, q: g.q, parent: g.parent || null, splitAt: g.splitAt, join: g.join || null, roads: g.roads !== false, loose: g.loose })) });
     function save() { if (NOSAVE) return; try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {} }
     function load() { if (NET.client) return; try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.groups)) { groups = o.groups; nextId = o.nextId || groups.length + 1; } } catch (e) {} }
 
@@ -4273,7 +4273,27 @@ void main(){
     }
 
     // ---- panel
-    const list = $('op-list'), ed = $('op-ed');
+    const list = $('op-list'), ed = $('op-ed'), search = $('op-search');
+    const folderState = new Map();
+    const folderName = g => typeof g.folder === 'string' ? g.folder : '';
+    const folderLabel = folder => folder || 'Unfiled';
+    function rootGroup(g) {
+      const seen = new Set();
+      while (!seen.has(g)) {
+        seen.add(g);
+        const parent = groups.find(o => o.id === (g.carrier || g.parent));
+        if (!parent) break;
+        g = parent;
+      }
+      return g;
+    }
+    const clearSearch = $('op-search-clear');
+    function updateSearch() {
+      clearSearch.hidden = !search.value;
+      renderList();
+    }
+    search.addEventListener('input', updateSearch);
+    clearSearch.addEventListener('click', () => { search.value = ''; updateSearch(); search.focus(); });
     function vtOptions(ship, cur) { return (ship ? SHIPS : LAND).map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${VT[k].name}</option>`).join(''); }
     function summary(g) {
       const s = g.units.map(u => u.n + '× ' + VT[u.type].name).join(', ') || 'no vehicles', b = branchesOf(g).reduce((a, o) => a + total(o), 0);
@@ -4283,7 +4303,18 @@ void main(){
       list.textContent = '';
       if (!groups.length) { list.innerHTML = '<p class="hint">No enemy yet. Add a group, then click its route on the map.</p>'; return; }
       const top = groups.filter(g => !g.carrier && !g.parent);
-      const row = (g, depth) => {
+      const children = new Map();
+      for (const g of groups) {
+        const parent = g.carrier || g.parent;
+        if (!parent) continue;
+        if (!children.has(parent)) children.set(parent, []);
+        children.get(parent).push(g);
+      }
+      for (const kids of children.values()) {
+        kids.sort((a, b) => Number(!a.carrier) - Number(!b.carrier)
+          || (a.carrier && b.carrier ? rampOf(a) - rampOf(b) || a.q - b.q : 0));
+      }
+      const row = (g, depth, container) => {
         const wrap = document.createElement('div'); wrap.className = 'gwrap'; wrap.style.marginLeft = depth * 14 + 'px';
         const b = document.createElement('button'); b.className = 'grow' + (sel === g ? ' on' : '');
         b.innerHTML = `<span class="gn"></span><span class="gs"></span><span class="gt" data-st="${g.id}"></span>`;
@@ -4294,12 +4325,47 @@ void main(){
         const ib = document.createElement('button'); ib.className = 'ghalt'; ib.textContent = 'IDENT'; ib.title = 'Flash this group\'s symbol on the map'; ib.setAttribute('aria-label', 'Ident ' + g.name);
         ib.addEventListener('click', () => identGroup(g));
         const col = document.createElement('div'); col.className = 'gbtns'; col.append(hb, ib);   // Halt over IDENT, same size
-        wrap.append(b, col); list.appendChild(wrap);
+        wrap.append(b, col); container.appendChild(wrap);
         if (g.carrier) dragQueue(g, b, wrap);
-        const cargo = groups.filter(o => o.carrier === g.id).sort((x, y) => rampOf(x) - rampOf(y) || x.q - y.q);
-        for (const c of [...cargo, ...groups.filter(o => o.parent === g.id)]) row(c, depth + 1);
       };
-      for (const g of top) row(g, 0);
+      const query = search.value.trim().toLowerCase();
+      const folders = new Map();
+      const collect = (g, depth, rows) => {
+        rows.push({ g, depth });
+        for (const child of children.get(g.id) || []) collect(child, depth + 1, rows);
+      };
+      for (const g of top) {
+        const name = folderName(g);
+        if (!folders.has(name)) folders.set(name, []);
+        collect(g, 0, folders.get(name));
+      }
+      for (const [name, entries] of folders) {
+        const matches = query ? entries.filter(({ g }) => [g.name, ...g.units.map(u => VT[u.type].name)]
+          .some(value => value.toLowerCase().includes(query))) : entries;
+        const details = document.createElement('details'); details.className = 'op-folder';
+        const heading = document.createElement('summary');
+        const body = document.createElement('div'); body.className = 'glist';
+        heading.textContent = folderLabel(name);
+        const count = document.createElement('span'); count.className = 'op-folder-count';
+        count.textContent = query
+          ? matches.length + ' of ' + entries.length + ' matching'
+          : entries.length + (entries.length === 1 ? ' group' : ' groups');
+        heading.append(' ', count);
+        for (const { g, depth } of matches) row(g, query ? 0 : depth, body);
+        if (!matches.length) {
+          const showAll = document.createElement('button');
+          showAll.type = 'button'; showAll.textContent = 'Clear search and open folder';
+          showAll.addEventListener('click', () => {
+            folderState.set(name, true);
+            search.value = ''; updateSearch(); search.focus();
+          });
+          body.appendChild(showAll);
+        }
+        details.append(heading, body);
+        details.open = query ? matches.length > 0 : folderState.get(name) ?? !name;
+        if (!query) details.addEventListener('toggle', () => { if (details.isConnected) folderState.set(name, details.open); });
+        list.appendChild(details);
+      }
       updateStatuses();
     }
     // drag a cargo row onto another off the same ramp to change the offload order (Lee, 2026-11-11). Pointer events, not
@@ -4368,7 +4434,10 @@ void main(){
       ed.hidden = false;
       const ship = isShip(g), c = carrierOf(g), kids = groups.filter(o => o.carrier === g.id);
       ed.innerHTML = `
+        <h3 class="op-editor-title" id="op-editor-title"></h3>
         <div class="row"><span class="lbl">Name</span><input id="op-name" class="grid-in" aria-label="Group name"></div>
+        <div class="row" id="op-folder-row"><label class="lbl" for="op-folder">Folder</label><select id="op-folder"></select><button type="button" id="op-new-folder">+ New folder</button></div>
+        <form class="row" id="op-folder-form" hidden><input id="op-folder-name" class="grid-in" aria-label="New folder name" maxlength="60" required><button type="submit">Add</button><button type="button" id="op-folder-cancel">Cancel</button></form>
         <div class="units" id="op-units"></div>
         <div class="row"><button id="op-addunit">+ ${ship ? 'Ship' : 'Vehicle type'}</button></div>
         ${g.parent ? `<p class="hint">${g._rides ? `Stays in <b>${esc(parentOf(g).name)}</b>'s line until its point ${g.splitAt + 1}, then forms its own line.` : `Rides at the rear of <b>${esc(parentOf(g).name)}</b> and turns off at its point ${g.splitAt + 1}.`}</p>
@@ -4397,6 +4466,28 @@ void main(){
         ${!ship || !carries(g) ? '' : shipsSpread(g) ? cargoByShip(g, kids) : `<div class="row"><span class="lbl">Cargo</span><button id="op-cargo">+ Cargo group</button></div>
                   <p class="hint">${kids.length ? 'Carrying ' + kids.map(k => esc(k.name)).join(', ') + '. Select one in the list above to edit it.' : 'Nothing aboard yet.'}</p>`}
         <div class="row"><button id="op-del" class="fire-btn">Delete group</button></div>`;
+      const rootGroupForEditor = rootGroup(g), currentFolder = folderName(rootGroupForEditor);
+      $('op-editor-title').textContent = folderLabel(currentFolder) + ' / ' + g.name;
+      const folderSelect = $('op-folder'), folderForm = $('op-folder-form'), newFolder = $('op-folder-name');
+      $('op-folder-row').hidden = rootGroupForEditor !== g;
+      const names = [...new Set(groups.filter(o => !o.carrier && !o.parent).map(folderName).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+      for (const name of ['', ...names]) folderSelect.add(new Option(folderLabel(name), name));
+      folderSelect.value = currentFolder;
+      function moveToFolder(name) {
+        g.folder = name || undefined;
+        folderState.set(name, true);
+        save(); renderList(); renderEditor();
+      }
+      folderSelect.addEventListener('change', () => moveToFolder(folderSelect.value));
+      $('op-new-folder').addEventListener('click', () => { folderForm.hidden = false; newFolder.focus(); });
+      $('op-folder-cancel').addEventListener('click', () => { folderForm.hidden = true; $('op-new-folder').focus(); });
+      folderForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const name = newFolder.value.trim();
+        if (!name) return;
+        const existing = ['', ...names].find(folder => folderLabel(folder).toLowerCase() === name.toLowerCase());
+        moveToFolder(existing ?? name);
+      });
       $('op-name').value = g.name;
       $('op-name').addEventListener('change', e => { g.name = e.target.value.trim() || g.name; refresh(); });      const ub = $('op-units');
       g.units.forEach((u, i) => {
@@ -4627,12 +4718,12 @@ void main(){
   //      drive a random walk over the road graph at a road-class speed, on the right-hand side. A moving car's place is a
   //      fixed function of the clock (pause, 10x and replays agree). No traffic rules, lights or collisions.
   //      Drawing is kept light: full models only near where someone is looking (the main view's centre and each open
-  //      UAS feed's aim point), coloured boxes elsewhere out to FAR_R, nothing beyond. Civilians can be struck exactly like
+  //      UAS feed's aim point), untextured car silhouettes elsewhere out to FAR_R, nothing beyond. Civilians can be struck exactly like
     //      enemy vehicles (soft class): a struck car stops where it is and burns (Lee, 2026-11-02).
   const CIV = (() => {
     const LEVELS = [['off', 'Off', 0], ['sparse', 'Sparse', 700], ['normal', 'Normal', 1800], ['rush', 'Rush hour', 3600]];   // cars across the whole map — placeholders
     const PARKED = 0.5, KMH = [50, 40, 30];       // share parked; driving speed by road class (major / mid / minor) — placeholders
-    const FAR_R = 3500, NEAR_CAP = 220;           // boxes out to FAR_R from a camera; at most NEAR_CAP full models
+    const FAR_R = 3500, NEAR_CAP = 220;           // silhouettes out to FAR_R from a camera; at most NEAR_CAP full models
     const COLOURS = { white: 0xe8e8e4, silver: 0xa9adb0, black: 0x1d1e20, 'dark blue': 0x1f2c48, red: 0x9e2222, 'dark green': 0x24402c, brown: 0x5a3f2a,
       grey: 0x6f7274, navy: 0x1d2640, cream: 0xd9d2b8, 'dark grey': 0x46484a, maroon: 0x5c1d22, rust: 0x8a4a2a, olive: 0x5e5f33, taupe: 0x8a7f70, 'off-white': 0xdcd8cc, 'dark teal': 0x1f4a4c };
     let level = LITE ? 'sparse' : 'normal', specs = null, N = 0, built = false; const cars = [];
@@ -4668,9 +4759,10 @@ void main(){
         }
         cars.push(c);
       }
+      initCarSilhouettes();
       buildBoats();
       built = true;
-      if (!modelsStarted) setTimeout(loadModels, 1500);   // models load in the background once traffic exists; boxes until then
+      if (!modelsStarted) setTimeout(loadModels, 1500);   // models load in the background once traffic exists; silhouettes until then
     }
     // ---- a driving car's path: edges chosen by its own dice, generated as far as needed; lane offset to the right
     function resetPath(c) { c.r = rng(c.seed); c.seg = []; c.base = 0; c.prevN = c.from; c.curN = c.to; addSeg(c, c.e0, c.from, c.to); }
@@ -4717,13 +4809,28 @@ void main(){
 
     // ---- drawing: one InstancedMesh per model part (full models) + one instanced box set (far)
     let parts = [];                              // per model: [{ mesh: InstancedMesh, local: Matrix4 }]
-    const boxGeo = new THREE.BoxGeometry(1, 1, 1); boxGeo.translate(0, 0.5, 0);
-    let boxes = null;
-    function initBoxes() {
-      boxes = new THREE.InstancedMesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), LEVELS[LEVELS.length - 1][2]);
-      boxes.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(boxes.instanceMatrix.count * 3).fill(1), 3);   // sized to capacity, not count
-      boxes.instanceMatrix.setUsage(THREE.DynamicDrawUsage); boxes.count = 0; boxes.frustumCulled = false; grp.add(boxes);
-      const col = new THREE.Color(); for (let i = 0; i < boxes.instanceMatrix.count; i++) boxes.setColorAt(i, col.setHex(0x888888));
+    const silhouettes = [];
+    function initCarSilhouettes() {
+      // Three side profiles based on the civilian pack's passenger cars, pickups and vans. Nose is +Z.
+      const profiles = [
+        [[-0.5, 0.12], [0.5, 0.12], [0.5, 0.52], [0.25, 0.58], [0.07, 1], [-0.25, 1], [-0.39, 0.6], [-0.5, 0.55]],
+        [[-0.5, 0.12], [0.5, 0.12], [0.5, 0.56], [0.28, 0.6], [0.12, 1], [-0.14, 1], [-0.18, 0.6], [-0.5, 0.6]],
+        [[-0.5, 0.12], [0.5, 0.12], [0.5, 0.51], [0.34, 0.55], [0.19, 0.94], [0.06, 1], [-0.46, 1], [-0.5, 0.89]]
+      ];
+      const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
+      const capacities = profiles.map(() => 0);
+      const profileOf = specs.map(({ type }) => type === 'pickup' ? 1 : type.endsWith('van') ? 2 : 0);
+      for (const c of cars) { c.profile = profileOf[c.mi]; capacities[c.profile]++; }
+      for (const [i, profile] of profiles.entries()) {
+        const shape = new THREE.Shape(profile.map(([z, y]) => new THREE.Vector2(z, y)));
+        const geometry = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false });
+        geometry.translate(0, 0, -0.5).rotateY(-Math.PI / 2);
+        const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, capacities[i]));
+        mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(mesh.instanceMatrix.count * 3).fill(1), 3);
+        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        mesh.count = 0; mesh.visible = false; mesh.frustumCulled = false;
+        silhouettes.push(mesh); grp.add(mesh);
+      }
       parts = specs.map(() => []);
     }
     let modelsStarted = false;
@@ -4731,8 +4838,8 @@ void main(){
       modelsStarted = true;
       if (!THREE.GLTFLoader) return;
       await loadBoat();
-      if (LITE) return;                          // lite: cars stay coloured boxes (30 textured models cost too much memory on a phone)
-      // one at a time, in the background: 30 small files; cars show as boxes until their model arrives
+      if (LITE) return;                          // lite: cars use untextured silhouettes (30 textured models cost too much memory on a phone)
+      // one at a time, in the background: 30 small files; cars use silhouettes until their model arrives
       const loader = new THREE.GLTFLoader();
       for (let mi = 0; mi < specs.length; mi++) {
         try {
@@ -4760,33 +4867,36 @@ void main(){
         cams = [camera.position].concat((extraFocus || []).map(f => f.cam).filter(Boolean));
       }
       const near = [];
-      let nb = 0;
+      for (const mesh of silhouettes) mesh.count = 0;
       for (const m of parts) for (const q of m) q.mesh.count = 0;
       for (let i = 0; i < N; i++) {
         const c = cars[i], p = posOf(c, t);
         let best = Infinity; for (const f of focus) { const d = Math.hypot(p.x - f.x, p.z - f.z) / f.r; if (d < best) best = d; }
         c.cx = p.x; c.cz = p.z; c.chd = p.hd; if (p.cl !== undefined) c.cl = p.cl;
-        if (best <= 1) { near.push([best, c]); continue; }
+        if (best <= 1) {
+          if (LITE) drawSilhouette(c, t); else near.push([best, c]);
+          continue;
+        }
         let far = true; for (const k of cams) if (Math.hypot(p.x - k.x, p.z - k.z) < FAR_R) { far = false; break; }
         if (far) continue;
-        drawBox(nb++, c, t);
+        drawSilhouette(c, t);
       }
       near.sort((a, b) => a[0] - b[0]);
       near.forEach(([, c], j) => {
         const pp = parts[c.mi];
-        if (j >= NEAR_CAP || !pp.length || pp[0].mesh.count >= NEAR_CAP) { drawBox(nb++, c, t); return; }
+        if (j >= NEAR_CAP || !pp.length || pp[0].mesh.count >= NEAR_CAP) { drawSilhouette(c, t); return; }
         place(c); const burnt = c.st && t >= c.st.t;
         for (const q of pp) { M2.multiplyMatrices(M, q.local); q.mesh.setColorAt(q.mesh.count, burnt ? BURNT : WHITE); q.mesh.setMatrixAt(q.mesh.count++, M2); }
       });
       for (const m of parts) for (const q of m) { q.mesh.visible = q.mesh.count > 0; sendInst(q.mesh); }
       if (frame % 30 === 0) for (const c of hit) OPFOR.debug.burn.hide((c.boat ? 'boat:' : 'civ:') + c.i, c.i >= (c.boat ? NBt : N));   // a lower setting hides its wrecks' fires too
       drawBoats(t);
-      boxes.count = nb; boxes.visible = nb > 0; sendInst(boxes);
+      for (const mesh of silhouettes) { mesh.visible = mesh.count > 0; sendInst(mesh); }
     }
     function place(c) { P.set(c.cx, (heightAt(c.cx, c.cz) + ROAD_LIFT[c.cl]) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(1, 1, 1); M.compose(P, Q, S); }
-    function drawBox(k, c, t) {
-      const sp = specs[c.mi]; P.set(c.cx, (heightAt(c.cx, c.cz) + ROAD_LIFT[c.cl]) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(sp.W * 0.85, sp.H, sp.L);
-      M.compose(P, Q, S); boxes.setMatrixAt(k, M); boxes.setColorAt(k, c.st && t >= c.st.t ? BURNT : C.setHex(COLOURS[sp.colour] || 0x888888));
+    function drawSilhouette(c, t) {
+      const mesh = silhouettes[c.profile], k = mesh.count++, sp = specs[c.mi]; P.set(c.cx, (heightAt(c.cx, c.cz) + ROAD_LIFT[c.cl]) * ex, c.cz); Q.setFromAxisAngle(Y, c.chd); S.set(sp.W, sp.H, sp.L);
+      M.compose(P, Q, S); mesh.setMatrixAt(k, M); mesh.setColorAt(k, c.st && t >= c.st.t ? BURNT : C.setHex(COLOURS[sp.colour] || 0x888888));
     }
     // ---- boats (Lee, 2026-11-03): fishing boats offshore, under the same Civilians setting. About half lie at anchor
     //      (gently swinging), the rest motor between random offshore points. Kept 150 m+ off the shore; paths stay on water.
@@ -4889,7 +4999,7 @@ void main(){
     async function set(lv) {
       level = lv; N = (LEVELS.find(l => l[0] === lv) || LEVELS[0])[2]; NBt = BOATS[lv] || 0;
       for (const [k] of LEVELS) { const b = document.getElementById('cv-' + k); if (b) b.setAttribute('aria-pressed', String(k === lv)); }
-      if (N && !specs) { specs = (await load('civ/civ.json', 'json')).vehicles; initBoxes(); }
+      if (N && !specs) specs = (await load('civ/civ.json', 'json')).vehicles;
       if (N && !built && ROADNET) build();
     }
     for (const [k] of LEVELS) { const b = document.getElementById('cv-' + k); if (b) b.addEventListener('click', () => set(k)); }
@@ -6385,7 +6495,7 @@ void main(){
           'Driving speed by road class: ' + CV.KMH.join(' / ') + ' km/h (major / mid / minor), ±15 % per car ' + PH + '. Right-hand traffic.',
           'Drivers take a random turn at each junction (never straight back unless it is a dead end). No lights, rules or collisions — cars pass through each other.',
           'A moving car\'s position is a fixed function of the clock: pause, 10× and replays agree.',
-          'Drawn as full models near where someone is looking (main view centre, open UAS feeds\' aim points; up to ' + CV.NEAR_CAP + '), coloured boxes elsewhere out to ' + CV.FAR_R / 1000 + ' km, nothing beyond.',
+          'Drawn as full models near where someone is looking (main view centre, open UAS feeds\' aim points; up to ' + CV.NEAR_CAP + '), untextured car silhouettes elsewhere out to ' + CV.FAR_R / 1000 + ' km, nothing beyond.',
           'UAS can track civilians exactly like enemy vehicles — the camera does not tell friend from foe.',
           'Boats: about half at anchor (swinging slowly), the rest motor at 4–8 kn between random points 0.8–3 km apart, always 150 m+ offshore and on open water. Moving boats trail a simple V wake (one flat textured shape, ~80 m long, ~19.5° arms).',
           'Civilians (cars and boats) can be struck exactly like enemy vehicles: soft class (same radii as a fuel truck), Pdh 1. A struck car stops where it is, darkens and burns; the fires log names it ("STRUCK CIVILIAN WHITE PICKUP").'])}`]); }
@@ -6409,7 +6519,7 @@ void main(){
           ['Buildings and trees', '2020 NOAA lidar; block sight on a 10 m grid; trees block completely'],
           ['OP inside a building', 'observer stands on the roof'],
           ['Map clicks (instructor)', 'land on a roof or wall when Buildings are shown, else on the ground'],
-          ['Phones and tablets', (LITE ? 'THIS DEVICE: ' : '') + 'demo (lite) mode — 1x resolution, no anti-aliasing, civilians Sparse as coloured boxes, trees simplified at half the distance. ?lite=1 / ?lite=0 forces it.'],
+          ['Phones and tablets', (LITE ? 'THIS DEVICE: ' : '') + 'demo (lite) mode — 1x resolution, no anti-aliasing, civilians Sparse with untextured car silhouettes, trees simplified at half the distance. ?lite=1 / ?lite=0 forces it.'],
           ['Trees drawn (display only)', 'only those in 250 m cells inside some camera\'s view (main view or an open UAS feed); simpler shapes and no trunks once a tree is a few pixels across, none past about 20 km. Sight lines still use every tree.'],
           ['Terrain drawn (display only)', 'in ~1.5 km tiles; tiles outside the view are skipped, and distant tiles use every 2nd or 4th grid point (full detail near a camera and under a viewshed). Sight lines, heights and clicks still use the 10 m grid.'],
           ['Far enemy vehicles (display only)', 'drawn as a plain box of the model\'s colour once under about 3 pixels long in every camera.'],

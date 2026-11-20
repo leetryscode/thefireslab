@@ -279,6 +279,18 @@ body.qf-armed::after { content: ''; position: fixed; inset: 0; pointer-events: n
 .win .vs { border-top: 1px solid var(--line); }
 /* ---- OPFOR panel ---- */
 .glist { display: grid; gap: 4px; }
+#w-opfor > .win-b { grid-auto-rows: max-content; }
+.op-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+#op-search { width: 100%; box-sizing: border-box; }
+#op-search-clear[hidden] { display: none; }
+#op-list { gap: 0; }
+.op-folder { min-width: 0; }
+.op-folder > summary { overflow-wrap: anywhere; }
+.op-folder > .glist { padding: 0 0 10px 12px; }
+.op-folder-count { margin-inline-start: 0.65em; color: var(--dim); }
+.op-editor-title { margin: 0; overflow-wrap: anywhere; }
+#op-folder-row[hidden], #op-folder-form[hidden] { display: none; }
+#op-folder, #op-folder-name { min-width: 0; max-width: 100%; }
 .grow { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "n t" "s s"; gap: 1px 8px; text-align: left; padding: 5px 8px; }
 .grow.on { border-color: var(--enemy); background: rgba(255, 106, 85, .08); }
 .grow .gn { grid-area: n; color: var(--enemy); font: 600 13px var(--font-head); letter-spacing: .05em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -319,9 +331,9 @@ a.tb-name:hover { color: var(--brass); }
 .win .feed-btn:hover { filter: brightness(1.1); }
 /* Display panel, layout A: big common toggles, minor settings folded under More */
 .dmain button { font-size: 13px; padding: 7px 12px; }
-.dmore details { border-top: 1px solid rgba(255,255,255,.08); }
-.dmore summary { cursor: pointer; padding: 7px 0; color: var(--ink); font: 500 13px var(--font-head, inherit); letter-spacing: .04em; }
-.dmore details[open] summary { color: var(--brass); }
+.dmore details, .op-folder { border-top: 1px solid rgba(255,255,255,.08); }
+.dmore summary, .op-folder > summary { cursor: pointer; padding: 7px 0; color: var(--ink); font: 500 13px var(--font-head, inherit); letter-spacing: .04em; }
+.dmore details[open] summary, .op-folder[open] > summary { color: var(--brass); }
 .dfold { display: grid; gap: 8px; padding: 0 0 10px 12px; }
 .dfold .lbl { min-width: 64px; font-size: 12px; }
 .dfold button { font-size: 11px; padding: 3px 8px; }
