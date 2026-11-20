@@ -1306,7 +1306,6 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
     function buildTrees(T) {
       // Lumpy crowns (4 shapes, darker underneath) on trunks, coloured from the photo under each tree;
       // tall narrow trees (palms, mostly) get a thin leaning trunk and a star of drooping fronds.
-      const n = T.length / 4;
       const pc = document.createElement('canvas'); pc.width = 2048; pc.height = 1706;
       const pg = pc.getContext('2d'); pg.drawImage(tex.image, 0, 0, pc.width, pc.height);
       const PX = pg.getImageData(0, 0, pc.width, pc.height).data;
@@ -1360,7 +1359,23 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const isPalm = i => { const h = T[4 * i + 2] / 10, r = T[4 * i + 3] / 10; return h >= 9 && r <= 3.2 && h >= 3.2 * r; };
       const VAR = 4, counts = new Array(VAR).fill(0); let nPalm = 0;
       const hash = i => (Math.imul(i + 1, 2654435761) >>> 0);
-      for (let i = 0; i < n; i++) { if (isPalm(i)) nPalm++; else counts[hash(i) % VAR]++; }
+      // Taper only the rendered canopy. Low ground keeps its street and park trees.
+      const visible = [];
+      for (let i = 0; i < T.length / 4; i++) {
+        const x = T[4 * i] / 10, z = T[4 * i + 1] / 10;
+        const riseX = heightAt(x + 20, z) - heightAt(x - 20, z);
+        const riseZ = heightAt(x, z + 20) - heightAt(x, z - 20);
+        const grade = Math.hypot(riseX, riseZ) / 40;
+        const height = heightAt(x, z);
+        const foothill = THREE.MathUtils.smoothstep(height, 45, 130)
+          * THREE.MathUtils.smoothstep(grade, 0.15, 0.45);
+        const upland = THREE.MathUtils.smoothstep(height, 130, 260);
+        const edge = THREE.MathUtils.smoothstep(edgeAt(x, z), 0.75, 0.98);
+        const density = (1 - Math.max(foothill, upland)) * edge;
+        if (hash(i) / 4294967296 >= density) continue;
+        visible.push(i);
+        if (isPalm(i)) nPalm++; else counts[hash(i) % VAR]++;
+      }
       const leafMat = new THREE.MeshLambertMaterial({ vertexColors: true });
       const lod = (geo, mat, c) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, c)); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, c) * 3), 3); m.count = 0; return m; };
       const crowns = counts.map((c, k) => new THREE.InstancedMesh(crownGeo(k * 1.7 + 0.4), leafMat, Math.max(1, c)));
@@ -1368,12 +1383,12 @@ float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * 
       const palmMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
       const palms = new THREE.InstancedMesh(palmGeo(), palmMat, Math.max(1, nPalm)), palmsFar = lod(palmGeo(5, 2), palmMat, nPalm);
       const tg = new THREE.CylinderGeometry(0.5, 0.75, 1, 6, 1, true); tg.translate(0, 0.5, 0);
-      const trunks = new THREE.InstancedMesh(tg, new THREE.MeshLambertMaterial({ color: 0xffffff }), n);
+      const trunks = new THREE.InstancedMesh(tg, new THREE.MeshLambertMaterial({ color: 0xffffff }), Math.max(1, visible.length));
       const mtx = new THREE.Matrix4(), col = new THREE.Color(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
       const e = new THREE.Euler(), up = new THREE.Vector3();
       const BARK = new THREE.Color(0x4a3b2c).convertSRGBToLinear(), PALMBARK = new THREE.Color(0x8a7c66).convertSRGBToLinear();
       const used = new Array(VAR).fill(0); let pi = 0, ti = 0;
-      for (let i = 0; i < n; i++) {
+      for (const i of visible) {
         const x = T[4 * i] / 10, z = T[4 * i + 1] / 10, h = T[4 * i + 2] / 10, r = T[4 * i + 3] / 10, g0 = heightAt(x, z), hs = hash(i);
         if (isPalm(i)) {
           // leaning trunk, fronds at the top
@@ -5566,6 +5581,7 @@ void main(){
     //      objects per IR feed. Simplifications: every vehicle is equally hot, parked civilian cars included; the ground has
     //      no heat of its own. Display only, per viewer: not sent to the room.
     const IR_BASE = 'grayscale(1) brightness(0.5) contrast(1.2)';
+    const feedFiltersSupported = typeof sctx.filter === 'string';
     const hotMat = new THREE.ShaderMaterial({
       vertexShader: 'void main() { vec4 p = vec4(position, 1.0);\n#ifdef USE_INSTANCING\n p = instanceMatrix * p;\n#endif\n gl_Position = projectionMatrix * modelViewMatrix * p; }',
       fragmentShader: 'void main() { gl_FragColor = vec4(1.0); }'
@@ -5627,7 +5643,7 @@ void main(){
         updateCam(d, fw / fh); d.obj.visible = false;
         renderer.setViewport(0, 0, fw, fh); renderer.setScissor(0, 0, fw, fh); renderer.render(scene, d.cam3);
         const sw = Math.max(80, Math.round(FEED_W * tier.res)), sh = Math.max(50, Math.round(FEED_H * tier.res));
-        const ir = !!d.ir, base = ir ? IR_BASE + ' ' : '';
+        const ir = !!d.ir, base = ir && feedFiltersSupported ? IR_BASE + ' ' : '';
         const put = (blur, extra) => {            // the frame just rendered -> the feed, at this camera's resolution and blur
           const f = (extra || '') + (blur ? ' blur(' + blur + 'px)' : '');
           if (tier.res < 1) {
@@ -5638,6 +5654,17 @@ void main(){
           g.filter = 'none';
         };
         put(tier.blur, base);
+        if (ir && !feedFiltersSupported) {
+          // Some mobile browsers lack Canvas 2D filters. Convert the base frame before drawing overlays.
+          g.save();
+          g.globalCompositeOperation = 'saturation';
+          g.fillStyle = '#808080';
+          g.fillRect(0, 0, FEED_W, FEED_H);
+          g.globalCompositeOperation = 'source-over';
+          g.fillStyle = 'rgba(0,0,0,0.5)';
+          g.fillRect(0, 0, FEED_W, FEED_H);
+          g.restore();
+        }
         if (ir) {                                 // thermal: vehicles, people and drones drawn white-hot over the dimmed grey picture
           irPass(d);
           g.save(); g.globalCompositeOperation = 'lighter';
