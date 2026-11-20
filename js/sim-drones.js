@@ -1,6 +1,6 @@
 /* The Fires Lab — Copyright (c) 2026 Catherine Lake Creations LLC. All rights reserved. */
 /* =========================================================
-   Fire Mission Sim — Predator: one-way attack drones that seek.
+   Fire Mission Sim — Predator: tactical UAS that seek.
 
    Lee, 2026-09-28. A small loitering munition (Switchblade-type) used both as
    a swarm and to pick off single vehicles. The student sends up to 20 in one

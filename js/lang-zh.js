@@ -34,8 +34,8 @@ window.D3A_LANG_ZH = {
     zh: "指揮官目標 → 火力 → 任務成功"
   },
   "index.013": {
-    en: "Kill Chain Simulator",
-    zh: "殺傷鏈模擬器"
+    en: "Fires Coordination Simulator",
+    zh: "火力協調模擬器"
   },
   "index.016": {
     en: "Multiplayer sensor-to-shooter training",

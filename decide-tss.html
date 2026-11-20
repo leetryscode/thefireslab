@@ -84,7 +84,7 @@
       <tbody><tr><th data-i18n="decide-tss.036">Weapon</th><th data-i18n="decide-tss.037">Largest location error it can accept</th></tr>
       <tr><td data-i18n="decide-tss.038">M109 155&nbsp;mm battery</td><td class="num" data-i18n="decide-tss.039">200 m</td></tr>
       <tr><td data-i18n="decide-tss.040">M101 105 mm howitzer battery</td><td class="num" data-i18n="decide-tss.041">100 m</td></tr>
-      <tr><td data-i18n="decide-tss.042">One-way attack UAS</td><td class="num"><span data-i18n="decide-tss.043">1,000 m</span><button class="flag" data-modal="m-owa-tle" aria-label="Why is this number so large?">?</button></td></tr>
+      <tr><td data-i18n="decide-tss.042">Tactical UAS</td><td class="num"><span data-i18n="decide-tss.043">1,000 m</span><button class="flag" data-modal="m-owa-tle" aria-label="Why is this number so large?">?</button></td></tr>
     </tbody></table>
     <p class="src" data-i18n="decide-tss.231">These figures are set for this scenario. They are not published doctrine. The location error a weapon can accept depends on several factors, including its circular error probable, the terrain, and the number of rounds in a given volley.</p>
     <p data-i18n="decide-tss.044">The M101 105&nbsp;mm howitzer battery accepts <em>less</em> error than the 155&nbsp;mm howitzer, because a 105&nbsp;mm shell covers less ground than a 155&nbsp;mm shell. The same report can therefore be good enough for one weapon and useless for another.</p>
@@ -97,7 +97,7 @@
       <div class="exercise-body">
         <div id="d4-match">
           <div class="match-row">
-            <div data-i18n="decide-tss.048"><span class="target-name">Engineer obstacle team — one-way attack UAS</span><br><span class="target-desc">Forward Observer: “Engineers on the far bridge. Accurate to about 100 metres.”</span></div>
+            <div data-i18n="decide-tss.048"><span class="target-name">Engineer obstacle team — tactical UAS</span><br><span class="target-desc">Forward Observer: “Engineers on the far bridge. Accurate to about 100 metres.”</span></div>
             <select data-answer="engage">
               <option value="" data-i18n="decide-tss.049">— choose —</option>
               <option value="engage" data-i18n="decide-tss.050">Location is good enough — engage</option>
@@ -313,7 +313,7 @@
             <th scope="row" class="hat-crit" data-i18n="decide-tss.189">Timeliness</th><td data-i18n="decide-tss.190">Continuous observation</td><td data-i18n="decide-tss.191">Continuous observation</td><td data-i18n="decide-tss.192">5 minutes</td><td data-i18n="decide-tss.193">12 hours</td>
           </tr>
           <tr class="weapon-start">
-            <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.194">One-way attack UAS</th>
+            <th scope="rowgroup" class="hat-weapon" rowspan="3" data-i18n="decide-tss.194">Tactical UAS</th>
             <th scope="row" class="hat-crit"><span data-i18n="decide-tss.195">Maximum location error</span><button class="flag" data-modal="m-owa-tle" aria-label="Why is this number so large?">?</button></th><td class="data ord" data-i18n="decide-tss.196"><b class="order">1</b>1,000 m</td><td class="data ord" data-i18n="decide-tss.197"><b class="order">1</b>1,000 m</td><td class="data ord" data-i18n="decide-tss.198"><b class="order">3</b>1,000 m</td><td class="data ord" data-i18n="decide-tss.199"><b class="order">3</b>1,000 m</td>
           </tr>
           <tr>
@@ -353,7 +353,7 @@
               <option value="none" data-i18n="decide-tss.134">Do not engage</option>
               <option value="105" data-i18n="decide-tss.135">M101 105&nbsp;mm howitzer battery</option>
               <option value="155" data-i18n="decide-tss.136">M109 155&nbsp;mm battery</option>
-              <option value="owa" data-i18n="decide-tss.137">One-way attack UAS</option>
+              <option value="owa" data-i18n="decide-tss.137">Tactical UAS</option>
             </select>
             <div class="btn-row"><button class="btn row-check" data-i18n="decide-tss.138">Check answer</button></div>
           </div>
@@ -368,7 +368,7 @@
               <option value="none" data-i18n="decide-tss.144">Do not engage</option>
               <option value="105" data-i18n="decide-tss.145">M101 105&nbsp;mm howitzer battery</option>
               <option value="155" data-i18n="decide-tss.146">M109 155&nbsp;mm battery</option>
-              <option value="owa" data-i18n="decide-tss.147">One-way attack UAS</option>
+              <option value="owa" data-i18n="decide-tss.147">Tactical UAS</option>
             </select>
             <div class="btn-row"><button class="btn row-check" data-i18n="decide-tss.148">Check answer</button></div>
           </div>
@@ -376,7 +376,7 @@
         </div>
 
         <div class="match-row">
-          <div data-i18n="decide-tss.150"><span class="target-name">3. ATGM section</span><br><span class="target-desc">A small UAS is looking at the ATGM position right now. We are out of one-way attack drones. Location accurate to 200&nbsp;m.</span></div>
+          <div data-i18n="decide-tss.150"><span class="target-name">3. ATGM section</span><br><span class="target-desc">A small UAS is looking at the ATGM position right now. We are out of tactical UAS. Location accurate to 200&nbsp;m.</span></div>
           <div>
             <select data-answer="155" aria-label="Engage the ATGM section with">
               <option value="" data-i18n="decide-tss.151">— choose —</option>
@@ -398,7 +398,7 @@
               <option value="none" data-i18n="decide-tss.243">Do not engage</option>
               <option value="105" data-i18n="decide-tss.246">M101 105&nbsp;mm howitzer battery</option>
               <option value="155" data-i18n="decide-tss.247">M109 155&nbsp;mm battery</option>
-              <option value="owa" data-i18n="decide-tss.248">One-way attack UAS</option>
+              <option value="owa" data-i18n="decide-tss.248">Tactical UAS</option>
             </select>
             <div class="btn-row"><button class="btn row-check" data-i18n="decide-tss.249">Check answer</button></div>
           </div>
@@ -422,7 +422,7 @@
   <div class="modal-box">
     <h4 data-i18n="decide-tss.157">Why is the most precise weapon given the loosest standard?</h4>
     <p data-i18n="decide-tss.158">Target location error was invented for guns. A gun fires where you aim it, so the error in the grid must be smaller than the ground the shells cover.</p>
-    <p data-i18n="decide-tss.159">A one-way attack UAS is <em>flown</em>. It is launched toward an area, it searches, and the operator puts it onto the target he can see. The grid does not have to be exact. It only has to be small enough for the drone to search in the time it can stay in the air.</p>
+    <p data-i18n="decide-tss.159">A tactical UAS is <em>flown</em>. It is launched toward an area, it searches, and the operator puts it onto the target he can see. The grid does not have to be exact. It only has to be small enough for the drone to search in the time it can stay in the air.</p>
     <p data-i18n="decide-tss.160">So a 1,000 metre area is acceptable: what we are spending is the drone's flying time, not the accuracy of the grid.</p>
     <p data-i18n="decide-tss.161">Units set this number differently, because target selection standards were written before these aircraft existed. Ask what your own unit uses.</p>
     <div class="btn-row"><button class="btn modal-close" data-i18n="decide-tss.162">Close</button></div>
@@ -433,7 +433,7 @@
   <div class="modal-box">
     <h4 data-i18n="decide-tss.122">Why does the drone get a window when the guns do not?</h4>
     <p data-i18n="decide-tss.123">Timeliness asks how long a report stays good enough to act on. Against a gun that is a question about the target alone. A gun fires at a grid, so if the team has moved off that grid, the shells land on empty ground.</p>
-    <p data-i18n="decide-tss.124">A one-way attack UAS is not fired at a grid. It is flown to the area, it searches, and the operator puts it onto the target he can see. A report fifteen minutes old is still worth launching on, because the drone does the finding when it arrives.</p>
+    <p data-i18n="decide-tss.124">A tactical UAS is not fired at a grid. It is flown to the area, it searches, and the operator puts it onto the target he can see. A report fifteen minutes old is still worth launching on, because the drone does the finding when it arrives.</p>
     <p data-i18n="decide-tss.125">So the two targets that demand continuous observation from the guns can be given a fifteen minute window against the drone. It is the same fact that gives the drone the loosest location error on this worksheet: the drone searches, and the gun does not.</p>
     <p data-i18n="decide-tss.126">Fifteen minutes is set for this scenario, as the location error is. Ask what your own unit uses.</p>
     <div class="btn-row"><button class="btn modal-close" data-i18n="decide-tss.127">Close</button></div>

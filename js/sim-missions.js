@@ -68,7 +68,7 @@ const SIM_MISSIONS = (() => {
      lower case mid-transmission without lower-casing an acronym. */
   const MUNITIONS = [
     { value: 'High explosive',    spoken: 'high explosive' },
-    { value: 'One Way Attack UAS', spoken: 'one-way attack UAS' }
+    { value: 'Tactical UAS', spoken: 'tactical UAS' }
   ];
   const spokenShell = v => {
     const m = MUNITIONS.find(x => x.value === v);
@@ -136,7 +136,7 @@ const SIM_MISSIONS = (() => {
 
      Every band is 20-35 s, Lee's figure, on the reasoning that the unit
      displaces after each mission so the range differs every time. THE PREDATOR
-     BAND IS A PLACEHOLDER AND IS ALMOST CERTAINLY WRONG — a one-way attack UAS
+     BAND IS A PLACEHOLDER AND IS ALMOST CERTAINLY WRONG — a tactical UAS
      does not transit in half a minute. Left at the tube band so the control flow
      could be built, flagged so it is not mistaken for a decision. */
   const UNITS = [
@@ -145,7 +145,7 @@ const SIM_MISSIONS = (() => {
     { callsign: 'Anvil',      system: 'M101',   tof: [20, 35], rounds: 300 },
     { callsign: 'Lightning',  system: 'M101',   tof: [20, 35], rounds: 300 },
     { callsign: 'Fire Storm', system: 'RT2000', tof: [20, 35], salvos: 2 },
-    /* PREDATOR (Lee, 2026-09-28): seeking one-way attack drones, 30 on hand,
+    /* PREDATOR (Lee, 2026-09-28): seeking tactical UAS, 30 on hand,
        up to 20 a mission, one launched every 10 s, 4 minutes to the aim point.
        No 15-minute recovery — the launcher is only as busy as its queue. The
        flight, search and strike live in js/sim-drones.js. */

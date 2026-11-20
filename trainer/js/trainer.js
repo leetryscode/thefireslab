@@ -2151,14 +2151,14 @@ void main(){
     let placing = null, moving = null, picking = false;
     const placeMsg = $('place-msg'), fmMsg = $('fm-msg');
     function msg(el, text, cls) { el.textContent = text; el.className = 'msg' + (cls ? ' ' + cls : ''); }
-    // Position firing units (Lee, 2026-11-11): one dropdown, cannon artillery or a one-way attack UAS launch point.
+    // Position firing units (Lee, 2026-11-11): one dropdown, cannon artillery or a tactical UAS launch point.
     // A UAS choice places a launch point in the UAS module (launched from the UAS panel). Values: gun type key, or 'uas:<family>'.
     const OWA = { altius: 'Altius launch point', switchblade: 'Switchblade launch point', lucas: 'LUCAS launch point' };
     const UAS_SHORT = { altius: 'Altius', switchblade: 'Switchblade', lucas: 'LUCAS' };
     { const s = $('place-type'), grp = (label, items) => { const og = document.createElement('optgroup'); og.label = label;
         for (const [v, t] of items) { const o = document.createElement('option'); o.value = v; o.textContent = t; og.appendChild(o); } s.appendChild(og); };
       grp('Cannon artillery', Object.entries(TYPES).map(([k, t]) => [k, t.label]));
-      grp('One-way attack UAS', Object.entries(OWA).map(([k, t]) => ['uas:' + k, t])); }
+      grp('Tactical UAS', Object.entries(OWA).map(([k, t]) => ['uas:' + k, t])); }
     function placeAt(kind, e, n, alt) {      // returns an error string, or '' when placed
       const cs = $('place-cs').value.trim();
       if (kind.startsWith('uas:')) {
@@ -2422,10 +2422,10 @@ void main(){
       rt_mk30: { cat: 'Rocket artillery', label: 'RT-2000 Mk30 180 mm', n: 27, ns: [1, 9, 27, 54], sd: 120, gap: 0.35, burst: 0.9 },
       rt_mk45: { cat: 'Rocket artillery', label: 'RT-2000 Mk45 227 mm', n: 12, ns: [1, 6, 12, 24], sd: 150, gap: 0.5, burst: 1.1 },
       atacms:  { cat: 'Rocket artillery', label: 'ATACMS (unitary)', n: 1, ns: [1, 2],            sd: 6,  gap: 0,   burst: 2.0 },
-      mk81:    { cat: 'Bombs', label: '250 lb',                n: 1,  ns: [1, 2, 4, 8],       sd: 5,  gap: 0.15, burst: 1.6 },
-      mk82:    { cat: 'Bombs', label: '500 lb',                n: 1,  ns: [1, 2, 4, 8],       sd: 5,  gap: 0.15, burst: 2.0 },
-      mk83:    { cat: 'Bombs', label: '1,000 lb',              n: 1,  ns: [1, 2, 4],          sd: 5,  gap: 0.15, burst: 2.6 },
-      mk84:    { cat: 'Bombs', label: '2,000 lb',              n: 1,  ns: [1, 2, 4],          sd: 5,  gap: 0.15, burst: 3.3 }
+      mk81:    { cat: 'AirDrop', label: '250 lb',                n: 1,  ns: [1, 2, 4, 8],       sd: 5,  gap: 0.15, burst: 1.6 },
+      mk82:    { cat: 'AirDrop', label: '500 lb',                n: 1,  ns: [1, 2, 4, 8],       sd: 5,  gap: 0.15, burst: 2.0 },
+      mk83:    { cat: 'AirDrop', label: '1,000 lb',              n: 1,  ns: [1, 2, 4],          sd: 5,  gap: 0.15, burst: 2.6 },
+      mk84:    { cat: 'AirDrop', label: '2,000 lb',              n: 1,  ns: [1, 2, 4],          sd: 5,  gap: 0.15, burst: 3.3 }
     };
     const quicks = []; let painting = false, qfId = 0;
     const qfMsg = $('qf-msg'), qfMun = $('qf-mun'), qfN = $('qf-n');
@@ -2434,7 +2434,7 @@ void main(){
         const o = document.createElement('option'); o.value = k; o.textContent = q.label; og.appendChild(o); } }
     function qfCounts() {
       const q = QF[qfMun.value]; qfN.textContent = '';
-      for (const n of q.ns) { const o = document.createElement('option'); o.value = String(n); o.textContent = n + (q.cat === 'Bombs' ? (n > 1 ? ' bombs' : ' bomb') : q.cat === 'Artillery' ? ' rds' : n > 1 ? ' rockets' : ' rocket'); qfN.appendChild(o); }
+      for (const n of q.ns) { const o = document.createElement('option'); o.value = String(n); o.textContent = n + (q.cat === 'AirDrop' ? (n > 1 ? ' airdrops' : ' airdrop') : q.cat === 'Artillery' ? ' rds' : n > 1 ? ' rockets' : ' rocket'); qfN.appendChild(o); }
       qfN.value = String(q.n);
     }
     qfMun.addEventListener('change', qfCounts); qfCounts();
@@ -2616,10 +2616,10 @@ void main(){
       mortar: { flash: 26, ball: 2, ballK: 0.6, col: 4, colH: 30, smoke: [0x4f4b47, 0x9d988f], dust: 6, dustC: 0x857c6e, deb: 14, ten: 0, ring: 0, spark: 8, life: 30 },
       arty:   { flash: 34, ball: 3, ballK: 0.8, col: 7, colH: 45, smoke: [0x4b3f33, 0x9a8f80], dust: 10, dustC: 0x8f7e66, deb: 24, ten: 4, ring: 0, spark: 12, life: 55 },
       rocket: { flash: 44, ball: 4, ballK: 0.9, col: 8, colH: 55, smoke: [0x2c2926, 0x86817a], dust: 8, dustC: 0x958672, deb: 22, ten: 3, ring: 0.35, spark: 20, life: 50 },
-      bomb:   { flash: 60, ball: 9, ballK: 1.25, col: 14, colH: 50, smoke: [0x302923, 0x8e8475], dust: 16, dustC: 0x9a8a74, deb: 46, ten: 8, ring: 1, spark: 26, life: 110 },
+      airdrop: { flash: 60, ball: 9, ballK: 1.25, col: 14, colH: 50, smoke: [0x302923, 0x8e8475], dust: 16, dustC: 0x9a8a74, deb: 46, ten: 8, ring: 1, spark: 26, life: 110 },
       uas:    { flash: 18, ball: 3, ballK: 0.9, col: 3, colH: 28, smoke: [0x1d1b19, 0x6e6a66], dust: 3, dustC: 0x8c7d68, deb: 6, ten: 0, ring: 0, spark: 12, life: 40 }
     };
-    const FAMILY = { m777: 'arty', m119: 'arty', m120: 'mortar', m252: 'mortar', gmlrs: 'rocket', atacms: 'rocket', rt_mk15: 'rocket', rt_mk30: 'rocket', rt_mk45: 'rocket', mk81: 'bomb', mk82: 'bomb', mk83: 'bomb', mk84: 'bomb' };
+    const FAMILY = { m777: 'arty', m119: 'arty', m120: 'mortar', m252: 'mortar', gmlrs: 'rocket', atacms: 'rocket', rt_mk15: 'rocket', rt_mk30: 'rocket', rt_mk45: 'rocket', mk81: 'airdrop', mk82: 'airdrop', mk83: 'airdrop', mk84: 'airdrop' };
     function bfx(kind, x, y, z, t0, s, onBld) {
       const F = BFX[FAMILY[kind] || (BFX[kind] ? kind : 'uas')], r = rng(((Math.round(x * 7) * 73856093) ^ (Math.round(z * 7) * 19349663) ^ Math.round(t0 * 1000)) >>> 0);
       const wet = !onBld && wetAt(x, z), rs = Math.sqrt(s), sm = rs,   // sm: smoke and dust scale, compressed so small rounds still read
@@ -2633,12 +2633,12 @@ void main(){
       // fireball: hot billows that cool from white to deep red as they swell and lift
       for (let k = 0, m = wet ? Math.ceil(F.ball / 2) : F.ball; k < m; k++) { const a = ang(), d = R(0, 4) * s;
         emit(PG, x + Math.cos(a) * d, y + R(1, 5) * s, z + Math.sin(a) * d, t0 + R(0, 0.08), { vx: Math.cos(a) * R(2, 8) * rs, vy: R(4, 12) * rs, vz: Math.sin(a) * R(2, 8) * rs, k: 2.5,
-          life: R(0.6, 1.1) * Math.sqrt(rs) * (F === BFX.bomb ? 1.5 : 1), s0: 4 * s * F.ballK, s1: R(10, 16) * s * F.ballK, sp: 0.4, c0: 0xfff2c8, c1: 0x9a2e06, cp: 0.55, fp: 1.3, cell: 1, rot: ang(), spin: R(0.5, 1.5) * sg(), px: 2 }); }
+          life: R(0.6, 1.1) * Math.sqrt(rs) * (F === BFX.airdrop ? 1.5 : 1), s0: 4 * s * F.ballK, s1: R(10, 16) * s * F.ballK, sp: 0.4, c0: 0xfff2c8, c1: 0x9a2e06, cp: 0.55, fp: 1.3, cell: 1, rot: ang(), spin: R(0.5, 1.5) * sg(), px: 2 }); }
       // sparks: hot fragments on ballistic arcs
       for (let k = 0, m = n(F.spark); k < m; k++) { const a = ang(), el = R(0.25, 1.35), v = R(28, 70) * rs;
         emit(PG, x, y + 1.5, z, t0, { vx: Math.cos(a) * Math.cos(el) * v, vy: Math.sin(el) * v, vz: Math.sin(a) * Math.cos(el) * v, g: 9.8, fl: gy, life: R(0.5, 1.1),
           s0: 2.2, s1: 1.2, c0: 0xffe7a8, c1: 0xff4a10, cp: 0.7, fp: 1.5, px: 1.6 }); }
-      // shockwave: a quick bright shell, then a dust ring racing out along the ground (unitary rockets, bombs)
+      // shockwave: a quick bright shell, then a dust ring racing out along the ground (unitary rockets, airdrops)
       if (F.ring) {
         emit(PG, x, y + 6 * s, z, t0, { life: 0.35, s0: 10 * s, s1: 110 * s * F.ring, sp: 0.6, c0: 0xfff4dc, c1: 0xffd9a0, a: 0.45, fp: 1.2, cell: 3, px: 3 });
         emit(PS, x, gy + 1.5, z, t0, { life: 1.1, s0: 8 * s, s1: 190 * rs * F.ring, sp: 0.5, c0: wet ? 0xf4f8fa : 0xe8dcc4, c1: dustC, a: 0.6, fp: 1.4, cell: 3, flat: 1 });
@@ -2651,7 +2651,7 @@ void main(){
       // blast cloud: a dome of dust (or spray) punched out in every direction, braking hard; the body of the burst
       for (let k = 0, m = Math.max(4, Math.round(9 * FXQ * (0.7 + 0.3 * rs))); k < m; k++) { const a = ang(), el = R(0.15, 1.45), v = R(18, 34) * rs;
         emit(PS, x, y + 2 * sm, z, t0 + R(0, 0.06), { vx: Math.cos(a) * Math.cos(el) * v, vy: Math.sin(el) * v, vz: Math.sin(a) * Math.cos(el) * v, k: 2.4, fl: gy + 3 * sm, rise: 0.5, wk: 0.8,
-          life: R(12, 20) * (F === BFX.bomb ? 1.5 : 1), s0: 10 * sm, s1: R(32, 46) * sm, sp: 0.22, c0: wet ? 0xf2f6f8 : onBld ? 0x77736d : F.smoke[0], c1: dustC, cp: 0.35,
+          life: R(12, 20) * (F === BFX.airdrop ? 1.5 : 1), s0: 10 * sm, s1: R(32, 46) * sm, sp: 0.22, c0: wet ? 0xf2f6f8 : onBld ? 0x77736d : F.smoke[0], c1: dustC, cp: 0.35,
           a: 1, fin: 0.04, fp: 1.3, cell: 1, rot: ang(), spin: R(0.05, 0.25) * sg(), lift: 0.3 }); }
       // dirt jets / water column: each jet is 6 puffs on one path, born a beat apart, so they read as a trailing plume
       const jets = wet ? n(5) + 2 : n(F.ten);
@@ -2666,7 +2666,7 @@ void main(){
       emit(PS, x, y + 8 * s, z, t0 + 0.4, { vy: 4, k: 0.3, rise: 0.5, wk: 1, life: F.life * 1.4, s0: 20 * sm, s1: 62 * sm, sp: 0.5, c0: F.smoke[1], c1: 0xbdb8b0, a: 0.28, fin: 2, fp: 1.2, cell: 1, rot: ang() });   // the haze it leaves
       // ground skirt: low dust (or foam) rolling out and settling
       for (let k = 0, m = n(F.dust); k < m; k++) { const a = ang(), v = R(14, 30) * rs;
-        emit(PS, x, gy + 2 * s, z, t0 + R(0, 0.15), { vx: Math.cos(a) * v, vy: R(0.5, 2.5), vz: Math.sin(a) * v, k: 1.3, fl: gy + 1.5 * s, wk: 0.7, life: R(16, 28) * (F === BFX.bomb ? 1.4 : 1),
+        emit(PS, x, gy + 2 * s, z, t0 + R(0, 0.15), { vx: Math.cos(a) * v, vy: R(0.5, 2.5), vz: Math.sin(a) * v, k: 1.3, fl: gy + 1.5 * s, wk: 0.7, life: R(16, 28) * (F === BFX.airdrop ? 1.4 : 1),
           s0: 6 * sm, s1: R(18, 28) * sm, sp: 0.35, c0: dustC, c1: dustC, a: wet ? 0.55 : 0.75, fin: 0.15, fp: 1.6, cell: 1, rot: ang(), spin: R(0.05, 0.2) * sg(), lift: 0.3 }); }
       if (wet) emit(PS, x, gy + 0.6, z, t0, { life: 14, s0: 6 * s, s1: 34 * s, sp: 0.5, c0: 0xf4f8fa, c1: 0xdde6ea, a: 0.55, fp: 1.2, cell: 3, flat: 1, rot: ang() });   // foam ring
       // scorch: ten minutes on the ground, not on roofs or water
@@ -4513,7 +4513,7 @@ void main(){
       switchblade_600: { soft: 12, eng: 4,  armor: 3 },
       lucas:      { soft: 30, eng: 12, armor: 8 },
       // Quick fire only (Claude, 2026-11-11, unsourced guesses for Lee to tune). Scaled from the 155 row by roughly the
-      // cube root of explosive weight, softened for frag: blast reach grows slower than the bomb.
+      // cube root of explosive weight, softened for frag: blast reach grows slower than the airdrop munition.
       gmlrs:       { soft: 50, eng: 22, armor: 14 },             // M31 unitary, ~90 kg warhead
       rt_mk15:     { soft: 25, eng: 10, armor: 6 },              // RT-2000 Mk15 117 mm, ~105-class
       rt_mk30:     { soft: 35, eng: 15, armor: 9 },              // RT-2000 Mk30 180 mm, ~155-class
