@@ -4233,7 +4233,17 @@ void main(){
       if (b.route.length > 1 && !btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'Confirm: discard its route'; return; }
       undoSplit(b);
     }
-    function setEditing(on) { editing = on && !!sel; joinPick = false; selPt = editing && sel ? sel.route.length - 1 : -1; rebuildLines(); renderEditor(); }
+    function setEditing(on) {
+      editing = on && !!sel;
+      if (editing && !showRoutes) {
+        showRoutes = true;
+        $('tg-eroutes').setAttribute('aria-pressed', 'true');
+      }
+      joinPick = false;
+      selPt = editing ? sel.route.length - 1 : -1;
+      rebuildLines();
+      renderEditor();
+    }
     function doJoin(g, o, i) {
       if (!o || !canJoin(g, o)) return;
       if (!g.join) g.route.push({ e: o.route[i].e, n: o.route[i].n });
@@ -4450,14 +4460,16 @@ void main(){
           <label class="mini">water <input id="op-water" style="width:50px"></label></div>
         <div class="row"><span class="lbl">Spacing m</span><input id="op-gap" style="width:60px" aria-label="Spacing in metres"></div>
         ${ship ? '' : `<div class="row"><span class="lbl">Movement</span><button id="op-loose" aria-pressed="${loose(g)}">Loose</button><span class="hint">${loose(g) ? 'uneven spacing, slight drift' : 'exact spacing'}</span></div>`}
-        ${ship ? '' : `<div class="row"><span class="lbl">Roads</span><button id="op-roads" aria-pressed="${g.roads !== false}">Follow roads</button><span class="hint">${g.roads !== false ? 'between your points' : 'straight lines'}</span></div>`}
+        ${ship ? '' : `<details class="op-folder" id="op-route-defaults"><summary>Route defaults</summary>
+          <div class="row"><button id="op-roads" aria-pressed="${g.roads !== false}">Follow roads</button><span class="hint">${g.roads !== false ? 'Applies unless turned off for a leg' : 'All legs use straight lines'}</span></div></details>`}
         ${ship && carries(g) ? `<div class="row"><span class="lbl">Offload s</span><input id="op-offload" style="width:60px" aria-label="Seconds to offload each vehicle"><span class="hint">per vehicle, one at a time</span></div>${offloadPlan(g, kids)}` : ''}
         <div class="row"><span class="lbl">Route</span><button id="op-edit" aria-pressed="${editing}">${editing ? 'Done' : 'Edit route'}</button><button id="op-clear">Clear route</button></div>
         <p class="msg ${editing ? 'arm' : ''}" id="op-msg"></p>
         ${g.join ? `<div class="row"><span class="hint">Rejoins <b>${esc((groups.find(o => o.id === g.join.group) || {}).name || '?')}</b> at its point ${g.join.at + 1}, then follows its route.</span><button id="op-unjoin">Unjoin</button></div>`
           : editing && g.route.length >= 1 && groups.some(o => canJoin(g, o)) ? `<div class="row"><button id="op-join" aria-pressed="${joinPick}">${joinPick ? 'Cancel rejoin' : 'Rejoin a route'}</button><span class="hint">${joinPick ? 'Click a blue point on the route to rejoin.' : 'snap the end onto another route'}</span></div>` : ''}
         ${editing && selPt >= 0 && selPt < g.route.length ? `<div class="ptrow">
-            ${selPt < g.route.length - 1 || g.join ? `<div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>` : `<div class="row"><span class="lbl">Point ${selPt + 1}</span><span class="hint">end of route</span></div>`}
+            <div class="row"><span class="lbl">Point ${selPt + 1} hold</span><input id="op-hold" style="width:70px" aria-label="Hold at this point, mm:ss"><span class="hint">mm:ss, 0 for none</span></div>
+            ${selPt === g.route.length - 1 && !g.join ? '<p class="hint">End of route. This hold applies once the route continues from here.</p>' : ''}
             ${pointRows(g)}
             <div class="row"><button id="op-delpt">Delete point ${selPt + 1}</button></div>
             <div class="row"><button id="op-split">Split here</button><span class="hint">${branchesOf(g).filter(b => b.splitAt === selPt).map(b => esc(b.name)).join(', ') || (!ship && formAt(g.route, selPt) === 'line' && selPt > 0 && formAt(g.route, selPt - 1) === 'line' ? 'half the line forms its own line here' : 'rear vehicles take a new road')}</span></div>
@@ -4515,8 +4527,6 @@ void main(){
       if ($('op-form')) { $('op-form').value = pt.form || ''; $('op-form').addEventListener('change', e => {
         if (e.target.value) pt.form = e.target.value; else delete pt.form;
         if (pt.form === 'line' && !(+pt.w > 0)) pt.w = Math.round(frontage(g, g.route, selPt)); refresh(); }); }
-      if ($('op-w')) { $('op-w').value = Math.round(frontage(g, g.route, selPt)); $('op-w').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v >= 10) pt.w = v; refresh(); }); }
-      if ($('op-ang')) $('op-ang').addEventListener('click', () => { delete pt.ang; refresh(); });
       if ($('op-kmh')) { $('op-kmh').value = +pt.kmh > 0 ? pt.kmh : ''; $('op-kmh').addEventListener('change', e => { const v = +e.target.value; if (v > 0) pt.kmh = v; else delete pt.kmh; refresh(); }); }
       if ($('op-straight')) $('op-straight').addEventListener('click', () => { if (pt.straight) delete pt.straight; else pt.straight = true; refresh(); });
       if ($('op-loose')) $('op-loose').addEventListener('click', () => { g.loose = !loose(g); refresh(); });
@@ -4565,14 +4575,12 @@ void main(){
       const opts = Array.from({ length: n }, (_, r) => `<option value="${r}"${!moved && g.offShip % n === r ? ' selected' : ''}>Ship ${r + 1}${r ? r === n - 1 ? ' (right end)' : '' : ' (left end)'}</option>`).join('');
       return `<div class="row"><span class="lbl">Off ship</span><select id="op-offship" aria-label="Ship this cargo rolls off">${moved ? '<option selected disabled>Start moved by hand</option>' : ''}${opts}</select><span class="hint">looking along its route</span></div>`;
     }
-    function pointRows(g) {                    // the selected point's formation, frontage, speed and roads to the next point
+    function pointRows(g) {                    // the selected point's formation, speed and roads to the next point
       const k = selPt, p = g.route[k], end = k === g.route.length - 1 && !g.join, R = g.route;
-      const inLine = formAt(R, k) === 'line' || (end && k > 0 && formAt(R, k - 1) === 'line' && p.form !== 'column');
       let h = '';                              // Formation shows on the last point too: it applies to the points clicked after it
       if (g._rides && k === 0) h += `<p class="hint">Leaves ${esc(parentOf(g).name)}'s front here in line. Set a Column point further on to regroup.</p>`;
       else h += `<div class="row"><span class="lbl">Formation</span><select id="op-form" aria-label="Formation from this point">
           <option value="">As before (${k ? (formAt(R, k - 1) === 'line' ? 'Line' : 'Column') : 'Column'})</option><option value="line">Line</option><option value="column">Column</option></select></div>`;
-      if (inLine && !(g._rides && k === 0)) h += `<div class="row"><span class="lbl">Frontage m</span><input id="op-w" style="width:60px" aria-label="Frontage in metres">${p.ang !== undefined ? '<button id="op-ang">Square to route</button>' : '<span class="hint">or drag the bar ends</span>'}</div>`;
       if (k === 0 && formAt(R, 0) === 'line' && startsAbreast(g)) h += '<p class="hint">Starts abreast on this front. Choose Column to start in column instead.</p>';
       else if (formAt(R, k) === 'line' && (!k || formAt(R, k - 1) !== 'line') && !(g._rides && k === 0)) h += `<p class="hint">Spreads out from here, ${isShip(g) ? 'each ship on its own track' : 'each vehicle on its own street'}, abreast at later points. A Column point regroups them.</p>`;
       if (!end) h += `<div class="row"><span class="lbl">Speed to next</span><input id="op-kmh" style="width:50px" placeholder="group" aria-label="Speed to the next point, km/h"><span class="hint">km/h</span></div>`;
