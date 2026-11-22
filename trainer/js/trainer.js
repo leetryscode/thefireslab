@@ -218,7 +218,7 @@
       const joinOnly = mode === 'callsign';
       $('wl-main').hidden = mode !== 'main'; form.hidden = mode === 'main';
       $('wl-code-l').hidden = joinOnly;
-      $('wl-form-t').textContent = joinOnly ? 'Join Live Session ' + NET.room : 'Join Live Session';
+      $('wl-form-t').textContent = joinOnly ? 'Join Multiplayer Session ' + NET.room : 'Join Multiplayer Session';
       $('wl-msg').textContent = '';
       $('wl-cs').value = $('wl-cs').value || lastCs;
       if (mode === 'main') $('wl-start').focus();
@@ -7057,7 +7057,7 @@ void main(){
     let retries = 0;
 
     // ---- hosting
-    function syncBtn() { hostBtn.textContent = NET.host ? 'Live Session' : 'Host Live Session'; hostBtn.title = NET.host ? 'Session code, join link and who has joined' : 'Open a live session: others join your battlefield with a code'; }
+    function syncBtn() { hostBtn.textContent = NET.host ? 'Live Session' : 'Host Multiplayer Session'; hostBtn.title = NET.host ? 'Session code, join link and who has joined' : 'Open a multiplayer session: others join your battlefield with a code'; }
     function hostSession(code) {
       if (STUDENT || ROOM) return;
       NET.room = code; NET.host = true; NET.cs = NET.cs || 'INSTRUCTOR';

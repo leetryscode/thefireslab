@@ -42,7 +42,7 @@
   </div>
   <div class="tb-timeline"><div class="tl-ticks" id="tl-ticks" aria-hidden="true"></div><div class="tl-done" id="tl-done" aria-hidden="true"></div><div class="tl-ev" id="tl-ev" role="group" aria-label="Key events: click one to open it in the Logbook"></div><div class="tl-now" id="tl-now" aria-hidden="true"></div></div>
   <div class="tb-right">
-    <button id="host-btn" class="instr-only" type="button">Host Live Session</button>
+    <button id="host-btn" class="instr-only" type="button">Host Multiplayer Session</button>
     <span class="seg instr-only" role="group" aria-label="View"><button id="vw-3d" aria-pressed="true">3D</button><button id="vw-map" aria-pressed="false">Map</button></span>
     <nav class="tb-tools" id="tools" aria-label="Control panels">
       <button data-win="w-display" aria-pressed="false">Display</button>
@@ -229,12 +229,12 @@
     <div id="wl-main">
       <button class="wl-opt wl-big" id="wl-start" type="button"><span class="wl-t">Start Simulation</span><span class="wl-d">God's-eye view of the battlefield. Single player, works offline. You can open a live session later.</span></button>
       <div class="wl-row">
-        <button class="wl-opt" id="wl-host" type="button"><span class="wl-t">Host Live Session</span><span class="wl-d">God's-eye view, plus a code for others to join your battlefield.</span></button>
-        <button class="wl-opt" id="wl-join" type="button"><span class="wl-t">Join Live Session</span><span class="wl-d">Join a session someone is hosting. You see the fight from OPs and sUAS feeds only.</span></button>
+        <button class="wl-opt" id="wl-host" type="button"><span class="wl-t">Host Multiplayer Session</span><span class="wl-d">God's-eye view, plus a code for others to join your battlefield.</span></button>
+        <button class="wl-opt" id="wl-join" type="button"><span class="wl-t">Join Multiplayer Session</span><span class="wl-d">Map view only. Participate as an observer from an OP, UAS operator, or Command Post.</span></button>
       </div>
     </div>
     <form id="wl-form" hidden novalidate>
-      <h2 id="wl-form-t">Join Live Session</h2>
+      <h2 id="wl-form-t">Join Multiplayer Session</h2>
       <label id="wl-code-l">Session code<input id="wl-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="KILO42"></label>
       <label>Callsign<input id="wl-cs" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="VIPER 2"></label>
       <p id="wl-msg" class="wl-msg" role="alert"></p>
@@ -271,6 +271,6 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/fatlines.js"></script>
-<script src="js/trainer.js?v=2026-11-21d"></script>
+<script src="js/trainer.js?v=2026-11-21e"></script>
 </body>
 </html>
