@@ -1,0 +1,1417 @@
+{
+ "format": "fist-scenario",
+ "version": 1,
+ "name": "Beachhead Established",
+ "opfor": {
+  "nextId": 69,
+  "groups": [
+   {
+    "id": 35,
+    "name": "RoRo 1",
+    "folder": "SHIPS",
+    "units": [
+     {
+      "type": "roro",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 617418,
+      "n": 2355694,
+      "hold": 600
+     },
+     {
+      "e": 617482,
+      "n": 2355772
+     },
+     {
+      "e": 617578,
+      "n": 2356020
+     },
+     {
+      "e": 617521,
+      "n": 2356237
+     },
+     {
+      "e": 617377,
+      "n": 2356283
+     },
+     {
+      "e": 617391,
+      "n": 2356146
+     },
+     {
+      "e": 617387,
+      "n": 2355882
+     },
+     {
+      "e": 617249,
+      "n": 2355615
+     },
+     {
+      "e": 616868,
+      "n": 2355192
+     },
+     {
+      "e": 608142,
+      "n": 2347424
+     }
+    ],
+    "start": 0,
+    "land": 0,
+    "water": 25,
+    "gap": 500,
+    "carrier": null,
+    "offload": 30,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 36,
+    "name": "RoRo 2",
+    "folder": "SHIPS",
+    "units": [
+     {
+      "type": "roro",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 617276,
+      "n": 2355427
+     },
+     {
+      "e": 617344,
+      "n": 2355558
+     }
+    ],
+    "start": 3600,
+    "land": 0,
+    "water": 25,
+    "gap": 500,
+    "carrier": null,
+    "offload": 30,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 37,
+    "name": "LCU N",
+    "folder": "SHIPS",
+    "units": [
+     {
+      "type": "lcu",
+      "n": 8
+     }
+    ],
+    "route": [
+     {
+      "e": 619147,
+      "n": 2354621,
+      "form": "line",
+      "w": 766,
+      "ang": -1.935400615493239
+     },
+     {
+      "e": 619154,
+      "n": 2354635,
+      "w": 782,
+      "ang": -1.9317688486034559
+     }
+    ],
+    "start": 0,
+    "land": 0,
+    "water": 18,
+    "gap": 150,
+    "carrier": null,
+    "offload": 30,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 38,
+    "name": "Fuel Truck 1",
+    "folder": "Logistics",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 3
+     }
+    ],
+    "route": [
+     {
+      "e": 619417,
+      "n": 2355414,
+      "form": "line",
+      "w": 174,
+      "ang": 0.7848287665818267,
+      "hold": 1800
+     },
+     {
+      "e": 619069,
+      "n": 2355714
+     },
+     {
+      "e": 617077,
+      "n": 2359537,
+      "w": 160,
+      "ang": -0.998199253804706
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 39,
+    "name": "ZBD 1",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 12
+     }
+    ],
+    "route": [
+     {
+      "e": 619371,
+      "n": 2355398,
+      "form": "line",
+      "w": 313,
+      "ang": -2.036178029810077,
+      "hold": 300
+     },
+     {
+      "e": 619268,
+      "n": 2355998,
+      "w": 1088,
+      "ang": -1.9608786455348761,
+      "hold": 300
+     },
+     {
+      "e": 619729,
+      "n": 2356300,
+      "w": 1101,
+      "ang": -1.9467780357351556,
+      "hold": 120
+     },
+     {
+      "e": 620621,
+      "n": 2356814,
+      "w": 298,
+      "ang": -1.9561665565684885,
+      "hold": 420
+     },
+     {
+      "e": 620231,
+      "n": 2357624,
+      "w": 83,
+      "ang": -0.8865753100151004,
+      "hold": 600
+     },
+     {
+      "e": 619147,
+      "n": 2357859,
+      "hold": 300
+     },
+     {
+      "e": 619681,
+      "n": 2358461,
+      "form": "column"
+     },
+     {
+      "e": 619722,
+      "n": 2359090
+     },
+     {
+      "e": 620024,
+      "n": 2359371
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 40,
+    "name": "HQ-17 SAM 1",
+    "folder": "Air Defense",
+    "units": [
+     {
+      "type": "hq17",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 618349,
+      "n": 2356231,
+      "form": "line"
+     }
+    ],
+    "start": 0,
+    "land": 10,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 41,
+    "name": "HQ-17 SAM 2",
+    "folder": "Air Defense",
+    "units": [
+     {
+      "type": "hq17",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 619615,
+      "n": 2354604,
+      "form": "line"
+     },
+     {
+      "e": 622936,
+      "n": 2355197
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 42,
+    "name": "LCU 2",
+    "folder": "SHIPS",
+    "units": [
+     {
+      "type": "lcu",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 620759,
+      "n": 2353474,
+      "form": "line",
+      "w": 450
+     },
+     {
+      "e": 620776,
+      "n": 2353495
+     }
+    ],
+    "start": 0,
+    "land": 0,
+    "water": 18,
+    "gap": 150,
+    "carrier": null,
+    "offload": 30,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 43,
+    "name": "PLZ-05 SPH 1",
+    "folder": "Fire Support",
+    "units": [
+     {
+      "type": "plz",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 622290,
+      "n": 2352081,
+      "form": "line",
+      "w": 370,
+      "ang": -2.917766805303106
+     },
+     {
+      "e": 622535,
+      "n": 2351988,
+      "w": 296,
+      "ang": 2.831147043215811,
+      "form": "line"
+     }
+    ],
+    "start": 0,
+    "land": 5,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 44,
+    "name": "LCU 3",
+    "folder": "SHIPS",
+    "units": [
+     {
+      "type": "lcu",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 621679,
+      "n": 2353086,
+      "form": "line",
+      "w": 238,
+      "ang": -2.1293139694983165
+     },
+     {
+      "e": 621691,
+      "n": 2353115,
+      "form": "line",
+      "w": 252,
+      "ang": -2.1430407923685557
+     }
+    ],
+    "start": 0,
+    "land": 0,
+    "water": 18,
+    "gap": 150,
+    "carrier": null,
+    "offload": 30,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 45,
+    "name": "ZTD 1",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 621783,
+      "n": 2353205,
+      "form": "line",
+      "w": 337,
+      "ang": -2.3587816822318692
+     },
+     {
+      "e": 621523,
+      "n": 2353771,
+      "w": 386,
+      "ang": -0.7510644391398116,
+      "hold": 600
+     },
+     {
+      "e": 620957,
+      "n": 2354719,
+      "w": 381,
+      "ang": -1.9153001268065462,
+      "hold": 240
+     },
+     {
+      "e": 621786,
+      "n": 2355084,
+      "w": 567,
+      "ang": -1.87557284819291,
+      "hold": 300
+     },
+     {
+      "e": 622832,
+      "n": 2355180,
+      "w": 334,
+      "ang": -1.5045611785314874,
+      "hold": 900
+     },
+     {
+      "e": 622547,
+      "n": 2356703
+     }
+    ],
+    "start": 0,
+    "land": 17,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 46,
+    "name": "ZBD 2",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 12
+     }
+    ],
+    "route": [
+     {
+      "e": 620774,
+      "n": 2353564,
+      "form": "line"
+     },
+     {
+      "e": 621040,
+      "n": 2353877,
+      "w": 355,
+      "ang": -1.3358713101948057
+     },
+     {
+      "e": 620490,
+      "n": 2354705,
+      "w": 261,
+      "ang": -1.0845125823385229
+     },
+     {
+      "e": 620671,
+      "n": 2355499
+     },
+     {
+      "e": 620112,
+      "n": 2356626
+     },
+     {
+      "e": 620094,
+      "n": 2357581,
+      "w": 440,
+      "ang": -1.1621284683787467
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true,
+    "loose": true
+   },
+   {
+    "id": 47,
+    "name": "Fuel Truck 2",
+    "folder": "Logistics",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 2
+     }
+    ],
+    "route": [
+     {
+      "e": 621040,
+      "n": 2353808,
+      "form": "line"
+     },
+     {
+      "e": 621031,
+      "n": 2353872
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 48,
+    "name": "ZTD 2",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 11
+     }
+    ],
+    "route": [
+     {
+      "e": 622634,
+      "n": 2351900,
+      "form": "line",
+      "w": 899,
+      "ang": 2.8053952667972397
+     },
+     {
+      "e": 622650,
+      "n": 2351893,
+      "hold": 1800,
+      "w": 882,
+      "ang": 2.7910812521028614
+     },
+     {
+      "e": 622609,
+      "n": 2352900,
+      "w": 139,
+      "ang": -1.678074566357446,
+      "hold": 600
+     },
+     {
+      "e": 624994,
+      "n": 2352113,
+      "w": 740,
+      "ang": 2.686821729531126
+     }
+    ],
+    "start": 0,
+    "land": 17,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 49,
+    "name": "ZTD 3",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 621733,
+      "n": 2352642,
+      "form": "line",
+      "w": 372,
+      "ang": -2.744906280963252
+     },
+     {
+      "e": 622017,
+      "n": 2352773,
+      "w": 417,
+      "ang": -2.6212179043147708
+     },
+     {
+      "e": 622785,
+      "n": 2352913,
+      "w": 48,
+      "ang": -2.718509638463476
+     },
+     {
+      "e": 622838,
+      "n": 2353300,
+      "w": 618,
+      "ang": -0.44298053677012555
+     },
+     {
+      "e": 622479,
+      "n": 2353778,
+      "w": 788,
+      "ang": -1.9231543303740068
+     }
+    ],
+    "start": 0,
+    "land": 14,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 50,
+    "name": "Fuel Truck 3",
+    "folder": "Logistics",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 3
+     }
+    ],
+    "route": [
+     {
+      "e": 621771,
+      "n": 2353220,
+      "form": "line"
+     },
+     {
+      "e": 622566,
+      "n": 2352889,
+      "w": 95,
+      "ang": 2.0137628596664237
+     }
+    ],
+    "start": 0,
+    "land": 30,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 51,
+    "name": "ZBD 3",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 11
+     }
+    ],
+    "route": [
+     {
+      "e": 622010,
+      "n": 2352330,
+      "form": "line",
+      "w": 598,
+      "ang": -2.8316639223341036
+     },
+     {
+      "e": 622665,
+      "n": 2352026,
+      "w": 740,
+      "ang": 2.594930501795344
+     },
+     {
+      "e": 622629,
+      "n": 2351404,
+      "w": 210,
+      "ang": 1.9503033759953243,
+      "straight": true
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 53,
+    "name": "ZBD 4",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 8
+     }
+    ],
+    "route": [
+     {
+      "e": 622785,
+      "n": 2352587,
+      "form": "line",
+      "w": 395,
+      "ang": -3.016158644360043
+     },
+     {
+      "e": 623645,
+      "n": 2352752,
+      "w": 482,
+      "ang": -3.00292752617851
+     },
+     {
+      "e": 624290,
+      "n": 2352701,
+      "w": 446,
+      "ang": 2.540078833330707
+     }
+    ],
+    "start": 0,
+    "land": 5,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 54,
+    "name": "ZBD 5",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 13
+     }
+    ],
+    "route": [
+     {
+      "e": 619541,
+      "n": 2354750,
+      "form": "line",
+      "w": 1231,
+      "ang": -1.8903963256223062
+     },
+     {
+      "e": 619766,
+      "n": 2355106,
+      "w": 860,
+      "ang": -1.9994858545534855
+     },
+     {
+      "e": 619823,
+      "n": 2355805,
+      "w": 986,
+      "ang": -1.960063532059
+     },
+     {
+      "e": 620053,
+      "n": 2356189,
+      "w": 963,
+      "ang": -1.9085524258231514
+     },
+     {
+      "e": 618721,
+      "n": 2357675,
+      "w": 166,
+      "ang": -2.1489081240265984,
+      "straight": true,
+      "form": "column"
+     },
+     {
+      "e": 618383,
+      "n": 2357313,
+      "form": "line",
+      "w": 166
+     }
+    ],
+    "start": 0,
+    "land": 10,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true,
+    "loose": true
+   },
+   {
+    "id": 55,
+    "name": "PLZ-05 SPH 2",
+    "folder": "Fire Support",
+    "units": [
+     {
+      "type": "plz",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 618178,
+      "n": 2355377,
+      "form": "column"
+     },
+     {
+      "e": 618766,
+      "n": 2356326,
+      "form": "column",
+      "straight": true
+     },
+     {
+      "e": 619056,
+      "n": 2356234,
+      "hold": 2400
+     },
+     {
+      "e": 617673,
+      "n": 2359230
+     }
+    ],
+    "start": 0,
+    "land": 13,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 56,
+    "name": "ZTZ-96 MBT 1",
+    "folder": "ARMOR",
+    "units": [
+     {
+      "type": "ztz96",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 617729,
+      "n": 2355593,
+      "form": "line"
+     },
+     {
+      "e": 617906,
+      "n": 2355893,
+      "w": 439,
+      "ang": -3.103768960878684,
+      "hold": 180
+     },
+     {
+      "e": 618974,
+      "n": 2356347,
+      "w": 148,
+      "ang": -2.0281164764595814
+     },
+     {
+      "e": 618828,
+      "n": 2356927,
+      "w": 759,
+      "ang": -2.3405934392070167,
+      "hold": 900
+     },
+     {
+      "e": 618778,
+      "n": 2357376,
+      "w": 529,
+      "ang": -2.5693795137327675,
+      "hold": 300
+     },
+     {
+      "e": 619446,
+      "n": 2358472,
+      "hold": 300
+     },
+     {
+      "e": 619989,
+      "n": 2359369,
+      "w": 155,
+      "ang": -1.9300401711915762
+     }
+    ],
+    "start": 0,
+    "land": 7,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 57,
+    "name": "Infantry 1",
+    "units": [
+     {
+      "type": "inf",
+      "n": 44
+     }
+    ],
+    "route": [
+     {
+      "e": 617711,
+      "n": 2355354,
+      "form": "line",
+      "w": 548,
+      "ang": 2.982503237668483,
+      "straight": true
+     },
+     {
+      "e": 618060,
+      "n": 2355202,
+      "w": 542,
+      "ang": 2.983741341920991
+     },
+     {
+      "e": 618262,
+      "n": 2355163,
+      "w": 373,
+      "ang": -1.9702728685512776
+     },
+     {
+      "e": 618946,
+      "n": 2355747
+     },
+     {
+      "e": 619536,
+      "n": 2355920,
+      "w": 510,
+      "ang": -1.9416622813411724
+     }
+    ],
+    "start": 0,
+    "land": 3,
+    "water": 0,
+    "gap": 5,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 58,
+    "name": "Fuel Truck 4",
+    "folder": "Logistics",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 2
+     }
+    ],
+    "route": [
+     {
+      "e": 617598,
+      "n": 2355546,
+      "form": "line"
+     },
+     {
+      "e": 618397,
+      "n": 2355669,
+      "w": 65,
+      "ang": -2.1840454228220834
+     }
+    ],
+    "start": 0,
+    "land": 20,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 59,
+    "name": "RoRo 2 cargo 1",
+    "units": [
+     {
+      "type": "ztz96",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 617319,
+      "n": 2355432,
+      "moved": true,
+      "form": "line",
+      "w": 150
+     },
+     {
+      "e": 617930,
+      "n": 2355449
+     },
+     {
+      "e": 619002,
+      "n": 2355656,
+      "w": 231,
+      "ang": -2.493471577873331
+     },
+     {
+      "e": 619438,
+      "n": 2356170,
+      "w": 359,
+      "ang": -1.9284435171617116
+     },
+     {
+      "e": 620629,
+      "n": 2356826,
+      "w": 396,
+      "ang": -2.054048712019699
+     },
+     {
+      "e": 619830,
+      "n": 2357692,
+      "w": 280,
+      "ang": -0.8550343636854237,
+      "straight": true
+     },
+     {
+      "e": 619322,
+      "n": 2358045,
+      "w": 260,
+      "ang": -0.7802487988255451
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 0,
+    "gap": 50,
+    "carrier": 36,
+    "offShip": 0,
+    "q": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 61,
+    "name": "RoRo 2 cargo 2",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 617344,
+      "n": 2355558
+     },
+     {
+      "e": 617632,
+      "n": 2355474
+     },
+     {
+      "e": 617945,
+      "n": 2355706
+     },
+     {
+      "e": 618772,
+      "n": 2356186
+     },
+     {
+      "e": 619271,
+      "n": 2356029
+     },
+     {
+      "e": 619412,
+      "n": 2356421
+     },
+     {
+      "e": 618899,
+      "n": 2357279
+     },
+     {
+      "e": 619691,
+      "n": 2358467
+     },
+     {
+      "e": 619454,
+      "n": 2358432
+     }
+    ],
+    "start": 0,
+    "land": 20,
+    "water": 0,
+    "gap": 50,
+    "carrier": 36,
+    "offShip": 1,
+    "q": 1,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 65,
+    "name": "ZTD 4",
+    "folder": "MECH",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 11
+     }
+    ],
+    "route": [
+     {
+      "e": 622700,
+      "n": 2352568,
+      "form": "line",
+      "w": 399,
+      "ang": -2.6749431908506076
+     },
+     {
+      "e": 623615,
+      "n": 2353102,
+      "w": 320,
+      "ang": -2.35634616768518
+     },
+     {
+      "e": 623986,
+      "n": 2353333,
+      "w": 525,
+      "ang": -2.0675663430307334,
+      "hold": 900
+     },
+     {
+      "e": 624134,
+      "n": 2353092,
+      "w": 114,
+      "ang": 2.6844127561206985,
+      "hold": 120
+     },
+     {
+      "e": 625166,
+      "n": 2352879,
+      "w": 544,
+      "ang": 2.628408147377501,
+      "hold": 1800
+     }
+    ],
+    "start": 0,
+    "land": 14,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 66,
+    "name": "Fuel Truck 6",
+    "folder": "Logistics",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 3
+     }
+    ],
+    "route": [
+     {
+      "e": 621774,
+      "n": 2353113,
+      "form": "line"
+     },
+     {
+      "e": 621932,
+      "n": 2353347
+     },
+     {
+      "e": 622758,
+      "n": 2352872
+     },
+     {
+      "e": 623635,
+      "n": 2352852
+     },
+     {
+      "e": 624103,
+      "n": 2353108
+     }
+    ],
+    "start": 0,
+    "land": 25,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 67,
+    "name": "PLZ-05 SPH 4",
+    "folder": "Fire Support",
+    "units": [
+     {
+      "type": "plz",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 621755,
+      "n": 2353231,
+      "form": "line",
+      "w": 163,
+      "ang": -2.396866451309907
+     },
+     {
+      "e": 622089,
+      "n": 2353514,
+      "w": 843,
+      "ang": -2.3044484418899103,
+      "hold": 2700,
+      "form": "line"
+     },
+     {
+      "e": 624808,
+      "n": 2352232,
+      "form": "column",
+      "w": 285,
+      "ang": -2.545097924419361
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 0,
+    "gap": 50,
+    "carrier": null,
+    "parent": null,
+    "join": null,
+    "roads": true,
+    "loose": false
+   },
+   {
+    "id": 68,
+    "name": "RoRo 2 cargo 3",
+    "units": [
+     {
+      "type": "eng",
+      "n": 5
+     }
+    ],
+    "route": [
+     {
+      "e": 617344,
+      "n": 2355558
+     },
+     {
+      "e": 617742,
+      "n": 2355743
+     },
+     {
+      "e": 617907,
+      "n": 2355892
+     },
+     {
+      "e": 617957,
+      "n": 2356377
+     },
+     {
+      "e": 618140,
+      "n": 2356644
+     },
+     {
+      "e": 618749,
+      "n": 2357363
+     },
+     {
+      "e": 619732,
+      "n": 2358713
+     },
+     {
+      "e": 619752,
+      "n": 2359049
+     },
+     {
+      "e": 619881,
+      "n": 2359193
+     }
+    ],
+    "start": 0,
+    "land": 17,
+    "water": 0,
+    "gap": 50,
+    "carrier": 36,
+    "offShip": 2,
+    "q": 2,
+    "parent": null,
+    "join": null,
+    "roads": true
+   }
+  ]
+ },
+ "units": [
+  {
+   "type": "m777",
+   "e": 621178,
+   "n": 2357036,
+   "alt": null
+  }
+ ],
+ "lps": [
+  {
+   "fam": "altius",
+   "name": "Altius",
+   "e": 623645,
+   "n": 2357348
+  },
+  {
+   "fam": "switchblade",
+   "name": "Switchblade",
+   "e": 620528,
+   "n": 2357346
+  },
+  {
+   "fam": "lucas",
+   "name": "LUCAS",
+   "e": 627893,
+   "n": 2372326
+  }
+ ],
+ "ops": [
+  {
+   "name": "OP Volcano",
+   "note": "overlooks some beach looking west",
+   "e": 623282,
+   "n": 2351454,
+   "h": 217.5
+  },
+  {
+   "name": "OP little volcano",
+   "note": "",
+   "e": 619459.5,
+   "n": 2356988.4,
+   "h": 133.6
+  },
+  {
+   "name": "OP Harbor",
+   "note": "on a roof above the harbour, at its southwest edge, overlooking the piers",
+   "e": 617968.5,
+   "n": 2356425.4,
+   "h": 2.7
+  },
+  {
+   "name": "Beach camera",
+   "note": "pan and zoom camera at the southwest corner of a roof, the corner nearest the beach; starts looking out to sea",
+   "e": 620480.3,
+   "n": 2353791.7,
+   "h": 1.6,
+   "kind": "camera",
+   "look": 3750
+  },
+  {
+   "name": "OP Hill",
+   "note": "overlooks city",
+   "e": 624477,
+   "n": 2356123.8,
+   "h": 279.3
+  },
+  {
+   "name": "OP Jungle Hill",
+   "note": "overlooks city near OP Hill",
+   "e": 623298.4,
+   "n": 2355737.3,
+   "h": 136.5
+  },
+  {
+   "name": "OP Mountain House",
+   "note": "overlooks city",
+   "e": 621878.1,
+   "n": 2356920.4,
+   "h": 198.6
+  }
+ ]
+}

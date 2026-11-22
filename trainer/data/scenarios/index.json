@@ -1,5 +1,6 @@
 {
  "scenarios": [
-  { "name": "Amphibius Assault East", "file": "amphibius-assault-east.json" }
+  { "name": "Amphibious Assault", "file": "amphibious-assault-10-nov.json" },
+  { "name": "Beachhead Established", "file": "beachhead-established-nov-21.json" }
  ]
 }

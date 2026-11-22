@@ -67,8 +67,31 @@
   // data/ops.json. Each: { name, note, e, n, h, kind, look } — kind 'camera' is a fixed pan/zoom camera instead of an
   // observer; look (optional) is the direction the view starts in, mils grid (else the centre of the battlespace).
   const OPS_KEY = 'fist-trainer-ops-v1';
+  const STORE = { opfor: 'fist-trainer-opfor-v2', units: 'fist-trainer-units-v1', lps: 'fist-trainer-lps-v1', name: 'fist-trainer-scenario-name-v1' };
   const validOps = a => Array.isArray(a) && a.every(o => o && typeof o.name === 'string' && isFinite(o.e) && isFinite(o.n));
   let setOps = () => {};                // replaced once the OP list and viewshed menu exist
+  // A browser with nothing saved yet starts on Amphibious Assault, 10 Nov. A saved scenario stays: it lives in
+  // localStorage and is restored on later visits. Joining never writes localStorage.
+  const DEFAULT_SCENARIO = 'scenarios/amphibious-assault-10-nov.json';
+  {
+    const q = new URLSearchParams(location.search);
+    const joining = q.get('role') === 'student' || q.has('join');
+    let saved = false;
+    try { saved = !!localStorage.getItem(STORE.opfor); } catch (e) {}
+    if (!joining && !saved) {
+      try {
+        const s = await load(DEFAULT_SCENARIO, 'json');
+        if (s && s.format === 'fist-scenario' && s.opfor && Array.isArray(s.opfor.groups) && Array.isArray(s.units) && Array.isArray(s.lps)) {
+          localStorage.setItem(STORE.opfor, JSON.stringify(s.opfor));
+          localStorage.setItem(STORE.units, JSON.stringify(s.units));
+          localStorage.setItem(STORE.lps, JSON.stringify(s.lps));
+          localStorage.setItem(STORE.name, s.name || 'Amphibious Assault');
+          if (validOps(s.ops)) localStorage.setItem(OPS_KEY, JSON.stringify(s.ops));
+          else localStorage.removeItem(OPS_KEY);
+        }
+      } catch (e) {}
+    }
+  }
   // a student waits for the instructor's list
   if (!(q => q.get('role') === 'student' || q.has('join'))(new URLSearchParams(location.search))) try { const s = JSON.parse(localStorage.getItem(OPS_KEY)); if (validOps(s)) SKETCH.ops = s; } catch (e) {}
   const demGz = Uint8Array.from(atob(demJ.data), c => c.charCodeAt(0)).buffer;
@@ -2081,8 +2104,8 @@ void main(){
 
   // ---- FIRES: instructor firing units, point-and-shoot, bursts and arcs, on one sim clock.
   // Everything that decides an outcome reads sim time and a per-mission seed, so a run can be replayed.
-  // The working scenario in this browser. A scenario file is these saved together; loading one writes them and reloads the page.
-  const STORE = { opfor: 'fist-trainer-opfor-v2', units: 'fist-trainer-units-v1', lps: 'fist-trainer-lps-v1', name: 'fist-trainer-scenario-name-v1' };
+  // The working scenario in this browser (STORE, beside OPS_KEY). A scenario file is these saved together;
+  // loading one writes them and reloads the page.
 
   const FIRES = (() => {
     // Placeholder figures, all in one place. Replace with real values when supplied.
@@ -6195,24 +6218,40 @@ void main(){
   //      File: { format: 'fist-scenario', version: 1, name, opfor: { nextId, groups }, units: [...], lps: [...], ops: [...] }
   //      ops (friendly positions, 2026-11-15) is optional: a file without it gets data/ops.json.
   (function scenario() {
-    const $ = id => document.getElementById(id), list = $('sc-list'), loadBtn = $('sc-load'), nameIn = $('sc-name'), fileIn = $('sc-filein');
+    const $ = id => document.getElementById(id), list = $('sc-list'), nameIn = $('sc-name'), fileIn = $('sc-filein');
     const msg = (text, cls) => { $('sc-msg').textContent = text; $('sc-msg').className = 'msg' + (cls ? ' ' + cls : ''); };
     let builtIn = [], fromFile = null;
     try { nameIn.value = localStorage.getItem(STORE.name) || ''; } catch (e) {}
     if (nameIn.value) msg('Current scenario: ' + nameIn.value);
     nameIn.addEventListener('input', () => { try { localStorage.setItem(STORE.name, nameIn.value.trim()); } catch (e) {} });
 
-    function disarm() { delete loadBtn.dataset.armed; loadBtn.textContent = 'Load'; }
+    let loading = false;
     function fillList() {
-      list.textContent = '';
-      const add = (value, text) => { const o = document.createElement('option'); o.value = value; o.textContent = text; list.appendChild(o); };
-      builtIn.forEach((s, i) => add(String(i), s.name));
+      list.replaceChildren();
+      function add(value, title, current) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'grow' + (current ? ' on' : '');
+        row.disabled = value === null;
+        row.setAttribute('aria-label', row.disabled ? title + ' (unavailable)' : 'Load ' + title);
+        const label = document.createElement('span');
+        label.className = 'gn';
+        label.textContent = title;
+        row.appendChild(label);
+        if (row.disabled) {
+          const status = document.createElement('span');
+          status.className = 'gt';
+          status.textContent = 'Unavailable';
+          row.appendChild(status);
+        } else {
+          row.addEventListener('click', () => loadScenario(value, title));
+        }
+        list.appendChild(row);
+      }
+      builtIn.forEach((s, i) => add(s.file ? String(i) : null, s.name, s.name === nameIn.value));
       if (fromFile) add('file', 'File: ' + fromFile.name);
-      if (!list.options.length) add('', 'No built-in scenarios yet');
-      if (fromFile) list.value = 'file';
-      loadBtn.disabled = !list.value; disarm();
+      if (!list.childElementCount) list.textContent = 'No built-in scenarios yet';
     }
-    list.addEventListener('change', disarm);
     load('scenarios/index.json', 'json').then(j => { if (j && Array.isArray(j.scenarios)) builtIn = j.scenarios; }).catch(() => {}).then(fillList);
 
     function isValid(s) {
@@ -6232,21 +6271,27 @@ void main(){
       } catch (e) { return msg('This browser would not store the scenario.', 'bad'); }
       location.reload();
     }
-    loadBtn.addEventListener('click', async () => {
+    async function loadScenario(value, title) {
+      if (loading) return;
       const hasWork = OPFOR.debug.groups.length > 0 || FIRES.debug.units.length > 0;
-      if (hasWork && !loadBtn.dataset.armed) { loadBtn.dataset.armed = '1'; loadBtn.textContent = 'Confirm: replace'; return msg('This replaces the enemy groups, firing units and launch points here. Export first to keep them.', 'arm'); }
-      disarm();
-      if (list.value === 'file') return apply(fromFile);
-      try { apply(await load('scenarios/' + builtIn[+list.value].file, 'json')); }
-      catch (e) { msg('Could not load that scenario.', 'bad'); }
-    });
+      if (hasWork && !window.confirm('Load ' + title + ' and replace the current exercise?')) return;
+      loading = true;
+      try {
+        const scenario = value === 'file' ? fromFile : await load('scenarios/' + builtIn[Number(value)].file, 'json');
+        apply(scenario);
+      } catch (e) {
+        msg('Could not load that scenario.', 'bad');
+      } finally {
+        loading = false;
+      }
+    }
     $('sc-open').addEventListener('click', () => fileIn.click());
     fileIn.addEventListener('change', async () => {
       const f = fileIn.files[0]; fileIn.value = ''; if (!f) return;
       let s = null; try { s = JSON.parse(await f.text()); } catch (e) {}
       if (!isValid(s)) return msg('That is not a usable scenario file.', 'bad');
       fromFile = s; if (!s.name) s.name = f.name.replace(/\.json$/i, '');
-      fillList(); msg('Press Load to open ' + s.name + '.', 'arm');
+      fillList(); loadScenario('file', s.name);
     });
     $('sc-export').addEventListener('click', () => {
       const name = nameIn.value.trim() || 'Untitled scenario';

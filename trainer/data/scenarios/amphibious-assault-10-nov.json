@@ -1,0 +1,1129 @@
+{
+ "format": "fist-scenario",
+ "version": 1,
+ "name": "Amphibious Assault",
+ "opfor": {
+  "nextId": 35,
+  "groups": [
+   {
+    "id": 4,
+    "name": "South ZTDs",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 618791,
+      "n": 2350170,
+      "form": "line",
+      "w": 733,
+      "ang": -2.440676506811308
+     },
+     {
+      "e": 620744,
+      "n": 2351432,
+      "w": 724,
+      "ang": -2.802222551917386
+     },
+     {
+      "e": 622139,
+      "n": 2352285,
+      "w": 651,
+      "ang": -2.9950412008677536
+     },
+     {
+      "e": 622670,
+      "n": 2351964,
+      "w": 890,
+      "ang": 2.599898270905624
+     }
+    ],
+    "start": 0,
+    "land": 10,
+    "water": 25,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 6,
+    "name": "South ZBDs",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 618414,
+      "n": 2349999,
+      "form": "line",
+      "w": 390
+     },
+     {
+      "e": 619395,
+      "n": 2350500,
+      "w": 878,
+      "ang": -2.5110350404752553
+     },
+     {
+      "e": 620680,
+      "n": 2351398,
+      "w": 705,
+      "ang": -2.7837478565386515
+     },
+     {
+      "e": 622161,
+      "n": 2352298,
+      "w": 665,
+      "ang": -3.017747288891821
+     },
+     {
+      "e": 622809,
+      "n": 2352572,
+      "w": 511,
+      "ang": -2.769637040300802
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 25,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 7,
+    "name": "South ZBDs B1",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 622161,
+      "n": 2352298,
+      "form": "line",
+      "ridesLine": true
+     },
+     {
+      "e": 622609,
+      "n": 2351603,
+      "form": "line",
+      "w": 352,
+      "ang": 2.268381658151815
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 25,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": 6,
+    "splitAt": 3,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 8,
+    "name": "Waikīkī E ZTDs",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 618422,
+      "n": 2350825,
+      "form": "line",
+      "w": 643,
+      "ang": -2.4045561299106493
+     },
+     {
+      "e": 621690,
+      "n": 2352878,
+      "w": 789,
+      "ang": -2.2925891481044816
+     },
+     {
+      "e": 621986,
+      "n": 2352897,
+      "w": 565,
+      "ang": -2.610583937427096
+     },
+     {
+      "e": 622184,
+      "n": 2353061,
+      "w": 867
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 9,
+    "name": "Waikīkī ZBDs",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 617993,
+      "n": 2350427,
+      "form": "line",
+      "w": 526,
+      "ang": -2.3034207871887884
+     },
+     {
+      "e": 621592,
+      "n": 2352824,
+      "w": 740,
+      "ang": -2.3263565356565685
+     },
+     {
+      "e": 621603,
+      "n": 2353163,
+      "w": 367,
+      "ang": -1.8173955868425131
+     },
+     {
+      "e": 621556,
+      "n": 2353431,
+      "w": 735,
+      "ang": -2.3498154693817805
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 10,
+    "name": "Waikīkī ZBDs B1",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 621592,
+      "n": 2352824,
+      "form": "line",
+      "ridesLine": true
+     },
+     {
+      "e": 621969,
+      "n": 2352877,
+      "w": 553,
+      "ang": -2.5838179196378492
+     },
+     {
+      "e": 622621,
+      "n": 2352890,
+      "w": 268,
+      "ang": 3.0700914548642495
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 23,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": 9,
+    "splitAt": 1,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 12,
+    "name": "RESORT ZTDs",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 617745,
+      "n": 2351465,
+      "form": "line"
+     },
+     {
+      "e": 620686,
+      "n": 2353575,
+      "w": 653,
+      "ang": -2.1826843071620643
+     },
+     {
+      "e": 620798,
+      "n": 2354136,
+      "w": 435,
+      "ang": -1.2434262902089357
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 24,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 13,
+    "name": "RESORT ZTDs B1",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 620686,
+      "n": 2353575,
+      "form": "line",
+      "ridesLine": true
+     },
+     {
+      "e": 621200,
+      "n": 2353962,
+      "w": 529,
+      "ang": -2.5954863814514564
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 24,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": 12,
+    "splitAt": 1,
+    "join": null,
+    "roads": false
+   },
+   {
+    "id": 14,
+    "name": "RESORT ZBDS",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 617288,
+      "n": 2351020,
+      "form": "line"
+     },
+     {
+      "e": 620674,
+      "n": 2353576,
+      "w": 656,
+      "ang": -2.2087513851802254
+     },
+     {
+      "e": 620444,
+      "n": 2354211,
+      "w": 306,
+      "ang": -2.4324123879426773
+     }
+    ],
+    "start": 0,
+    "land": 14,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 15,
+    "name": "PARK ZTDs",
+    "units": [
+     {
+      "type": "ztd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 617076,
+      "n": 2352171,
+      "form": "line",
+      "w": 1113,
+      "ang": -2.3570113408880298
+     },
+     {
+      "e": 618876,
+      "n": 2353818,
+      "w": 1291,
+      "ang": -1.8394172791780485
+     },
+     {
+      "e": 619287,
+      "n": 2354822,
+      "w": 1057,
+      "ang": -1.965672639807323
+     },
+     {
+      "e": 619683,
+      "n": 2355202,
+      "w": 1015,
+      "ang": -1.978476317154178
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 16,
+    "name": "PARK ZBDs",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 14
+     }
+    ],
+    "route": [
+     {
+      "e": 616427,
+      "n": 2351392,
+      "form": "line",
+      "w": 1120,
+      "ang": -2.3190110909698594
+     },
+     {
+      "e": 618827,
+      "n": 2353805,
+      "w": 1309,
+      "ang": -1.775733819326746
+     },
+     {
+      "e": 619307,
+      "n": 2354824,
+      "w": 1174,
+      "ang": -1.9642331810291307
+     },
+     {
+      "e": 618695,
+      "n": 2355406,
+      "w": 722,
+      "ang": -0.9378453499507415
+     },
+     {
+      "e": 618493,
+      "n": 2356060,
+      "w": 581,
+      "ang": -1.2147389545329546
+     },
+     {
+      "e": 617892,
+      "n": 2356521,
+      "w": 399,
+      "ang": 0.5596315820702638
+     }
+    ],
+    "start": 0,
+    "land": 15,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 17,
+    "name": "PARK REIN",
+    "units": [
+     {
+      "type": "zbd",
+      "n": 7
+     },
+     {
+      "type": "ztd",
+      "n": 7
+     }
+    ],
+    "route": [
+     {
+      "e": 615603,
+      "n": 2350621,
+      "form": "line",
+      "w": 1242,
+      "ang": -2.335204642691263
+     },
+     {
+      "e": 618810,
+      "n": 2353821,
+      "w": 1465,
+      "ang": -1.739372906596463
+     },
+     {
+      "e": 619314,
+      "n": 2354797,
+      "w": 1049,
+      "ang": -1.9025395735011716
+     },
+     {
+      "e": 617685,
+      "n": 2355736,
+      "w": 879,
+      "ang": -0.6806617804463221
+     }
+    ],
+    "start": 0,
+    "land": 17,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 21,
+    "name": "SOUTH LCU",
+    "units": [
+     {
+      "type": "lcu",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 616997,
+      "n": 2350343,
+      "form": "line",
+      "w": 450
+     },
+     {
+      "e": 621964,
+      "n": 2352832,
+      "form": "line",
+      "w": 443,
+      "ang": -2.5847090288764405
+     }
+    ],
+    "start": 0,
+    "land": 0,
+    "water": 18,
+    "gap": 150,
+    "carrier": null,
+    "unload": 120,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 22,
+    "name": "SOUTH LCU cargo 1",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 621847,
+      "n": 2353020
+     },
+     {
+      "e": 622572,
+      "n": 2352908
+     }
+    ],
+    "start": 0,
+    "land": 20,
+    "water": 0,
+    "gap": 50,
+    "carrier": 21,
+    "offShip": 0,
+    "unload": 0,
+    "q": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 23,
+    "name": "SOUTH LCU ship 1 cargo 2",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 621925,
+      "n": 2352895
+     },
+     {
+      "e": 622741,
+      "n": 2352223
+     }
+    ],
+    "start": 0,
+    "land": 20,
+    "water": 0,
+    "gap": 75,
+    "carrier": 21,
+    "offShip": 1,
+    "unload": 0,
+    "q": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 24,
+    "name": "SOUTH LCU ship 3 cargo 1",
+    "units": [
+     {
+      "type": "hq17",
+      "n": 1
+     },
+     {
+      "type": "fuel",
+      "n": 3
+     }
+    ],
+    "route": [
+     {
+      "e": 622003,
+      "n": 2352769
+     },
+     {
+      "e": 622531,
+      "n": 2352070
+     }
+    ],
+    "start": 0,
+    "land": 30,
+    "water": 0,
+    "gap": 50,
+    "carrier": 21,
+    "offShip": 2,
+    "unload": 0,
+    "q": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 25,
+    "name": "SOUTH LCU ship 4 cargo 1",
+    "units": [
+     {
+      "type": "eng",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 622081,
+      "n": 2352644
+     },
+     {
+      "e": 621045,
+      "n": 2354219
+     }
+    ],
+    "start": 0,
+    "land": 17,
+    "water": 0,
+    "gap": 100,
+    "carrier": 21,
+    "offShip": 3,
+    "unload": 0,
+    "q": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 26,
+    "name": "RoRo 1",
+    "units": [
+     {
+      "type": "roro",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 612798,
+      "n": 2351367
+     },
+     {
+      "e": 615058,
+      "n": 2353324
+     },
+     {
+      "e": 617161,
+      "n": 2355416
+     },
+     {
+      "e": 617476,
+      "n": 2355780
+     }
+    ],
+    "start": 600,
+    "land": 0,
+    "water": 20,
+    "gap": 50,
+    "carrier": null,
+    "unload": 600,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 27,
+    "name": "RoRo 1 cargo 1",
+    "units": [
+     {
+      "type": "hq17",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 617476,
+      "n": 2355780
+     },
+     {
+      "e": 617827,
+      "n": 2355566,
+      "form": "line",
+      "w": 180
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 0,
+    "gap": 50,
+    "carrier": 26,
+    "offShip": 0,
+    "unload": 0,
+    "q": 0,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 28,
+    "name": "RoRo 1 cargo 2",
+    "units": [
+     {
+      "type": "plz",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 617476,
+      "n": 2355780,
+      "form": "line",
+      "w": 150
+     },
+     {
+      "e": 618054,
+      "n": 2355242,
+      "w": 234,
+      "ang": 2.6275566115675204
+     }
+    ],
+    "start": 0,
+    "land": 12,
+    "water": 0,
+    "gap": 50,
+    "carrier": 26,
+    "offShip": 1,
+    "unload": 0,
+    "q": 1,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 29,
+    "name": "RoRo 1 cargo 3",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 3
+     }
+    ],
+    "route": [
+     {
+      "e": 617476,
+      "n": 2355780
+     },
+     {
+      "e": 618396,
+      "n": 2355667
+     }
+    ],
+    "start": 0,
+    "land": 30,
+    "water": 0,
+    "gap": 50,
+    "carrier": 26,
+    "offShip": 2,
+    "unload": 0,
+    "q": 2,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 30,
+    "name": "RoRo 1 cargo 4",
+    "units": [
+     {
+      "type": "eng",
+      "n": 4
+     }
+    ],
+    "route": [
+     {
+      "e": 617476,
+      "n": 2355780
+     },
+     {
+      "e": 618828,
+      "n": 2355018
+     },
+     {
+      "e": 620181,
+      "n": 2354579
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 0,
+    "gap": 50,
+    "carrier": 26,
+    "offShip": 3,
+    "unload": 0,
+    "q": 3,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 32,
+    "name": "RoRo 1 cargo 5",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 3
+     }
+    ],
+    "route": [
+     {
+      "e": 617476,
+      "n": 2355780
+     },
+     {
+      "e": 618252,
+      "n": 2355488
+     },
+     {
+      "e": 619007,
+      "n": 2355665
+     },
+     {
+      "e": 619303,
+      "n": 2355609,
+      "form": "column",
+      "w": 60
+     }
+    ],
+    "start": 0,
+    "land": 16,
+    "water": 0,
+    "gap": 50,
+    "carrier": 26,
+    "offShip": 4,
+    "unload": 0,
+    "q": 4,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 33,
+    "name": "RoRo 1 cargo 6",
+    "units": [
+     {
+      "type": "fuel",
+      "n": 6
+     }
+    ],
+    "route": [
+     {
+      "e": 617476,
+      "n": 2355780
+     }
+    ],
+    "start": 0,
+    "land": 40,
+    "water": 0,
+    "gap": 50,
+    "carrier": 26,
+    "offShip": 5,
+    "q": 5,
+    "parent": null,
+    "join": null,
+    "roads": true
+   },
+   {
+    "id": 34,
+    "name": "BIG NAVY",
+    "units": [
+     {
+      "type": "type075",
+      "n": 1
+     },
+     {
+      "type": "type071",
+      "n": 1
+     },
+     {
+      "type": "type055",
+      "n": 1
+     }
+    ],
+    "route": [
+     {
+      "e": 613951,
+      "n": 2343557,
+      "form": "column",
+      "w": 3200
+     },
+     {
+      "e": 611768,
+      "n": 2347427
+     },
+     {
+      "e": 607927,
+      "n": 2351759
+     },
+     {
+      "e": 607655,
+      "n": 2347114
+     },
+     {
+      "e": 609473,
+      "n": 2344017
+     },
+     {
+      "e": 611257,
+      "n": 2342737
+     },
+     {
+      "e": 612978,
+      "n": 2343249
+     },
+     {
+      "e": 612650,
+      "n": 2346924
+     },
+     {
+      "e": 611145,
+      "n": 2349861
+     },
+     {
+      "e": 609105,
+      "n": 2351804
+     },
+     {
+      "e": 607442,
+      "n": 2350203
+     },
+     {
+      "e": 607552,
+      "n": 2346025
+     },
+     {
+      "e": 609641,
+      "n": 2342672
+     },
+     {
+      "e": 612247,
+      "n": 2342245
+     },
+     {
+      "e": 614487,
+      "n": 2344847
+     },
+     {
+      "e": 612682,
+      "n": 2350174
+     },
+     {
+      "e": 610046,
+      "n": 2352428
+     },
+     {
+      "e": 608467,
+      "n": 2351790
+     },
+     {
+      "e": 607192,
+      "n": 2348327
+     },
+     {
+      "e": 607814,
+      "n": 2344685
+     }
+    ],
+    "start": 0,
+    "land": 0,
+    "water": 8,
+    "gap": 800,
+    "carrier": null,
+    "offload": 30,
+    "parent": null,
+    "join": null,
+    "roads": true
+   }
+  ]
+ },
+ "units": [
+  {
+   "type": "m777",
+   "e": 621178,
+   "n": 2357036,
+   "alt": null
+  }
+ ],
+ "lps": [
+  {
+   "fam": "altius",
+   "name": "Altius",
+   "e": 623645,
+   "n": 2357348
+  },
+  {
+   "fam": "switchblade",
+   "name": "Switchblade",
+   "e": 620528,
+   "n": 2357346
+  },
+  {
+   "fam": "lucas",
+   "name": "LUCAS",
+   "e": 627893,
+   "n": 2372326
+  }
+ ],
+ "ops": [
+  {
+   "name": "OP Volcano",
+   "note": "overlooks some beach looking west",
+   "e": 623282,
+   "n": 2351454,
+   "h": 217.5
+  },
+  {
+   "name": "OP little volcano",
+   "note": "",
+   "e": 619459.5,
+   "n": 2356988.4,
+   "h": 133.6
+  },
+  {
+   "name": "OP Harbor",
+   "note": "on a roof above the harbour, at its southwest edge, overlooking the piers",
+   "e": 617968.5,
+   "n": 2356425.4,
+   "h": 2.7
+  },
+  {
+   "name": "Beach camera",
+   "note": "pan and zoom camera at the southwest corner of a roof, the corner nearest the beach; starts looking out to sea",
+   "e": 620480.3,
+   "n": 2353791.7,
+   "h": 1.6,
+   "kind": "camera",
+   "look": 3750
+  },
+  {
+   "name": "OP Hill",
+   "note": "overlooks city",
+   "e": 624477.0,
+   "n": 2356123.8,
+   "h": 279.3
+  },
+  {
+   "name": "OP Jungle Hill",
+   "note": "overlooks city near OP Hill",
+   "e": 623298.4,
+   "n": 2355737.3,
+   "h": 136.5
+  },
+  {
+   "name": "OP Mountain House",
+   "note": "overlooks city",
+   "e": 621878.1,
+   "n": 2356920.4,
+   "h": 198.6
+  }
+ ]
+}
